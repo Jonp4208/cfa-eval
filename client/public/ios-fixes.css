@@ -23,14 +23,22 @@ html, body {
   bottom: 0;
 }
 
-/* Fix for iOS status bar */
+/* Fix for iOS status bar and fixed header */
 @supports (padding-top: env(safe-area-inset-top)) {
   .fixed-header-ios {
     padding-top: env(safe-area-inset-top);
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    z-index: 50;
+    background-color: white;
+    border-bottom: 1px solid #e5e7eb;
   }
   
   .ios-status-bar-height {
     height: env(safe-area-inset-top);
+    background-color: white;
   }
   
   .content-padding-ios {
@@ -59,5 +67,19 @@ html, body {
 @supports (padding-right: env(safe-area-inset-right)) {
   .safe-area-right {
     padding-right: env(safe-area-inset-right);
+  }
+}
+
+/* Additional PWA fixes */
+@media all and (display-mode: standalone) {
+  /* Prevent overscroll bounce effects */
+  body {
+    -webkit-overflow-scrolling: touch;
+    overscroll-behavior-y: none;
+  }
+  
+  /* Ensure fixed elements stay fixed */
+  .fixed {
+    position: fixed !important;
   }
 }
