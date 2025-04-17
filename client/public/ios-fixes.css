@@ -8,6 +8,8 @@ html, body {
   height: 100%;
   overscroll-behavior: none;
   -webkit-overflow-scrolling: touch;
+  margin: 0;
+  padding: 0;
 }
 
 /* Make the root div scrollable instead */
@@ -21,12 +23,13 @@ html, body {
   left: 0;
   right: 0;
   bottom: 0;
+  margin: 0;
+  padding: 0;
 }
 
 /* Fix for iOS status bar and fixed header */
 @supports (padding-top: env(safe-area-inset-top)) {
   .fixed-header-ios {
-    padding-top: env(safe-area-inset-top);
     position: fixed;
     top: 0;
     left: 0;
@@ -40,13 +43,19 @@ html, body {
     height: env(safe-area-inset-top);
     background-color: white;
   }
-  
-  .content-padding-ios {
-    padding-top: calc(4rem + env(safe-area-inset-top));
+
+  /* Mobile layout (< 938px) */
+  @media (max-width: 937px) {
+    main {
+      padding-top: calc(4rem + env(safe-area-inset-top));
+    }
   }
-  
-  .safe-area-bottom {
-    padding-bottom: env(safe-area-inset-bottom);
+
+  /* Desktop layout (>= 938px) */
+  @media (min-width: 938px) {
+    .fixed-header-ios {
+      display: none;
+    }
   }
 }
 
