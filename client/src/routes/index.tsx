@@ -1,0 +1,236 @@
+import React from 'react';
+import { Routes, Route, Navigate, useLocation } from 'react-router-dom';
+import { useAuth } from '../contexts/AuthContext';
+import Layout from '../components/Layout';
+import Login from '../pages/Login';
+import Register from '../pages/Register';
+import Dashboard from '../pages/Dashboard/Dashboard';
+import TaskHistory from '@/pages/TaskManagement/pages/History';
+import Evaluations from '../pages/Evaluations/index';
+import NewEvaluation from '../pages/Evaluations/NewEvaluation';
+import { EmployeeReview } from '../pages/Evaluations/EmployeeReview';
+import EnhancedEvaluationForm from '../pages/Evaluations/EnhancedEvaluationForm';
+import { EvaluationHistory } from '../pages/Evaluations/EvaluationHistory';
+import EvaluationsList from '../pages/Evaluations/EvaluationsList';
+import Templates from '@/pages/Templates/index';
+import TemplateBuilder from '../pages/Templates/TemplateBuilder';
+import Settings from '../pages/Settings/index';
+import Users from '../pages/users/index';
+import UserProfile from '../pages/users/[id]/index';
+import EditUser from '../pages/users/[id]/edit';
+import ViewEvaluation from '@/pages/Evaluations/ViewEvaluation';
+import ForgotPassword from '@/pages/ForgotPassword';
+import ResetPassword from '@/pages/ResetPassword';
+import AnalyticsHub from '@/pages/Analytics';
+import HeartsAndHands from '@/pages/Analytics/HeartsAndHands';
+import DayVsNight from '@/pages/Analytics/DayVsNight';
+import EvaluationTrends from '@/pages/Analytics/EvaluationTrends';
+import DepartmentComparison from '@/pages/Analytics/DepartmentComparison';
+// Disciplinary pages removed - functionality moved to documentation
+import DocumentationPage from '@/pages/Documentation';
+import NewDocument from '@/pages/Documentation/NewDocument';
+import DocumentDetail from '@/pages/Documentation/[id]';
+import TeamScores from '@/pages/Analytics/TeamScores';
+import Kitchen from '@/pages/Kitchen';
+import FoodSafety from '../pages/Kitchen/FoodSafety';
+import CompleteChecklist from '../pages/Kitchen/FoodSafety/CompleteChecklist';
+import DailyChecklist from '../pages/Kitchen/FoodSafety/DailyChecklist';
+import ChecklistHistory from '../pages/Kitchen/FoodSafety/components/ChecklistHistory';
+import History from '../pages/Kitchen/FoodSafety/pages/History';
+import ChecklistAnalytics from '../pages/Kitchen/FoodSafety/components/ChecklistAnalytics';
+import ViewCompletion from '../pages/Kitchen/FoodSafety/ViewCompletion';
+import KitchenHome from '@/pages/Kitchen/Home';
+import Leadership from '@/pages/Leadership';
+import LeadershipDashboard from '@/pages/Leadership/Dashboard';
+import Goals from '@/pages/Leadership/Goals';
+import GoalDetails from '@/pages/Leadership/GoalDetails';
+import DevelopmentalPlan from '@/pages/Leadership/DevelopmentalPlan';
+import MyPlans from '@/pages/Leadership/MyPlans';
+import PlanTasks from '@/pages/Leadership/PlanTasks';
+import TrainingPrograms from '@/pages/Leadership/TrainingPrograms';
+import TrainingProgramDetails from '@/pages/Leadership/TrainingProgramDetails';
+import Assessments from '@/pages/Leadership/Assessments';
+import AssessmentDetails from '@/pages/Leadership/AssessmentDetails';
+import Subscription from '@/pages/Leadership/Subscription';
+import Checklists from '@/pages/Kitchen/Checklists';
+import WasteTracker from '@/pages/Kitchen/WasteTracker';
+
+import Equipment from '@/pages/Kitchen/Equipment';
+
+import WasteAnalytics from '@/pages/Kitchen/WasteTracker/Analytics';
+import Training from '@/pages/Training';
+import TrainingDashboard from '@/pages/Training/Dashboard';
+import TrainingProgress from '@/pages/Training/Progress/TrainingProgress';
+import TrainingPlanList from '@/pages/Training/PlanList';
+import NewHires from '@/pages/Training/NewHires';
+import TrainingDetails from '@/pages/Training/Progress/TrainingDetails';
+import PlanDetails from '@/pages/Training/PlanDetails';
+import FuturePage from '@/pages/FuturePage';
+import AssignManagers from '../pages/users/AssignManagers';
+import DailyChecklistHistory from '../pages/Kitchen/FoodSafety/DailyChecklistHistory';
+import TemperatureHistory from '../pages/Kitchen/FoodSafety/pages/TemperatureHistory';
+// Shifts functionality removed
+
+import LandingPage from '../pages/Landing';
+import FOH from '../pages/FOH'
+import FOHHistory from '../pages/FOH/History'
+
+interface PrivateRouteProps {
+  children: React.ReactNode;
+}
+
+function PrivateRoute({ children }: PrivateRouteProps) {
+  const { user, isLoading } = useAuth();
+  const token = localStorage.getItem('token');
+  const location = useLocation();
+
+  if (isLoading) {
+    return <div>Loading...</div>;
+  }
+
+  if (!user || !token) {
+    return <Navigate to="/login" state={{ from: location }} replace />;
+  }
+
+  return <Layout>{children}</Layout>;
+}
+
+export const publicRoutes = [
+  {
+    path: '/',
+    element: <LandingPage />
+  },
+  {
+    path: '/login',
+    element: <Login />
+  },
+  {
+    path: '/register',
+    element: <Register />
+  },
+  {
+    path: '/forgot-password',
+    element: <ForgotPassword />
+  },
+  {
+    path: '/reset-password',
+    element: <ResetPassword />
+  }
+];
+
+export default function AppRoutes() {
+  const { user } = useAuth();
+
+  return (
+    <Routes>
+      {/* Public Routes */}
+      <Route
+        path="/"
+        element={
+          user ? (
+            <Navigate to="/dashboard" replace />
+          ) : (
+            <LandingPage />
+          )
+        }
+      />
+      <Route path="/login" element={<Login />} />
+      <Route path="/register" element={<Register />} />
+      <Route path="/forgot-password" element={<ForgotPassword />} />
+      <Route path="/reset-password" element={<ResetPassword />} />
+
+      {/* Protected Routes */}
+      <Route path="/dashboard" element={<PrivateRoute><Dashboard /></PrivateRoute>} />
+      <Route path="/foh" element={<PrivateRoute><FOH /></PrivateRoute>} />
+      <Route path="/foh/history" element={<PrivateRoute><FOHHistory /></PrivateRoute>} />
+      <Route path="/evaluations" element={<PrivateRoute><Evaluations /></PrivateRoute>} />
+      <Route path="/evaluations/new" element={<PrivateRoute><NewEvaluation /></PrivateRoute>} />
+      <Route path="/evaluations/:id/review" element={<PrivateRoute><EmployeeReview /></PrivateRoute>} />
+      <Route path="/evaluations/:id/acknowledge" element={<PrivateRoute><EnhancedEvaluationForm /></PrivateRoute>} />
+      <Route path="/evaluations/:id/history" element={<PrivateRoute><EvaluationHistory employeeId={''} /></PrivateRoute>} />
+      <Route path="/evaluations/:id/list" element={<PrivateRoute><EvaluationsList /></PrivateRoute>} />
+      <Route path="/evaluations/:id" element={<PrivateRoute><ViewEvaluation /></PrivateRoute>} />
+
+
+      <Route path="/kitchen" element={<PrivateRoute><Kitchen /></PrivateRoute>}>
+        <Route index element={<KitchenHome />} />
+        <Route path="waste-tracker" element={<WasteTracker />} />
+        <Route path="waste-tracker/analytics" element={<WasteAnalytics />} />
+        <Route path="equipment" element={<Equipment />} />
+        <Route path="food-safety" element={<FoodSafety />} />
+        <Route path="food-safety/complete/:id" element={<CompleteChecklist />} />
+        <Route path="food-safety/daily" element={<DailyChecklist />} />
+        <Route path="food-safety/history" element={<History />} />
+        <Route path="food-safety/history/:id" element={<ChecklistHistory />} />
+        <Route path="food-safety/pages/history" element={<DailyChecklistHistory />} />
+        <Route path="food-safety/pages/temperature-history" element={<TemperatureHistory />} />
+        <Route path="food-safety/analytics/:id" element={<ChecklistAnalytics />} />
+        <Route path="food-safety/view/:id" element={<ViewCompletion />} />
+
+        <Route path="checklists" element={<Checklists />} />
+      </Route>
+
+      <Route path="/food-safety" element={<PrivateRoute><FoodSafety /></PrivateRoute>} />
+
+      <Route path="/templates" element={<PrivateRoute><Templates /></PrivateRoute>} />
+      <Route path="/templates/new" element={<PrivateRoute><TemplateBuilder /></PrivateRoute>} />
+      <Route path="/templates/:id/edit" element={<PrivateRoute><TemplateBuilder /></PrivateRoute>} />
+      <Route path="/settings" element={<PrivateRoute><Settings /></PrivateRoute>} />
+      <Route path="/users" element={<PrivateRoute><Users /></PrivateRoute>} />
+      <Route path="/users/assign-managers" element={<PrivateRoute><AssignManagers /></PrivateRoute>} />
+      <Route path="/users/:id" element={<PrivateRoute><UserProfile /></PrivateRoute>} />
+      <Route path="/users/:id/edit" element={<PrivateRoute><EditUser /></PrivateRoute>} />
+      {/* Redirects for old disciplinary routes */}
+      <Route path="/disciplinary" element={<Navigate to="/documentation" replace />} />
+      <Route path="/disciplinary/new" element={<Navigate to="/documentation/new" replace />} />
+      <Route path="/disciplinary/:id" element={<Navigate to="/documentation" replace />} />
+      <Route path="/documentation" element={<PrivateRoute><DocumentationPage /></PrivateRoute>} />
+      <Route path="/documentation/new" element={<PrivateRoute><NewDocument /></PrivateRoute>} />
+      <Route path="/documentation/:id" element={<PrivateRoute><DocumentDetail /></PrivateRoute>} />
+      <Route path="/analytics" element={<PrivateRoute><AnalyticsHub /></PrivateRoute>}>
+        <Route path="hearts-and-hands" element={<HeartsAndHands />} />
+        <Route path="team-scores" element={<TeamScores />} />
+        <Route path="day-vs-night" element={<DayVsNight />} />
+        <Route path="evaluation-trends" element={<EvaluationTrends />} />
+        <Route path="department-comparison" element={<DepartmentComparison />} />
+      </Route>
+      <Route path="/training" element={<PrivateRoute><Training /></PrivateRoute>}>
+        <Route index element={<Navigate to="/training/progress" replace />} />
+        <Route path="progress" element={<TrainingProgress />} />
+        <Route path="progress/:id" element={<TrainingDetails />} />
+        <Route path="plans" element={<TrainingPlanList />} />
+        <Route path="plans/:id" element={<PlanDetails />} />
+        <Route path="new-hires" element={<NewHires />} />
+        <Route path="*" element={<Navigate to="/training/progress" replace />} />
+      </Route>
+      <Route path="/future" element={<PrivateRoute><FuturePage /></PrivateRoute>} />
+
+      <Route path="/leadership" element={<PrivateRoute><Leadership /></PrivateRoute>}>
+        <Route index element={<LeadershipDashboard />} />
+        <Route path="goals" element={<Goals />} />
+        <Route path="goals/:id" element={<GoalDetails />} />
+        <Route path="developmental-plan" element={<DevelopmentalPlan />} />
+        <Route path="my-plans" element={<MyPlans />} />
+        <Route path="plans/:planId/tasks" element={<PlanTasks />} />
+        <Route path="training-programs" element={<TrainingPrograms />} />
+        <Route path="training-programs/:id" element={<TrainingProgramDetails />} />
+        <Route path="assessments" element={<Assessments />} />
+        <Route path="assessments/:id" element={<AssessmentDetails />} />
+        <Route path="subscription" element={<Subscription />} />
+        <Route path="*" element={<Navigate to="/leadership" replace />} />
+      </Route>
+
+      <Route path="/foh" element={<PrivateRoute><FOH /></PrivateRoute>} />
+      <Route path="/foh/history" element={<PrivateRoute><FOHHistory /></PrivateRoute>} />
+
+      {/* Shifts functionality removed */}
+
+      {/* Redirect /goals to /leadership/goals since goals feature has been moved */}
+      <Route path="/goals" element={<Navigate to="/leadership/goals" replace />} />
+
+      <Route path="*" element={<Navigate to="/" replace />} />
+    </Routes>
+  );
+}
+
+// client/src/components/Layout.tsx

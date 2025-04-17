@@ -1,0 +1,20 @@
+[33mcommit 2d397c6a1277985ee02e301dff06c3e471bdc7e8[m[33m ([m[1;36mHEAD[m[33m -> [m[1;32mmaster[m[33m, [m[1;31mheroku/master[m[33m)[m
+Author: Jonathon <jonp4208@gmail.com>
+Date:   Thu Apr 10 17:01:32 2025 -0400
+
+    Add missing dialog components for equipment cleaning functionality
+
+A	client/src/pages/Kitchen/Equipment/components/CleaningHistoryDialog.tsx
+A	client/src/pages/Kitchen/Equipment/components/CleaningScheduleDialog.tsx
+
+[33mcommit 40e8182f120fe088ca36cc55b05a7ea5c25b0e74[m
+Author: Jonathon <jonp4208@gmail.com>
+Date:   Thu Apr 10 16:59:40 2025 -0400
+
+    Improve equipment cleaning functionality: make cleaning items clickable, add early completion option, optimize mobile UI
+
+A	client/src/pages/Kitchen/Equipment/components/CompleteCleaningDialog.tsx
+M	client/src/pages/Kitchen/Equipment/index.tsx
+M	client/src/services/kitchenService.ts
+M	server/src/routes/kitchen.js
+* [32mmaster[m

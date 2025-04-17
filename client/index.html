@@ -1,0 +1,117 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover, user-scalable=no" />
+    <meta name="theme-color" content="#E51636" media="(prefers-color-scheme: light)" />
+    <meta name="theme-color" content="#E51636" media="(prefers-color-scheme: dark)" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="default" />
+    <meta name="apple-mobile-web-app-title" content="LD Growth" />
+    <meta name="mobile-web-app-capable" content="yes" />
+    <meta name="apple-touch-fullscreen" content="yes" />
+    <link rel="manifest" href="/manifest.json" />
+    <link rel="apple-touch-icon" href="/icons/icon-192x192.png" />
+    <link rel="apple-touch-startup-image" href="/icons/splash-640x1136.png" media="(device-width: 320px) and (device-height: 568px) and (-webkit-device-pixel-ratio: 2)" />
+    <link rel="apple-touch-startup-image" href="/icons/splash-750x1334.png" media="(device-width: 375px) and (device-height: 667px) and (-webkit-device-pixel-ratio: 2)" />
+    <link rel="apple-touch-startup-image" href="/icons/splash-1242x2208.png" media="(device-width: 414px) and (device-height: 736px) and (-webkit-device-pixel-ratio: 3)" />
+    <link rel="apple-touch-startup-image" href="/icons/splash-1125x2436.png" media="(device-width: 375px) and (device-height: 812px) and (-webkit-device-pixel-ratio: 3)" />
+    <link rel="apple-touch-startup-image" href="/icons/splash-1536x2048.png" media="(min-device-width: 768px) and (max-device-width: 1024px) and (-webkit-device-pixel-ratio: 2)" />
+    <link rel="apple-touch-startup-image" href="/icons/splash-1668x2224.png" media="(min-device-width: 834px) and (max-device-width: 834px) and (-webkit-device-pixel-ratio: 2)" />
+    <link rel="apple-touch-startup-image" href="/icons/splash-2048x2732.png" media="(min-device-width: 1024px) and (max-device-width: 1024px) and (-webkit-device-pixel-ratio: 2)" />
+    <title>LD Growth - Empowering Team Development</title>
+    <script>
+      // Detect iOS and load iOS-specific CSS
+      (function() {
+        var iOS = /iPad|iPhone|iPod/.test(navigator.userAgent) && !window.MSStream;
+        var isPWA = window.navigator.standalone === true;
+
+        if (iOS) {
+          var link = document.createElement('link');
+          link.rel = 'stylesheet';
+          link.href = '/ios-fixes.css';
+          document.head.appendChild(link);
+          document.documentElement.classList.add('ios-device');
+
+          if (isPWA) {
+            document.documentElement.classList.add('ios-pwa');
+          }
+        }
+      })();
+    </script>
+  </head>
+  <body>
+    <div id="root"></div>
+    <script type="module" src="/src/main.tsx"></script>
+    <script>
+      if ('serviceWorker' in navigator) {
+        window.addEventListener('load', () => {
+          navigator.serviceWorker.register('/sw.js')
+            .then(registration => {
+              console.log('ServiceWorker registration successful with scope: ', registration.scope);
+
+              // Check for service worker updates
+              registration.addEventListener('updatefound', () => {
+                const newWorker = registration.installing;
+                console.log('Service worker update found!');
+
+                newWorker.addEventListener('statechange', () => {
+                  if (newWorker.state === 'installed' && navigator.serviceWorker.controller) {
+                    // New service worker is installed but waiting to activate
+                    console.log('New service worker installed, but waiting to activate');
+                    // Dispatch an event that our React app can listen for
+                    window.dispatchEvent(new CustomEvent('swUpdateAvailable'));
+                  }
+                });
+              });
+
+              // Check if there's an update on page load
+              if (registration.waiting) {
+                console.log('New service worker waiting to activate');
+                window.dispatchEvent(new CustomEvent('swUpdateAvailable'));
+              }
+            })
+            .catch(error => {
+              console.log('ServiceWorker registration failed: ', error);
+            });
+
+          // Listen for controller change to reload the page
+          navigator.serviceWorker.addEventListener('controllerchange', () => {
+            console.log('New service worker activated, reloading for fresh content');
+            window.location.reload();
+          });
+        });
+      }
+
+      // Function to tell the service worker to skip waiting
+      window.updateServiceWorker = function() {
+        if (navigator.serviceWorker) {
+          navigator.serviceWorker.getRegistration().then(reg => {
+            if (reg && reg.waiting) {
+              console.log('Sending SKIP_WAITING message to service worker');
+              // Send message to service worker to skip waiting and activate
+              reg.waiting.postMessage({ type: 'SKIP_WAITING' });
+
+              // Force reload after a short delay to ensure the new service worker is activated
+              setTimeout(() => {
+                console.log('Forcing page reload to activate new service worker');
+                window.location.reload(true);
+              }, 1000);
+            } else {
+              console.log('No waiting service worker found, reloading anyway');
+              window.location.reload(true);
+            }
+          }).catch(err => {
+            console.error('Error updating service worker:', err);
+            // Fallback - just reload the page
+            window.location.reload(true);
+          });
+        } else {
+          // No service worker support, just reload
+          window.location.reload(true);
+        }
+      }
+    </script>
+  </body>
+</html>

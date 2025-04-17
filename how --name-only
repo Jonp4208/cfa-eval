@@ -1,0 +1,15 @@
+[33mcommit 3d66e9786cebc4bf76fc1812788a48c8759b751e[m[33m ([m[1;36mHEAD[m[33m -> [m[1;32mmaster[m[33m, [m[1;31mheroku/master[m[33m)[m
+Author: Jonathon <jonp4208@gmail.com>
+Date:   Thu Apr 10 10:23:31 2025 -0400
+
+    Merged disciplinary into documentation page and simplified document types
+
+M	client/src/components/Layout.tsx
+A	client/src/pages/Documentation/NewDocument.tsx
+A	client/src/pages/Documentation/[id]/index.tsx
+A	client/src/pages/Documentation/components/AcknowledgmentDialog.tsx
+A	client/src/pages/Documentation/components/DocumentUploadDialog.tsx
+A	client/src/pages/Documentation/components/FollowUpDialog.tsx
+A	client/src/pages/Documentation/index.tsx
+M	client/src/routes/index.tsx
+A	client/src/services/documentationService.ts
