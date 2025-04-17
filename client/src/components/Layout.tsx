@@ -537,7 +537,7 @@ export default function Layout({ children }: { children: React.ReactNode }) {
                     )}
                   </Button>
                 </DropdownMenuTrigger>
-                <DropdownMenuContent align="end" className="w-[300px]">
+                <DropdownMenuContent align="end" className="w-[300px] max-h-[80vh] overflow-y-auto">
                   <DropdownMenuLabel>{t('common.notifications', 'Notifications')}</DropdownMenuLabel>
                   <NotificationList onDismiss={() => {
                     // Refresh notification count after dismissal
@@ -590,7 +590,7 @@ export default function Layout({ children }: { children: React.ReactNode }) {
 
       {/* Main Content */}
       <main className="min-h-screen">
-        <div className="max-w-7xl mx-auto p-4 min-[938px]:p-6 min-[938px]:pt-24">
+        <div className="max-w-7xl mx-auto py-4 min-[938px]:p-6 min-[938px]:pt-24">
           {children}
         </div>
       </main>

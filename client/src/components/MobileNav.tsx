@@ -54,8 +54,8 @@ export function MobileNav() {
   ];
 
   return (
-    <nav className="min-[938px]:hidden fixed bottom-0 left-0 right-0 bg-white border-t z-50">
-      <div className="flex items-center justify-around">
+    <nav className="min-[938px]:hidden fixed bottom-0 left-0 right-0 bg-white border-t z-[100] shadow-[0_-1px_3px_rgba(0,0,0,0.1)]">
+      <div className="flex items-center justify-around pb-safe">
         {/* Bottom navigation items */}
         {navItems
           .filter(item => item.show)
@@ -81,8 +81,6 @@ export function MobileNav() {
             );
           })}
       </div>
-      {/* Safe area spacer for iOS notch/home indicator */}
-      <div className="safe-area-bottom bg-white"></div>
     </nav>
   );
 }
