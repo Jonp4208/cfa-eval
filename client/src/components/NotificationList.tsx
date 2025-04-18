@@ -30,9 +30,10 @@ interface Notification {
 interface NotificationListProps {
   onDismiss: () => void;
   isMobile?: boolean;
+  compact?: boolean;
 }
 
-export function NotificationList({ onDismiss, isMobile = false }: NotificationListProps) {
+export function NotificationList({ onDismiss, isMobile = false, compact = false }: NotificationListProps) {
   const navigate = useNavigate();
   const { showNotification } = useNotification();
   const { t } = useTranslation();
@@ -48,7 +49,7 @@ export function NotificationList({ onDismiss, isMobile = false }: NotificationLi
       console.log('Fetching notifications...');
       const response = await api.get('/api/notifications');
       console.log('Notifications response:', response.data);
-      
+
       setNotifications(response.data.notifications);
       setLoading(false);
     } catch (error) {
@@ -64,13 +65,13 @@ export function NotificationList({ onDismiss, isMobile = false }: NotificationLi
       if (notification.type === 'EVALUATION' && notification.metadata?.evaluationId) {
         navigate(`/evaluations/${notification.metadata.evaluationId}`);
       }
-      
+
       // Mark as read
       await api.post(`/api/notifications/${notification._id}/mark-read`);
-      
+
       // Remove from list
       setNotifications(prev => prev.filter(n => n._id !== notification._id));
-      
+
       // Close dropdown if mobile
       if (isMobile) {
         onDismiss();
@@ -85,13 +86,13 @@ export function NotificationList({ onDismiss, isMobile = false }: NotificationLi
     try {
       // Stop event propagation to prevent notification click handler
       event?.stopPropagation()
-      
+
       // Optimistically remove from UI first
       setNotifications(prev => prev.filter(n => n._id !== notificationId))
-      
+
       // Then delete from backend
       const response = await api.delete(`/api/notifications/${notificationId}`)
-      
+
       if (response.status !== 200) {
         // If deletion failed, add notification back to list
         const response = await api.get('/api/notifications')
@@ -143,7 +144,7 @@ export function NotificationList({ onDismiss, isMobile = false }: NotificationLi
     return (
       <div className={cn(
         "text-center text-gray-500",
-        isMobile ? "p-6" : "p-4"
+        compact ? "p-2" : isMobile ? "p-6" : "p-4"
       )}>
         {t('common.loading')}
       </div>
@@ -154,7 +155,7 @@ export function NotificationList({ onDismiss, isMobile = false }: NotificationLi
     return (
       <div className={cn(
         "text-center text-gray-500",
-        isMobile ? "p-6" : "p-4"
+        compact ? "p-2" : isMobile ? "p-6" : "p-4"
       )}>
         {t('common.noNotifications')}
       </div>
@@ -164,26 +165,29 @@ export function NotificationList({ onDismiss, isMobile = false }: NotificationLi
   return (
     <div className={cn(
       "overflow-y-auto",
-      isMobile ? "max-h-[calc(100vh-280px)] pb-16" : "max-h-[400px] py-2"
+      compact ? "max-h-[30vh]" : isMobile ? "max-h-[calc(100vh-280px)] pb-16" : "max-h-[400px] py-2"
     )}>
       {notifications.map((notification) => (
-        <div 
-          key={notification._id} 
+        <div
+          key={notification._id}
           className={cn(
             "relative hover:bg-gray-50",
-            isMobile ? "p-4 border-b" : "px-4 py-2"
+            compact ? "p-2 border-b" : isMobile ? "p-4 border-b" : "px-4 py-2"
           )}
         >
           <div className="flex items-start gap-3">
             <div className="relative">
-              <div className="w-8 h-8 rounded-full bg-[#E51636]/10 flex items-center justify-center flex-shrink-0">
+              <div className={cn(
+                "rounded-full bg-[#E51636]/10 flex items-center justify-center flex-shrink-0",
+                compact ? "w-6 h-6" : "w-8 h-8"
+              )}>
                 {getNotificationIcon(notification.type)}
               </div>
               {notification.status === 'UNREAD' && (
                 <div className="absolute -top-1 -right-1 w-3 h-3 bg-[#E51636] rounded-full" />
               )}
             </div>
-            <button 
+            <button
               className="flex-grow text-left"
               onClick={() => handleNotificationClick(notification)}
             >
@@ -191,35 +195,37 @@ export function NotificationList({ onDismiss, isMobile = false }: NotificationLi
                 <div className="flex justify-between items-start">
                   <p className={cn(
                     "font-medium text-[#27251F]",
-                    isMobile ? "text-base" : "text-sm"
+                    compact ? "text-sm" : isMobile ? "text-base" : "text-sm"
                   )}>
                     {notification.title}
                     {notification.employee?.name && ` - ${notification.employee.name}`}
                   </p>
                   <p className={cn(
                     "text-[#27251F]/60 text-xs",
-                    isMobile ? "text-sm" : "text-xs"
+                    compact ? "text-xs" : isMobile ? "text-sm" : "text-xs"
                   )}>
                     {formatDate(notification.createdAt)}
                   </p>
                 </div>
-                <p className={cn(
-                  "text-[#27251F]/60",
-                  isMobile ? "text-sm" : "text-xs"
-                )}>
-                  {notification.message}
-                </p>
+                {!compact && (
+                  <p className={cn(
+                    "text-[#27251F]/60",
+                    isMobile ? "text-sm" : "text-xs"
+                  )}>
+                    {notification.message}
+                  </p>
+                )}
               </div>
             </button>
             <button
               onClick={(e) => handleDismissNotification(notification._id, e)}
               className="text-[#27251F]/40 hover:text-[#27251F]/60"
             >
-              <X className="w-4 h-4" />
+              <X className={compact ? "w-3 h-3" : "w-4 h-4"} />
             </button>
           </div>
         </div>
       ))}
     </div>
   );
-} 
+}

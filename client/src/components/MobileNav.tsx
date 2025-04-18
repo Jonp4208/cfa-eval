@@ -10,7 +10,10 @@ import {
   GraduationCap,
   CheckSquare,
   FileText,
-  Calendar
+  Calendar,
+  CalendarDays,
+  LayoutDashboard,
+  Plus
 } from 'lucide-react';
 
 export function MobileNav() {
@@ -50,12 +53,33 @@ export function MobileNav() {
       label: t('navigation.training'),
       href: '/training',
       show: true
+    },
+    {
+      icon: CalendarDays,
+      label: 'Setup Sheet',
+      href: '/setup-sheet-templates',
+      show: true,
+      badge: null,
+      submenu: [
+        {
+          icon: LayoutDashboard,
+          label: 'Templates',
+          href: '/setup-sheet-templates',
+          badge: null
+        },
+        {
+          icon: Plus,
+          label: 'New Template',
+          href: '/setup-sheet-builder',
+          badge: null
+        }
+      ]
     }
   ];
 
   return (
-    <nav className="min-[938px]:hidden fixed bottom-0 left-0 right-0 bg-white border-t z-[100] shadow-[0_-1px_3px_rgba(0,0,0,0.1)]">
-      <div className="flex items-center justify-around pb-safe">
+    <nav className="min-[938px]:hidden fixed bottom-0 left-0 right-0 bg-white border-t z-[9999] shadow-[0_-1px_3px_rgba(0,0,0,0.1)]" style={{ touchAction: 'manipulation', position: 'fixed', bottom: 0 }}>
+      <div className="flex items-center justify-around pb-safe safe-area-bottom">
         {/* Bottom navigation items */}
         {navItems
           .filter(item => item.show)
@@ -70,10 +94,12 @@ export function MobileNav() {
                 key={item.href}
                 onClick={() => navigate(item.href)}
                 className={cn(
-                  "flex flex-col items-center gap-1 p-2 min-w-[64px] min-h-[64px] touch-manipulation",
-                  "transition-colors duration-200",
+                  "flex flex-col items-center gap-1 p-2 min-w-[64px] min-h-[64px] touch-manipulation mobile-nav-button",
+                  "transition-colors duration-200 relative", // Added relative positioning
+                  "active:opacity-70", // Added active state for better touch feedback
                   isActive ? "text-red-600" : "text-gray-500 hover:text-gray-900"
                 )}
+                style={{ touchAction: 'manipulation' }} // Ensure touch events work properly
               >
                 <Icon className="w-6 h-6" />
                 <span className="text-xs font-medium">{item.label}</span>

@@ -160,4 +160,15 @@
   .hide-scrollbar::-webkit-scrollbar {
     display: none;             /* Chrome, Safari and Opera */
   }
+
+  /* Ensure mobile menu buttons are clickable */
+  .mobile-nav-button {
+    position: relative;
+    z-index: 110;
+    -webkit-tap-highlight-color: transparent;
+    touch-action: manipulation;
+    user-select: none;
+    -webkit-user-select: none;
+    cursor: pointer;
+  }
 }

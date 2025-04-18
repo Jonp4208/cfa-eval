@@ -36,7 +36,9 @@ import {
   ShieldCheck,
   GraduationCap,
   BarChart3,
-  FileText
+  FileText,
+  CalendarDays,
+  Plus
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import api from '@/lib/axios';
@@ -175,8 +177,15 @@ export default function Layout({ children }: { children: React.ReactNode }) {
   // Toggle menu with proper event handling
   const handleMenuToggle = (event: React.MouseEvent) => {
     // Prevent event from bubbling to document
+    event.preventDefault();
     event.stopPropagation();
     setIsMobileMenuOpen(prev => !prev);
+
+    // Add a small delay to ensure the click event is fully processed
+    setTimeout(() => {
+      // Force a re-render to ensure the menu is properly displayed
+      setIsMobileMenuOpen(prev => prev);
+    }, 10);
   };
 
   const menuItems: MenuItem[] = [
@@ -194,12 +203,32 @@ export default function Layout({ children }: { children: React.ReactNode }) {
       show: true,
       badge: null
     },
-    // Shifts functionality removed
+    {
+      icon: CalendarDays,
+      label: 'Setup Sheet',
+      href: '/setup-sheet-templates',
+      show: true,
+      badge: null,
+      submenu: [
+        {
+          icon: LayoutDashboard,
+          label: 'Templates',
+          href: '/setup-sheet-templates',
+          badge: null
+        },
+        {
+          icon: Plus,
+          label: 'New Template',
+          href: '/setup-sheet-builder',
+          badge: null
+        }
+      ]
+    },
     {
       icon: ChefHat,
       label: t('navigation.kitchen'),
       href: '/kitchen',
-      show: user?.departments?.includes('Kitchen'),
+      show: Boolean(user?.departments?.includes('Kitchen')),
       badge: null,
       submenu: [
         {
@@ -413,7 +442,8 @@ export default function Layout({ children }: { children: React.ReactNode }) {
           <button
             data-mobile-menu-toggle
             onClick={handleMenuToggle}
-            className="min-[938px]:hidden p-2 rounded-lg hover:bg-gray-100 transition-colors duration-200 min-h-[44px] min-w-[44px] touch-manipulation"
+            className="min-[938px]:hidden p-2 rounded-lg hover:bg-gray-100 transition-colors duration-200 min-h-[44px] min-w-[44px] touch-manipulation active:opacity-70 relative z-[201]"
+            style={{ touchAction: 'manipulation' }}
           >
             <MenuIcon className="w-6 h-6" />
           </button>
@@ -598,10 +628,191 @@ export default function Layout({ children }: { children: React.ReactNode }) {
       {/* Update Notification */}
       <UpdateNotification />
 
+      {/* Mobile Menu Dropdown */}
+      {isMobileMenuOpen && (
+        <div
+          className="min-[938px]:hidden fixed inset-0 bg-black/50 z-[200] overflow-hidden"
+          onClick={() => setIsMobileMenuOpen(false)}
+        >
+          <div
+            ref={menuRef}
+            className="absolute right-0 top-0 bottom-0 w-[85%] max-w-[320px] bg-white shadow-xl overflow-y-auto"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="p-4 border-b flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <div className="w-8 h-8 rounded-full bg-gray-100 flex items-center justify-center">
+                  <User2 className="w-4 h-4 text-gray-600" />
+                </div>
+                <div>
+                  <div className="font-medium">{user?.firstName} {user?.lastName}</div>
+                </div>
+              </div>
+              <button
+                onClick={() => setIsMobileMenuOpen(false)}
+                className="p-2 rounded-lg hover:bg-gray-100 transition-colors duration-200"
+              >
+                <X className="w-5 h-5 text-gray-500" />
+              </button>
+            </div>
+
+            {/* Notifications Section - Moved to top */}
+            <div className="p-4 border-b">
+              <div className="flex items-center justify-between mb-2">
+                <h3 className="font-medium text-gray-900">{t('common.notifications', 'Notifications')}</h3>
+                {notificationCount > 0 && (
+                  <span className="px-2 py-0.5 rounded-full text-xs font-medium bg-red-100 text-red-600">
+                    {notificationCount}
+                  </span>
+                )}
+              </div>
+
+              <div className="max-h-[30vh] overflow-y-auto rounded-lg bg-gray-50 mb-2" style={{ overscrollBehavior: 'contain' }}>
+                <NotificationList
+                  onDismiss={() => {
+                    // Refresh notification count after dismissal
+                    const fetchNotifications = async () => {
+                      try {
+                        const response = await api.get('/api/notifications');
+                        const unreadCount = response.data.notifications.filter(
+                          (notification: any) => !notification.read
+                        ).length;
+                        setNotificationCount(unreadCount);
+                      } catch (error) {
+                        console.error('Error fetching notifications:', error);
+                      }
+                    };
+                    fetchNotifications();
+                  }}
+                  compact={true}
+                  isMobile={true}
+                />
+              </div>
+            </div>
+
+            <div className="p-2 overflow-y-auto max-h-[calc(100vh-280px)]" style={{ overscrollBehavior: 'contain' }}>
+              {menuItems
+                .filter(item => item.show)
+                .map(item => {
+                  const Icon = item.icon;
+                  const isActive = item.href === '/'
+                    ? location.pathname === '/'
+                    : location.pathname.startsWith(item.href);
+
+                  if (item.submenu) {
+                    return (
+                      <div key={item.href} className="mb-1">
+                        <button
+                          onClick={() => setActiveSubmenu(activeSubmenu === item.href ? null : item.href)}
+                          className={cn(
+                            "w-full px-4 py-3 flex items-center justify-between rounded-lg",
+                            (isActive || item.submenu.some(sub => location.pathname.startsWith(sub.href)))
+                              ? "bg-red-50 text-red-600"
+                              : "hover:bg-gray-50 text-gray-700"
+                          )}
+                        >
+                          <div className="flex items-center gap-3">
+                            <Icon className="w-5 h-5" />
+                            <span className="font-medium">{item.label}</span>
+                          </div>
+                          <ChevronDown className={cn(
+                            "w-4 h-4 transition-transform",
+                            activeSubmenu === item.href ? "rotate-180" : ""
+                          )} />
+                        </button>
+
+                        {activeSubmenu === item.href && (
+                          <div className="ml-4 pl-4 border-l border-gray-200 mt-1 mb-1">
+                            {item.submenu.map(subItem => {
+                              const SubIcon = subItem.icon;
+                              const isSubActive = location.pathname.startsWith(subItem.href);
+                              return (
+                                <button
+                                  key={subItem.href}
+                                  onClick={() => {
+                                    navigate(subItem.href);
+                                    setIsMobileMenuOpen(false);
+                                  }}
+                                  className={cn(
+                                    "w-full px-4 py-2 flex items-center gap-3 rounded-lg my-1",
+                                    isSubActive ? "bg-red-50 text-red-600" : "hover:bg-gray-50 text-gray-700"
+                                  )}
+                                >
+                                  <SubIcon className="w-4 h-4" />
+                                  <span>{subItem.label}</span>
+                                  {subItem.badge && (
+                                    <span className="ml-auto px-2 py-0.5 rounded-full text-xs font-medium bg-red-100 text-red-600">
+                                      {subItem.badge}
+                                    </span>
+                                  )}
+                                </button>
+                              );
+                            })}
+                          </div>
+                        )}
+                      </div>
+                    );
+                  }
+
+                  return (
+                    <button
+                      key={item.href}
+                      onClick={() => {
+                        navigate(item.href);
+                        setIsMobileMenuOpen(false);
+                      }}
+                      className={cn(
+                        "w-full px-4 py-3 flex items-center gap-3 rounded-lg mb-1",
+                        isActive ? "bg-red-50 text-red-600" : "hover:bg-gray-50 text-gray-700"
+                      )}
+                    >
+                      <Icon className="w-5 h-5" />
+                      <span className="font-medium">{item.label}</span>
+                      {item.badge && (
+                        <span className="ml-auto px-2 py-0.5 rounded-full text-xs font-medium bg-red-100 text-red-600">
+                          {item.badge}
+                        </span>
+                      )}
+                    </button>
+                  );
+                })}
+            </div>
+
+            {/* Settings and Logout */}
+            <div className="p-4 border-t pb-safe safe-area-bottom">
+              <button
+                onClick={() => {
+                  navigate('/settings');
+                  setIsMobileMenuOpen(false);
+                }}
+                className="w-full px-4 py-3 flex items-center gap-3 rounded-lg mb-2 hover:bg-gray-50"
+              >
+                <Settings className="w-5 h-5 text-gray-500" />
+                <span className="font-medium">{t('navigation.settings')}</span>
+              </button>
+
+              <button
+                onClick={() => {
+                  logout();
+                  setIsMobileMenuOpen(false);
+                }}
+                className="w-full px-4 py-3 flex items-center gap-3 rounded-lg text-red-600 hover:bg-red-50"
+              >
+                <LogOut className="w-5 h-5" />
+                <span className="font-medium">{t('auth.logout')}</span>
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* Mobile Navigation */}
       <div className="[&>*]:min-[938px]:hidden">
         <MobileNav />
       </div>
+
+      {/* This div ensures no other elements overlap with the mobile navigation */}
+      <div className="min-[938px]:hidden h-[80px]"></div>
     </div>
   );
 }
