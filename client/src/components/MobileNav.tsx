@@ -57,23 +57,9 @@ export function MobileNav() {
     {
       icon: CalendarDays,
       label: 'Setup Sheet',
-      href: '/setup-sheet-templates',
+      href: '/saved-setups',
       show: true,
-      badge: null,
-      submenu: [
-        {
-          icon: LayoutDashboard,
-          label: 'Templates',
-          href: '/setup-sheet-templates',
-          badge: null
-        },
-        {
-          icon: Plus,
-          label: 'New Setup',
-          href: '/setup-sheet-builder',
-          badge: null
-        }
-      ]
+      badge: null
     }
   ];
 

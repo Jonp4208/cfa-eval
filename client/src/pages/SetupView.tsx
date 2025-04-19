@@ -67,24 +67,28 @@ export function SetupView() {
   }
 
   return (
-    <div className="container mx-auto p-4 space-y-4">
+    <div className="container mx-auto p-4 pb-20 sm:pb-4 space-y-4">
       {/* Breadcrumb navigation */}
-      <nav className="flex items-center text-sm text-gray-500">
-        <Link to="/" className="flex items-center hover:text-blue-600">
+      <nav className="flex flex-wrap items-center text-sm text-gray-500 gap-1">
+        <Link to="/" className="flex items-center hover:text-gray-800">
           <Home className="h-4 w-4 mr-1" />
           <span>Home</span>
         </Link>
-        <ChevronRight className="h-4 w-4 mx-2" />
-        <Link to="/saved-setups" className="hover:text-blue-600">Saved Setups</Link>
-        <ChevronRight className="h-4 w-4 mx-2" />
+        <ChevronRight className="h-4 w-4 mx-1" />
+        <Link to="/saved-setups" className="hover:text-gray-800">Saved Setups</Link>
+        <ChevronRight className="h-4 w-4 mx-1" />
         <span className="text-gray-900 font-medium">{setup.name}</span>
-        {setup.startDate && (
-          <span className="ml-2 text-xs bg-gray-100 px-2 py-1 rounded">
+      </nav>
+
+      {/* Date range badge */}
+      {setup.startDate && (
+        <div className="flex items-center">
+          <span className="text-xs bg-gray-100 px-2 py-1 rounded">
             {format(new Date(setup.startDate), 'MMM d')} - {format(new Date(setup.endDate), 'MMM d, yyyy')}
             <span className="ml-1 text-gray-500">(Sun - Sat)</span>
           </span>
-        )}
-      </nav>
+        </div>
+      )}
 
       <DailyView setup={setup} onBack={handleBack} />
     </div>

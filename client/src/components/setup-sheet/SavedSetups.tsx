@@ -54,15 +54,15 @@ export function SavedSetups({ onSelectSetup }: { onSelectSetup: (setupId: string
 
   return (
     <div className="space-y-6">
-      <div className="flex justify-between items-center">
-        <h2 className="text-2xl font-bold">Saved Weekly Setups</h2>
-        <div className="relative">
+      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+        <h2 className="text-2xl font-bold text-red-600">Saved Weekly Setups</h2>
+        <div className="relative w-full sm:w-auto">
           <Search className="absolute left-2 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
           <Input
             placeholder="Search setups..."
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            className="pl-8 w-[250px]"
+            className="pl-8 w-full sm:w-[250px]"
           />
         </div>
       </div>
@@ -77,19 +77,19 @@ export function SavedSetups({ onSelectSetup }: { onSelectSetup: (setupId: string
           )}
         </Card>
       ) : (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
           {filteredSetups.map(setup => (
-            <Card key={setup._id} className="p-4 flex flex-col">
-              <div className="flex justify-between items-start mb-2">
-                <h3 className="font-semibold text-lg">{setup.name}</h3>
-                <Badge variant="outline" className="bg-blue-50">
+            <Card key={setup._id} className="p-4 flex flex-col shadow-sm hover:shadow-md transition-shadow">
+              <div className="flex flex-wrap justify-between items-start mb-2 gap-2">
+                <h3 className="font-semibold text-lg text-red-600">{setup.name}</h3>
+                <Badge variant="outline" className="bg-red-50 text-red-600 border-red-200">
                   {countAssignedPositions(setup)} Positions
                 </Badge>
               </div>
 
               <div className="flex items-center gap-2 text-sm text-gray-500 mb-4">
-                <Calendar className="h-4 w-4" />
-                <span>
+                <Calendar className="h-4 w-4 text-red-500" />
+                <span className="flex-wrap">
                   {format(new Date(setup.startDate), 'MMM d')} - {format(new Date(setup.endDate), 'MMM d, yyyy')}
                   <span className="ml-1 text-xs text-gray-400">
                     (Sun - Sat)
@@ -97,8 +97,8 @@ export function SavedSetups({ onSelectSetup }: { onSelectSetup: (setupId: string
                 </span>
               </div>
 
-              <div className="mt-auto pt-4 border-t flex justify-between">
-                <Button variant="outline" size="sm" onClick={() => onSelectSetup(setup._id)}>
+              <div className="mt-auto pt-4 border-t flex flex-wrap justify-between gap-2">
+                <Button variant="outline" size="sm" className="bg-red-50 text-red-600 hover:bg-red-100 border-red-200" onClick={() => onSelectSetup(setup._id)}>
                   <Eye className="h-4 w-4 mr-2" />
                   View
                 </Button>
@@ -107,7 +107,7 @@ export function SavedSetups({ onSelectSetup }: { onSelectSetup: (setupId: string
                   if (!open) setSetupToDelete(null)
                 }}>
                   <AlertDialogTrigger asChild>
-                    <Button variant="outline" size="sm" className="text-red-500 hover:text-red-700" onClick={() => setSetupToDelete(setup._id)}>
+                    <Button variant="outline" size="sm" className="text-gray-500 hover:text-gray-700 border-gray-200" onClick={() => setSetupToDelete(setup._id)}>
                       <Trash2 className="h-4 w-4 mr-2" />
                       Delete
                     </Button>
@@ -122,7 +122,7 @@ export function SavedSetups({ onSelectSetup }: { onSelectSetup: (setupId: string
                     </AlertDialogHeader>
                     <AlertDialogFooter>
                       <AlertDialogCancel>Cancel</AlertDialogCancel>
-                      <AlertDialogAction onClick={handleDeleteSetup} className="bg-red-500 hover:bg-red-600">
+                      <AlertDialogAction onClick={handleDeleteSetup} className="bg-red-600 hover:bg-red-700">
                         Delete
                       </AlertDialogAction>
                     </AlertDialogFooter>

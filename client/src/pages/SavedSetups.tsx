@@ -16,7 +16,7 @@ export function SavedSetups() {
   }
 
   return (
-    <div className="container mx-auto p-4">
+    <div className="container mx-auto p-4 pb-20 sm:pb-4">
       <SavedSetupsComponent onSelectSetup={handleSelectSetup} />
     </div>
   )

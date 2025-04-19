@@ -1017,7 +1017,7 @@ export function DailyView({ setup, onBack }: DailyViewProps) {
     <div className="flex flex-col h-[calc(100vh-80px)] overflow-hidden">
       {/* Streamlined header with controls */}
       <div className="sticky top-0 z-10 bg-white border-b pb-3 pt-2 shadow-sm">
-        <div className="flex justify-between items-center">
+        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2">
           {/* Left section: Back button and title */}
           <div className="flex items-center gap-3">
             <Button variant="ghost" size="sm" onClick={onBack} className="h-8 px-2 hover:bg-gray-100">
@@ -1026,10 +1026,10 @@ export function DailyView({ setup, onBack }: DailyViewProps) {
             </Button>
 
             <div>
-              <h2 className="text-lg md:text-xl font-bold truncate">{setup.name}</h2>
+              <h2 className="text-lg md:text-xl font-bold truncate text-red-600">{setup.name}</h2>
               {setup.startDate && setup.endDate && (
                 <div className="text-xs text-gray-500 flex items-center">
-                  <Calendar className="h-3 w-3 mr-1" />
+                  <Calendar className="h-3 w-3 mr-1 text-red-500" />
                   <span>
                     Week of {format(new Date(setup.startDate), 'MMM d')} - {format(new Date(setup.endDate), 'MMM d, yyyy')}
                   </span>
@@ -1039,8 +1039,8 @@ export function DailyView({ setup, onBack }: DailyViewProps) {
           </div>
 
           {/* Right section: Action buttons */}
-          <div className="flex items-center gap-1">
-            <div className="text-sm font-medium mr-3 bg-gray-100 px-2 py-1 rounded-md">
+          <div className="flex items-center gap-1 w-full sm:w-auto justify-end">
+            <div className="text-sm font-medium mr-2 bg-red-50 text-red-600 px-2 py-1 rounded-md border border-red-100">
               {format(currentTime, 'h:mm a')}
             </div>
 
@@ -1058,7 +1058,7 @@ export function DailyView({ setup, onBack }: DailyViewProps) {
               variant="default"
               size="sm"
               onClick={handleSaveChanges}
-              className="h-8 bg-blue-600 hover:bg-blue-700 ml-1"
+              className="h-8 bg-red-600 hover:bg-red-700 ml-1"
             >
               Save Changes
             </Button>
@@ -1084,8 +1084,8 @@ export function DailyView({ setup, onBack }: DailyViewProps) {
       {/* Day tabs - redesigned for better visual hierarchy */}
       <div className="bg-white border rounded-lg shadow-sm overflow-hidden flex-1 flex flex-col">
         <Tabs value={activeDay} onValueChange={setActiveDay} className="w-full h-full flex flex-col">
-          <div className="border-b bg-gray-50 flex-shrink-0">
-            <TabsList className="w-full justify-start p-0 bg-transparent rounded-none flex">
+          <div className="border-b bg-gray-50 flex-shrink-0 overflow-x-auto">
+            <TabsList className="w-full justify-start p-0 bg-transparent rounded-none flex min-w-[700px]">
               {days.map(day => {
                 const date = getDateForDay(day)
                 const isToday = new Date().toDateString() === date.toDateString()
@@ -1095,13 +1095,13 @@ export function DailyView({ setup, onBack }: DailyViewProps) {
                   <TabsTrigger
                     key={day}
                     value={day}
-                    className={`px-4 py-3 rounded-none border-b-2 ${isActive ? 'border-blue-600 bg-white' : 'border-transparent'}
-                              ${isToday && !isActive ? 'bg-blue-50' : ''} transition-all`}
+                    className={`px-4 py-3 rounded-none border-b-2 ${isActive ? 'border-red-600 bg-white' : 'border-transparent'}
+                              ${isToday && !isActive ? 'bg-red-50' : ''} transition-all flex-1`}
                   >
                     <div className="flex flex-col items-center">
                       <div className="flex items-center gap-2">
-                        <span className={`font-medium ${isActive ? 'text-blue-600' : ''}`}>{formatShortDayName(day)}</span>
-                        {isToday && <span className="text-[10px] bg-blue-100 text-blue-600 px-1 py-0.5 rounded">Today</span>}
+                        <span className={`font-medium ${isActive ? 'text-red-600' : ''}`}>{formatShortDayName(day)}</span>
+                        {isToday && <span className="text-[10px] bg-red-100 text-red-600 px-1 py-0.5 rounded">Today</span>}
                       </div>
                       <span className="text-xs mt-1 text-gray-500">
                         {day === 'saturday' && format(date, 'M/d') === '4/12' ? '4/19' : format(date, 'M/d')}
@@ -1128,30 +1128,33 @@ export function DailyView({ setup, onBack }: DailyViewProps) {
                   </div>
                 </div>
 
-                <div className="bg-gray-50 rounded-lg p-2 border">
-                  <div className="grid grid-cols-6 sm:grid-cols-8 md:grid-cols-12 gap-2">
+                <div className="bg-white rounded-lg border shadow-sm overflow-hidden">
+                  <div className="flex overflow-x-auto pb-1 pt-1 px-1 scrollbar-thin scrollbar-thumb-gray-300 scrollbar-track-gray-100">
                     {allHours.map(hour => {
                       const isCurrentHour = hour.split(':')[0] === new Date().getHours().toString().padStart(2, '0')
                       const hasScheduledBlocks = getTimeBlocksByHour(hour).length > 0
                       const positionCount = getTimeBlocksByHour(hour).reduce((acc, block) => acc + block.positions.length, 0)
                       const isActive = activeHour === hour
 
+                      // Format the hour for display (5:00, 6:00, etc.)
+                      const displayHour = parseInt(hour).toString()
+
                       return (
-                        <div key={hour} className="flex flex-col">
+                        <div key={hour} className="flex-shrink-0 px-1">
                           <Button
-                            variant={isActive ? "default" : hasScheduledBlocks ? "outline" : "ghost"}
+                            variant={isActive ? "default" : "outline"}
                             size="sm"
-                            className={`w-full justify-center py-2 px-0 ${isCurrentHour ? 'border-blue-300 ring-1 ring-blue-100' : ''}
-                                      ${hasScheduledBlocks ? 'font-semibold' : 'opacity-70'}
-                                      ${isActive ? 'shadow-sm bg-blue-600 text-white hover:bg-blue-700' :
-                                        hasScheduledBlocks ? 'bg-white hover:bg-gray-50' : 'hover:bg-gray-100'}`}
+                            className={`min-w-[70px] justify-center py-3 ${isCurrentHour ? 'border-red-300 ring-1 ring-red-100' : ''}
+                                      ${hasScheduledBlocks ? 'font-semibold' : 'opacity-80'}
+                                      ${isActive ? 'shadow-sm bg-red-600 text-white hover:bg-red-700' :
+                                        hasScheduledBlocks ? 'bg-white hover:bg-gray-50 border-red-200' : 'hover:bg-gray-100'}`}
                             onClick={() => setActiveHour(hour)}
                           >
                             <div className="flex flex-col items-center">
-                              <span className="text-sm">{parseInt(hour).toString()}:00</span>
+                              <span className="text-sm font-medium">{displayHour}:00</span>
                               {hasScheduledBlocks && (
-                                <span className={`text-[10px] mt-1 ${isActive ? 'text-blue-100' : 'text-gray-500'}`}>
-                                  {positionCount} {positionCount === 1 ? 'pos' : 'pos'}
+                                <span className={`text-xs mt-1 ${isActive ? 'text-red-100' : 'text-gray-500'}`}>
+                                  {positionCount} pos
                                 </span>
                               )}
                             </div>
