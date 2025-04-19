@@ -74,6 +74,11 @@ import TemperatureHistory from '../pages/Kitchen/FoodSafety/pages/TemperatureHis
 import LandingPage from '../pages/Landing';
 import FOH from '../pages/FOH'
 import FOHHistory from '../pages/FOH/History'
+import { SetupSheetBuilder } from '@/pages/SetupSheetBuilder';
+import { SetupSheetTemplates } from '@/pages/SetupSheetTemplates';
+import { SavedSetups } from '@/pages/SavedSetups';
+import { SetupView } from '@/pages/SetupView';
+import { EditTemplate } from '@/pages/EditTemplate';
 
 interface PrivateRouteProps {
   children: React.ReactNode;
@@ -143,6 +148,11 @@ export default function AppRoutes() {
       <Route path="/dashboard" element={<PrivateRoute><Dashboard /></PrivateRoute>} />
       <Route path="/foh" element={<PrivateRoute><FOH /></PrivateRoute>} />
       <Route path="/foh/history" element={<PrivateRoute><FOHHistory /></PrivateRoute>} />
+      <Route path="/setup-sheet-templates" element={<PrivateRoute><SetupSheetTemplates /></PrivateRoute>} />
+      <Route path="/setup-sheet-builder" element={<PrivateRoute><SetupSheetBuilder /></PrivateRoute>} />
+      <Route path="/edit-template/:id" element={<PrivateRoute><EditTemplate /></PrivateRoute>} />
+      <Route path="/saved-setups" element={<PrivateRoute><SavedSetups /></PrivateRoute>} />
+      <Route path="/setup-view/:setupId" element={<PrivateRoute><SetupView /></PrivateRoute>} />
       <Route path="/evaluations" element={<PrivateRoute><Evaluations /></PrivateRoute>} />
       <Route path="/evaluations/new" element={<PrivateRoute><NewEvaluation /></PrivateRoute>} />
       <Route path="/evaluations/:id/review" element={<PrivateRoute><EmployeeReview /></PrivateRoute>} />

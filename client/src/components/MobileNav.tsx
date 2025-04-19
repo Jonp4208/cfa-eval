@@ -69,7 +69,7 @@ export function MobileNav() {
         },
         {
           icon: Plus,
-          label: 'New Template',
+          label: 'New Setup',
           href: '/setup-sheet-builder',
           badge: null
         }

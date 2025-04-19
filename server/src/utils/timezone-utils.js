@@ -9,16 +9,12 @@
  */
 export function convertToNewYorkTime(utcDate) {
   if (!utcDate) {
-    console.warn('convertToNewYorkTime called with null or undefined date');
     utcDate = new Date(); // Default to current date
   }
 
   try {
     // Create a date object from the input
     const date = new Date(utcDate);
-
-    // Log the input date for debugging
-    console.log(`convertToNewYorkTime input: ${date.toISOString()}`);
 
     // Create a formatter in the New York timezone
     const formatter = new Intl.DateTimeFormat('en-US', {
@@ -44,14 +40,9 @@ export function convertToNewYorkTime(utcDate) {
     });
 
     // Create a new date in New York timezone
-    const nyDate = new Date(
+    return new Date(
       `${parts.year}-${parts.month}-${parts.day}T${parts.hour}:${parts.minute}:${parts.second}`
     );
-
-    // Log the output date for debugging
-    console.log(`convertToNewYorkTime output: ${nyDate.toISOString()}`);
-
-    return nyDate;
   } catch (error) {
     console.error('Error in convertToNewYorkTime:', error);
     // Return the original date as a fallback
@@ -89,7 +80,7 @@ export function createNewYorkDateForStorage() {
 
     // Create a new Date object with the NY date/time
     // Note: months are 0-indexed in JavaScript Date
-    const nyDate = new Date(Date.UTC(
+    return new Date(Date.UTC(
       parseInt(year),
       parseInt(month) - 1,
       parseInt(day),
@@ -97,12 +88,6 @@ export function createNewYorkDateForStorage() {
       parseInt(minutes),
       parseInt(seconds)
     ));
-
-    console.log(`NY date/time string: ${nyDateTimeString}`);
-    console.log(`Parsed components: year=${year}, month=${month}, day=${day}, hours=${hours}, minutes=${minutes}, seconds=${seconds}`);
-    console.log(`Created date for MongoDB storage: ${nyDate.toISOString()}`);
-
-    return nyDate;
   } catch (error) {
     console.error('Error in createNewYorkDateForStorage:', error);
     // Fallback to current date if there's an error
@@ -117,7 +102,6 @@ export function createNewYorkDateForStorage() {
  */
 export function getNewYorkDateString(utcDate) {
   if (!utcDate) {
-    console.warn('getNewYorkDateString called with null or undefined date');
     utcDate = new Date(); // Default to current date
   }
 
@@ -137,10 +121,7 @@ export function getNewYorkDateString(utcDate) {
     const [month, day, year] = nyDateString.split('/');
 
     // Format as YYYY-MM-DD
-    const result = `${year}-${month}-${day}`;
-
-    console.log(`getNewYorkDateString: UTC date=${date.toISOString()}, NY date=${result}`);
-    return result;
+    return `${year}-${month}-${day}`;
   } catch (error) {
     console.error('Error in getNewYorkDateString:', error);
     // Fallback to current date in local timezone
@@ -163,12 +144,7 @@ export function isDateInNewYork(utcDate, dateString) {
     const nyDateString = getNewYorkDateString(utcDate);
 
     // Compare with the target date string
-    const result = nyDateString === dateString;
-
-    // Log for debugging
-    console.log(`isDateInNewYork check: UTC date=${new Date(utcDate).toISOString()}, NY date=${nyDateString}, comparing with=${dateString}, result=${result}`);
-
-    return result;
+    return nyDateString === dateString;
   } catch (error) {
     console.error('Error in isDateInNewYork:', error);
     // Default to false on error

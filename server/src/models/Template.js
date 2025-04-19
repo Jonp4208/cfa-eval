@@ -1,59 +1,68 @@
 import mongoose from 'mongoose';
 
-const criterionSchema = new mongoose.Schema({
-  name: { type: String, required: true },
-  description: String,
-  gradingScale: { 
-    type: mongoose.Schema.Types.ObjectId,
-    ref: 'GradingScale',
-    required: true
-  },
-  required: { type: Boolean, default: true }
-});
-
-const sectionSchema = new mongoose.Schema({
-  title: { type: String, required: true },
-  description: String,
-  order: { type: Number, default: 0 },
-  criteria: [criterionSchema]
-});
-
 const templateSchema = new mongoose.Schema({
   name: {
     type: String,
-    required: true
+    required: true,
+    trim: true
   },
-  description: String,
-  store: {
+  description: {
+    type: String,
+    trim: true
+  },
+  storeId: {
     type: mongoose.Schema.Types.ObjectId,
     ref: 'Store',
     required: true
   },
-  sections: [sectionSchema],
-  tags: [String],
-  isActive: {
+  shifts: [{
+    dayOfWeek: {
+      type: Number,
+      required: true,
+      min: 0,
+      max: 6
+    },
+    startTime: {
+      type: String,
+      required: true
+    },
+    endTime: {
+      type: String,
+      required: true
+    },
+    positions: [{
+      positionId: {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: 'Position',
+        required: true
+      },
+      count: {
+        type: Number,
+        required: true,
+        min: 1
+      }
+    }]
+  }],
+  isArchived: {
     type: Boolean,
-    default: true
+    default: false
   },
   createdBy: {
     type: mongoose.Schema.Types.ObjectId,
     ref: 'User',
     required: true
+  },
+  updatedBy: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'User'
   }
 }, {
   timestamps: true
 });
 
-// Virtual for sections count
-templateSchema.virtual('sectionsCount').get(function() {
-  return this.sections.length;
-});
+// Indexes
+templateSchema.index({ storeId: 1, isArchived: 1 });
+templateSchema.index({ storeId: 1, name: 1 });
 
-// Virtual for criteria count
-templateSchema.virtual('criteriaCount').get(function() {
-  return this.sections.reduce((count, section) => count + section.criteria.length, 0);
-});
-
-const Template = mongoose.model('Template', templateSchema);
-
-export default Template; 
+// Export the model only if it hasn't been registered yet
+export default mongoose.models.Template || mongoose.model('Template', templateSchema); 

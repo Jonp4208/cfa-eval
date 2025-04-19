@@ -6,39 +6,40 @@ const positionSchema = new mongoose.Schema({
     required: true,
     trim: true
   },
-  department: {
+  description: {
     type: String,
-    required: true,
-    enum: ['FC', 'DT', 'KT'],
-    default: 'FC'
+    trim: true
   },
-  status: {
-    type: String,
-    enum: ['unassigned', 'assigned'],
-    default: 'unassigned'
-  },
-  assignedEmployee: {
+  storeId: {
     type: mongoose.Schema.Types.ObjectId,
-    ref: 'Employee',
-    default: null
-  },
-  timeBlock: {
-    type: mongoose.Schema.Types.ObjectId,
-    ref: 'TimeBlock',
+    ref: 'Store',
     required: true
+  },
+  color: {
+    type: String,
+    default: '#000000'
+  },
+  isActive: {
+    type: Boolean,
+    default: true
   },
   createdBy: {
     type: mongoose.Schema.Types.ObjectId,
     ref: 'User',
     required: true
   },
-  store: {
+  updatedBy: {
     type: mongoose.Schema.Types.ObjectId,
-    ref: 'Store',
-    required: true
+    ref: 'User'
   }
 }, {
   timestamps: true
 });
 
-export default mongoose.model('Position', positionSchema);
+// Indexes
+positionSchema.index({ storeId: 1, name: 1 }, { unique: true });
+positionSchema.index({ storeId: 1, isActive: 1 });
+
+const Position = mongoose.model('Position', positionSchema);
+
+export default Position;

@@ -33,6 +33,9 @@ import shiftSetupsRouter from './routes/shiftSetups.js';
 import positionsRouter from './routes/positions.js';
 import timeBlocksRouter from './routes/timeBlocks.js';
 import defaultPositionsRouter from './routes/defaultPositions.js';
+import setupSheetRouter from './routes/setupSheetRoutes.js';
+import { setupSheetTemplatesRouter } from './routes/setupSheetTemplates.js';
+import weeklySetupsRouter from './routes/weeklySetups.js';
 
 // Services
 import { initCronJobs } from './services/cronService.js';
@@ -59,13 +62,36 @@ app.use(cors({
   exposedHeaders: ['Set-Cookie'],
 }));
 
-app.use(express.json());
-app.use(express.urlencoded({ extended: true }));
+app.use(express.json({ limit: '50mb' }));
+app.use(express.urlencoded({ extended: true, limit: '50mb' }));
 
 // Debug middleware for route matching
 app.use((req, res, next) => {
   console.log(`${req.method} ${req.url}`);
   next();
+});
+
+// Custom error handler for payload size errors
+app.use((err, req, res, next) => {
+  if (err instanceof SyntaxError && err.status === 413) {
+    console.error('Request entity too large:', err);
+    return res.status(413).json({
+      error: 'Payload too large',
+      message: 'The data you are trying to send is too large. Please reduce the size of your request.',
+      code: 'PAYLOAD_TOO_LARGE'
+    });
+  }
+
+  if (err instanceof SyntaxError && err.status === 400 && 'body' in err) {
+    console.error('Invalid JSON:', err);
+    return res.status(400).json({
+      error: 'Invalid JSON',
+      message: 'The request contains invalid JSON.',
+      code: 'INVALID_JSON'
+    });
+  }
+
+  next(err);
 });
 
 // Create a router for API routes
@@ -99,6 +125,9 @@ apiRouter.use('/shift-setups', shiftSetupsRouter);
 apiRouter.use('/positions', positionsRouter);
 apiRouter.use('/time-blocks', timeBlocksRouter);
 apiRouter.use('/default-positions', defaultPositionsRouter);
+apiRouter.use('/setup-sheet', setupSheetRouter);
+apiRouter.use('/setup-sheet-templates', setupSheetTemplatesRouter);
+apiRouter.use('/weekly-setups', weeklySetupsRouter);
 
 // Test Email Configuration
 apiRouter.post('/test-email', async (req, res) => {

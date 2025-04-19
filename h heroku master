@@ -1,0 +1,5 @@
+[33mcommit f8b8bb0bdfd16912f056067514039efee645d1b1[m[33m ([m[1;36mHEAD[m[33m -> [m[1;32mmaster[m[33m)[m
+Author: Jonathon <jonp4208@gmail.com>
+Date:   Thu Apr 17 16:07:44 2025 -0400
+
+    Update package-lock.json for Heroku deployment

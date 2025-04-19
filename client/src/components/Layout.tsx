@@ -218,8 +218,14 @@ export default function Layout({ children }: { children: React.ReactNode }) {
         },
         {
           icon: Plus,
-          label: 'New Template',
+          label: 'New Setup',
           href: '/setup-sheet-builder',
+          badge: null
+        },
+        {
+          icon: Calendar,
+          label: 'Saved Setups',
+          href: '/saved-setups',
           badge: null
         }
       ]
