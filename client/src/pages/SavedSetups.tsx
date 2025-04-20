@@ -50,6 +50,14 @@ export function SavedSetups() {
         </Button>
         <Button
           variant="outline"
+          className="flex items-center gap-2"
+          onClick={() => navigate('/edit-template/new')}
+        >
+          <Plus className="w-4 h-4" />
+          New Template
+        </Button>
+        <Button
+          variant="outline"
           className="flex items-center gap-2 bg-gray-50 border-gray-200"
           disabled
         >

@@ -76,18 +76,32 @@ export function EditTemplate() {
   }
 
   return (
-    <div className="container mx-auto p-4">
-      <div className="flex items-center mb-6">
-        <Button variant="outline" onClick={() => navigate('/setup-sheet-templates')} className="mr-4">
-          <ArrowLeft className="h-4 w-4 mr-2" />
-          Back to Templates
-        </Button>
-        <h1 className="text-2xl font-bold">
-          {id === 'new' ? 'Create New Template' : `Edit Template: ${template.name}`}
-        </h1>
+    <div className="container mx-auto px-4 pb-20 sm:pb-4 space-y-6">
+      {/* Enhanced header with gradient */}
+      <div className="bg-gradient-to-br from-[#E51636] to-[#D01530] rounded-[20px] p-4 md:p-6 text-white shadow-md">
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+          <div>
+            <h1 className="text-2xl md:text-3xl font-bold tracking-tight">
+              {id === 'new' ? 'Create New Template' : `Edit Template: ${template.name}`}
+            </h1>
+            <p className="text-white/90 text-sm md:text-base">
+              {id === 'new' ? 'Create a new template for your weekly setup sheets' : 'Modify your existing template'}
+            </p>
+          </div>
+          <div className="flex flex-wrap gap-2">
+            <Button
+              variant="secondary"
+              className="bg-white/15 hover:bg-white/25 text-white"
+              onClick={() => navigate('/setup-sheet-templates')}
+            >
+              <ArrowLeft className="w-4 h-4 mr-2" />
+              Back to Templates
+            </Button>
+          </div>
+        </div>
       </div>
 
-      <Card className="p-6">
+      <Card className="p-6 shadow-sm">
         <TemplateBuilder initialTemplate={template} />
       </Card>
     </div>

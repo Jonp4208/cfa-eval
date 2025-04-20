@@ -390,11 +390,11 @@ export function TemplateBuilder({ initialTemplate, onSave }: TemplateBuilderProp
 
   return (
     <div className="space-y-6">
-      <div className="flex justify-between items-center">
-        <h2 className="text-2xl font-bold">Setup Sheet Template Builder</h2>
+      <div className="flex justify-between items-center border-b pb-4 mb-2">
+        <h2 className="text-xl font-semibold text-gray-800">Configure Your Template</h2>
         <Dialog open={showSaveDialog} onOpenChange={setShowSaveDialog}>
           <DialogTrigger asChild>
-            <Button>
+            <Button className="bg-red-600 hover:bg-red-700 text-white">
               <Save className="h-4 w-4 mr-2" />
               Save Template
             </Button>
@@ -427,10 +427,18 @@ export function TemplateBuilder({ initialTemplate, onSave }: TemplateBuilderProp
         </Dialog>
       </div>
 
+      <div className="bg-gray-50 p-4 rounded-lg border border-gray-100 shadow-sm mb-6">
+        <h3 className="text-sm font-medium text-gray-500 mb-3">Select a day to configure:</h3>
+      </div>
+
       <Tabs value={activeDay} onValueChange={(value) => setActiveDay(value as typeof DAYS[number])}>
-        <TabsList className="w-full grid grid-cols-7">
+        <TabsList className="w-full grid grid-cols-7 bg-white border border-gray-200 mb-6">
           {DAYS.map(day => (
-            <TabsTrigger key={day} value={day} className="flex-1">
+            <TabsTrigger
+              key={day}
+              value={day}
+              className="flex-1 data-[state=active]:bg-red-50 data-[state=active]:text-red-600 data-[state=active]:shadow-none"
+            >
               {FORMATTED_DAYS[day]}
             </TabsTrigger>
           ))}
@@ -439,13 +447,13 @@ export function TemplateBuilder({ initialTemplate, onSave }: TemplateBuilderProp
         {DAYS.map(day => (
           <TabsContent key={day} value={day}>
             <div className="space-y-6">
-              <div className="flex justify-between items-center">
+              <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 bg-white p-4 rounded-lg border border-gray-200 shadow-sm">
                 <div className="flex items-center gap-4">
-                  <h3 className="text-lg font-semibold">{FORMATTED_DAYS[day]} Time Blocks</h3>
+                  <h3 className="text-lg font-semibold text-red-600">{FORMATTED_DAYS[day]} Time Blocks</h3>
                   <DropdownMenu>
                     <DropdownMenuTrigger asChild>
-                      <Button variant="outline" size="sm">
-                        <Copy className="h-4 w-4 mr-2" />
+                      <Button variant="outline" size="sm" className="border-gray-200 hover:bg-gray-50">
+                        <Copy className="h-4 w-4 mr-2 text-gray-500" />
                         Copy to Days
                       </Button>
                     </DropdownMenuTrigger>
@@ -469,7 +477,12 @@ export function TemplateBuilder({ initialTemplate, onSave }: TemplateBuilderProp
                     </DropdownMenuContent>
                   </DropdownMenu>
                 </div>
-                <Button onClick={() => addTimeBlock(day)} variant="outline" size="sm">
+                <Button
+                  onClick={() => addTimeBlock(day)}
+                  variant="outline"
+                  size="sm"
+                  className="bg-red-50 text-red-600 border-red-200 hover:bg-red-100 hover:text-red-700"
+                >
                   <Plus className="h-4 w-4 mr-2" />
                   Add Time Block
                 </Button>
@@ -477,25 +490,28 @@ export function TemplateBuilder({ initialTemplate, onSave }: TemplateBuilderProp
 
               <div className="space-y-4">
                 {weekSchedule[day].timeBlocks.map((block) => (
-                  <Card key={block.id} className="p-4">
-                    <div className="flex items-center gap-4 mb-4">
+                  <Card key={block.id} className="p-4 shadow-sm border border-gray-200 overflow-hidden">
+                    <div className="flex items-center gap-4 mb-4 bg-gray-50 p-3 -mx-4 -mt-4 mb-6 border-b">
                       <div className="flex-1">
-                        <Label>Start Time</Label>
+                        <Label className="text-gray-500 text-xs mb-1 block">Start Time</Label>
                         <TimePicker
                           value={block.start}
                           onChange={(value) => updateTimeBlock(day, block.id, 'start', value)}
+                          className="bg-white"
                         />
                       </div>
                       <div className="flex-1">
-                        <Label>End Time</Label>
+                        <Label className="text-gray-500 text-xs mb-1 block">End Time</Label>
                         <TimePicker
                           value={block.end}
                           onChange={(value) => updateTimeBlock(day, block.id, 'end', value)}
+                          className="bg-white"
                         />
                       </div>
                       <Button
                         variant="ghost"
                         size="icon"
+                        className="text-gray-400 hover:text-red-600 hover:bg-red-50"
                         onClick={() => removeTimeBlock(day, block.id)}
                       >
                         <Trash2 className="h-4 w-4" />
@@ -504,15 +520,33 @@ export function TemplateBuilder({ initialTemplate, onSave }: TemplateBuilderProp
 
                     <div className="space-y-4">
                       <Tabs defaultValue="FC" onValueChange={(value) => setActiveTab(value as 'FC' | 'DT' | 'Kitchen')}>
-                        <TabsList className="grid w-full grid-cols-3">
-                          <TabsTrigger value="FC">Front Counter</TabsTrigger>
-                          <TabsTrigger value="DT">Drive-Thru</TabsTrigger>
-                          <TabsTrigger value="Kitchen">Kitchen</TabsTrigger>
+                        <TabsList className="grid w-full grid-cols-3 bg-gray-50 border border-gray-200">
+                          <TabsTrigger
+                            value="FC"
+                            className="data-[state=active]:bg-white data-[state=active]:text-red-600 data-[state=active]:shadow-none"
+                          >
+                            Front Counter
+                          </TabsTrigger>
+                          <TabsTrigger
+                            value="DT"
+                            className="data-[state=active]:bg-white data-[state=active]:text-red-600 data-[state=active]:shadow-none"
+                          >
+                            Drive-Thru
+                          </TabsTrigger>
+                          <TabsTrigger
+                            value="Kitchen"
+                            className="data-[state=active]:bg-white data-[state=active]:text-red-600 data-[state=active]:shadow-none"
+                          >
+                            Kitchen
+                          </TabsTrigger>
                         </TabsList>
 
                         <TabsContent value="FC">
-                          <div className="space-y-4">
-                            <h4 className="font-medium">Front Counter Positions</h4>
+                          <div className="space-y-4 pt-4">
+                            <h4 className="font-medium text-gray-700 flex items-center gap-2">
+                              <span className="inline-block w-3 h-3 rounded-full bg-red-500"></span>
+                              Front Counter Positions
+                            </h4>
                             <DndContext
                               sensors={sensors}
                               collisionDetection={closestCenter}
@@ -537,8 +571,11 @@ export function TemplateBuilder({ initialTemplate, onSave }: TemplateBuilderProp
                         </TabsContent>
 
                         <TabsContent value="DT">
-                          <div className="space-y-4">
-                            <h4 className="font-medium">Drive-Thru Positions</h4>
+                          <div className="space-y-4 pt-4">
+                            <h4 className="font-medium text-gray-700 flex items-center gap-2">
+                              <span className="inline-block w-3 h-3 rounded-full bg-blue-500"></span>
+                              Drive-Thru Positions
+                            </h4>
                             <DndContext
                               sensors={sensors}
                               collisionDetection={closestCenter}
@@ -563,8 +600,11 @@ export function TemplateBuilder({ initialTemplate, onSave }: TemplateBuilderProp
                         </TabsContent>
 
                         <TabsContent value="Kitchen">
-                          <div className="space-y-4">
-                            <h4 className="font-medium">Kitchen Positions</h4>
+                          <div className="space-y-4 pt-4">
+                            <h4 className="font-medium text-gray-700 flex items-center gap-2">
+                              <span className="inline-block w-3 h-3 rounded-full bg-green-500"></span>
+                              Kitchen Positions
+                            </h4>
                             <DndContext
                               sensors={sensors}
                               collisionDetection={closestCenter}
@@ -589,19 +629,20 @@ export function TemplateBuilder({ initialTemplate, onSave }: TemplateBuilderProp
                         </TabsContent>
                       </Tabs>
 
-                      <div className="pt-4 border-t">
-                        <div>
-                          <Label>Position Name</Label>
+                      <div className="pt-4 mt-4 border-t border-dashed">
+                        <div className="bg-gray-50 p-4 rounded-lg">
+                          <Label className="text-gray-500 text-sm mb-2 block font-medium">Add New Position</Label>
                           <div className="flex gap-2">
                             <Input
                               value={newPosition.name}
                               onChange={(e) => setNewPosition({ ...newPosition, name: e.target.value })}
                               placeholder="e.g., Cashier"
-                              className="flex-1"
+                              className="flex-1 border-gray-300"
                             />
                             <Button
                               onClick={() => addPosition(day, block.id)}
                               disabled={!newPosition.name}
+                              className="bg-red-600 hover:bg-red-700 text-white"
                             >
                               <Plus className="h-4 w-4 mr-2" />
                               Add Position
