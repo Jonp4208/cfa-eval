@@ -17,11 +17,29 @@ export function EditTemplate() {
   useEffect(() => {
     const loadTemplate = async () => {
       try {
+        // Check if this is a new template
+        if (id === 'new') {
+          // Create an empty template structure
+          setTemplate({
+            name: 'New Template',
+            weekSchedule: {
+              monday: { timeBlocks: [] },
+              tuesday: { timeBlocks: [] },
+              wednesday: { timeBlocks: [] },
+              thursday: { timeBlocks: [] },
+              friday: { timeBlocks: [] },
+              saturday: { timeBlocks: [] },
+              sunday: { timeBlocks: [] }
+            }
+          })
+          return
+        }
+
         // If templates are not loaded yet, fetch them
         if (templates.length === 0) {
           await fetchTemplates()
         }
-        
+
         // Find the template with the matching ID
         const foundTemplate = templates.find(t => t._id === id)
         if (foundTemplate) {
@@ -64,7 +82,9 @@ export function EditTemplate() {
           <ArrowLeft className="h-4 w-4 mr-2" />
           Back to Templates
         </Button>
-        <h1 className="text-2xl font-bold">Edit Template: {template.name}</h1>
+        <h1 className="text-2xl font-bold">
+          {id === 'new' ? 'Create New Template' : `Edit Template: ${template.name}`}
+        </h1>
       </div>
 
       <Card className="p-6">
