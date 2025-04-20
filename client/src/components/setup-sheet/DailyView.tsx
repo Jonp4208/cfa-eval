@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { Card } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
@@ -137,6 +137,7 @@ export function DailyView({ setup, onBack }: DailyViewProps) {
   const [showEmployeeList, setShowEmployeeList] = useState(false)
   const [employeeAreaTab, setEmployeeAreaTab] = useState('all') // 'all', 'FOH', or 'BOH'
   const [showAssignDialog, setShowAssignDialog] = useState(false)
+  const assignDialogRef = useRef<HTMLDivElement>(null)
   const [selectedPosition, setSelectedPosition] = useState<Position | null>(null)
   const [modifiedSetup, setModifiedSetup] = useState<any>(setup)
   const [scheduledEmployees, setScheduledEmployees] = useState<Array<{id: string, name: string, timeBlock: string, area?: string, day?: string}>>([])
@@ -874,6 +875,14 @@ export function DailyView({ setup, onBack }: DailyViewProps) {
     setSelectedPosition({...position, blockStart, blockEnd})
     setShowAssignDialog(true)
   }
+
+  // Effect to handle focus when assign dialog opens
+  useEffect(() => {
+    if (showAssignDialog && assignDialogRef.current) {
+      // Set focus to the dialog content instead of any input
+      assignDialogRef.current.focus()
+    }
+  }, [showAssignDialog])
 
   // Handle assigning an employee to a position
   const handleAssignEmployee = (employeeId: string, employeeName: string) => {
@@ -1848,7 +1857,7 @@ export function DailyView({ setup, onBack }: DailyViewProps) {
 
       {/* Enhanced Assign Employee Dialog */}
       <Dialog open={showAssignDialog} onOpenChange={setShowAssignDialog}>
-        <DialogContent className="sm:max-w-[500px]">
+        <DialogContent className="sm:max-w-[500px]" ref={assignDialogRef} tabIndex={0}>
           <DialogHeader>
             <DialogTitle className="flex items-center">
               <User className="h-5 w-5 mr-2 text-blue-500" />
@@ -1894,6 +1903,8 @@ export function DailyView({ setup, onBack }: DailyViewProps) {
                           type="text"
                           placeholder="Search employees..."
                           className="pl-8 pr-2 py-1 text-sm border rounded-md w-[180px]"
+                          autoFocus={false}
+                          tabIndex="-1"
                         />
                       </div>
                     </div>
