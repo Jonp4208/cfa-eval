@@ -420,16 +420,49 @@ export const useSetupSheetStore = create<SetupSheetState>()(
           const token = localStorage.getItem('token')
           if (!token) throw new Error('No authentication token found')
 
-          const response = await fetch(`/api/weekly-setups/${setupId}`, {
-            method: 'DELETE',
+          console.log(`Deleting weekly setup with ID: ${setupId}`)
+
+          // Import axios dynamically to avoid circular dependencies
+          const axios = (await import('axios')).default
+
+          // Create a one-time axios instance for this request
+          const axiosInstance = axios.create({
+            baseURL: '',
             headers: {
+              'Content-Type': 'application/json',
               'Authorization': `Bearer ${token}`
             }
           })
 
-          if (!response.ok) {
-            const errorData = await response.json()
-            throw new Error(errorData.message || 'Failed to delete weekly setup')
+          // Make the DELETE request using axios with better error handling
+          try {
+            const response = await axiosInstance.delete(`/api/weekly-setups/${setupId}`)
+            console.log('Delete response:', response.status, response.statusText)
+            console.log('Weekly setup deleted successfully')
+          } catch (axiosError: any) {
+            console.error('Axios error deleting setup:', axiosError)
+
+            // Extract error details from axios error
+            if (axiosError.response) {
+              // The request was made and the server responded with a status code
+              // that falls out of the range of 2xx
+              console.error('Error response data:', axiosError.response.data)
+              console.error('Error response status:', axiosError.response.status)
+              console.error('Error response headers:', axiosError.response.headers)
+
+              throw new Error(
+                axiosError.response.data?.message ||
+                `Server error: ${axiosError.response.status} ${axiosError.response.statusText}`
+              )
+            } else if (axiosError.request) {
+              // The request was made but no response was received
+              console.error('Error request:', axiosError.request)
+              throw new Error('No response received from server. Please check your network connection.')
+            } else {
+              // Something happened in setting up the request that triggered an Error
+              console.error('Error message:', axiosError.message)
+              throw new Error(`Request failed: ${axiosError.message}`)
+            }
           }
 
           set((state) => ({
