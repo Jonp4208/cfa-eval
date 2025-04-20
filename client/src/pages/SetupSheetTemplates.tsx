@@ -97,19 +97,19 @@ export function SetupSheetTemplates() {
       <div className="flex flex-wrap gap-4 mb-6">
         <Button
           variant="outline"
-          className="flex items-center gap-2"
-          onClick={() => navigate('/setup-sheet-templates')}
+          className="flex items-center gap-2 bg-gray-50 border-gray-200"
+          disabled
         >
-          <LayoutDashboard className="w-4 h-4" />
+          <LayoutDashboard className="w-4 h-4 text-red-600" />
           Templates
         </Button>
         <Button
           variant="outline"
           className="flex items-center gap-2"
-          onClick={() => navigate('/setup-sheet-builder')}
+          onClick={() => navigate('/edit-template/new')}
         >
           <Plus className="w-4 h-4" />
-          New Setup
+          New Template
         </Button>
         <Button
           variant="outline"
