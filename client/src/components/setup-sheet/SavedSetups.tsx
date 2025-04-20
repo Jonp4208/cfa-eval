@@ -3,7 +3,7 @@ import { Card } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Badge } from '@/components/ui/badge'
-import { Search, Calendar, Trash2, Edit, Eye } from 'lucide-react'
+import { Search, Calendar, Trash2, Edit, Eye, Share2, User } from 'lucide-react'
 import { format } from 'date-fns'
 import { useSetupSheetStore } from '@/stores/setupSheetStore'
 import { useToast } from '@/components/ui/use-toast'
@@ -81,20 +81,37 @@ export function SavedSetups({ onSelectSetup }: { onSelectSetup: (setupId: string
           {filteredSetups.map(setup => (
             <Card key={setup._id} className="p-4 flex flex-col shadow-sm hover:shadow-md transition-shadow">
               <div className="flex flex-wrap justify-between items-start mb-2 gap-2">
-                <h3 className="font-semibold text-lg text-red-600">{setup.name}</h3>
+                <div className="flex items-center gap-2">
+                  <h3 className="font-semibold text-lg text-red-600">{setup.name}</h3>
+                  {setup.isShared && (
+                    <Badge variant="outline" className="bg-blue-50 text-blue-600 border-blue-200 flex items-center gap-1">
+                      <Share2 className="h-3 w-3" />
+                      Shared
+                    </Badge>
+                  )}
+                </div>
                 <Badge variant="outline" className="bg-red-50 text-red-600 border-red-200">
                   {countAssignedPositions(setup)} Positions
                 </Badge>
               </div>
 
-              <div className="flex items-center gap-2 text-sm text-gray-500 mb-4">
-                <Calendar className="h-4 w-4 text-red-500" />
-                <span className="flex-wrap">
-                  {format(new Date(setup.startDate), 'MMM d')} - {format(new Date(setup.endDate), 'MMM d, yyyy')}
-                  <span className="ml-1 text-xs text-gray-400">
-                    (Sun - Sat)
+              <div className="space-y-2 mb-4">
+                <div className="flex items-center gap-2 text-sm text-gray-500">
+                  <Calendar className="h-4 w-4 text-red-500" />
+                  <span className="flex-wrap">
+                    {format(new Date(setup.startDate), 'MMM d')} - {format(new Date(setup.endDate), 'MMM d, yyyy')}
+                    <span className="ml-1 text-xs text-gray-400">
+                      (Sun - Sat)
+                    </span>
                   </span>
-                </span>
+                </div>
+
+                {setup.isShared && (
+                  <div className="flex items-center gap-2 text-sm text-gray-500">
+                    <User className="h-4 w-4 text-blue-500" />
+                    <span>Created by {setup.user?.name || 'Unknown'}</span>
+                  </div>
+                )}
               </div>
 
               <div className="mt-auto pt-4 border-t flex flex-wrap justify-between gap-2">

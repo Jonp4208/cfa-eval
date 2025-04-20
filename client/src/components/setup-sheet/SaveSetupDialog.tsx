@@ -3,7 +3,8 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Badge } from '@/components/ui/badge';
-import { Save } from 'lucide-react';
+import { Switch } from '@/components/ui/switch';
+import { Save, Share2 } from 'lucide-react';
 import { getShortDayOfWeekName, testSpecificDates } from '@/lib/dateUtils';
 import {
   Dialog,
@@ -24,11 +25,14 @@ interface SaveSetupDialogProps {
   setSetupStartDate: (date: string) => void;
   setupEndDate: string;
   setSetupEndDate: (date: string) => void;
+  isShared: boolean;
+  setIsShared: (shared: boolean) => void;
   handleSaveWeeklySetup: () => void;
   adjustToSundayToSaturdayRange: (startDate: Date | string, endDate: Date | string) => { startDate: Date, endDate: Date };
   completionPercentage: number;
   currentTemplateName: string;
   employeesCount: number;
+  isSaving?: boolean;
 }
 
 export function SaveSetupDialog({
@@ -40,11 +44,14 @@ export function SaveSetupDialog({
   setSetupStartDate,
   setupEndDate,
   setSetupEndDate,
+  isShared,
+  setIsShared,
   handleSaveWeeklySetup,
   adjustToSundayToSaturdayRange,
   completionPercentage,
   currentTemplateName,
-  employeesCount
+  employeesCount,
+  isSaving = false
 }: SaveSetupDialogProps) {
   // Run the test function when the component mounts
   useEffect(() => {
@@ -182,8 +189,26 @@ export function SaveSetupDialog({
                 </div>
               </div>
 
+              {/* Share with store toggle */}
+              <div className="flex items-center space-x-2 mt-4 pt-4 border-t">
+                <Switch
+                  id="share-setup"
+                  checked={isShared}
+                  onCheckedChange={setIsShared}
+                />
+                <div className="grid gap-1.5">
+                  <Label htmlFor="share-setup" className="flex items-center gap-2">
+                    <Share2 className="h-4 w-4 text-blue-600" />
+                    Share with entire store
+                  </Label>
+                  <p className="text-sm text-muted-foreground">
+                    When enabled, all users in your store will be able to view this setup
+                  </p>
+                </div>
+              </div>
+
               {/* Summary of assignments */}
-              <div className="mt-2">
+              <div className="mt-4">
                 <h4 className="text-sm font-medium mb-2">Assignment Summary</h4>
                 <div className="text-sm">
                   <p>Completion: {completionPercentage}%</p>

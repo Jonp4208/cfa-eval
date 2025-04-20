@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react'
+import { useNavigate } from 'react-router-dom'
 import { adjustToSundayToSaturdayRange, getShortDayOfWeekName } from '@/lib/dateUtils'
 import { SaveSetupDialog } from '@/components/setup-sheet/SaveSetupDialog'
 import { useDropzone } from 'react-dropzone'
@@ -64,6 +65,8 @@ export function SetupSheetBuilder() {
   const [setupName, setSetupName] = useState('')
   const [setupStartDate, setSetupStartDate] = useState('')
   const [setupEndDate, setSetupEndDate] = useState('')
+  const [isShared, setIsShared] = useState(false)
+  const [isSaving, setIsSaving] = useState(false)
   const [activeTab, setActiveTab] = useState<'upload' | 'assign'>('upload')
   const [isUploading, setIsUploading] = useState(false)
   const [previewData, setPreviewData] = useState<any[] | null>(null)
@@ -75,6 +78,7 @@ export function SetupSheetBuilder() {
     day: 'Day'
   })
   const { toast } = useToast()
+  const navigate = useNavigate()
 
   useEffect(() => {
     fetchTemplates()
@@ -426,6 +430,9 @@ export function SetupSheetBuilder() {
       return
     }
 
+    // Set saving state to true to show loading indicators
+    setIsSaving(true);
+
     if (!setupStartDate || !setupEndDate) {
       toast({
         title: "Error",
@@ -479,20 +486,55 @@ export function SetupSheetBuilder() {
       }
 
       // Prepare employee data - only include essential fields to reduce payload size
-      const simplifiedEmployees = employees.map(emp => ({
-        id: emp.id,
-        name: emp.name,
-        timeBlock: emp.timeBlock,
-        area: emp.area,
-        day: emp.day
-      }));
+      // Filter out employees that don't have a day assigned (they're not scheduled)
+      const simplifiedEmployees = employees
+        .filter(emp => emp.day) // Only include employees with a day assigned
+        .map(emp => ({
+          id: emp.id,
+          name: emp.name,
+          timeBlock: emp.timeBlock,
+          area: emp.area,
+          day: emp.day
+        }));
+
+      // Optimize weekSchedule by removing empty timeBlocks and positions
+      const optimizedWeekSchedule = Object.entries(finalWeekSchedule).reduce((acc, [day, daySchedule]) => {
+        // Skip days with no time blocks
+        if (!daySchedule.timeBlocks || daySchedule.timeBlocks.length === 0) {
+          return acc;
+        }
+
+        // Filter out empty time blocks and optimize positions
+        const optimizedTimeBlocks = daySchedule.timeBlocks
+          .filter(block => block.positions && block.positions.length > 0)
+          .map(block => ({
+            ...block,
+            // Only keep essential position data
+            positions: block.positions.map(pos => ({
+              id: pos.id,
+              name: pos.name,
+              category: pos.category,
+              section: pos.section,
+              employeeId: pos.employeeId,
+              employeeName: pos.employeeName
+            }))
+          }));
+
+        // Only add days with time blocks
+        if (optimizedTimeBlocks.length > 0) {
+          acc[day] = { timeBlocks: optimizedTimeBlocks };
+        }
+
+        return acc;
+      }, {});
 
       const weeklySetup = {
         name: finalSetupName,
         startDate: adjustedStartDate.toISOString(),
         endDate: adjustedEndDate.toISOString(),
-        weekSchedule: finalWeekSchedule,
-        uploadedSchedules: simplifiedEmployees // Include simplified employee data
+        weekSchedule: optimizedWeekSchedule,
+        uploadedSchedules: simplifiedEmployees, // Include simplified employee data
+        isShared: isShared // Include sharing setting
       }
 
       // Log the size of the data being sent
@@ -531,10 +573,12 @@ export function SetupSheetBuilder() {
       }
 
       setShowSaveDialog(false)
+      setIsSaving(false) // Reset saving state
 
       // Navigate to the setup view
-      navigate(`/setup-sheet-view/${savedSetup._id}`);
+      navigate(`/setup-view/${savedSetup._id}`);
     } catch (err) {
+      setIsSaving(false) // Reset saving state on error
       console.error('Error saving weekly setup:', err);
 
       // More detailed error message
@@ -938,6 +982,8 @@ export function SetupSheetBuilder() {
                         setSetupStartDate={setSetupStartDate}
                         setupEndDate={setupEndDate}
                         setSetupEndDate={setSetupEndDate}
+                        isShared={isShared}
+                        setIsShared={setIsShared}
                         handleSaveWeeklySetup={handleSaveWeeklySetup}
                         adjustToSundayToSaturdayRange={adjustToSundayToSaturdayRange}
                         completionPercentage={completionPercentage}

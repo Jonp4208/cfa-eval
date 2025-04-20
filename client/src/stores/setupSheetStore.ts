@@ -49,12 +49,20 @@ interface Template {
   updatedAt: string
 }
 
+interface User {
+  _id: string
+  name: string
+}
+
 interface WeeklySetup {
   _id: string
   name: string
   startDate: string
   endDate: string
   weekSchedule: WeekSchedule
+  isShared: boolean
+  user: User
+  store: string
   createdAt: string
   updatedAt: string
 }

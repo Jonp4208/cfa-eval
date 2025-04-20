@@ -5,7 +5,22 @@ import WeeklySetup from '../models/weeklySetup.js';
 export const getWeeklySetups = async (req, res) => {
   try {
     console.log('Getting weekly setups for user:', req.user?.userId || 'Unknown user');
-    const weeklySetups = await WeeklySetup.find({ user: req.user?.userId }).sort({ createdAt: -1 });
+
+    // Get the user's store ID
+    const storeId = req.user?.store?._id || req.user?.store;
+
+    if (!storeId) {
+      return res.status(400).json({ message: 'Store ID not found in user profile' });
+    }
+
+    // Find setups that either belong to the user OR are shared and belong to the same store
+    const weeklySetups = await WeeklySetup.find({
+      $or: [
+        { user: req.user?.userId },
+        { isShared: true, store: storeId }
+      ]
+    }).sort({ createdAt: -1 });
+
     res.status(200).json(weeklySetups);
   } catch (error) {
     console.error('Error fetching weekly setups:', error);
@@ -22,7 +37,21 @@ export const getWeeklySetup = async (req, res) => {
       return res.status(404).json({ message: 'Invalid ID format' });
     }
 
-    const weeklySetup = await WeeklySetup.findOne({ _id: id, user: req.user?.userId });
+    // Get the user's store ID
+    const storeId = req.user?.store?._id || req.user?.store;
+
+    if (!storeId) {
+      return res.status(400).json({ message: 'Store ID not found in user profile' });
+    }
+
+    // Find setup that either belongs to the user OR is shared and belongs to the same store
+    const weeklySetup = await WeeklySetup.findOne({
+      _id: id,
+      $or: [
+        { user: req.user?.userId },
+        { isShared: true, store: storeId }
+      ]
+    });
 
     if (!weeklySetup) {
       return res.status(404).json({ message: 'Weekly setup not found' });
@@ -41,7 +70,7 @@ export const createWeeklySetup = async (req, res) => {
     console.log('Creating weekly setup for user:', req.user?.userId || 'Unknown user');
     console.log('Request body keys:', Object.keys(req.body));
 
-    const { name, startDate, endDate, weekSchedule, uploadedSchedules } = req.body;
+    const { name, startDate, endDate, weekSchedule, uploadedSchedules, isShared } = req.body;
 
     // Log detailed information about the request
     console.log('Weekly setup request details:', {
@@ -101,16 +130,26 @@ export const createWeeklySetup = async (req, res) => {
 
     console.log(`Sanitized ${sanitizedUploadedSchedules.length} employee records`);
 
+    // Get the user's store ID
+    const storeId = req.user?.store?._id || req.user?.store;
+
+    if (!storeId) {
+      return res.status(400).json({ message: 'Store ID not found in user profile' });
+    }
+
     // Create the new setup with a try-catch for validation errors
     let newWeeklySetup;
     try {
+
       newWeeklySetup = new WeeklySetup({
         name,
         startDate: new Date(startDate),
         endDate: new Date(endDate),
         weekSchedule,
         uploadedSchedules: sanitizedUploadedSchedules,
-        user: req.user.userId
+        user: req.user.userId,
+        store: storeId,
+        isShared: isShared === true // Convert to boolean
       });
 
       // Validate the document before saving
@@ -143,7 +182,9 @@ export const createWeeklySetup = async (req, res) => {
           endDate: new Date(endDate),
           weekSchedule,
           uploadedSchedules: [], // Empty array
-          user: req.user.userId
+          user: req.user.userId,
+          store: storeId, // Use the storeId from above
+          isShared: isShared === true // Convert to boolean
         });
 
         // Save the setup without employees
@@ -186,7 +227,9 @@ export const createWeeklySetup = async (req, res) => {
               endDate: new Date(endDate),
               weekSchedule,
               uploadedSchedules: [], // Empty array
-              user: req.user.userId
+              user: req.user.userId,
+              store: storeId, // Use the storeId from above
+              isShared: isShared === true // Convert to boolean
             });
 
             await setupWithoutEmployees.save();
@@ -228,7 +271,7 @@ export const createWeeklySetup = async (req, res) => {
 export const updateWeeklySetup = async (req, res) => {
   try {
     const { id } = req.params;
-    const { name, startDate, endDate, weekSchedule, uploadedSchedules } = req.body;
+    const { name, startDate, endDate, weekSchedule, uploadedSchedules, isShared } = req.body;
 
     if (!mongoose.Types.ObjectId.isValid(id)) {
       return res.status(404).json({ message: 'Invalid ID format' });
@@ -239,10 +282,21 @@ export const updateWeeklySetup = async (req, res) => {
       return res.status(401).json({ message: 'User not authenticated properly' });
     }
 
-    // Check if the setup exists and belongs to the user
-    const existingSetup = await WeeklySetup.findOne({ _id: id, user: req.user.userId });
+    // Check if the setup exists in the user's store
+    const storeId = req.user?.store?._id || req.user?.store;
+    const existingSetup = await WeeklySetup.findOne({ _id: id, store: storeId });
+
     if (!existingSetup) {
       return res.status(404).json({ message: 'Weekly setup not found' });
+    }
+
+    // Check if user has permission to edit this setup
+    // Allow if: user is the creator OR user is a Leader/Director
+    const isCreator = existingSetup.user.toString() === req.user.userId.toString();
+    const isLeaderOrDirector = ['Leader', 'Director'].includes(req.user.position);
+
+    if (!isCreator && !isLeaderOrDirector) {
+      return res.status(403).json({ message: 'You do not have permission to edit this setup' });
     }
 
     // Check for duplicate name if name is being changed
@@ -269,6 +323,7 @@ export const updateWeeklySetup = async (req, res) => {
         endDate: endDate || existingSetup.endDate,
         weekSchedule: weekSchedule || existingSetup.weekSchedule,
         uploadedSchedules: uploadedSchedules || existingSetup.uploadedSchedules,
+        isShared: isShared !== undefined ? isShared : existingSetup.isShared,
         updatedAt: new Date()
       },
       { new: true }
@@ -298,10 +353,21 @@ export const deleteWeeklySetup = async (req, res) => {
       return res.status(401).json({ message: 'User not authenticated properly' });
     }
 
-    const weeklySetup = await WeeklySetup.findOne({ _id: id, user: req.user.userId });
+    // Check if the setup exists in the user's store
+    const storeId = req.user?.store?._id || req.user?.store;
+    const weeklySetup = await WeeklySetup.findOne({ _id: id, store: storeId });
 
     if (!weeklySetup) {
       return res.status(404).json({ message: 'Weekly setup not found' });
+    }
+
+    // Check if user has permission to delete this setup
+    // Allow if: user is the creator OR user is a Leader/Director
+    const isCreator = weeklySetup.user.toString() === req.user.userId.toString();
+    const isLeaderOrDirector = ['Leader', 'Director'].includes(req.user.position);
+
+    if (!isCreator && !isLeaderOrDirector) {
+      return res.status(403).json({ message: 'You do not have permission to delete this setup' });
     }
 
     await WeeklySetup.findByIdAndDelete(id);

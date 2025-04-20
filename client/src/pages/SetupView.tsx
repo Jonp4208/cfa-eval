@@ -4,15 +4,23 @@ import { DailyView } from '@/components/setup-sheet/DailyView'
 import { useSetupSheetStore } from '@/stores/setupSheetStore'
 import { useToast } from '@/components/ui/use-toast'
 import { Skeleton } from '@/components/ui/skeleton'
-import { ChevronRight, Home } from 'lucide-react'
+import { Switch } from '@/components/ui/switch'
+import { Label } from '@/components/ui/label'
+import { ChevronRight, Home, Share2 } from 'lucide-react'
 import { format } from 'date-fns'
+import { useAuth } from '@/contexts/AuthContext'
 
 export function SetupView() {
   const { setupId } = useParams<{ setupId: string }>()
   const navigate = useNavigate()
-  const { weeklySetups, fetchWeeklySetups, isLoading } = useSetupSheetStore()
+  const { weeklySetups, fetchWeeklySetups, updateWeeklySetup, isLoading } = useSetupSheetStore()
   const [setup, setSetup] = useState<any>(null)
+  const [isShared, setIsShared] = useState(false)
   const { toast } = useToast()
+  const { user } = useAuth()
+
+  // Check if user can edit this setup (creator or Leader/Director)
+  const [canEdit, setCanEdit] = useState(false)
 
   useEffect(() => {
     const loadSetup = async () => {
@@ -26,6 +34,12 @@ export function SetupView() {
 
       if (foundSetup) {
         setSetup(foundSetup)
+        setIsShared(foundSetup.isShared || false)
+
+        // Check if user can edit this setup
+        const isCreator = foundSetup.user?._id === user?._id
+        const isLeaderOrDirector = user?.position === 'Leader' || user?.position === 'Director'
+        setCanEdit(isCreator || isLeaderOrDirector)
       } else {
         toast({
           title: 'Error',
@@ -37,10 +51,39 @@ export function SetupView() {
     }
 
     loadSetup()
-  }, [setupId, weeklySetups, fetchWeeklySetups, navigate, toast])
+  }, [setupId, weeklySetups, fetchWeeklySetups, navigate, toast, user])
 
   const handleBack = () => {
     navigate('/saved-setups')
+  }
+
+  const handleShareToggle = async (shared: boolean) => {
+    if (!setupId || !setup) return
+
+    try {
+      setIsShared(shared)
+      await updateWeeklySetup(setupId, { isShared: shared })
+
+      toast({
+        title: shared ? 'Setup shared with store' : 'Setup is now private',
+        description: shared
+          ? 'All users in your store can now view this setup'
+          : 'Only you can view this setup now',
+        variant: 'default'
+      })
+
+      // Update the local setup object
+      setSetup({ ...setup, isShared: shared })
+    } catch (error) {
+      // Revert the UI state if the API call fails
+      setIsShared(!shared)
+
+      toast({
+        title: 'Error',
+        description: 'Failed to update sharing settings',
+        variant: 'destructive'
+      })
+    }
   }
 
   if (isLoading || !setup) {
@@ -94,6 +137,33 @@ export function SetupView() {
               </div>
             )}
           </div>
+
+          {/* Share toggle - only visible to creator or Leader/Director */}
+          {canEdit ? (
+            <div className="flex items-center space-x-2 mt-2 sm:mt-0">
+              <Switch
+                id="share-setup"
+                checked={isShared}
+                onCheckedChange={handleShareToggle}
+              />
+              <Label htmlFor="share-setup" className="flex items-center gap-2 cursor-pointer">
+                <Share2 className="h-4 w-4 text-blue-600" />
+                <span className="text-sm font-medium">
+                  {isShared ? 'Shared with store' : 'Share with store'}
+                </span>
+              </Label>
+            </div>
+          ) : (
+            /* For non-editors, just show the shared status */
+            isShared && (
+              <div className="flex items-center space-x-2 mt-2 sm:mt-0">
+                <div className="flex items-center gap-2 text-sm text-blue-600">
+                  <Share2 className="h-4 w-4" />
+                  <span className="font-medium">Shared with store</span>
+                </div>
+              </div>
+            )
+          )}
         </div>
       </div>
 

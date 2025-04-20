@@ -90,6 +90,17 @@ const weeklySetupSchema = new mongoose.Schema({
     required: true,
     index: true // Add index for better query performance
   },
+  store: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'Store',
+    required: true,
+    index: true // Add index for better query performance
+  },
+  isShared: {
+    type: Boolean,
+    default: false,
+    index: true // Add index for better filtering
+  },
   createdAt: {
     type: Date,
     default: Date.now
