@@ -4,7 +4,7 @@ import { DailyView } from '@/components/setup-sheet/DailyView'
 import { useSetupSheetStore } from '@/stores/setupSheetStore'
 import { useToast } from '@/components/ui/use-toast'
 import { Skeleton } from '@/components/ui/skeleton'
-import { ChevronRight, Home } from 'lucide-react'
+import { Calendar, ChevronRight, Home } from 'lucide-react'
 import { format } from 'date-fns'
 
 export function SetupView() {
@@ -68,27 +68,35 @@ export function SetupView() {
 
   return (
     <div className="container mx-auto p-4 pb-20 sm:pb-4 space-y-4">
-      {/* Breadcrumb navigation */}
-      <nav className="flex flex-wrap items-center text-sm text-gray-500 gap-1">
-        <Link to="/" className="flex items-center hover:text-gray-800">
-          <Home className="h-4 w-4 mr-1" />
-          <span>Home</span>
-        </Link>
-        <ChevronRight className="h-4 w-4 mx-1" />
-        <Link to="/saved-setups" className="hover:text-gray-800">Saved Setups</Link>
-        <ChevronRight className="h-4 w-4 mx-1" />
-        <span className="text-gray-900 font-medium">{setup.name}</span>
-      </nav>
+      {/* Enhanced header with breadcrumb and title */}
+      <div className="bg-white rounded-lg shadow-sm border p-4 mb-4">
+        {/* Breadcrumb navigation */}
+        <nav className="flex flex-wrap items-center text-sm text-gray-500 gap-1 mb-2">
+          <Link to="/" className="flex items-center hover:text-red-600">
+            <Home className="h-4 w-4 mr-1" />
+            <span>Home</span>
+          </Link>
+          <ChevronRight className="h-4 w-4 mx-1" />
+          <Link to="/saved-setups" className="hover:text-red-600">Saved Setups</Link>
+          <ChevronRight className="h-4 w-4 mx-1" />
+          <span className="text-red-600 font-medium">View Setup</span>
+        </nav>
 
-      {/* Date range badge */}
-      {setup.startDate && (
-        <div className="flex items-center">
-          <span className="text-xs bg-gray-100 px-2 py-1 rounded">
-            {format(new Date(setup.startDate), 'MMM d')} - {format(new Date(setup.endDate), 'MMM d, yyyy')}
-            <span className="ml-1 text-gray-500">(Sun - Sat)</span>
-          </span>
+        {/* Title and date */}
+        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2">
+          <h1 className="text-2xl font-bold text-red-600">{setup.name}</h1>
+
+          {setup.startDate && (
+            <div className="flex items-center">
+              <span className="text-sm bg-red-50 text-red-600 px-3 py-1 rounded-full border border-red-200 flex items-center">
+                <Calendar className="h-4 w-4 mr-2" />
+                {format(new Date(setup.startDate), 'MMM d')} - {format(new Date(setup.endDate), 'MMM d, yyyy')}
+                <span className="ml-1 text-red-400">(Sun - Sat)</span>
+              </span>
+            </div>
+          )}
         </div>
-      )}
+      </div>
 
       <DailyView setup={setup} onBack={handleBack} />
     </div>

@@ -3,7 +3,7 @@ import { Card } from '@/components/ui/card'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
-import { Clock, User, Calendar, ArrowLeft, Coffee, Play, Pause, Download, Printer, RefreshCw, Search, Filter, ChevronDown, X, Check } from 'lucide-react'
+import { Clock, User, Calendar, ArrowLeft, Coffee, Play, Pause, Download, Printer, RefreshCw, Search, Filter, ChevronDown, X, Check, Save } from 'lucide-react'
 import { format, isToday, parseISO } from 'date-fns'
 import { useNavigate } from 'react-router-dom'
 import { useToast } from '@/components/ui/use-toast'
@@ -127,7 +127,8 @@ export function DailyView({ setup, onBack }: DailyViewProps) {
   // This function was removed to avoid duplication with the one below
 
   const [activeDay, setActiveDay] = useState(getTodayDayName())
-  const [currentTime, setCurrentTime] = useState(new Date())
+  // Using a constant for current time since we don't need to update it anymore
+  const currentTime = new Date()
   const [employeeBreaks, setEmployeeBreaks] = useState<EmployeeBreak[]>([])
   const [showBreakDialog, setShowBreakDialog] = useState(false)
   const [selectedEmployee, setSelectedEmployee] = useState<{id: string, name: string} | null>(null)
@@ -144,14 +145,8 @@ export function DailyView({ setup, onBack }: DailyViewProps) {
   const navigate = useNavigate()
   const { toast } = useToast()
 
-  // Update current time every minute
-  useEffect(() => {
-    const interval = setInterval(() => {
-      setCurrentTime(new Date())
-    }, 60000)
-
-    return () => clearInterval(interval)
-  }, [])
+  // We no longer need to update the current time
+  // since we've removed the time display
 
   // Set initial active hour to first available hour or current hour if available
   useEffect(() => {
@@ -1017,67 +1012,27 @@ export function DailyView({ setup, onBack }: DailyViewProps) {
     <div className="flex flex-col h-[calc(100vh-80px)] overflow-hidden">
       {/* Streamlined header with controls */}
       <div className="sticky top-0 z-10 bg-white border-b pb-3 pt-2 shadow-sm">
-        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2">
-          {/* Left section: Back button and title */}
-          <div className="flex items-center gap-3">
-            <Button variant="ghost" size="sm" onClick={onBack} className="h-8 px-2 hover:bg-gray-100">
-              <ArrowLeft className="h-4 w-4" />
-              <span className="sr-only md:not-sr-only md:ml-1 font-medium">Back</span>
-            </Button>
+        <div className="flex flex-col sm:flex-row gap-2 px-2">
+          {/* Action buttons - full width on mobile */}
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => setShowEmployeeList(true)}
+            className="h-10 border-gray-200 w-full sm:w-auto flex-1 sm:flex-none"
+          >
+            <User className="h-4 w-4 mr-2" />
+            <span className="font-medium">Employees</span>
+          </Button>
 
-            <div>
-              <h2 className="text-lg md:text-xl font-bold truncate text-red-600">{setup.name}</h2>
-              {setup.startDate && setup.endDate && (
-                <div className="text-xs text-gray-500 flex items-center">
-                  <Calendar className="h-3 w-3 mr-1 text-red-500" />
-                  <span>
-                    Week of {format(new Date(setup.startDate), 'MMM d')} - {format(new Date(setup.endDate), 'MMM d, yyyy')}
-                  </span>
-                </div>
-              )}
-            </div>
-          </div>
-
-          {/* Right section: Action buttons */}
-          <div className="flex items-center gap-1 w-full sm:w-auto justify-end">
-            <div className="text-sm font-medium mr-2 bg-red-50 text-red-600 px-2 py-1 rounded-md border border-red-100">
-              {format(currentTime, 'h:mm a')}
-            </div>
-
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => setShowEmployeeList(true)}
-              className="h-8 border-gray-200"
-            >
-              <User className="h-4 w-4 mr-1" />
-              <span className="font-medium">Employees</span>
-            </Button>
-
-            <Button
-              variant="default"
-              size="sm"
-              onClick={handleSaveChanges}
-              className="h-8 bg-red-600 hover:bg-red-700 ml-1"
-            >
-              Save Changes
-            </Button>
-
-            <div className="flex ml-1">
-              <TooltipProvider>
-                <Tooltip>
-                  <TooltipTrigger asChild>
-                    <Button variant="outline" size="sm" className="h-8 w-8 p-0 border-gray-200">
-                      <RefreshCw className="h-4 w-4" />
-                    </Button>
-                  </TooltipTrigger>
-                  <TooltipContent>
-                    <p>Refresh data</p>
-                  </TooltipContent>
-                </Tooltip>
-              </TooltipProvider>
-            </div>
-          </div>
+          <Button
+            variant="default"
+            size="sm"
+            onClick={handleSaveChanges}
+            className="h-10 bg-red-600 hover:bg-red-700 w-full sm:w-auto flex-1 sm:flex-none"
+          >
+            <Save className="h-4 w-4 mr-2" />
+            Save Changes
+          </Button>
         </div>
       </div>
 
