@@ -4,7 +4,7 @@ import { DailyView } from '@/components/setup-sheet/DailyView'
 import { useSetupSheetStore } from '@/stores/setupSheetStore'
 import { useToast } from '@/components/ui/use-toast'
 import { Skeleton } from '@/components/ui/skeleton'
-import { Calendar, ChevronRight, Home } from 'lucide-react'
+import { ChevronRight, Home } from 'lucide-react'
 import { format } from 'date-fns'
 
 export function SetupView() {
@@ -82,19 +82,18 @@ export function SetupView() {
           <span className="text-red-600 font-medium">View Setup</span>
         </nav>
 
-        {/* Title and date */}
+        {/* Title and date - improved design */}
         <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2">
-          <h1 className="text-2xl font-bold text-red-600">{setup.name}</h1>
-
-          {setup.startDate && (
-            <div className="flex items-center">
-              <span className="text-sm bg-red-50 text-red-600 px-3 py-1 rounded-full border border-red-200 flex items-center">
-                <Calendar className="h-4 w-4 mr-2" />
-                {format(new Date(setup.startDate), 'MMM d')} - {format(new Date(setup.endDate), 'MMM d, yyyy')}
-                <span className="ml-1 text-red-400">(Sun - Sat)</span>
-              </span>
-            </div>
-          )}
+          <div className="flex items-center gap-2">
+            <h1 className="text-2xl font-bold text-gray-800">{setup.name}</h1>
+            {setup.startDate && (
+              <div className="flex items-center">
+                <span className="text-sm bg-blue-50 text-blue-600 px-3 py-1 rounded-md border border-blue-200 flex items-center font-medium">
+                  {format(new Date(setup.startDate), 'MMM d')} - {format(new Date(setup.endDate), 'MMM d, yyyy')}
+                </span>
+              </div>
+            )}
+          </div>
         </div>
       </div>
 

@@ -1,6 +1,5 @@
 import { useState, useEffect } from 'react'
 import { Card } from '@/components/ui/card'
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Clock, User, Calendar, ArrowLeft, Coffee, Play, Pause, Download, Printer, RefreshCw, Search, Filter, ChevronDown, X, Check, Save } from 'lucide-react'
@@ -747,19 +746,23 @@ export function DailyView({ setup, onBack }: DailyViewProps) {
     return remaining > 0 ? remaining : 0
   }
 
-  // Get count of service positions (Front Counter and Drive Thru)
+  // Get count of service positions (Front Counter and Drive Thru) for the current hour
   const getServicePositionCount = (): number => {
+    if (!activeHour) return 0
+
     let count = 0
-    getTimeBlocks().forEach(block => {
+    getTimeBlocksByHour(activeHour).forEach(block => {
       count += block.positions.filter(p => p.category === 'Front Counter' || p.category === 'Drive Thru').length
     })
     return count
   }
 
-  // Get count of kitchen positions
+  // Get count of kitchen positions for the current hour
   const getKitchenPositionCount = (): number => {
+    if (!activeHour) return 0
+
     let count = 0
-    getTimeBlocks().forEach(block => {
+    getTimeBlocksByHour(activeHour).forEach(block => {
       count += block.positions.filter(p => p.category === 'Kitchen').length
     })
     return count
@@ -1036,97 +1039,85 @@ export function DailyView({ setup, onBack }: DailyViewProps) {
         </div>
       </div>
 
-      {/* Day tabs - redesigned for better visual hierarchy */}
+      {/* Day and hour selection dropdowns */}
       <div className="bg-white border rounded-lg shadow-sm overflow-hidden flex-1 flex flex-col">
-        <Tabs value={activeDay} onValueChange={setActiveDay} className="w-full h-full flex flex-col">
-          <div className="border-b bg-gray-50 flex-shrink-0 overflow-x-auto">
-            <TabsList className="w-full justify-start p-0 bg-transparent rounded-none flex min-w-[700px]">
-              {days.map(day => {
-                const date = getDateForDay(day)
-                const isToday = new Date().toDateString() === date.toDateString()
-                const isActive = activeDay === day
+        <div className="border-b bg-gray-50 p-3">
+          <div className="flex flex-col sm:flex-row gap-3 items-end">
+            <div className="w-full sm:w-1/2">
+              <label className="text-sm font-medium text-gray-700 mb-1 block">Select Day</label>
+              <Select value={activeDay} onValueChange={setActiveDay}>
+                <SelectTrigger className="w-full bg-white">
+                  <SelectValue placeholder="Select a day" />
+                </SelectTrigger>
+                <SelectContent>
+                  {days.map(day => {
+                    const date = getDateForDay(day)
+                    const isToday = new Date().toDateString() === date.toDateString()
 
-                return (
-                  <TabsTrigger
-                    key={day}
-                    value={day}
-                    className={`px-4 py-3 rounded-none border-b-2 ${isActive ? 'border-red-600 bg-white' : 'border-transparent'}
-                              ${isToday && !isActive ? 'bg-red-50' : ''} transition-all flex-1`}
-                  >
-                    <div className="flex flex-col items-center">
-                      <div className="flex items-center gap-2">
-                        <span className={`font-medium ${isActive ? 'text-red-600' : ''}`}>{formatShortDayName(day)}</span>
-                        {isToday && <span className="text-[10px] bg-red-100 text-red-600 px-1 py-0.5 rounded">Today</span>}
-                      </div>
-                      <span className="text-xs mt-1 text-gray-500">
-                        {day === 'saturday' && format(date, 'M/d') === '4/12' ? '4/19' : format(date, 'M/d')}
-                      </span>
-                    </div>
-                  </TabsTrigger>
-                )
-              })}
-            </TabsList>
-          </div>
+                    return (
+                      <SelectItem key={day} value={day} className="flex items-center">
+                        <div className="flex items-center gap-2">
+                          <span className="font-medium">{formatDayName(day)}</span>
+                          <span className="text-xs text-gray-500">
+                            {day === 'saturday' && format(date, 'M/d') === '4/12' ? '4/19' : format(date, 'M/d')}
+                          </span>
+                          {isToday && <span className="text-[10px] bg-red-100 text-red-600 px-1 py-0.5 rounded ml-2">Today</span>}
+                        </div>
+                      </SelectItem>
+                    )
+                  })}
+                </SelectContent>
+              </Select>
+            </div>
 
-        {days.map(day => (
-          <TabsContent key={day} value={day} className="flex-1 overflow-y-auto p-4">
-            {/* Time blocks selection - redesigned for better usability */}
-            {allHours.length > 0 ? (
-              <div className="mb-6">
-                <div className="flex items-center justify-between mb-3">
-                  <h3 className="text-sm font-medium text-gray-700 flex items-center">
-                    <Clock className="h-4 w-4 mr-2 text-blue-600" />
-                    Time Blocks
-                  </h3>
-                  <div className="text-xs text-gray-500">
-                    {getTimeBlocks().length} time blocks • {getTimeBlocks().reduce((acc, block) => acc + block.positions.length, 0)} positions
-                  </div>
-                </div>
-
-                <div className="bg-white rounded-lg border shadow-sm overflow-hidden">
-                  <div className="flex overflow-x-auto pb-1 pt-1 px-1 scrollbar-thin scrollbar-thumb-gray-300 scrollbar-track-gray-100">
+            <div className="w-full sm:w-1/2">
+              <label className="text-sm font-medium text-gray-700 mb-1 block">Select Hour</label>
+              {allHours.length > 0 ? (
+                <Select value={activeHour || ''} onValueChange={setActiveHour}>
+                  <SelectTrigger className="w-full bg-white">
+                    <SelectValue placeholder="Select an hour" />
+                  </SelectTrigger>
+                  <SelectContent>
                     {allHours.map(hour => {
                       const isCurrentHour = hour.split(':')[0] === new Date().getHours().toString().padStart(2, '0')
                       const hasScheduledBlocks = getTimeBlocksByHour(hour).length > 0
                       const positionCount = getTimeBlocksByHour(hour).reduce((acc, block) => acc + block.positions.length, 0)
-                      const isActive = activeHour === hour
 
                       // Format the hour for display (5:00, 6:00, etc.)
                       const displayHour = parseInt(hour).toString()
 
                       return (
-                        <div key={hour} className="flex-shrink-0 px-1">
-                          <Button
-                            variant={isActive ? "default" : "outline"}
-                            size="sm"
-                            className={`min-w-[70px] justify-center py-3 ${isCurrentHour ? 'border-red-300 ring-1 ring-red-100' : ''}
-                                      ${hasScheduledBlocks ? 'font-semibold' : 'opacity-80'}
-                                      ${isActive ? 'shadow-sm bg-red-600 text-white hover:bg-red-700' :
-                                        hasScheduledBlocks ? 'bg-white hover:bg-gray-50 border-red-200' : 'hover:bg-gray-100'}`}
-                            onClick={() => setActiveHour(hour)}
-                          >
-                            <div className="flex flex-col items-center">
-                              <span className="text-sm font-medium">{displayHour}:00</span>
-                              {hasScheduledBlocks && (
-                                <span className={`text-xs mt-1 ${isActive ? 'text-red-100' : 'text-gray-500'}`}>
-                                  {positionCount} pos
-                                </span>
-                              )}
-                            </div>
-                          </Button>
-                        </div>
+                        <SelectItem key={hour} value={hour}>
+                          <div className="flex items-center justify-between w-full">
+                            <span className="font-medium">{displayHour}:00</span>
+                            {hasScheduledBlocks && (
+                              <span className="text-xs bg-red-50 text-red-600 px-1.5 py-0.5 rounded-full ml-2">
+                                {positionCount} positions
+                              </span>
+                            )}
+                            {isCurrentHour && (
+                              <span className="text-[10px] bg-blue-100 text-blue-600 px-1 py-0.5 rounded ml-auto">
+                                Current
+                              </span>
+                            )}
+                          </div>
+                        </SelectItem>
                       )
                     })}
-                  </div>
+                  </SelectContent>
+                </Select>
+              ) : (
+                <div className="text-center p-3 bg-gray-50 rounded-md flex flex-col items-center">
+                  <Calendar className="h-6 w-6 text-gray-300 mb-1" />
+                  <p className="text-gray-500 text-sm font-medium">No time blocks scheduled</p>
+                  <p className="text-gray-400 text-xs">There are no positions scheduled for {formatDayName(activeDay)}</p>
                 </div>
-              </div>
-            ) : (
-              <div className="text-center p-6 bg-gray-50 flex flex-col items-center">
-                <Calendar className="h-8 w-8 text-gray-300 mb-2" />
-                <p className="text-gray-500 font-medium">No time blocks scheduled</p>
-                <p className="text-gray-400 text-sm">There are no positions scheduled for {formatDayName(activeDay)}</p>
-              </div>
-            )}
+              )}
+            </div>
+          </div>
+        </div>
+
+        <div className="flex-1 overflow-y-auto p-4">
 
             {/* Area tabs - redesigned with better visual hierarchy */}
             {allHours.length > 0 && activeHour && (
@@ -1163,207 +1154,20 @@ export function DailyView({ setup, onBack }: DailyViewProps) {
               </div>
             )}
 
-            {/* Current time blocks section - enhanced with visual indicators */}
-            {currentTimeBlocks.length > 0 && day === getTodayDayName() && (
+            {/* We've removed the duplicate "Current time blocks" section and kept only the hour-based view */}
+
+            {/* Position display - enhanced with better visual hierarchy */}
+            {activeHour && allHours.length > 0 && (
               <div className="mb-6 space-y-2">
                 <h3 className="text-md font-semibold flex items-center">
                   <div className="flex h-5 w-5 items-center justify-center rounded-full bg-blue-100 mr-2">
                     <Clock className="h-3 w-3 text-blue-600" />
                   </div>
-                  <span className="text-blue-800">Current Positions</span>
-                  <Badge className="ml-2 bg-blue-500 text-white">Live</Badge>
-                </h3>
-
-                <Card className="p-4 border-blue-200 bg-blue-50 shadow-sm">
-                  {currentTimeBlocks.map((block: TimeBlock) => (
-                    <div key={block.id} className="space-y-3">
-                      <div className="flex justify-between items-center">
-                        <div className="flex items-center">
-                          <div className="h-2 w-2 rounded-full bg-green-500 mr-2 animate-pulse"></div>
-                          <h4 className="text-sm font-medium">{block.start} - {block.end}</h4>
-                        </div>
-                        <Badge variant="outline" className="bg-white border-blue-200">
-                          {block.positions.filter(p => p.employeeId).length} Employees
-                        </Badge>
-                      </div>
-
-                      <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
-                        {areaTab === 'service' ? (
-                          // Front Counter and Drive Thru
-                          ['Front Counter', 'Drive Thru'].map(category => {
-                            const positions = block.positions.filter(p => p.category === category)
-                            if (positions.length === 0) return null
-
-                            return (
-                              <div key={category} className="space-y-1">
-                                <h5 className={`text-xs font-medium ${category === 'Front Counter' ? 'text-blue-600' : 'text-green-600'}`}>
-                                  {category}
-                                </h5>
-
-                                {positions.map((position: any) => {
-                                  const breakStatus = getBreakStatus(position.employeeId)
-                                  const remainingTime = getRemainingBreakTime(position.employeeId)
-
-                                  return (
-                                    <div key={position.id} className={`flex justify-between items-center p-2 rounded-md ${breakStatus === 'active' ? 'bg-amber-50 border border-amber-200' : position.employeeId ? 'bg-white border' : 'bg-gray-50 border border-dashed border-gray-300'}`}>
-                                      <div className="flex items-center gap-2">
-                                        <User className="h-4 w-4 text-gray-500" />
-                                        <div>
-                                          <div className="font-medium text-sm">{position.employeeName}</div>
-                                          <div className="text-xs text-gray-500">{position.name}</div>
-                                          {position.employeeId && (
-                                            <div className="text-xs text-blue-500 flex items-center mt-1">
-                                              <Clock className="h-3 w-3 mr-1" />
-                                              {scheduledEmployees.find(e => e.id === position.employeeId)?.timeBlock || 'No time data'}
-                                            </div>
-                                          )}
-                                        </div>
-                                      </div>
-
-                                      <div className="flex items-center">
-                                        {position.employeeId ? (
-                                          <>
-                                            {breakStatus === 'active' ? (
-                                              <div className="flex items-center mr-2">
-                                                <Coffee className="h-3 w-3 text-amber-500 mr-1" />
-                                                <span className="text-xs text-amber-600">{remainingTime}m</span>
-                                              </div>
-                                            ) : null}
-
-                                            {breakStatus === 'active' ? (
-                                              <Button
-                                                variant="outline"
-                                                size="sm"
-                                                className="h-7 px-2 text-xs"
-                                                onClick={() => endBreak(position.employeeId!)}
-                                              >
-                                                <Play className="h-3 w-3 mr-1" />
-                                                End
-                                              </Button>
-                                            ) : (
-                                              <Button
-                                                variant="outline"
-                                                size="sm"
-                                                className="h-7 px-2 text-xs"
-                                                onClick={() => handleBreakClick(position.employeeId!, position.employeeName!)}
-                                              >
-                                                <Coffee className="h-3 w-3 mr-1" />
-                                                Break
-                                              </Button>
-                                            )}
-                                          </>
-                                        ) : (
-                                          <Button
-                                            variant="outline"
-                                            size="sm"
-                                            className="h-7 px-2 text-xs bg-green-50 hover:bg-green-100 border-green-200"
-                                            onClick={() => handleAssignClick(position, block.start, block.end)}
-                                          >
-                                            Assign
-                                          </Button>
-                                        )}
-                                      </div>
-                                    </div>
-                                  )
-                                })}
-                              </div>
-                            )
-                          })
-                        ) : (
-                          // Kitchen
-                          ['Kitchen'].map(category => {
-                            const positions = block.positions.filter(p => p.category === category)
-                            if (positions.length === 0) return null
-
-                            return (
-                              <div key={category} className="space-y-1">
-                                <h5 className="text-xs font-medium text-orange-600">
-                                  {category}
-                                </h5>
-
-                                {positions.map((position: any) => {
-                                  const breakStatus = getBreakStatus(position.employeeId)
-                                  const remainingTime = getRemainingBreakTime(position.employeeId)
-
-                                  return (
-                                    <div key={position.id} className={`flex justify-between items-center p-2 rounded-md ${breakStatus === 'active' ? 'bg-amber-50 border border-amber-200' : position.employeeId ? 'bg-white border' : 'bg-gray-50 border border-dashed border-gray-300'}`}>
-                                      <div className="flex items-center gap-2">
-                                        <User className="h-4 w-4 text-gray-500" />
-                                        <div>
-                                          <div className="font-medium text-sm">{position.employeeName}</div>
-                                          <div className="text-xs text-gray-500">{position.name}</div>
-                                          {position.employeeId && (
-                                            <div className="text-xs text-blue-500 flex items-center mt-1">
-                                              <Clock className="h-3 w-3 mr-1" />
-                                              {scheduledEmployees.find(e => e.id === position.employeeId)?.timeBlock || 'No time data'}
-                                            </div>
-                                          )}
-                                        </div>
-                                      </div>
-
-                                      <div className="flex items-center">
-                                        {position.employeeId ? (
-                                          <>
-                                            {breakStatus === 'active' ? (
-                                              <div className="flex items-center mr-2">
-                                                <Coffee className="h-3 w-3 text-amber-500 mr-1" />
-                                                <span className="text-xs text-amber-600">{remainingTime}m</span>
-                                              </div>
-                                            ) : null}
-
-                                            {breakStatus === 'active' ? (
-                                              <Button
-                                                variant="outline"
-                                                size="sm"
-                                                className="h-7 px-2 text-xs"
-                                                onClick={() => endBreak(position.employeeId!)}
-                                              >
-                                                <Play className="h-3 w-3 mr-1" />
-                                                End
-                                              </Button>
-                                            ) : (
-                                              <Button
-                                                variant="outline"
-                                                size="sm"
-                                                className="h-7 px-2 text-xs"
-                                                onClick={() => handleBreakClick(position.employeeId!, position.employeeName!)}
-                                              >
-                                                <Coffee className="h-3 w-3 mr-1" />
-                                                Break
-                                              </Button>
-                                            )}
-                                          </>
-                                        ) : (
-                                          <Button
-                                            variant="outline"
-                                            size="sm"
-                                            className="h-7 px-2 text-xs bg-green-50 hover:bg-green-100 border-green-200"
-                                            onClick={() => handleAssignClick(position, block.start, block.end)}
-                                          >
-                                            Assign
-                                          </Button>
-                                        )}
-                                      </div>
-                                    </div>
-                                  )
-                                })}
-                              </div>
-                            )
-                          })
-                        )}
-                      </div>
-                    </div>
-                  ))}
-                </Card>
-              </div>
-            )}
-
-            {/* Selected hour time blocks - only show if there are time blocks */}
-            {activeHour && allHours.length > 0 && (
-              <div className="mb-6 space-y-2">
-                <h3 className="text-md font-semibold flex items-center">
-                  <Clock className="h-4 w-4 mr-2" />
-                  {activeHour} - {parseInt(activeHour) + 1}:00
+                  <span className="text-blue-800">{activeHour} - {parseInt(activeHour) + 1}:00</span>
+                  {activeDay === getTodayDayName() &&
+                    parseInt(activeHour) === new Date().getHours() &&
+                    <Badge className="ml-2 bg-blue-500 text-white">Current Hour</Badge>
+                  }
                 </h3>
 
                 {hourTimeBlocks.length === 0 ? (
@@ -1374,7 +1178,7 @@ export function DailyView({ setup, onBack }: DailyViewProps) {
                 ) : (
                   <div className="space-y-3">
                     {hourTimeBlocks.map((block: TimeBlock) => {
-                      const isCurrent = isCurrentTimeBlock(block) && day === getTodayDayName()
+                      const isCurrent = isCurrentTimeBlock(block) && activeDay === getTodayDayName()
 
                       return (
                         <Card
@@ -1382,7 +1186,10 @@ export function DailyView({ setup, onBack }: DailyViewProps) {
                           className={`p-3 ${isCurrent ? 'border-blue-200 bg-blue-50' : ''}`}
                         >
                           <div className="flex justify-between items-center mb-2">
-                            <h4 className="text-sm font-medium">{block.start} - {block.end}</h4>
+                            <div className="flex items-center">
+                              {isCurrent && <div className="h-2 w-2 rounded-full bg-green-500 mr-2 animate-pulse"></div>}
+                              <h4 className="text-sm font-medium">{block.start} - {block.end}</h4>
+                            </div>
                             {isCurrent && <Badge className="bg-blue-500 text-white">Current</Badge>}
                           </div>
 
@@ -1426,7 +1233,7 @@ export function DailyView({ setup, onBack }: DailyViewProps) {
                                                 {isCurrent && breakStatus === 'active' ? (
                                                   <div className="flex items-center gap-1 mr-1">
                                                     <Coffee className="h-3 w-3 text-amber-500" />
-                                                    <span className="text-xs text-amber-600">On Break</span>
+                                                    <span className="text-xs text-amber-600">On Break ({getRemainingBreakTime(position.employeeId)}m)</span>
                                                   </div>
                                                 ) : null}
 
@@ -1507,7 +1314,7 @@ export function DailyView({ setup, onBack }: DailyViewProps) {
                                                 {isCurrent && breakStatus === 'active' ? (
                                                   <div className="flex items-center gap-1 mr-1">
                                                     <Coffee className="h-3 w-3 text-amber-500" />
-                                                    <span className="text-xs text-amber-600">On Break</span>
+                                                    <span className="text-xs text-amber-600">On Break ({getRemainingBreakTime(position.employeeId)}m)</span>
                                                   </div>
                                                 ) : null}
 
@@ -1558,9 +1365,7 @@ export function DailyView({ setup, onBack }: DailyViewProps) {
                 )}
               </div>
             )}
-          </TabsContent>
-        ))}
-      </Tabs>
+        </div>
       </div>
 
       {/* Enhanced Break Dialog */}
