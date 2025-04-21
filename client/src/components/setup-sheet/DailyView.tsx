@@ -953,29 +953,36 @@ export function DailyView({ setup, onBack }: DailyViewProps) {
     if (!selectedEmployeeToReplace || !replacementName.trim()) return
 
     try {
-      // Find all positions where the employee is assigned
-      const updatedPositions = modifiedSetup.weekSchedule[activeDay].map((block: any) => {
-        const updatedBlock = { ...block }
-        updatedBlock.positions = block.positions.map((position: any) => {
-          if (position.employeeId === selectedEmployeeToReplace.id) {
-            return {
-              ...position,
-              employeeId: `replacement-${Date.now()}`, // Generate a temporary ID
-              employeeName: replacementName
-            }
-          }
-          return position
-        })
-        return updatedBlock
-      })
+      console.log('Replacing employee:', selectedEmployeeToReplace.name, 'with', replacementName)
 
-      // Update the setup
-      const updatedSetup = { ...modifiedSetup }
-      updatedSetup.weekSchedule[activeDay] = updatedPositions
-      setModifiedSetup(updatedSetup)
+      // Create a deep copy of the setup to modify
+      const newSetup = JSON.parse(JSON.stringify(modifiedSetup))
+
+      // Find the position in the setup and update it
+      const daySchedule = newSetup.weekSchedule[activeDay]
+      if (daySchedule && daySchedule.timeBlocks) {
+        // Track if we found and replaced any positions
+        let replacedCount = 0
+
+        daySchedule.timeBlocks.forEach((block: TimeBlock) => {
+          block.positions.forEach((position: Position) => {
+            if (position.employeeId === selectedEmployeeToReplace.id) {
+              console.log('Found position to update:', position)
+              position.employeeId = `replacement-${Date.now()}` // Generate a temporary ID
+              position.employeeName = replacementName
+              replacedCount++
+            }
+          })
+        })
+
+        console.log(`Replaced ${replacedCount} positions`)
+      }
+
+      // Update the state with the modified setup
+      setModifiedSetup(newSetup)
 
       // Save changes
-      await saveChangesAutomatically('assign')
+      await saveChangesAutomatically('assign', replacementName, selectedEmployeeToReplace.name)
 
       toast({
         title: 'Employee Replaced',
@@ -984,6 +991,9 @@ export function DailyView({ setup, onBack }: DailyViewProps) {
 
       // Close the dialog
       setShowReplaceDialog(false)
+
+      // Force a re-render to update the UI
+      setActiveHour(activeHour)
     } catch (error) {
       console.error('Error replacing employee:', error)
       toast({
