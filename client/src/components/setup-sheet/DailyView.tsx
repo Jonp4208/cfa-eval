@@ -141,6 +141,7 @@ export function DailyView({ setup, onBack }: DailyViewProps) {
   const assignDialogRef = useRef<HTMLDivElement>(null)
   const [selectedPosition, setSelectedPosition] = useState<Position | null>(null)
   const [modifiedSetup, setModifiedSetup] = useState<any>(setup)
+  const [originalSetup, setOriginalSetup] = useState<any>(setup)
   const [scheduledEmployees, setScheduledEmployees] = useState<Array<{id: string, name: string, timeBlock: string, area?: string, day?: string}>>([])
   const [unassignedEmployees, setUnassignedEmployees] = useState<Array<{id: string, name: string, timeBlock: string, area?: string, day?: string}>>([])
   const navigate = useNavigate()
@@ -205,6 +206,7 @@ export function DailyView({ setup, onBack }: DailyViewProps) {
     }
 
     setModifiedSetup(setup);
+    setOriginalSetup(setup);
 
     // Initialize scheduledEmployees from uploadedSchedules if available
     if (setup.uploadedSchedules && setup.uploadedSchedules.length > 0) {
@@ -847,6 +849,8 @@ export function DailyView({ setup, onBack }: DailyViewProps) {
 
   // Get employees available for a specific time block
   const getAvailableEmployeesForTimeBlock = (blockStart: string, blockEnd: string) => {
+    console.log('Getting available employees for time block:', blockStart, '-', blockEnd)
+
     // Parse times to minutes for comparison
     const parseTimeToMinutes = (time: string): number => {
       const [hours, minutes] = time.split(':').map(Number)
@@ -884,6 +888,44 @@ export function DailyView({ setup, onBack }: DailyViewProps) {
       }
     }
 
+    // Get all assigned employee IDs for the current time block
+    const assignedEmployeeIds = new Set<string>()
+
+    // Check if the selected position is being edited (in which case we want to show the currently assigned employee)
+    const editingPositionId = selectedPosition?.id
+
+    // Check all time blocks for the active day
+    if (modifiedSetup.weekSchedule && modifiedSetup.weekSchedule[activeDay]) {
+      const timeBlocks = modifiedSetup.weekSchedule[activeDay].timeBlocks || []
+
+      timeBlocks.forEach(block => {
+        // Only consider blocks that overlap with the current time block
+        const blockStartMin = parseTimeToMinutes(block.start)
+        const blockEndMin = parseTimeToMinutes(block.end)
+
+        // Check if this block overlaps with the selected time block
+        const overlaps = (
+          (blockStartMin <= blockEndMinutes && blockEndMin >= blockStartMinutes) ||
+          (blockStartMinutes <= blockEndMin && blockEndMinutes >= blockStartMin)
+        )
+
+        if (overlaps) {
+          block.positions.forEach(position => {
+            // Skip the position we're currently editing
+            if (position.id === editingPositionId) {
+              return
+            }
+
+            if (position.employeeId) {
+              assignedEmployeeIds.add(position.employeeId)
+            }
+          })
+        }
+      })
+    }
+
+    console.log('Employees already assigned to positions in this time block:', Array.from(assignedEmployeeIds))
+
     // Get all employees for the current day
     const employeesForDay = scheduledEmployees.filter(employee => {
       // Check if this employee is for the current day or has no day specified
@@ -894,8 +936,16 @@ export function DailyView({ setup, onBack }: DailyViewProps) {
 
     console.log(`Found ${employeesForDay.length} employees for ${activeDay}`)
 
-    // Filter to those available for this time block
-    let availableEmployees = employeesForDay.filter(isAvailableForTimeBlock)
+    // Filter to those available for this time block and not already assigned
+    let availableEmployees = employeesForDay.filter(employee => {
+      // Check if employee is available for this time block
+      const isAvailable = isAvailableForTimeBlock(employee)
+
+      // Check if employee is already assigned to another position in this time block
+      const isAlreadyAssigned = assignedEmployeeIds.has(employee.id)
+
+      return isAvailable && !isAlreadyAssigned
+    })
 
     // Filter by area based on the selected position's category
     if (selectedPosition) {
@@ -931,73 +981,105 @@ export function DailyView({ setup, onBack }: DailyViewProps) {
   const handleAssignEmployee = async (employeeId: string, employeeName: string) => {
     if (!selectedPosition) return
 
-    // Create a deep copy of the setup to modify
-    const newSetup = JSON.parse(JSON.stringify(modifiedSetup))
+    try {
+      console.log('Assigning employee:', employeeId, employeeName, 'to position:', selectedPosition)
 
-    // Make sure we have a valid employee name, use position name as fallback
-    const finalEmployeeName = employeeName && employeeName !== 'Unknown Employee'
-      ? employeeName
-      : selectedPosition.name
+      // Create a deep copy of the setup to modify
+      const newSetup = JSON.parse(JSON.stringify(modifiedSetup))
 
-    // Find the position in the setup and update it
-    const daySchedule = newSetup.weekSchedule[activeDay]
-    if (daySchedule && daySchedule.timeBlocks) {
-      daySchedule.timeBlocks.forEach((block: TimeBlock) => {
-        block.positions.forEach((pos: Position) => {
-          if (pos.id === selectedPosition.id) {
-            pos.employeeId = employeeId
-            pos.employeeName = finalEmployeeName
-          }
+      // Make sure we have a valid employee name, use position name as fallback
+      const finalEmployeeName = employeeName && employeeName !== 'Unknown Employee'
+        ? employeeName
+        : selectedPosition.name
+
+      // Find the position in the setup and update it
+      const daySchedule = newSetup.weekSchedule[activeDay]
+      if (daySchedule && daySchedule.timeBlocks) {
+        daySchedule.timeBlocks.forEach((block: TimeBlock) => {
+          block.positions.forEach((pos: Position) => {
+            if (pos.id === selectedPosition.id) {
+              console.log('Found position to update:', pos)
+              pos.employeeId = employeeId
+              pos.employeeName = finalEmployeeName
+            }
+          })
         })
+      }
+
+      // Update the state with the modified setup
+      setModifiedSetup(newSetup)
+      setShowAssignDialog(false)
+
+      // Recalculate unassigned employees after assignment
+      calculateUnassignedEmployees(scheduledEmployees)
+
+      // Auto-save the changes
+      await saveChangesAutomatically('assign', finalEmployeeName, selectedPosition.name)
+
+      // Force a re-render to update the UI
+      setActiveHour(activeHour)
+    } catch (error) {
+      console.error('Error assigning employee:', error)
+      toast({
+        title: 'Error',
+        description: 'Failed to assign employee. Please try again.',
+        variant: 'destructive'
       })
     }
-
-    // Update the state with the modified setup
-    setModifiedSetup(newSetup)
-    setShowAssignDialog(false)
-
-    // Recalculate unassigned employees after assignment
-    calculateUnassignedEmployees(scheduledEmployees)
-
-    // Auto-save the changes
-    await saveChangesAutomatically('assign', finalEmployeeName, selectedPosition.name)
   }
 
   // Handle removing an employee from a position
   const handleRemoveAssignment = async (position: Position) => {
-    // Create a deep copy of the setup to modify
-    const newSetup = JSON.parse(JSON.stringify(modifiedSetup))
+    try {
+      console.log('Removing assignment from position:', position)
 
-    // Store employee name for the toast message
-    let removedEmployeeName = ''
+      // Create a deep copy of the setup to modify
+      const newSetup = JSON.parse(JSON.stringify(modifiedSetup))
 
-    // Find the position in the setup and update it
-    const daySchedule = newSetup.weekSchedule[activeDay]
-    if (daySchedule && daySchedule.timeBlocks) {
-      daySchedule.timeBlocks.forEach((block: TimeBlock) => {
-        block.positions.forEach((pos: Position) => {
-          if (pos.id === position.id) {
-            removedEmployeeName = pos.employeeName || 'Employee'
-            pos.employeeId = undefined
-            pos.employeeName = undefined
-          }
+      // Store employee name for the toast message
+      let removedEmployeeName = ''
+
+      // Find the position in the setup and update it
+      const daySchedule = newSetup.weekSchedule[activeDay]
+      if (daySchedule && daySchedule.timeBlocks) {
+        daySchedule.timeBlocks.forEach((block: TimeBlock) => {
+          block.positions.forEach((pos: Position) => {
+            if (pos.id === position.id) {
+              console.log('Found position to update:', pos)
+              removedEmployeeName = pos.employeeName || 'Employee'
+              pos.employeeId = undefined
+              pos.employeeName = undefined
+            }
+          })
         })
+      }
+
+      // Update the state with the modified setup
+      setModifiedSetup(newSetup)
+
+      // Recalculate unassigned employees after removing assignment
+      calculateUnassignedEmployees(scheduledEmployees)
+
+      // Auto-save the changes
+      await saveChangesAutomatically('remove', removedEmployeeName, position.name)
+
+      // Force a re-render to update the UI
+      setActiveHour(activeHour)
+    } catch (error) {
+      console.error('Error removing assignment:', error)
+      toast({
+        title: 'Error',
+        description: 'Failed to remove assignment. Please try again.',
+        variant: 'destructive'
       })
     }
-
-    // Update the state with the modified setup
-    setModifiedSetup(newSetup)
-
-    // Recalculate unassigned employees after removing assignment
-    calculateUnassignedEmployees(scheduledEmployees)
-
-    // Auto-save the changes
-    await saveChangesAutomatically('remove', removedEmployeeName, position.name)
   }
 
   // Save the modified setup automatically without page reload
   const saveChangesAutomatically = async (actionType: 'assign' | 'remove', employeeName?: string, positionName?: string) => {
     try {
+      console.log('Auto-saving changes:', actionType, employeeName, positionName)
+
       // Get the token from localStorage
       const token = localStorage.getItem('token')
       if (!token) {
@@ -1012,6 +1094,8 @@ export function DailyView({ setup, onBack }: DailyViewProps) {
         weekSchedule: modifiedSetup.weekSchedule,
         uploadedSchedules: scheduledEmployees // Save in the new field
       }
+
+      console.log('Saving payload:', payload)
 
       // Call the API to update the setup
       const response = await fetch(`/api/weekly-setups/${setup._id}`, {
@@ -1030,6 +1114,10 @@ export function DailyView({ setup, onBack }: DailyViewProps) {
 
       // Update the original setup with the modified one
       const updatedSetup = await response.json()
+      console.log('Setup updated successfully:', updatedSetup)
+
+      // Update the setup state with the response from the server
+      setOriginalSetup(updatedSetup)
 
       // Show a toast message based on the action type
       if (actionType === 'assign' && employeeName && positionName) {
@@ -1048,6 +1136,8 @@ export function DailyView({ setup, onBack }: DailyViewProps) {
           description: 'Your changes have been saved automatically'
         })
       }
+
+      return true
     } catch (error) {
       console.error('Error saving setup:', error)
       toast({
@@ -1055,6 +1145,7 @@ export function DailyView({ setup, onBack }: DailyViewProps) {
         description: error instanceof Error ? error.message : 'Failed to save changes automatically. Please try manual save.',
         variant: 'destructive'
       })
+      return false
     }
   }
 
@@ -1099,6 +1190,9 @@ export function DailyView({ setup, onBack }: DailyViewProps) {
 
       // Update the original setup with the modified one
       const updatedSetup = await response.json()
+
+      // Update the setup state with the response from the server
+      setOriginalSetup(updatedSetup)
 
       toast({
         title: 'Changes Saved',
