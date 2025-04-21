@@ -142,6 +142,10 @@ export function DailyView({ setup, onBack }: DailyViewProps) {
   const [showAssignDialog, setShowAssignDialog] = useState(false)
   const assignDialogRef = useRef<HTMLDivElement>(null)
   const [selectedPosition, setSelectedPosition] = useState<Position | null>(null)
+  const [showReplaceDialog, setShowReplaceDialog] = useState(false)
+  const [selectedEmployeeToReplace, setSelectedEmployeeToReplace] = useState<{id: string, name: string} | null>(null)
+  const [replacementName, setReplacementName] = useState('')
+  const replaceDialogRef = useRef<HTMLDivElement>(null)
   const [modifiedSetup, setModifiedSetup] = useState<any>(setup)
   const [originalSetup, setOriginalSetup] = useState<any>(setup)
   const [scheduledEmployees, setScheduledEmployees] = useState<Array<{id: string, name: string, timeBlock: string, area?: string, day?: string}>>([])
@@ -933,6 +937,59 @@ export function DailyView({ setup, onBack }: DailyViewProps) {
     if (selectedEmployee) {
       await startBreak(selectedEmployee.id, selectedEmployee.name, parseInt(breakDuration))
       setShowBreakDialog(false)
+    }
+  }
+
+  // Handle replace button click
+  const handleReplaceClick = (employeeId: string, employeeName: string) => {
+    setSelectedEmployeeToReplace({ id: employeeId, name: employeeName })
+    setReplacementName('')
+    setShowReplaceDialog(true)
+  }
+
+  // Handle replace employee
+  const handleReplaceEmployee = async () => {
+    if (!selectedEmployeeToReplace || !replacementName.trim()) return
+
+    try {
+      // Find all positions where the employee is assigned
+      const updatedPositions = modifiedSetup.weekSchedule[activeDay].map((block: any) => {
+        const updatedBlock = { ...block }
+        updatedBlock.positions = block.positions.map((position: any) => {
+          if (position.employeeId === selectedEmployeeToReplace.id) {
+            return {
+              ...position,
+              employeeId: `replacement-${Date.now()}`, // Generate a temporary ID
+              employeeName: replacementName
+            }
+          }
+          return position
+        })
+        return updatedBlock
+      })
+
+      // Update the setup
+      const updatedSetup = { ...modifiedSetup }
+      updatedSetup.weekSchedule[activeDay] = updatedPositions
+      setModifiedSetup(updatedSetup)
+
+      // Save changes
+      await saveChangesAutomatically('assign')
+
+      toast({
+        title: 'Employee Replaced',
+        description: `${selectedEmployeeToReplace.name} has been replaced with ${replacementName}`
+      })
+
+      // Close the dialog
+      setShowReplaceDialog(false)
+    } catch (error) {
+      console.error('Error replacing employee:', error)
+      toast({
+        title: 'Error',
+        description: 'Failed to replace employee. Please try again.',
+        variant: 'destructive'
+      })
     }
   }
 
@@ -1958,15 +2015,26 @@ export function DailyView({ setup, onBack }: DailyViewProps) {
                                   </Button>
                                 </>
                               ) : (
-                                <Button
-                                  variant="outline"
-                                  size="sm"
-                                  className={`h-9 px-3 w-full ${hasHadBreak(employee.id) ? 'border-green-200 text-green-600 hover:bg-green-50' : ''}`}
-                                  onClick={() => handleBreakClick(employee.id, employee.name)}
-                                >
-                                  <Coffee className="h-4 w-4 mr-2" />
-                                  {hasHadBreak(employee.id) ? 'Another Break' : 'Start Break'}
-                                </Button>
+                                <>
+                                  <Button
+                                    variant="outline"
+                                    size="sm"
+                                    className={`h-9 px-3 w-full ${hasHadBreak(employee.id) ? 'border-green-200 text-green-600 hover:bg-green-50' : ''}`}
+                                    onClick={() => handleBreakClick(employee.id, employee.name)}
+                                  >
+                                    <Coffee className="h-4 w-4 mr-2" />
+                                    {hasHadBreak(employee.id) ? 'Another Break' : 'Start Break'}
+                                  </Button>
+                                  <Button
+                                    variant="outline"
+                                    size="sm"
+                                    className="h-9 px-3 w-full border-blue-200 text-blue-600 hover:bg-blue-50"
+                                    onClick={() => handleReplaceClick(employee.id, employee.name)}
+                                  >
+                                    <RefreshCw className="h-4 w-4 mr-2" />
+                                    Replace
+                                  </Button>
+                                </>
                               )}
                             </div>
                           </div>
@@ -2058,15 +2126,26 @@ export function DailyView({ setup, onBack }: DailyViewProps) {
                                     </Button>
                                   </>
                                 ) : (
-                                  <Button
-                                    variant="outline"
-                                    size="sm"
-                                    className={`h-9 px-3 w-full ${hasHadBreak(employee.id) ? 'border-green-200 text-green-600 hover:bg-green-50' : ''}`}
-                                    onClick={() => handleBreakClick(employee.id, employee.name)}
-                                  >
-                                    <Coffee className="h-4 w-4 mr-2" />
-                                    {hasHadBreak(employee.id) ? 'Another Break' : 'Start Break'}
-                                  </Button>
+                                  <>
+                                    <Button
+                                      variant="outline"
+                                      size="sm"
+                                      className={`h-9 px-3 w-full ${hasHadBreak(employee.id) ? 'border-green-200 text-green-600 hover:bg-green-50' : ''}`}
+                                      onClick={() => handleBreakClick(employee.id, employee.name)}
+                                    >
+                                      <Coffee className="h-4 w-4 mr-2" />
+                                      {hasHadBreak(employee.id) ? 'Another Break' : 'Start Break'}
+                                    </Button>
+                                    <Button
+                                      variant="outline"
+                                      size="sm"
+                                      className="h-9 px-3 w-full border-blue-200 text-blue-600 hover:bg-blue-50"
+                                      onClick={() => handleReplaceClick(employee.id, employee.name)}
+                                    >
+                                      <RefreshCw className="h-4 w-4 mr-2" />
+                                      Replace
+                                    </Button>
+                                  </>
                                 )}
                               </div>
                             </div>
@@ -2145,15 +2224,26 @@ export function DailyView({ setup, onBack }: DailyViewProps) {
                                   </Button>
                                 </>
                               ) : (
-                                <Button
-                                  variant="outline"
-                                  size="sm"
-                                  className={`h-9 px-3 w-full ${hasHadBreak(employee.id) ? 'border-green-200 text-green-600 hover:bg-green-50' : ''}`}
-                                  onClick={() => handleBreakClick(employee.id, employee.name)}
-                                >
-                                  <Coffee className="h-4 w-4 mr-2" />
-                                  {hasHadBreak(employee.id) ? 'Another Break' : 'Start Break'}
-                                </Button>
+                                <>
+                                  <Button
+                                    variant="outline"
+                                    size="sm"
+                                    className={`h-9 px-3 w-full ${hasHadBreak(employee.id) ? 'border-green-200 text-green-600 hover:bg-green-50' : ''}`}
+                                    onClick={() => handleBreakClick(employee.id, employee.name)}
+                                  >
+                                    <Coffee className="h-4 w-4 mr-2" />
+                                    {hasHadBreak(employee.id) ? 'Another Break' : 'Start Break'}
+                                  </Button>
+                                  <Button
+                                    variant="outline"
+                                    size="sm"
+                                    className="h-9 px-3 w-full border-blue-200 text-blue-600 hover:bg-blue-50"
+                                    onClick={() => handleReplaceClick(employee.id, employee.name)}
+                                  >
+                                    <RefreshCw className="h-4 w-4 mr-2" />
+                                    Replace
+                                  </Button>
+                                </>
                               )}
                             </div>
                           </div>
@@ -2307,6 +2397,64 @@ export function DailyView({ setup, onBack }: DailyViewProps) {
                 Clear Assignment
               </Button>
             )}
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Replace Employee Dialog */}
+      <Dialog open={showReplaceDialog} onOpenChange={setShowReplaceDialog}>
+        <DialogContent className="sm:max-w-[425px]" ref={replaceDialogRef}>
+          <DialogHeader>
+            <DialogTitle className="flex items-center">
+              <RefreshCw className="h-5 w-5 mr-2 text-blue-500" />
+              Replace Employee
+            </DialogTitle>
+            <DialogDescription>
+              {selectedEmployeeToReplace ? (
+                <>
+                  <div>Enter the name of the employee who will replace <span className="font-medium">{selectedEmployeeToReplace.name}</span></div>
+                </>
+              ) : 'Enter replacement employee name'}
+            </DialogDescription>
+          </DialogHeader>
+
+          <div className="py-4 space-y-4">
+            {selectedEmployeeToReplace && (
+              <div className="p-3 rounded-lg border bg-blue-50 border-blue-100">
+                <div className="flex items-center gap-3">
+                  <div className="h-10 w-10 rounded-full flex items-center justify-center bg-blue-100">
+                    <User className="h-5 w-5 text-blue-600" />
+                  </div>
+                  <div>
+                    <h4 className="font-medium">{selectedEmployeeToReplace.name}</h4>
+                    <p className="text-sm text-gray-500">Will be replaced with:</p>
+                  </div>
+                </div>
+              </div>
+            )}
+
+            <div className="space-y-2">
+              <label className="text-sm font-medium">Replacement Employee Name</label>
+              <Input
+                type="text"
+                placeholder="Enter name..."
+                value={replacementName}
+                onChange={(e) => setReplacementName(e.target.value)}
+                className="w-full"
+              />
+            </div>
+          </div>
+
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setShowReplaceDialog(false)}>Cancel</Button>
+            <Button
+              onClick={handleReplaceEmployee}
+              className="bg-blue-500 hover:bg-blue-600"
+              disabled={!replacementName.trim()}
+            >
+              <RefreshCw className="h-4 w-4 mr-2" />
+              Replace
+            </Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
