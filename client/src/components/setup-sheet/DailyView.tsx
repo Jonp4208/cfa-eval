@@ -130,6 +130,8 @@ export function DailyView({ setup, onBack }: DailyViewProps) {
   // Using a constant for current time since we don't need to update it anymore
   const currentTime = new Date()
   const [employeeBreaks, setEmployeeBreaks] = useState<EmployeeBreak[]>([])
+  // Flag to track if breaks have been loaded from the server
+  const [breaksLoaded, setBreaksLoaded] = useState(false)
   const [showBreakDialog, setShowBreakDialog] = useState(false)
   const [selectedEmployee, setSelectedEmployee] = useState<{id: string, name: string} | null>(null)
   const [breakDuration, setBreakDuration] = useState('30')
@@ -212,6 +214,9 @@ export function DailyView({ setup, onBack }: DailyViewProps) {
     if (setup.uploadedSchedules && setup.uploadedSchedules.length > 0) {
       console.log('Loading uploaded schedules:', setup.uploadedSchedules.length);
       setScheduledEmployees(setup.uploadedSchedules);
+
+      // Load break information from uploaded schedules
+      loadBreakInformation(setup.uploadedSchedules);
     } else {
       // If no uploadedSchedules, try to extract from positions as before
       const extractedEmployees = extractEmployeesFromPositions();
@@ -224,6 +229,50 @@ export function DailyView({ setup, onBack }: DailyViewProps) {
     // Recalculate unassigned employees
     calculateUnassignedEmployees(setup.uploadedSchedules || []);
   }, [setup])
+
+  // Load break information from uploaded schedules
+  const loadBreakInformation = (employees: any[]) => {
+    console.log('Loading break information from employees:', employees.length);
+
+    const breaks: EmployeeBreak[] = [];
+
+    employees.forEach(employee => {
+      // Check if employee has break information
+      if (employee.breaks && employee.breaks.length > 0) {
+        // Add each break to the breaks array
+        employee.breaks.forEach(breakInfo => {
+          if (breakInfo.status === 'active' || breakInfo.status === 'completed') {
+            breaks.push({
+              employeeId: employee.id,
+              employeeName: employee.name,
+              startTime: breakInfo.startTime,
+              endTime: breakInfo.endTime,
+              duration: breakInfo.duration,
+              status: breakInfo.status as BreakStatus,
+              hadBreak: true
+            });
+          }
+        });
+      }
+
+      // If employee has hadBreak flag but no breaks, add a completed break
+      if (employee.hadBreak && (!employee.breaks || employee.breaks.length === 0)) {
+        breaks.push({
+          employeeId: employee.id,
+          employeeName: employee.name,
+          startTime: new Date().toISOString(), // Use current time as fallback
+          endTime: new Date().toISOString(),
+          duration: 30, // Default duration
+          status: 'completed',
+          hadBreak: true
+        });
+      }
+    });
+
+    console.log('Loaded breaks:', breaks.length);
+    setEmployeeBreaks(breaks);
+    setBreaksLoaded(true);
+  }
 
   // Extract employees from positions in the setup
   const extractEmployeesFromPositions = () => {
@@ -702,7 +751,7 @@ export function DailyView({ setup, onBack }: DailyViewProps) {
   }
 
   // Start a break for an employee
-  const startBreak = (employeeId: string, employeeName: string, duration: number) => {
+  const startBreak = async (employeeId: string, employeeName: string, duration: number) => {
     const now = new Date()
 
     // Check if employee already had a break today
@@ -721,6 +770,35 @@ export function DailyView({ setup, onBack }: DailyViewProps) {
 
     setEmployeeBreaks(prev => [...prev, newBreak])
 
+    // Update the employee in scheduledEmployees
+    const updatedEmployees = scheduledEmployees.map(emp => {
+      if (emp.id === employeeId) {
+        // Create a new breaks array or use the existing one
+        const breaks = emp.breaks || []
+
+        // Add the new break
+        breaks.push({
+          startTime: now.toISOString(),
+          duration,
+          status: 'active'
+        })
+
+        // Return the updated employee
+        return {
+          ...emp,
+          breaks,
+          hadBreak: true
+        }
+      }
+      return emp
+    })
+
+    // Update the state
+    setScheduledEmployees(updatedEmployees)
+
+    // Save the changes to the server
+    await saveChangesAutomatically('assign')
+
     toast({
       title: 'Break Started',
       description: `${employeeName} is now on a ${duration} minute break`
@@ -736,14 +814,53 @@ export function DailyView({ setup, onBack }: DailyViewProps) {
   }
 
   // End a break for an employee
-  const endBreak = (employeeId: string) => {
+  const endBreak = async (employeeId: string) => {
+    const now = new Date()
+
+    // Update the employeeBreaks state
     setEmployeeBreaks(prev => prev.map(brk =>
       brk.employeeId === employeeId && brk.status === 'active'
-        ? { ...brk, endTime: new Date().toISOString(), status: 'completed' }
+        ? { ...brk, endTime: now.toISOString(), status: 'completed' }
         : brk
     ))
 
+    // Find the employee in the breaks array
     const employee = employeeBreaks.find(b => b.employeeId === employeeId && b.status === 'active')
+
+    // Update the employee in scheduledEmployees
+    const updatedEmployees = scheduledEmployees.map(emp => {
+      if (emp.id === employeeId) {
+        // Create a new breaks array or use the existing one
+        const breaks = emp.breaks || []
+
+        // Find the active break and update it
+        const updatedBreaks = breaks.map(brk => {
+          if (brk.status === 'active') {
+            return {
+              ...brk,
+              endTime: now.toISOString(),
+              status: 'completed'
+            }
+          }
+          return brk
+        })
+
+        // Return the updated employee
+        return {
+          ...emp,
+          breaks: updatedBreaks,
+          hadBreak: true
+        }
+      }
+      return emp
+    })
+
+    // Update the state
+    setScheduledEmployees(updatedEmployees)
+
+    // Save the changes to the server
+    await saveChangesAutomatically('assign')
+
     if (employee) {
       toast({
         title: 'Break Ended',
@@ -812,9 +929,9 @@ export function DailyView({ setup, onBack }: DailyViewProps) {
   }
 
   // Handle starting a break from the dialog
-  const handleStartBreak = () => {
+  const handleStartBreak = async () => {
     if (selectedEmployee) {
-      startBreak(selectedEmployee.id, selectedEmployee.name, parseInt(breakDuration))
+      await startBreak(selectedEmployee.id, selectedEmployee.name, parseInt(breakDuration))
       setShowBreakDialog(false)
     }
   }
@@ -1793,7 +1910,7 @@ export function DailyView({ setup, onBack }: DailyViewProps) {
                         const remainingTime = getRemainingBreakTime(employee.id)
 
                         return (
-                          <div key={employee.id} className={`flex items-center justify-between p-4 rounded-md border ${breakStatus === 'active' ? 'bg-amber-50 border-amber-200' : hasHadBreak(employee.id) ? 'bg-green-50 border-green-200 hover:bg-green-100' : 'bg-white hover:bg-blue-50 border-gray-200'}`}>
+                          <div key={employee.id} className={`flex flex-col sm:flex-row sm:items-center sm:justify-between p-4 rounded-md border ${breakStatus === 'active' ? 'bg-amber-50 border-amber-200' : hasHadBreak(employee.id) ? 'bg-green-50 border-green-200 hover:bg-green-100' : 'bg-white hover:bg-blue-50 border-gray-200'}`}>
                             <div className="flex items-center gap-4">
                               <div className="h-12 w-12 rounded-full bg-blue-100 flex items-center justify-center flex-shrink-0">
                                 <User className="h-6 w-6 text-blue-600" />
@@ -1823,10 +1940,10 @@ export function DailyView({ setup, onBack }: DailyViewProps) {
                               </div>
                             </div>
 
-                            <div className="flex flex-col gap-2 items-end">
+                            <div className="flex flex-col gap-2 w-full sm:w-auto mt-3 sm:mt-0 sm:items-end">
                               {breakStatus === 'active' ? (
                                 <>
-                                  <div className="flex items-center bg-amber-100 text-amber-600 px-2 py-1 rounded-md text-xs">
+                                  <div className="flex items-center justify-center bg-amber-100 text-amber-600 px-3 py-2 rounded-md text-sm font-medium">
                                     <Coffee className="h-3 w-3 mr-1" />
                                     <span>On Break ({remainingTime}m)</span>
                                   </div>
@@ -1882,7 +1999,7 @@ export function DailyView({ setup, onBack }: DailyViewProps) {
                           const remainingTime = getRemainingBreakTime(employee.id)
 
                           return (
-                            <div key={employee.id} className={`flex items-center justify-between p-4 rounded-md border ${breakStatus === 'active' ? 'bg-amber-50 border-amber-200' : hasHadBreak(employee.id) ? 'bg-green-50 border-green-200 hover:bg-green-100' : 'bg-white hover:bg-green-50 border-gray-200'}`}>
+                            <div key={employee.id} className={`flex flex-col sm:flex-row sm:items-center sm:justify-between p-4 rounded-md border ${breakStatus === 'active' ? 'bg-amber-50 border-amber-200' : hasHadBreak(employee.id) ? 'bg-green-50 border-green-200 hover:bg-green-100' : 'bg-white hover:bg-green-50 border-gray-200'}`}>
                               <div className="flex items-center gap-4">
                                 <div className="h-12 w-12 rounded-full bg-green-100 flex items-center justify-center flex-shrink-0">
                                   <User className="h-6 w-6 text-green-600" />
@@ -1923,10 +2040,10 @@ export function DailyView({ setup, onBack }: DailyViewProps) {
                                 </div>
                               </div>
 
-                              <div className="flex flex-col gap-2 items-end">
+                              <div className="flex flex-col gap-2 w-full sm:w-auto mt-3 sm:mt-0 sm:items-end">
                                 {breakStatus === 'active' ? (
                                   <>
-                                    <div className="flex items-center bg-amber-100 text-amber-600 px-2 py-1 rounded-md text-xs">
+                                    <div className="flex items-center justify-center bg-amber-100 text-amber-600 px-3 py-2 rounded-md text-sm font-medium">
                                       <Coffee className="h-3 w-3 mr-1" />
                                       <span>On Break ({remainingTime}m)</span>
                                     </div>
@@ -1980,7 +2097,7 @@ export function DailyView({ setup, onBack }: DailyViewProps) {
                         const remainingTime = getRemainingBreakTime(employee.id)
 
                         return (
-                          <div key={employee.id} className={`flex items-center justify-between p-4 rounded-md border ${breakStatus === 'active' ? 'bg-amber-50 border-amber-200' : hasHadBreak(employee.id) ? 'bg-green-50 border-green-200 hover:bg-green-100' : 'bg-white hover:bg-gray-50 border-gray-200'}`}>
+                          <div key={employee.id} className={`flex flex-col sm:flex-row sm:items-center sm:justify-between p-4 rounded-md border ${breakStatus === 'active' ? 'bg-amber-50 border-amber-200' : hasHadBreak(employee.id) ? 'bg-green-50 border-green-200 hover:bg-green-100' : 'bg-white hover:bg-gray-50 border-gray-200'}`}>
                             <div className="flex items-center gap-4">
                               <div className="h-12 w-12 rounded-full bg-gray-100 flex items-center justify-center flex-shrink-0">
                                 <User className="h-6 w-6 text-gray-500" />
@@ -2010,10 +2127,10 @@ export function DailyView({ setup, onBack }: DailyViewProps) {
                               </div>
                             </div>
 
-                            <div className="flex flex-col gap-2 items-end">
+                            <div className="flex flex-col gap-2 w-full sm:w-auto mt-3 sm:mt-0 sm:items-end">
                               {breakStatus === 'active' ? (
                                 <>
-                                  <div className="flex items-center bg-amber-100 text-amber-600 px-2 py-1 rounded-md text-xs">
+                                  <div className="flex items-center justify-center bg-amber-100 text-amber-600 px-3 py-2 rounded-md text-sm font-medium">
                                     <Coffee className="h-3 w-3 mr-1" />
                                     <span>On Break ({remainingTime}m)</span>
                                   </div>

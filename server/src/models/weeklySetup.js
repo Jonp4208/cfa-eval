@@ -47,6 +47,26 @@ const weekScheduleSchema = new mongoose.Schema({
   sunday: dayScheduleSchema
 }, { _id: false }); // Disable _id generation for subdocuments to reduce size
 
+const breakSchema = new mongoose.Schema({
+  startTime: {
+    type: String,
+    default: null
+  },
+  endTime: {
+    type: String,
+    default: null
+  },
+  duration: {
+    type: Number,
+    default: 30
+  },
+  status: {
+    type: String,
+    enum: ['none', 'active', 'completed'],
+    default: 'none'
+  }
+}, { _id: false }); // Disable _id generation for subdocuments to reduce size
+
 const employeeScheduleSchema = new mongoose.Schema({
   id: {
     type: String,
@@ -58,7 +78,15 @@ const employeeScheduleSchema = new mongoose.Schema({
   },
   timeBlock: String,
   area: String,
-  day: String
+  day: String,
+  breaks: {
+    type: [breakSchema],
+    default: []
+  },
+  hadBreak: {
+    type: Boolean,
+    default: false
+  }
 }, { _id: false }); // Disable _id generation for subdocuments to reduce size
 
 const weeklySetupSchema = new mongoose.Schema({
