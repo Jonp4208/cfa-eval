@@ -203,13 +203,19 @@ export function DailyView({ setup, onBack }: DailyViewProps) {
 
   // Initialize modifiedSetup when setup changes
   useEffect(() => {
-    console.log('Setup received:', setup);
-    console.log('Setup weekSchedule:', setup.weekSchedule);
-    console.log('Setup has positions:', hasPositions(setup));
+    // Only log in development mode
+    if (process.env.NODE_ENV === 'development' && false) { // Disabled for now
+      console.log('Setup received:', setup);
+      console.log('Setup weekSchedule:', setup.weekSchedule);
+      console.log('Setup has positions:', hasPositions(setup));
+    }
 
     // If the setup doesn't have positions, we need to add them from the template
     if (!hasPositions(setup)) {
-      console.log('Setup has no positions, need to add them from template');
+      // Only log in development mode
+      if (process.env.NODE_ENV === 'development' && false) { // Disabled for now
+        console.log('Setup has no positions, need to add them from template');
+      }
     }
 
     setModifiedSetup(setup);
@@ -217,7 +223,10 @@ export function DailyView({ setup, onBack }: DailyViewProps) {
 
     // Initialize scheduledEmployees from uploadedSchedules if available
     if (setup.uploadedSchedules && setup.uploadedSchedules.length > 0) {
-      console.log('Loading uploaded schedules:', setup.uploadedSchedules.length);
+      // Only log in development mode
+      if (process.env.NODE_ENV === 'development' && false) { // Disabled for now
+        console.log('Loading uploaded schedules:', setup.uploadedSchedules.length);
+      }
       setScheduledEmployees(setup.uploadedSchedules);
 
       // Load break information from uploaded schedules
@@ -226,7 +235,10 @@ export function DailyView({ setup, onBack }: DailyViewProps) {
       // If no uploadedSchedules, try to extract from positions as before
       const extractedEmployees = extractEmployeesFromPositions();
       if (extractedEmployees.length > 0) {
-        console.log('Extracted employees from positions:', extractedEmployees.length);
+        // Only log in development mode
+        if (process.env.NODE_ENV === 'development' && false) { // Disabled for now
+          console.log('Extracted employees from positions:', extractedEmployees.length);
+        }
         setScheduledEmployees(extractedEmployees);
       }
     }
@@ -237,7 +249,10 @@ export function DailyView({ setup, onBack }: DailyViewProps) {
 
   // Load break information from uploaded schedules
   const loadBreakInformation = (employees: any[]) => {
-    console.log('Loading break information from employees:', employees.length);
+    // Only log in development mode
+    if (process.env.NODE_ENV === 'development' && false) { // Disabled for now
+      console.log('Loading break information from employees:', employees.length);
+    }
 
     const breaks: EmployeeBreak[] = [];
 
@@ -274,7 +289,10 @@ export function DailyView({ setup, onBack }: DailyViewProps) {
       }
     });
 
-    console.log('Loaded breaks:', breaks.length);
+    // Only log in development mode
+    if (process.env.NODE_ENV === 'development' && false) { // Disabled for now
+      console.log('Loaded breaks:', breaks.length);
+    }
     setEmployeeBreaks(breaks);
     setBreaksLoaded(true);
   }
@@ -331,7 +349,10 @@ export function DailyView({ setup, onBack }: DailyViewProps) {
 
       // Check if the setup has employees directly
       if (setup.employees && Array.isArray(setup.employees) && setup.employees.length > 0) {
-        console.log('Found employees in setup.employees:', setup.employees.length)
+        // Only log in development mode
+        if (process.env.NODE_ENV === 'development' && false) { // Disabled for now
+          console.log('Found employees in setup.employees:', setup.employees.length)
+        }
 
         // Map the employees to the format we need
         const mappedEmployees = setup.employees.map(emp => ({
@@ -348,7 +369,10 @@ export function DailyView({ setup, onBack }: DailyViewProps) {
       // Also extract employees from positions (in case there are employees assigned to positions but not in setup.employees)
       const extractedEmployees = extractEmployeesFromPositions()
       if (extractedEmployees.length > 0) {
-        console.log('Extracted employees from positions:', extractedEmployees.length)
+        // Only log in development mode
+        if (process.env.NODE_ENV === 'development' && false) { // Disabled for now
+          console.log('Extracted employees from positions:', extractedEmployees.length)
+        }
 
         // Add extracted employees that aren't already in allEmployees
         extractedEmployees.forEach(extractedEmp => {
@@ -360,7 +384,10 @@ export function DailyView({ setup, onBack }: DailyViewProps) {
 
       // If we found any employees (either in setup.employees or in positions)
       if (allEmployees.length > 0) {
-        console.log('Total employees found:', allEmployees.length)
+        // Only log in development mode
+        if (process.env.NODE_ENV === 'development' && false) { // Disabled for now
+          console.log('Total employees found:', allEmployees.length)
+        }
         setScheduledEmployees(allEmployees)
         calculateUnassignedEmployees(allEmployees)
         return
@@ -409,7 +436,10 @@ export function DailyView({ setup, onBack }: DailyViewProps) {
       return isForActiveDay && !assignedEmployeeIds.has(emp.id)
     })
 
-    console.log(`Unassigned employees for ${activeDay}:`, unassigned.length)
+    // Only log in development mode
+    if (process.env.NODE_ENV === 'development' && false) { // Disabled for now
+      console.log(`Unassigned employees for ${activeDay}:`, unassigned.length)
+    }
     setUnassignedEmployees(unassigned)
   }
 
@@ -444,12 +474,18 @@ export function DailyView({ setup, onBack }: DailyViewProps) {
   const getDateForDay = (day: string) => {
     // First, check if we have pre-calculated dates from the week range
     if (weekDates && weekDates[day]) {
-      console.log(`Using pre-calculated date for ${day}: ${weekDates[day].toDateString()}`)
+      // Only log in development mode
+      if (process.env.NODE_ENV === 'development' && false) { // Disabled for now
+        console.log(`Using pre-calculated date for ${day}: ${weekDates[day].toDateString()}`)
+      }
       return weekDates[day]
     }
 
     // If we don't have pre-calculated dates, fall back to the original calculation
-    console.log(`No pre-calculated date for ${day}, using fallback calculation`)
+    // Only log in development mode
+    if (process.env.NODE_ENV === 'development' && false) { // Disabled for now
+      console.log(`No pre-calculated date for ${day}, using fallback calculation`)
+    }
 
     // Create a new date object from the setup's start date
     const startDate = new Date(setup.startDate)
@@ -461,7 +497,9 @@ export function DailyView({ setup, onBack }: DailyViewProps) {
     }
 
     // Special case for debugging the specific issue
-    console.log(`Calculating date for ${day} from start date ${startDate.toISOString()}`)
+    if (process.env.NODE_ENV === 'development' && false) { // Disabled for now
+      console.log(`Calculating date for ${day} from start date ${startDate.toISOString()}`)
+    }
 
     // For a week starting on Sunday (4/12), the dates should be:
     // Sunday: 4/12, Monday: 4/13, Tuesday: 4/14, Wednesday: 4/15,
@@ -487,7 +525,10 @@ export function DailyView({ setup, onBack }: DailyViewProps) {
 
     // Get the day of week for the start date (0 = Sunday, 1 = Monday, etc.)
     const startDayIndex = startDate.getDay()
-    console.log(`Start date ${startDate.toDateString()} is day index ${startDayIndex}`)
+    // Only log in development mode
+    if (process.env.NODE_ENV === 'development' && false) { // Disabled for now
+      console.log(`Start date ${startDate.toDateString()} is day index ${startDayIndex}`)
+    }
 
     // Calculate days to add to get from start date to target day
     let daysToAdd = 0
@@ -501,7 +542,10 @@ export function DailyView({ setup, onBack }: DailyViewProps) {
       daysToAdd = (targetDayIndex - startDayIndex + 7) % 7
     }
 
-    console.log(`Adding ${daysToAdd} days to get to ${day}`)
+    // Only log in development mode
+    if (process.env.NODE_ENV === 'development' && false) { // Disabled for now
+      console.log(`Adding ${daysToAdd} days to get to ${day}`)
+    }
 
     // Create a new date by adding the calculated days
     const date = new Date(startDate)
@@ -511,7 +555,10 @@ export function DailyView({ setup, onBack }: DailyViewProps) {
     if (day === 'saturday') {
       // Direct fix for the specific 4/12 issue
       if (format(date, 'M/d') === '4/12') {
-        console.log('Detected Saturday 4/12 issue, setting to 4/19')
+        // Only log in development mode
+        if (process.env.NODE_ENV === 'development' && false) { // Disabled for now
+          console.log('Detected Saturday 4/12 issue, setting to 4/19')
+        }
         // Create a new date for April 19, 2023 (or whatever year is in the original date)
         const fixedDate = new Date(date.getFullYear(), 3, 19) // Month is 0-indexed, so 3 = April
         return fixedDate
@@ -520,7 +567,10 @@ export function DailyView({ setup, onBack }: DailyViewProps) {
       // Check if Saturday's date is the same as Sunday's date
       const sundayDate = getDateForDay('sunday')
       if (format(date, 'M/d') === format(sundayDate, 'M/d')) {
-        console.log('Detected Saturday date issue - same as Sunday, adding 6 days to fix')
+        // Only log in development mode
+        if (process.env.NODE_ENV === 'development' && false) { // Disabled for now
+          console.log('Detected Saturday date issue - same as Sunday, adding 6 days to fix')
+        }
         date.setDate(date.getDate() + 6) // Add 6 days to get from Sunday to Saturday
       }
 
@@ -529,12 +579,18 @@ export function DailyView({ setup, onBack }: DailyViewProps) {
       mondayDate.setDate(startDate.getDate() + 1) // Monday should be startDate + 1
 
       if (date < mondayDate) {
-        console.log('Detected Saturday date issue - before Monday, adding 7 days to fix')
+        // Only log in development mode
+        if (process.env.NODE_ENV === 'development' && false) { // Disabled for now
+          console.log('Detected Saturday date issue - before Monday, adding 7 days to fix')
+        }
         date.setDate(date.getDate() + 7) // Add one week
       }
     }
 
-    console.log(`Result date for ${day}: ${date.toDateString()} (${format(date, 'M/d')})`)
+    // Only log in development mode
+    if (process.env.NODE_ENV === 'development' && false) { // Disabled for now
+      console.log(`Result date for ${day}: ${date.toDateString()} (${format(date, 'M/d')})`)
+    }
     return date
   }
 
@@ -556,12 +612,18 @@ export function DailyView({ setup, onBack }: DailyViewProps) {
   // Get the time blocks for the active day
   const getTimeBlocks = () => {
     if (!modifiedSetup.weekSchedule || !modifiedSetup.weekSchedule[activeDay] || !modifiedSetup.weekSchedule[activeDay].timeBlocks) {
-      console.log('No time blocks found for day:', activeDay);
+      // Only log in development mode
+      if (process.env.NODE_ENV === 'development' && false) { // Disabled for now
+        console.log('No time blocks found for day:', activeDay);
+      }
       return []
     }
 
     const blocks = modifiedSetup.weekSchedule[activeDay].timeBlocks;
-    console.log('Time blocks for day:', activeDay, blocks);
+    // Only log in development mode
+    if (process.env.NODE_ENV === 'development' && false) { // Disabled for now
+      console.log('Time blocks for day:', activeDay, blocks);
+    }
     return blocks;
   }
 
@@ -640,7 +702,10 @@ export function DailyView({ setup, onBack }: DailyViewProps) {
       }
     })
 
-    console.log(`Total employees for ${activeDay}:`, Array.from(employees.values()).length)
+    // Only log in development mode
+    if (process.env.NODE_ENV === 'development' && false) { // Disabled for now
+      console.log(`Total employees for ${activeDay}:`, Array.from(employees.values()).length)
+    }
     return Array.from(employees.values())
   }
 
