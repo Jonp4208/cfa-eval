@@ -1023,6 +1023,9 @@ export function DailyView({ setup, onBack }: DailyViewProps) {
     setShowReplaceDialog(true);
   }
 
+  // State for replace loading
+  const [isReplacing, setIsReplacing] = useState(false);
+
   // Handle replace employee
   const handleReplaceEmployee = async () => {
     if (!selectedEmployeeToReplace || !replacementName.trim()) {
@@ -1031,6 +1034,8 @@ export function DailyView({ setup, onBack }: DailyViewProps) {
     }
 
     try {
+      // Show loading state
+      setIsReplacing(true);
       console.log('REPLACE: Starting replacement of', selectedEmployeeToReplace.name, 'with', replacementName);
 
       // Create a deep copy of the setup to modify
@@ -1052,46 +1057,79 @@ export function DailyView({ setup, onBack }: DailyViewProps) {
       // Update all positions with this employee
       let replacedCount = 0;
 
-      // Update all days, not just the active day
-      Object.keys(newSetup.weekSchedule).forEach(day => {
-        const daySchedule = newSetup.weekSchedule[day];
-        if (daySchedule && daySchedule.timeBlocks && Array.isArray(daySchedule.timeBlocks)) {
-          daySchedule.timeBlocks.forEach(block => {
-            if (block.positions && Array.isArray(block.positions)) {
-              block.positions.forEach(position => {
-                if (position.employeeId === selectedEmployeeToReplace.id ||
-                    (position.employeeName && position.employeeName.toLowerCase() === selectedEmployeeToReplace.name.toLowerCase())) {
-                  console.log(`REPLACE: Found position to update in ${day}:`, position.name);
-                  position.employeeName = replacementName;
-                  replacedCount++;
-                }
-              });
-            }
-          });
-        }
-      });
+      // Only update the active day for immediate UI update
+      // This makes the operation much faster
+      const daySchedule = newSetup.weekSchedule[activeDay];
+      if (daySchedule && daySchedule.timeBlocks && Array.isArray(daySchedule.timeBlocks)) {
+        daySchedule.timeBlocks.forEach(block => {
+          if (block.positions && Array.isArray(block.positions)) {
+            block.positions.forEach(position => {
+              if (position.employeeId === selectedEmployeeToReplace.id ||
+                  (position.employeeName && position.employeeName.toLowerCase() === selectedEmployeeToReplace.name.toLowerCase())) {
+                console.log(`REPLACE: Found position to update in ${activeDay}:`, position.name);
+                position.employeeName = replacementName;
+                replacedCount++;
+              }
+            });
+          }
+        });
+      }
 
       console.log(`REPLACE: Updated employee name and replaced ${replacedCount} positions`);
 
       // Update the state with the modified setup and employees
+      // This will immediately update the UI
       setModifiedSetup(newSetup);
       setScheduledEmployees(updatedEmployees);
 
-      // Save changes
-      console.log('REPLACE: Saving changes to server');
-      await saveChangesAutomatically('assign', replacementName, selectedEmployeeToReplace.name);
+      // Close the dialog immediately to improve perceived performance
+      setShowReplaceDialog(false);
 
+      // Show success toast immediately
       toast({
         title: 'Employee Replaced',
         description: `${selectedEmployeeToReplace.name} has been replaced with ${replacementName}`
       });
 
-      // Close the dialog
-      setShowReplaceDialog(false);
-
       // Force a re-render to update the UI
       setActiveHour(activeHour);
-      console.log('REPLACE: Completed successfully');
+
+      // Save changes in the background
+      console.log('REPLACE: Saving changes to server');
+      saveChangesAutomatically('assign', replacementName, selectedEmployeeToReplace.name)
+        .then(() => {
+          console.log('REPLACE: Completed successfully');
+          // Update all days in the background after saving
+          const fullUpdateSetup = JSON.parse(JSON.stringify(modifiedSetup));
+
+          // Now update all other days
+          Object.keys(fullUpdateSetup.weekSchedule).forEach(day => {
+            if (day === activeDay) return; // Skip active day, already updated
+
+            const daySchedule = fullUpdateSetup.weekSchedule[day];
+            if (daySchedule && daySchedule.timeBlocks && Array.isArray(daySchedule.timeBlocks)) {
+              daySchedule.timeBlocks.forEach(block => {
+                if (block.positions && Array.isArray(block.positions)) {
+                  block.positions.forEach(position => {
+                    if (position.employeeId === selectedEmployeeToReplace.id ||
+                        (position.employeeName && position.employeeName.toLowerCase() === selectedEmployeeToReplace.name.toLowerCase())) {
+                      position.employeeName = replacementName;
+                    }
+                  });
+                }
+              });
+            }
+          });
+
+          // Update the state with all days updated
+          setModifiedSetup(fullUpdateSetup);
+        })
+        .catch(error => {
+          console.error('REPLACE ERROR during background save:', error);
+        })
+        .finally(() => {
+          setIsReplacing(false);
+        });
     } catch (error) {
       console.error('REPLACE ERROR:', error);
       toast({
@@ -1099,6 +1137,7 @@ export function DailyView({ setup, onBack }: DailyViewProps) {
         description: 'Failed to replace employee. Please try again.',
         variant: 'destructive'
       });
+      setIsReplacing(false);
     }
   }
 
@@ -2576,14 +2615,23 @@ export function DailyView({ setup, onBack }: DailyViewProps) {
           </div>
 
           <DialogFooter>
-            <Button variant="outline" onClick={() => setShowReplaceDialog(false)}>Cancel</Button>
+            <Button variant="outline" onClick={() => setShowReplaceDialog(false)} disabled={isReplacing}>Cancel</Button>
             <Button
               onClick={handleReplaceEmployee}
               className="bg-blue-500 hover:bg-blue-600"
-              disabled={!replacementName.trim()}
+              disabled={!replacementName.trim() || isReplacing}
             >
-              <RefreshCw className="h-4 w-4 mr-2" />
-              Replace
+              {isReplacing ? (
+                <>
+                  <RefreshCw className="h-4 w-4 mr-2 animate-spin" />
+                  Replacing...
+                </>
+              ) : (
+                <>
+                  <RefreshCw className="h-4 w-4 mr-2" />
+                  Replace
+                </>
+              )}
             </Button>
           </DialogFooter>
         </DialogContent>
