@@ -1036,52 +1036,46 @@ export function DailyView({ setup, onBack }: DailyViewProps) {
       // Create a deep copy of the setup to modify
       const newSetup = JSON.parse(JSON.stringify(modifiedSetup));
 
-      // Find the position in the setup and update it
-      const daySchedule = newSetup.weekSchedule[activeDay];
-      console.log('REPLACE: Day schedule structure:', JSON.stringify(daySchedule, null, 2).substring(0, 200) + '...');
-
-      if (!daySchedule) {
-        console.error('REPLACE ERROR: No day schedule found for', activeDay);
-        throw new Error('No day schedule found');
-      }
-
-      if (!daySchedule.timeBlocks || !Array.isArray(daySchedule.timeBlocks)) {
-        console.error('REPLACE ERROR: Invalid timeBlocks structure', daySchedule);
-        throw new Error('Invalid timeBlocks structure');
-      }
-
-      // Track if we found and replaced any positions
-      let replacedCount = 0;
-
-      daySchedule.timeBlocks.forEach((block: TimeBlock, blockIndex: number) => {
-        if (!block.positions || !Array.isArray(block.positions)) {
-          console.error('REPLACE ERROR: Invalid positions structure in block', blockIndex);
-          return;
+      // Find the employee in the uploaded schedules and update their name
+      const updatedEmployees = scheduledEmployees.map(emp => {
+        if (emp.id === selectedEmployeeToReplace.id ||
+            emp.name.toLowerCase() === selectedEmployeeToReplace.name.toLowerCase()) {
+          console.log('REPLACE: Found employee to update:', emp.name, 'to', replacementName);
+          return {
+            ...emp,
+            name: replacementName
+          };
         }
-
-        block.positions.forEach((position: Position, posIndex: number) => {
-          console.log(`REPLACE DEBUG: Checking position ${position.name} with employee ${position.employeeName} (ID: ${position.employeeId})`);
-          console.log(`REPLACE DEBUG: Looking for ${selectedEmployeeToReplace.name} (ID: ${selectedEmployeeToReplace.id})`);
-
-          // Check for exact match or if the employee name matches (in case ID is different)
-          if (position.employeeId === selectedEmployeeToReplace.id ||
-              (position.employeeName && position.employeeName.toLowerCase() === selectedEmployeeToReplace.name.toLowerCase())) {
-            console.log('REPLACE: Found position to update:', position.name, 'at block', blockIndex, 'position', posIndex);
-            // Keep the same ID structure but update the name
-            position.employeeName = replacementName;
-            replacedCount++;
-          }
-        });
+        return emp;
       });
 
-      console.log(`REPLACE: Replaced ${replacedCount} positions`);
+      // Update all positions with this employee
+      let replacedCount = 0;
 
-      if (replacedCount === 0) {
-        console.warn('REPLACE WARNING: No positions were replaced');
-      }
+      // Update all days, not just the active day
+      Object.keys(newSetup.weekSchedule).forEach(day => {
+        const daySchedule = newSetup.weekSchedule[day];
+        if (daySchedule && daySchedule.timeBlocks && Array.isArray(daySchedule.timeBlocks)) {
+          daySchedule.timeBlocks.forEach(block => {
+            if (block.positions && Array.isArray(block.positions)) {
+              block.positions.forEach(position => {
+                if (position.employeeId === selectedEmployeeToReplace.id ||
+                    (position.employeeName && position.employeeName.toLowerCase() === selectedEmployeeToReplace.name.toLowerCase())) {
+                  console.log(`REPLACE: Found position to update in ${day}:`, position.name);
+                  position.employeeName = replacementName;
+                  replacedCount++;
+                }
+              });
+            }
+          });
+        }
+      });
 
-      // Update the state with the modified setup
+      console.log(`REPLACE: Updated employee name and replaced ${replacedCount} positions`);
+
+      // Update the state with the modified setup and employees
       setModifiedSetup(newSetup);
+      setScheduledEmployees(updatedEmployees);
 
       // Save changes
       console.log('REPLACE: Saving changes to server');
