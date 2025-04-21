@@ -943,64 +943,89 @@ export function DailyView({ setup, onBack }: DailyViewProps) {
 
   // Handle replace button click
   const handleReplaceClick = (employeeId: string, employeeName: string) => {
-    setSelectedEmployeeToReplace({ id: employeeId, name: employeeName })
-    setReplacementName('')
-    setShowReplaceDialog(true)
+    console.log('REPLACE CLICK: Opening replace dialog for', employeeName, '(ID:', employeeId, ')');
+    setSelectedEmployeeToReplace({ id: employeeId, name: employeeName });
+    setReplacementName('');
+    setShowReplaceDialog(true);
   }
 
   // Handle replace employee
   const handleReplaceEmployee = async () => {
-    if (!selectedEmployeeToReplace || !replacementName.trim()) return
+    if (!selectedEmployeeToReplace || !replacementName.trim()) {
+      console.error('REPLACE ERROR: Missing employee or replacement name');
+      return;
+    }
 
     try {
-      console.log('Replacing employee:', selectedEmployeeToReplace.name, 'with', replacementName)
+      console.log('REPLACE: Starting replacement of', selectedEmployeeToReplace.name, 'with', replacementName);
 
       // Create a deep copy of the setup to modify
-      const newSetup = JSON.parse(JSON.stringify(modifiedSetup))
+      const newSetup = JSON.parse(JSON.stringify(modifiedSetup));
 
       // Find the position in the setup and update it
-      const daySchedule = newSetup.weekSchedule[activeDay]
-      if (daySchedule && daySchedule.timeBlocks) {
-        // Track if we found and replaced any positions
-        let replacedCount = 0
+      const daySchedule = newSetup.weekSchedule[activeDay];
+      console.log('REPLACE: Day schedule structure:', JSON.stringify(daySchedule, null, 2).substring(0, 200) + '...');
 
-        daySchedule.timeBlocks.forEach((block: TimeBlock) => {
-          block.positions.forEach((position: Position) => {
-            if (position.employeeId === selectedEmployeeToReplace.id) {
-              console.log('Found position to update:', position)
-              position.employeeId = `replacement-${Date.now()}` // Generate a temporary ID
-              position.employeeName = replacementName
-              replacedCount++
-            }
-          })
-        })
+      if (!daySchedule) {
+        console.error('REPLACE ERROR: No day schedule found for', activeDay);
+        throw new Error('No day schedule found');
+      }
 
-        console.log(`Replaced ${replacedCount} positions`)
+      if (!daySchedule.timeBlocks || !Array.isArray(daySchedule.timeBlocks)) {
+        console.error('REPLACE ERROR: Invalid timeBlocks structure', daySchedule);
+        throw new Error('Invalid timeBlocks structure');
+      }
+
+      // Track if we found and replaced any positions
+      let replacedCount = 0;
+
+      daySchedule.timeBlocks.forEach((block: TimeBlock, blockIndex: number) => {
+        if (!block.positions || !Array.isArray(block.positions)) {
+          console.error('REPLACE ERROR: Invalid positions structure in block', blockIndex);
+          return;
+        }
+
+        block.positions.forEach((position: Position, posIndex: number) => {
+          if (position.employeeId === selectedEmployeeToReplace.id) {
+            console.log('REPLACE: Found position to update:', position.name, 'at block', blockIndex, 'position', posIndex);
+            position.employeeId = `replacement-${Date.now()}`; // Generate a temporary ID
+            position.employeeName = replacementName;
+            replacedCount++;
+          }
+        });
+      });
+
+      console.log(`REPLACE: Replaced ${replacedCount} positions`);
+
+      if (replacedCount === 0) {
+        console.warn('REPLACE WARNING: No positions were replaced');
       }
 
       // Update the state with the modified setup
-      setModifiedSetup(newSetup)
+      setModifiedSetup(newSetup);
 
       // Save changes
-      await saveChangesAutomatically('assign', replacementName, selectedEmployeeToReplace.name)
+      console.log('REPLACE: Saving changes to server');
+      await saveChangesAutomatically('assign', replacementName, selectedEmployeeToReplace.name);
 
       toast({
         title: 'Employee Replaced',
         description: `${selectedEmployeeToReplace.name} has been replaced with ${replacementName}`
-      })
+      });
 
       // Close the dialog
-      setShowReplaceDialog(false)
+      setShowReplaceDialog(false);
 
       // Force a re-render to update the UI
-      setActiveHour(activeHour)
+      setActiveHour(activeHour);
+      console.log('REPLACE: Completed successfully');
     } catch (error) {
-      console.error('Error replacing employee:', error)
+      console.error('REPLACE ERROR:', error);
       toast({
         title: 'Error',
         description: 'Failed to replace employee. Please try again.',
         variant: 'destructive'
-      })
+      });
     }
   }
 
