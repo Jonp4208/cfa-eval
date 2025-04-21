@@ -895,7 +895,7 @@ export function DailyView({ setup, onBack }: DailyViewProps) {
   }, [showAssignDialog])
 
   // Handle assigning an employee to a position
-  const handleAssignEmployee = (employeeId: string, employeeName: string) => {
+  const handleAssignEmployee = async (employeeId: string, employeeName: string) => {
     if (!selectedPosition) return
 
     // Create a deep copy of the setup to modify
@@ -926,16 +926,17 @@ export function DailyView({ setup, onBack }: DailyViewProps) {
     // Recalculate unassigned employees after assignment
     calculateUnassignedEmployees(scheduledEmployees)
 
-    toast({
-      title: 'Assignment Updated',
-      description: `${finalEmployeeName} assigned to ${selectedPosition.name}`
-    })
+    // Auto-save the changes
+    await saveChangesAutomatically('assign', finalEmployeeName, selectedPosition.name)
   }
 
   // Handle removing an employee from a position
-  const handleRemoveAssignment = (position: Position) => {
+  const handleRemoveAssignment = async (position: Position) => {
     // Create a deep copy of the setup to modify
     const newSetup = JSON.parse(JSON.stringify(modifiedSetup))
+
+    // Store employee name for the toast message
+    let removedEmployeeName = ''
 
     // Find the position in the setup and update it
     const daySchedule = newSetup.weekSchedule[activeDay]
@@ -943,14 +944,9 @@ export function DailyView({ setup, onBack }: DailyViewProps) {
       daySchedule.timeBlocks.forEach((block: TimeBlock) => {
         block.positions.forEach((pos: Position) => {
           if (pos.id === position.id) {
-            const employeeName = pos.employeeName
+            removedEmployeeName = pos.employeeName || 'Employee'
             pos.employeeId = undefined
             pos.employeeName = undefined
-
-            toast({
-              title: 'Assignment Removed',
-              description: `${employeeName} removed from ${position.name}`
-            })
           }
         })
       })
@@ -961,9 +957,75 @@ export function DailyView({ setup, onBack }: DailyViewProps) {
 
     // Recalculate unassigned employees after removing assignment
     calculateUnassignedEmployees(scheduledEmployees)
+
+    // Auto-save the changes
+    await saveChangesAutomatically('remove', removedEmployeeName, position.name)
   }
 
-  // Save the modified setup
+  // Save the modified setup automatically without page reload
+  const saveChangesAutomatically = async (actionType: 'assign' | 'remove', employeeName?: string, positionName?: string) => {
+    try {
+      // Get the token from localStorage
+      const token = localStorage.getItem('token')
+      if (!token) {
+        throw new Error('No authentication token found')
+      }
+
+      // Create the payload with all scheduled employees
+      const payload = {
+        name: modifiedSetup.name,
+        startDate: modifiedSetup.startDate,
+        endDate: modifiedSetup.endDate,
+        weekSchedule: modifiedSetup.weekSchedule,
+        uploadedSchedules: scheduledEmployees // Save in the new field
+      }
+
+      // Call the API to update the setup
+      const response = await fetch(`/api/weekly-setups/${setup._id}`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
+        body: JSON.stringify(payload),
+      })
+
+      if (!response.ok) {
+        const errorData = await response.json()
+        throw new Error(errorData.message || 'Failed to save changes')
+      }
+
+      // Update the original setup with the modified one
+      const updatedSetup = await response.json()
+
+      // Show a toast message based on the action type
+      if (actionType === 'assign' && employeeName && positionName) {
+        toast({
+          title: 'Assignment Saved',
+          description: `${employeeName} assigned to ${positionName} and changes saved automatically`
+        })
+      } else if (actionType === 'remove' && employeeName && positionName) {
+        toast({
+          title: 'Assignment Removed',
+          description: `${employeeName} removed from ${positionName} and changes saved automatically`
+        })
+      } else {
+        toast({
+          title: 'Changes Saved',
+          description: 'Your changes have been saved automatically'
+        })
+      }
+    } catch (error) {
+      console.error('Error saving setup:', error)
+      toast({
+        title: 'Error Saving',
+        description: error instanceof Error ? error.message : 'Failed to save changes automatically. Please try manual save.',
+        variant: 'destructive'
+      })
+    }
+  }
+
+  // Save the modified setup with page reload (manual save)
   const handleSaveChanges = async () => {
     try {
       // Show loading toast
@@ -1053,7 +1115,7 @@ export function DailyView({ setup, onBack }: DailyViewProps) {
             className="h-10 bg-red-600 hover:bg-red-700 w-full sm:w-auto flex-1 sm:flex-none"
           >
             <Save className="h-4 w-4 mr-2" />
-            Save Changes
+            Save & Refresh
           </Button>
         </div>
       </div>
