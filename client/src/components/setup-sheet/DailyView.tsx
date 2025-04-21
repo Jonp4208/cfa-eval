@@ -1823,9 +1823,9 @@ export function DailyView({ setup, onBack }: DailyViewProps) {
                               </div>
                             </div>
 
-                            <div>
+                            <div className="flex flex-col gap-2 items-end">
                               {breakStatus === 'active' ? (
-                                <div className="flex items-center gap-2">
+                                <>
                                   <div className="flex items-center bg-amber-100 text-amber-600 px-2 py-1 rounded-md text-xs">
                                     <Coffee className="h-3 w-3 mr-1" />
                                     <span>On Break ({remainingTime}m)</span>
@@ -1833,25 +1833,23 @@ export function DailyView({ setup, onBack }: DailyViewProps) {
                                   <Button
                                     variant="outline"
                                     size="sm"
-                                    className="h-9 px-3 border-amber-200 text-amber-600 hover:bg-amber-50"
+                                    className="h-9 px-3 border-amber-200 text-amber-600 hover:bg-amber-50 w-full"
                                     onClick={() => endBreak(employee.id)}
                                   >
                                     <Play className="h-3 w-3 mr-2" />
                                     End Break
                                   </Button>
-                                </div>
+                                </>
                               ) : (
-                                <div className="flex items-center gap-2">
-                                  <Button
-                                    variant="outline"
-                                    size="sm"
-                                    className={`h-9 px-3 ${hasHadBreak(employee.id) ? 'border-green-200 text-green-600 hover:bg-green-50' : ''}`}
-                                    onClick={() => handleBreakClick(employee.id, employee.name)}
-                                  >
-                                    <Coffee className="h-4 w-4 mr-2" />
-                                    {hasHadBreak(employee.id) ? 'Another Break' : 'Start Break'}
-                                  </Button>
-                                </div>
+                                <Button
+                                  variant="outline"
+                                  size="sm"
+                                  className={`h-9 px-3 w-full ${hasHadBreak(employee.id) ? 'border-green-200 text-green-600 hover:bg-green-50' : ''}`}
+                                  onClick={() => handleBreakClick(employee.id, employee.name)}
+                                >
+                                  <Coffee className="h-4 w-4 mr-2" />
+                                  {hasHadBreak(employee.id) ? 'Another Break' : 'Start Break'}
+                                </Button>
                               )}
                             </div>
                           </div>
@@ -1925,9 +1923,9 @@ export function DailyView({ setup, onBack }: DailyViewProps) {
                                 </div>
                               </div>
 
-                              <div>
+                              <div className="flex flex-col gap-2 items-end">
                                 {breakStatus === 'active' ? (
-                                  <div className="flex items-center gap-2">
+                                  <>
                                     <div className="flex items-center bg-amber-100 text-amber-600 px-2 py-1 rounded-md text-xs">
                                       <Coffee className="h-3 w-3 mr-1" />
                                       <span>On Break ({remainingTime}m)</span>
@@ -1935,25 +1933,23 @@ export function DailyView({ setup, onBack }: DailyViewProps) {
                                     <Button
                                       variant="outline"
                                       size="sm"
-                                      className="h-9 px-3 border-amber-200 text-amber-600 hover:bg-amber-50"
+                                      className="h-9 px-3 border-amber-200 text-amber-600 hover:bg-amber-50 w-full"
                                       onClick={() => endBreak(employee.id)}
                                     >
                                       <Play className="h-3 w-3 mr-2" />
                                       End Break
                                     </Button>
-                                  </div>
+                                  </>
                                 ) : (
-                                  <div className="flex items-center gap-2">
-                                    <Button
-                                      variant="outline"
-                                      size="sm"
-                                      className={`h-9 px-3 ${hasHadBreak(employee.id) ? 'border-green-200 text-green-600 hover:bg-green-50' : ''}`}
-                                      onClick={() => handleBreakClick(employee.id, employee.name)}
-                                    >
-                                      <Coffee className="h-4 w-4 mr-2" />
-                                      {hasHadBreak(employee.id) ? 'Another Break' : 'Start Break'}
-                                    </Button>
-                                  </div>
+                                  <Button
+                                    variant="outline"
+                                    size="sm"
+                                    className={`h-9 px-3 w-full ${hasHadBreak(employee.id) ? 'border-green-200 text-green-600 hover:bg-green-50' : ''}`}
+                                    onClick={() => handleBreakClick(employee.id, employee.name)}
+                                  >
+                                    <Coffee className="h-4 w-4 mr-2" />
+                                    {hasHadBreak(employee.id) ? 'Another Break' : 'Start Break'}
+                                  </Button>
                                 )}
                               </div>
                             </div>
@@ -2014,9 +2010,9 @@ export function DailyView({ setup, onBack }: DailyViewProps) {
                               </div>
                             </div>
 
-                            <div>
+                            <div className="flex flex-col gap-2 items-end">
                               {breakStatus === 'active' ? (
-                                <div className="flex items-center gap-2">
+                                <>
                                   <div className="flex items-center bg-amber-100 text-amber-600 px-2 py-1 rounded-md text-xs">
                                     <Coffee className="h-3 w-3 mr-1" />
                                     <span>On Break ({remainingTime}m)</span>
@@ -2024,25 +2020,23 @@ export function DailyView({ setup, onBack }: DailyViewProps) {
                                   <Button
                                     variant="outline"
                                     size="sm"
-                                    className="h-9 px-3 border-amber-200 text-amber-600 hover:bg-amber-50"
+                                    className="h-9 px-3 border-amber-200 text-amber-600 hover:bg-amber-50 w-full"
                                     onClick={() => endBreak(employee.id)}
                                   >
                                     <Play className="h-3 w-3 mr-2" />
                                     End Break
                                   </Button>
-                                </div>
+                                </>
                               ) : (
-                                <div className="flex items-center gap-2">
-                                  <Button
-                                    variant="outline"
-                                    size="sm"
-                                    className={`h-9 px-3 ${hasHadBreak(employee.id) ? 'border-green-200 text-green-600 hover:bg-green-50' : ''}`}
-                                    onClick={() => handleBreakClick(employee.id, employee.name)}
-                                  >
-                                    <Coffee className="h-4 w-4 mr-2" />
-                                    {hasHadBreak(employee.id) ? 'Another Break' : 'Start Break'}
-                                  </Button>
-                                </div>
+                                <Button
+                                  variant="outline"
+                                  size="sm"
+                                  className={`h-9 px-3 w-full ${hasHadBreak(employee.id) ? 'border-green-200 text-green-600 hover:bg-green-50' : ''}`}
+                                  onClick={() => handleBreakClick(employee.id, employee.name)}
+                                >
+                                  <Coffee className="h-4 w-4 mr-2" />
+                                  {hasHadBreak(employee.id) ? 'Another Break' : 'Start Break'}
+                                </Button>
                               )}
                             </div>
                           </div>
