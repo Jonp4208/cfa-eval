@@ -89,3 +89,44 @@ export function formatUTCTimeDirectly(date: Date | string): string {
   const displayHours = hours % 12 || 12; // Convert 0 to 12 for 12 AM
   return `${displayHours}:${minutes} ${ampm}`;
 }
+
+/**
+ * Convert 24-hour time format (HH:MM) to 12-hour AM/PM format
+ */
+export function formatHourTo12Hour(hour: string | number): string {
+  // Handle null or undefined
+  if (hour === null || hour === undefined) {
+    return '';
+  }
+
+  // If it's already in the format we want, return it
+  if (typeof hour === 'string') {
+    if (hour.indexOf('AM') > -1 || hour.indexOf('PM') > -1) {
+      return hour;
+    }
+  }
+
+  // Parse the hour
+  let hourNum: number;
+  if (typeof hour === 'string') {
+    // Handle formats like "14:00" or "14"
+    const parts = hour.split(':');
+    hourNum = parseInt(parts[0]);
+    if (isNaN(hourNum)) {
+      return hour; // Return original if parsing fails
+    }
+  } else if (typeof hour === 'number') {
+    hourNum = hour;
+  } else {
+    return String(hour); // Return string representation for other types
+  }
+
+  // Convert to 12-hour format
+  const ampm = hourNum >= 12 ? 'PM' : 'AM';
+  const hour12 = hourNum % 12 || 12; // Convert 0 to 12 for 12 AM
+
+  // Check if the original hour had minutes
+  const hasMinutes = typeof hour === 'string' && hour.indexOf(':') > -1;
+
+  return `${hour12}${hasMinutes ? ':00' : ''} ${ampm}`;
+}

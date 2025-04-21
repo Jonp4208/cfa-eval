@@ -4,6 +4,7 @@ import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Clock, User, Calendar, ArrowLeft, Coffee, Play, Pause, Download, Printer, RefreshCw, Search, Filter, ChevronDown, X, Check, Save } from 'lucide-react'
 import { format, isToday, parseISO } from 'date-fns'
+import { formatHourTo12Hour } from '@/lib/utils/date-utils'
 import { useNavigate } from 'react-router-dom'
 import { useToast } from '@/components/ui/use-toast'
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip'
@@ -803,8 +804,12 @@ export function DailyView({ setup, onBack }: DailyViewProps) {
     const blockStartMinutes = parseTimeToMinutes(blockStart)
     const blockEndMinutes = parseTimeToMinutes(blockEnd)
 
+    // Add 1 minute to blockStartMinutes to ensure employees who leave exactly at the start time are not included
+    const blockStartPlusOneMinute = blockStartMinutes + 1
+
     // Check if the employee's schedule overlaps with the block
-    return empStartMinutes <= blockEndMinutes && empEndMinutes >= blockStartMinutes
+    // Employee must be available at least 1 minute past the start time of the block
+    return empStartMinutes <= blockEndMinutes && empEndMinutes >= blockStartPlusOneMinute
   }
 
   // Get employees available for a specific time block
@@ -834,7 +839,12 @@ export function DailyView({ setup, onBack }: DailyViewProps) {
       try {
         const empStartMinutes = parseTimeToMinutes(empStart)
         const empEndMinutes = parseTimeToMinutes(empEnd)
-        return empStartMinutes <= blockEndMinutes && empEndMinutes >= blockStartMinutes
+
+        // Add 1 minute to blockStartMinutes to ensure employees who leave exactly at the start time are not included
+        const blockStartPlusOneMinute = blockStartMinutes + 1
+
+        // Employee must be available at least 1 minute past the start time of the block
+        return empStartMinutes <= blockEndMinutes && empEndMinutes >= blockStartPlusOneMinute
       } catch (error) {
         console.error('Error parsing time for employee:', employee, error)
         return false
@@ -1092,13 +1102,14 @@ export function DailyView({ setup, onBack }: DailyViewProps) {
                       const hasScheduledBlocks = getTimeBlocksByHour(hour).length > 0
                       const positionCount = getTimeBlocksByHour(hour).reduce((acc, block) => acc + block.positions.length, 0)
 
-                      // Format the hour for display (5:00, 6:00, etc.)
-                      const displayHour = parseInt(hour).toString()
+                      // Format the hour for display with AM/PM
+                      const displayHour = parseInt(hour)
+                      const formattedHour = formatHourTo12Hour(displayHour)
 
                       return (
                         <SelectItem key={hour} value={hour}>
                           <div className="flex items-center justify-between w-full">
-                            <span className="font-medium">{displayHour}:00</span>
+                            <span className="font-medium">{formattedHour}</span>
                             {hasScheduledBlocks && (
                               <span className="text-xs bg-red-50 text-red-600 px-1.5 py-0.5 rounded-full ml-2">
                                 {positionCount} positions
@@ -1172,7 +1183,7 @@ export function DailyView({ setup, onBack }: DailyViewProps) {
                   <div className="flex h-5 w-5 items-center justify-center rounded-full bg-blue-100 mr-2">
                     <Clock className="h-3 w-3 text-blue-600" />
                   </div>
-                  <span className="text-blue-800">{activeHour} - {parseInt(activeHour) + 1}:00</span>
+                  <span className="text-blue-800">{formatHourTo12Hour(activeHour)} - {formatHourTo12Hour(parseInt(activeHour) + 1)}</span>
                   {activeDay === getTodayDayName() &&
                     parseInt(activeHour) === new Date().getHours() &&
                     <Badge className="ml-2 bg-blue-500 text-white">Current Hour</Badge>
@@ -1181,7 +1192,7 @@ export function DailyView({ setup, onBack }: DailyViewProps) {
 
                 {hourTimeBlocks.length === 0 ? (
                   <Card className="p-4 text-center text-gray-500">
-                    <p className="text-sm">No positions scheduled for {parseInt(activeHour)}:00 - {parseInt(activeHour) + 1}:00</p>
+                    <p className="text-sm">No positions scheduled for {formatHourTo12Hour(activeHour)} - {formatHourTo12Hour(parseInt(activeHour) + 1)}</p>
                     <p className="text-xs mt-1">Try selecting a different hour or check the schedule</p>
                   </Card>
                 ) : (
@@ -1197,7 +1208,7 @@ export function DailyView({ setup, onBack }: DailyViewProps) {
                           <div className="flex justify-between items-center mb-2">
                             <div className="flex items-center">
                               {isCurrent && <div className="h-2 w-2 rounded-full bg-green-500 mr-2 animate-pulse"></div>}
-                              <h4 className="text-sm font-medium">{block.start} - {block.end}</h4>
+                              <h4 className="text-sm font-medium">{formatHourTo12Hour(block.start)} - {formatHourTo12Hour(block.end)}</h4>
                             </div>
                             {isCurrent && <Badge className="bg-blue-500 text-white">Current</Badge>}
                           </div>
@@ -1230,7 +1241,9 @@ export function DailyView({ setup, onBack }: DailyViewProps) {
                                               {position.employeeId && (
                                                 <div className="text-xs text-blue-500 flex items-center mt-1">
                                                   <Clock className="h-3 w-3 mr-1" />
-                                                  {scheduledEmployees.find(e => e.id === position.employeeId)?.timeBlock || 'No time data'}
+                                                  {scheduledEmployees.find(e => e.id === position.employeeId)?.timeBlock ?
+                                                    scheduledEmployees.find(e => e.id === position.employeeId)?.timeBlock.split(' - ').map(time => formatHourTo12Hour(time)).join(' - ') :
+                                                    'No time data'}
                                                 </div>
                                               )}
                                             </div>
@@ -1311,7 +1324,9 @@ export function DailyView({ setup, onBack }: DailyViewProps) {
                                               {position.employeeId && (
                                                 <div className="text-xs text-blue-500 flex items-center mt-1">
                                                   <Clock className="h-3 w-3 mr-1" />
-                                                  {scheduledEmployees.find(e => e.id === position.employeeId)?.timeBlock || 'No time data'}
+                                                  {scheduledEmployees.find(e => e.id === position.employeeId)?.timeBlock ?
+                                                    scheduledEmployees.find(e => e.id === position.employeeId)?.timeBlock.split(' - ').map(time => formatHourTo12Hour(time)).join(' - ') :
+                                                    'No time data'}
                                                 </div>
                                               )}
                                             </div>
@@ -1596,7 +1611,7 @@ export function DailyView({ setup, onBack }: DailyViewProps) {
                                 </div>
                                 <div className="text-xs text-gray-500 mt-2 flex items-center">
                                   <Clock className="h-3 w-3 mr-1 text-gray-400" />
-                                  <span>{employee.timeBlock}</span>
+                                  <span>{employee.timeBlock ? employee.timeBlock.split(' - ').map(time => formatHourTo12Hour(time)).join(' - ') : ''}</span>
                                 </div>
                               </div>
                             </div>
@@ -1693,7 +1708,12 @@ export function DailyView({ setup, onBack }: DailyViewProps) {
                                   </div>
                                   <div className="text-xs text-gray-500 mt-2 flex items-center">
                                     <Clock className="h-3 w-3 mr-1 text-gray-400" />
-                                    <span>{scheduledEmployees.find(e => e.id === employee.id)?.timeBlock || employee.timeBlocks.join(', ')}</span>
+                                    <span>
+                                    {scheduledEmployees.find(e => e.id === employee.id)?.timeBlock ?
+                                      scheduledEmployees.find(e => e.id === employee.id)?.timeBlock.split(' - ').map(time => formatHourTo12Hour(time)).join(' - ') :
+                                      employee.timeBlocks.map(block => block.split(' - ').map(time => formatHourTo12Hour(time)).join(' - ')).join(', ')
+                                    }
+                                  </span>
                                   </div>
                                 </div>
                               </div>
@@ -1869,7 +1889,7 @@ export function DailyView({ setup, onBack }: DailyViewProps) {
                   <div>Select an employee to assign to <span className="font-medium">{selectedPosition.name}</span></div>
                   <div className="flex items-center mt-2 bg-blue-50 p-2 rounded-md border border-blue-100">
                     <Clock className="h-4 w-4 mr-2 text-blue-500" />
-                    <span className="text-sm">Time block: <span className="font-medium">{selectedPosition.blockStart} - {selectedPosition.blockEnd}</span></span>
+                    <span className="text-sm">Time block: <span className="font-medium">{formatHourTo12Hour(selectedPosition.blockStart)} - {formatHourTo12Hour(selectedPosition.blockEnd)}</span></span>
                   </div>
                 </>
               ) : 'Select an employee'}
@@ -1930,7 +1950,12 @@ export function DailyView({ setup, onBack }: DailyViewProps) {
                               </div>
                               <div className="text-xs text-gray-500 mt-1 flex items-center">
                                 <Clock className="h-3 w-3 mr-1" />
-                                <span>{scheduledEmployees.find(e => e.id === employee.id)?.timeBlock || employee.timeBlocks.join(', ')}</span>
+                                <span>
+                                  {scheduledEmployees.find(e => e.id === employee.id)?.timeBlock ?
+                                    scheduledEmployees.find(e => e.id === employee.id)?.timeBlock.split(' - ').map(time => formatHourTo12Hour(time)).join(' - ') :
+                                    employee.timeBlocks.map(block => block.split(' - ').map(time => formatHourTo12Hour(time)).join(' - ')).join(', ')
+                                  }
+                                </span>
                               </div>
                             </div>
                           </div>
