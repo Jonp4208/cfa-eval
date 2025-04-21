@@ -742,16 +742,25 @@ export function DailyView({ setup, onBack }: DailyViewProps) {
     if (!hour) return []
 
     const allBlocks = getTimeBlocks();
-    console.log('All blocks before filtering by hour:', allBlocks);
+    // Only log in development mode
+    if (process.env.NODE_ENV === 'development' && false) { // Disabled for now
+      console.log('All blocks before filtering by hour:', allBlocks);
+    }
 
     const filteredBlocks = allBlocks.filter(block => {
       const blockHour = block.start.split(':')[0] + ':00'
       const matches = blockHour === hour;
-      console.log(`Block ${block.start}-${block.end}, hour: ${blockHour}, matches ${hour}: ${matches}`);
+      // Only log in development mode
+      if (process.env.NODE_ENV === 'development' && false) { // Disabled for now
+        console.log(`Block ${block.start}-${block.end}, hour: ${blockHour}, matches ${hour}: ${matches}`);
+      }
       return matches;
     });
 
-    console.log('Filtered blocks for hour', hour, ':', filteredBlocks);
+    // Only log in development mode
+    if (process.env.NODE_ENV === 'development' && false) { // Disabled for now
+      console.log('Filtered blocks for hour', hour, ':', filteredBlocks);
+    }
     return filteredBlocks;
   }
 
@@ -1059,7 +1068,10 @@ export function DailyView({ setup, onBack }: DailyViewProps) {
 
   // Get employees available for a specific time block
   const getAvailableEmployeesForTimeBlock = (blockStart: string, blockEnd: string) => {
-    console.log('Getting available employees for time block:', blockStart, '-', blockEnd)
+    // Only log in development mode
+    if (process.env.NODE_ENV === 'development' && false) { // Disabled for now
+      console.log('Getting available employees for time block:', blockStart, '-', blockEnd)
+    }
 
     // Parse times to minutes for comparison
     const parseTimeToMinutes = (time: string): number => {
@@ -1073,13 +1085,19 @@ export function DailyView({ setup, onBack }: DailyViewProps) {
     // Helper function to check if an employee's schedule overlaps with the block
     const isAvailableForTimeBlock = (employee) => {
       if (!employee.timeBlock) {
-        console.warn('Employee missing timeBlock:', employee)
+        // Only log warnings in development mode
+        if (process.env.NODE_ENV === 'development') {
+          console.warn('Employee missing timeBlock:', employee)
+        }
         return false
       }
 
       const [empStart, empEnd] = employee.timeBlock.split(' - ')
       if (!empStart || !empEnd) {
-        console.warn('Invalid timeBlock format:', employee.timeBlock)
+        // Only log warnings in development mode
+        if (process.env.NODE_ENV === 'development') {
+          console.warn('Invalid timeBlock format:', employee.timeBlock)
+        }
         return false
       }
 
@@ -1134,7 +1152,10 @@ export function DailyView({ setup, onBack }: DailyViewProps) {
       })
     }
 
-    console.log('Employees already assigned to positions in this time block:', Array.from(assignedEmployeeIds))
+    // Only log in development mode
+    if (process.env.NODE_ENV === 'development' && false) { // Disabled for now
+      console.log('Employees already assigned to positions in this time block:', Array.from(assignedEmployeeIds))
+    }
 
     // Get all employees for the current day
     const employeesForDay = scheduledEmployees.filter(employee => {
@@ -1144,7 +1165,10 @@ export function DailyView({ setup, onBack }: DailyViewProps) {
              employee.day.toLowerCase() === activeDay
     })
 
-    console.log(`Found ${employeesForDay.length} employees for ${activeDay}`)
+    // Only log in development mode
+    if (process.env.NODE_ENV === 'development' && false) { // Disabled for now
+      console.log(`Found ${employeesForDay.length} employees for ${activeDay}`)
+    }
 
     // Filter to those available for this time block and not already assigned
     let availableEmployees = employeesForDay.filter(employee => {
@@ -1162,11 +1186,17 @@ export function DailyView({ setup, onBack }: DailyViewProps) {
       if (selectedPosition.category === 'Kitchen') {
         // For Kitchen positions, only show BOH employees
         availableEmployees = availableEmployees.filter(employee => employee.area === 'BOH')
-        console.log(`Filtered to ${availableEmployees.length} BOH employees for Kitchen position`)
+        // Only log in development mode
+        if (process.env.NODE_ENV === 'development' && false) { // Disabled for now
+          console.log(`Filtered to ${availableEmployees.length} BOH employees for Kitchen position`)
+        }
       } else if (selectedPosition.category === 'Front Counter' || selectedPosition.category === 'Drive Thru') {
         // For Front Counter and Drive Thru positions, only show FOH employees
         availableEmployees = availableEmployees.filter(employee => employee.area === 'FOH')
-        console.log(`Filtered to ${availableEmployees.length} FOH employees for ${selectedPosition.category} position`)
+        // Only log in development mode
+        if (process.env.NODE_ENV === 'development' && false) { // Disabled for now
+          console.log(`Filtered to ${availableEmployees.length} FOH employees for ${selectedPosition.category} position`)
+        }
       }
     }
 
