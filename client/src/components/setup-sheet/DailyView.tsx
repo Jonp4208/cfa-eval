@@ -149,22 +149,20 @@ export function DailyView({ setup, onBack }: DailyViewProps) {
   // We no longer need to update the current time
   // since we've removed the time display
 
-  // Set initial active hour to first available hour or current hour if available
+  // Set initial active hour to closest available hour to current time
   useEffect(() => {
     // Get all available hours
     const availableHours = getAllHours()
 
     if (availableHours.length > 0) {
-      // Get current hour in the format "HH:00"
-      const now = new Date()
-      const currentHour = `${now.getHours().toString().padStart(2, '0')}:00`
+      // Find the closest hour to the current time
+      const closestHour = findClosestHour(availableHours)
 
-      // If current hour is available, set it as active, otherwise use the first available hour
-      if (availableHours.includes(currentHour)) {
-        setActiveHour(currentHour)
-      } else {
-        setActiveHour(availableHours[0])
-      }
+      // Set the active hour to the closest hour or the first available hour
+      setActiveHour(closestHour || availableHours[0])
+
+      // Log for debugging
+      console.log(`Setting active hour to ${closestHour || availableHours[0]} (closest to current time)`)
     }
 
     // Fetch scheduled employees when the active day changes
@@ -646,6 +644,41 @@ export function DailyView({ setup, onBack }: DailyViewProps) {
 
     // Convert to array and sort
     return Array.from(hours).sort()
+  }
+
+  // Find the closest available hour to the current time
+  const findClosestHour = (availableHours: string[]): string | null => {
+    if (availableHours.length === 0) return null
+
+    // Get current hour in the format "HH:00"
+    const now = new Date()
+    const currentHour = `${now.getHours().toString().padStart(2, '0')}:00`
+
+    // If current hour is available, use it
+    if (availableHours.includes(currentHour)) {
+      return currentHour
+    }
+
+    // Convert hours to numbers for comparison
+    const currentHourNum = parseInt(currentHour.split(':')[0])
+    const hourNums = availableHours.map(h => parseInt(h.split(':')[0]))
+
+    // Find the closest hour
+    let closestHour = availableHours[0]
+    let minDiff = 24 // Maximum possible difference
+
+    for (const hour of availableHours) {
+      const hourNum = parseInt(hour.split(':')[0])
+      const diff = Math.abs(hourNum - currentHourNum)
+
+      // If this hour is closer than the current closest
+      if (diff < minDiff) {
+        minDiff = diff
+        closestHour = hour
+      }
+    }
+
+    return closestHour
   }
 
   // Filter time blocks by hour
@@ -1160,7 +1193,8 @@ export function DailyView({ setup, onBack }: DailyViewProps) {
                   </SelectTrigger>
                   <SelectContent>
                     {allHours.map(hour => {
-                      const isCurrentHour = hour.split(':')[0] === new Date().getHours().toString().padStart(2, '0')
+                      const now = new Date()
+                      const isCurrentHour = hour.split(':')[0] === now.getHours().toString().padStart(2, '0')
                       const hasScheduledBlocks = getTimeBlocksByHour(hour).length > 0
                       const positionCount = getTimeBlocksByHour(hour).reduce((acc, block) => acc + block.positions.length, 0)
 
@@ -1168,20 +1202,33 @@ export function DailyView({ setup, onBack }: DailyViewProps) {
                       const displayHour = parseInt(hour)
                       const formattedHour = formatHourTo12Hour(displayHour)
 
+                      // Format current time for display
+                      const currentTimeStr = `${now.getHours().toString().padStart(2, '0')}:${now.getMinutes().toString().padStart(2, '0')}`
+                      const formattedCurrentTime = formatHourTo12Hour(`${now.getHours()}:${now.getMinutes()}`)
+
+                      // Check if this hour is the selected hour
+                      const isSelectedHour = hour === activeHour
+
                       return (
                         <SelectItem key={hour} value={hour}>
                           <div className="flex items-center justify-between w-full">
-                            <span className="font-medium">{formattedHour}</span>
-                            {hasScheduledBlocks && (
-                              <span className="text-xs bg-red-50 text-red-600 px-1.5 py-0.5 rounded-full ml-2">
-                                {positionCount} positions
-                              </span>
-                            )}
-                            {isCurrentHour && (
-                              <span className="text-[10px] bg-blue-100 text-blue-600 px-1 py-0.5 rounded ml-auto">
-                                Current
-                              </span>
-                            )}
+                            <div className="flex items-center">
+                              {isSelectedHour && <Check className="h-4 w-4 text-red-600 mr-1.5" />}
+                              <div className="flex items-center gap-2">
+                                <span className="font-medium">{parseInt(hour) === 0 ? 12 : parseInt(hour) > 12 ? parseInt(hour) - 12 : parseInt(hour)}</span>
+                                <span className="text-xs text-gray-500">{parseInt(hour) >= 12 ? 'PM' : 'AM'}</span>
+                              </div>
+                            </div>
+                            <div className="flex items-center gap-1.5">
+                              {hasScheduledBlocks && (
+                                <span className="text-xs bg-red-50 text-red-600 px-1.5 py-0.5 rounded-full">
+                                  {positionCount} positions
+                                </span>
+                              )}
+                              {isCurrentHour && (
+                                <span className="text-[10px] bg-red-100 text-red-600 px-1 py-0.5 rounded ml-2">Current</span>
+                              )}
+                            </div>
                           </div>
                         </SelectItem>
                       )
@@ -1242,14 +1289,18 @@ export function DailyView({ setup, onBack }: DailyViewProps) {
             {activeHour && allHours.length > 0 && (
               <div className="mb-6 space-y-2">
                 <h3 className="text-md font-semibold flex items-center">
-                  <div className="flex h-5 w-5 items-center justify-center rounded-full bg-blue-100 mr-2">
+                  <div className={`flex h-5 w-5 items-center justify-center rounded-full ${activeDay === getTodayDayName() && parseInt(activeHour) === new Date().getHours() ? 'bg-blue-200 animate-pulse' : 'bg-blue-100'} mr-2`}>
                     <Clock className="h-3 w-3 text-blue-600" />
                   </div>
                   <span className="text-blue-800">{formatHourTo12Hour(activeHour)} - {formatHourTo12Hour(parseInt(activeHour) + 1)}</span>
-                  {activeDay === getTodayDayName() &&
-                    parseInt(activeHour) === new Date().getHours() &&
-                    <Badge className="ml-2 bg-blue-500 text-white">Current Hour</Badge>
-                  }
+                  {activeDay === getTodayDayName() && parseInt(activeHour) === new Date().getHours() && (
+                    <>
+                      <Badge className="ml-2 bg-blue-500 text-white">Current Hour</Badge>
+                      <span className="ml-2 text-sm text-blue-600 font-normal">
+                        Current time: {formatHourTo12Hour(`${new Date().getHours()}:${new Date().getMinutes()}`)}
+                      </span>
+                    </>
+                  )}
                 </h3>
 
                 {hourTimeBlocks.length === 0 ? (
