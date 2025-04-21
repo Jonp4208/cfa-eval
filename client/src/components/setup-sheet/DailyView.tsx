@@ -1060,9 +1060,11 @@ export function DailyView({ setup, onBack }: DailyViewProps) {
         }
 
         block.positions.forEach((position: Position, posIndex: number) => {
-          if (position.employeeId === selectedEmployeeToReplace.id) {
+          // Check for exact match or if the employee name matches (in case ID is different)
+          if (position.employeeId === selectedEmployeeToReplace.id ||
+              position.employeeName === selectedEmployeeToReplace.name) {
             console.log('REPLACE: Found position to update:', position.name, 'at block', blockIndex, 'position', posIndex);
-            position.employeeId = `replacement-${Date.now()}`; // Generate a temporary ID
+            // Keep the same ID structure but update the name
             position.employeeName = replacementName;
             replacedCount++;
           }
