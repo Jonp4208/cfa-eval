@@ -1054,26 +1054,57 @@ export function DailyView({ setup, onBack }: DailyViewProps) {
         return emp;
       });
 
+      // Also update the employee in the setup.employees array if it exists
+      if (newSetup.employees && Array.isArray(newSetup.employees)) {
+        newSetup.employees = newSetup.employees.map(emp => {
+          if (emp.id === selectedEmployeeToReplace.id ||
+              emp.name.toLowerCase() === selectedEmployeeToReplace.name.toLowerCase()) {
+            console.log('REPLACE: Found employee in setup.employees to update:', emp.name, 'to', replacementName);
+            return {
+              ...emp,
+              name: replacementName
+            };
+          }
+          return emp;
+        });
+      }
+
+      // Also update the employee in the setup.uploadedSchedules array if it exists
+      if (newSetup.uploadedSchedules && Array.isArray(newSetup.uploadedSchedules)) {
+        newSetup.uploadedSchedules = newSetup.uploadedSchedules.map(emp => {
+          if (emp.id === selectedEmployeeToReplace.id ||
+              emp.name.toLowerCase() === selectedEmployeeToReplace.name.toLowerCase()) {
+            console.log('REPLACE: Found employee in setup.uploadedSchedules to update:', emp.name, 'to', replacementName);
+            return {
+              ...emp,
+              name: replacementName
+            };
+          }
+          return emp;
+        });
+      }
+
       // Update all positions with this employee
       let replacedCount = 0;
 
-      // Only update the active day for immediate UI update
-      // This makes the operation much faster
-      const daySchedule = newSetup.weekSchedule[activeDay];
-      if (daySchedule && daySchedule.timeBlocks && Array.isArray(daySchedule.timeBlocks)) {
-        daySchedule.timeBlocks.forEach(block => {
-          if (block.positions && Array.isArray(block.positions)) {
-            block.positions.forEach(position => {
-              if (position.employeeId === selectedEmployeeToReplace.id ||
-                  (position.employeeName && position.employeeName.toLowerCase() === selectedEmployeeToReplace.name.toLowerCase())) {
-                console.log(`REPLACE: Found position to update in ${activeDay}:`, position.name);
-                position.employeeName = replacementName;
-                replacedCount++;
-              }
-            });
-          }
-        });
-      }
+      // Update all days immediately for consistency
+      Object.keys(newSetup.weekSchedule).forEach(day => {
+        const daySchedule = newSetup.weekSchedule[day];
+        if (daySchedule && daySchedule.timeBlocks && Array.isArray(daySchedule.timeBlocks)) {
+          daySchedule.timeBlocks.forEach(block => {
+            if (block.positions && Array.isArray(block.positions)) {
+              block.positions.forEach(position => {
+                if (position.employeeId === selectedEmployeeToReplace.id ||
+                    (position.employeeName && position.employeeName.toLowerCase() === selectedEmployeeToReplace.name.toLowerCase())) {
+                  console.log(`REPLACE: Found position to update in ${day}:`, position.name);
+                  position.employeeName = replacementName;
+                  replacedCount++;
+                }
+              });
+            }
+          });
+        }
+      });
 
       console.log(`REPLACE: Updated employee name and replaced ${replacedCount} positions`);
 
@@ -1099,33 +1130,16 @@ export function DailyView({ setup, onBack }: DailyViewProps) {
       saveChangesAutomatically('assign', replacementName, selectedEmployeeToReplace.name)
         .then(() => {
           console.log('REPLACE: Completed successfully');
-          // Update all days in the background after saving
-          const fullUpdateSetup = JSON.parse(JSON.stringify(modifiedSetup));
-
-          // Now update all other days
-          Object.keys(fullUpdateSetup.weekSchedule).forEach(day => {
-            if (day === activeDay) return; // Skip active day, already updated
-
-            const daySchedule = fullUpdateSetup.weekSchedule[day];
-            if (daySchedule && daySchedule.timeBlocks && Array.isArray(daySchedule.timeBlocks)) {
-              daySchedule.timeBlocks.forEach(block => {
-                if (block.positions && Array.isArray(block.positions)) {
-                  block.positions.forEach(position => {
-                    if (position.employeeId === selectedEmployeeToReplace.id ||
-                        (position.employeeName && position.employeeName.toLowerCase() === selectedEmployeeToReplace.name.toLowerCase())) {
-                      position.employeeName = replacementName;
-                    }
-                  });
-                }
-              });
-            }
-          });
-
-          // Update the state with all days updated
-          setModifiedSetup(fullUpdateSetup);
+          // Force a refresh to ensure all data is consistent
+          window.location.reload();
         })
         .catch(error => {
           console.error('REPLACE ERROR during background save:', error);
+          toast({
+            title: 'Error Saving',
+            description: 'Changes were made locally but could not be saved to the server. Please refresh the page.',
+            variant: 'destructive'
+          });
         })
         .finally(() => {
           setIsReplacing(false);
