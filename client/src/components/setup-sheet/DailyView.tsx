@@ -511,14 +511,30 @@ export function DailyView({ setup, onBack }: DailyViewProps) {
     const currentMinute = now.getMinutes();
     const currentTimeInMinutes = currentHour * 60 + currentMinute;
 
-    // Parse start and end times
-    const startHour = parseInt(startTime.split(':')[0]);
-    const startMinute = parseInt(startTime.split(':')[1]) || 0;
-    const startTimeInMinutes = startHour * 60 + startMinute;
+    // Parse start and end times - handle both "HH:MM" and "H:MM" formats
+    // Also handle AM/PM format if present
+    const parseTimeToMinutes = (timeStr: string): number => {
+      // Check if time is in AM/PM format
+      if (timeStr.toLowerCase().includes('am') || timeStr.toLowerCase().includes('pm')) {
+        const isPM = timeStr.toLowerCase().includes('pm');
+        const timePart = timeStr.toLowerCase().replace('am', '').replace('pm', '').trim();
+        const [hours, minutes] = timePart.split(':').map(Number);
+        let hour = hours;
 
-    const endHour = parseInt(endTime.split(':')[0]);
-    const endMinute = parseInt(endTime.split(':')[1]) || 0;
-    const endTimeInMinutes = endHour * 60 + endMinute;
+        // Convert to 24-hour format
+        if (isPM && hour < 12) hour += 12;
+        if (!isPM && hour === 12) hour = 0;
+
+        return hour * 60 + (minutes || 0);
+      } else {
+        // Handle 24-hour format
+        const [hours, minutes] = timeStr.split(':').map(Number);
+        return hours * 60 + (minutes || 0);
+      }
+    };
+
+    const startTimeInMinutes = parseTimeToMinutes(startTime);
+    const endTimeInMinutes = parseTimeToMinutes(endTime);
 
     // Check if current time is within shift time
     return currentTimeInMinutes >= startTimeInMinutes && currentTimeInMinutes <= endTimeInMinutes;
@@ -2845,6 +2861,16 @@ export function DailyView({ setup, onBack }: DailyViewProps) {
                     <User className="h-10 w-10 mx-auto text-gray-300 mb-2" />
                     <p className="font-medium">No {employeeAreaTab} employees found</p>
                     <p className="text-sm mt-1">Try selecting a different area filter</p>
+                  </div>
+                )}
+
+                {/* Show message if no employees match the current shift filter */}
+                {(showCurrentShiftOnly && filterEmployeesByArea(getDayEmployees().filter(e => e.positions.some(p => p !== 'Scheduled'))).length === 0 &&
+                  filterEmployeesByArea(unassignedEmployees).length === 0 && scheduledEmployees.length > 0) && (
+                  <div className="text-center text-gray-500 py-8 bg-gray-50 rounded-lg border border-gray-100">
+                    <Clock className="h-10 w-10 mx-auto text-gray-300 mb-2" />
+                    <p className="font-medium">No employees currently on shift</p>
+                    <p className="text-sm mt-1">Try turning off the "Current Shift Only" filter</p>
                   </div>
                 )}
 
