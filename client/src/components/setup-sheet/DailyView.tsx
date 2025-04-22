@@ -500,12 +500,6 @@ export function DailyView({ setup, onBack }: DailyViewProps) {
 
   // Check if an employee is currently on shift
   const isEmployeeOnCurrentShift = (employee: any): boolean => {
-    // Add debug alert for testing
-    if (employee.name === 'Aiden Brookshire') {
-      const now = new Date();
-      alert(`Checking Aiden Brookshire at ${now.getHours()}:${now.getMinutes()}. Time blocks: ${JSON.stringify(employee.timeBlocks)}`);
-    }
-
     // First check if the employee is scheduled for today
     const normalizedEmpDay = employee.day ? normalizeDay(employee.day) : null;
     const normalizedToday = getTodayDayName();
@@ -586,11 +580,6 @@ export function DailyView({ setup, onBack }: DailyViewProps) {
 
         const startTimeInMinutes = parseTimeToMinutes(startTime);
         const endTimeInMinutes = parseTimeToMinutes(endTime);
-
-        // Debug for Aiden
-        if (employee.name === 'Aiden Brookshire') {
-          alert(`Time block: ${block}\nStart time: ${startTime} (${startTimeInMinutes} mins)\nEnd time: ${endTime} (${endTimeInMinutes} mins)\nCurrent time: ${currentTimeInMinutes} mins\nIs current: ${currentTimeInMinutes >= startTimeInMinutes && currentTimeInMinutes <= endTimeInMinutes}`);
-        }
 
         // Check if current time is within shift time
         return currentTimeInMinutes >= startTimeInMinutes && currentTimeInMinutes <= endTimeInMinutes;
