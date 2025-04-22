@@ -69,13 +69,7 @@ interface TimeBlock {
 }
 
 export function DailyView({ setup, onBack }: DailyViewProps) {
-  // Log setup data for debugging
-  console.log('Setup data:', {
-    name: setup.name,
-    startDate: setup.startDate,
-    endDate: setup.endDate,
-    weekSchedule: Object.keys(setup.weekSchedule || {}),
-  })
+  // Setup data initialization
 
   // Calculate the correct dates for each day of the week
   const calculateWeekDates = () => {
@@ -108,11 +102,11 @@ export function DailyView({ setup, onBack }: DailyViewProps) {
         weekDates[dayNames[dayIndex]] = date;
       }
 
-      console.log('Calculated week dates:', weekDates);
+      // Week dates calculated successfully;
       return weekDates;
     }
 
-    console.log('Date range does not appear to be a standard week:', { diffDays });
+    // Date range is not a standard week;
     return null;
   }
 
@@ -181,6 +175,12 @@ export function DailyView({ setup, onBack }: DailyViewProps) {
       calculateUnassignedEmployees(scheduledEmployees)
     }
   }, [activeDay])
+
+  // Refresh employee data when originalSetup changes
+  useEffect(() => {
+    console.log('originalSetup changed, refreshing employee data');
+    fetchScheduledEmployees();
+  }, [originalSetup])
 
   // Check if a weekly setup has positions
   const hasPositions = (setup) => {
@@ -344,15 +344,19 @@ export function DailyView({ setup, onBack }: DailyViewProps) {
         return
       }
 
+      console.log('Fetching scheduled employees from originalSetup:', originalSetup);
+
       // Create an array to hold all employees
       let allEmployees = []
 
-      // Check if the setup has employees directly
-      if (setup.employees && Array.isArray(setup.employees) && setup.employees.length > 0) {
-        // Only log in development mode
-        if (process.env.NODE_ENV === 'development' && false) { // Disabled for now
-          console.log('Found employees in setup.employees:', setup.employees.length)
-        }
+      // First check if we have uploadedSchedules in the original setup
+      if (originalSetup.uploadedSchedules && Array.isArray(originalSetup.uploadedSchedules) && originalSetup.uploadedSchedules.length > 0) {
+        console.log('Found uploadedSchedules in originalSetup:', originalSetup.uploadedSchedules.length);
+        allEmployees = [...originalSetup.uploadedSchedules];
+      }
+      // If no uploadedSchedules, check if the setup has employees directly
+      else if (setup.employees && Array.isArray(setup.employees) && setup.employees.length > 0) {
+        console.log('Found employees in setup.employees:', setup.employees.length);
 
         // Map the employees to the format we need
         const mappedEmployees = setup.employees.map(emp => ({
@@ -474,18 +478,12 @@ export function DailyView({ setup, onBack }: DailyViewProps) {
   const getDateForDay = (day: string) => {
     // First, check if we have pre-calculated dates from the week range
     if (weekDates && weekDates[day]) {
-      // Only log in development mode
-      if (process.env.NODE_ENV === 'development' && false) { // Disabled for now
-        console.log(`Using pre-calculated date for ${day}: ${weekDates[day].toDateString()}`)
-      }
+      // Using pre-calculated date from week range
       return weekDates[day]
     }
 
     // If we don't have pre-calculated dates, fall back to the original calculation
-    // Only log in development mode
-    if (process.env.NODE_ENV === 'development' && false) { // Disabled for now
-      console.log(`No pre-calculated date for ${day}, using fallback calculation`)
-    }
+    // No pre-calculated date, using fallback calculation
 
     // Create a new date object from the setup's start date
     const startDate = new Date(setup.startDate)
@@ -496,10 +494,7 @@ export function DailyView({ setup, onBack }: DailyViewProps) {
       return new Date() // Return current date as fallback
     }
 
-    // Special case for debugging the specific issue
-    if (process.env.NODE_ENV === 'development' && false) { // Disabled for now
-      console.log(`Calculating date for ${day} from start date ${startDate.toISOString()}`)
-    }
+    // Calculate date for day from start date
 
     // For a week starting on Sunday (4/12), the dates should be:
     // Sunday: 4/12, Monday: 4/13, Tuesday: 4/14, Wednesday: 4/15,
@@ -525,10 +520,7 @@ export function DailyView({ setup, onBack }: DailyViewProps) {
 
     // Get the day of week for the start date (0 = Sunday, 1 = Monday, etc.)
     const startDayIndex = startDate.getDay()
-    // Only log in development mode
-    if (process.env.NODE_ENV === 'development' && false) { // Disabled for now
-      console.log(`Start date ${startDate.toDateString()} is day index ${startDayIndex}`)
-    }
+    // Get start date day index
 
     // Calculate days to add to get from start date to target day
     let daysToAdd = 0
@@ -542,10 +534,7 @@ export function DailyView({ setup, onBack }: DailyViewProps) {
       daysToAdd = (targetDayIndex - startDayIndex + 7) % 7
     }
 
-    // Only log in development mode
-    if (process.env.NODE_ENV === 'development' && false) { // Disabled for now
-      console.log(`Adding ${daysToAdd} days to get to ${day}`)
-    }
+    // Add days to get to target day
 
     // Create a new date by adding the calculated days
     const date = new Date(startDate)
@@ -555,10 +544,7 @@ export function DailyView({ setup, onBack }: DailyViewProps) {
     if (day === 'saturday') {
       // Direct fix for the specific 4/12 issue
       if (format(date, 'M/d') === '4/12') {
-        // Only log in development mode
-        if (process.env.NODE_ENV === 'development' && false) { // Disabled for now
-          console.log('Detected Saturday 4/12 issue, setting to 4/19')
-        }
+        // Fix for specific date issue (4/12 -> 4/19)
         // Create a new date for April 19, 2023 (or whatever year is in the original date)
         const fixedDate = new Date(date.getFullYear(), 3, 19) // Month is 0-indexed, so 3 = April
         return fixedDate
@@ -567,10 +553,7 @@ export function DailyView({ setup, onBack }: DailyViewProps) {
       // Check if Saturday's date is the same as Sunday's date
       const sundayDate = getDateForDay('sunday')
       if (format(date, 'M/d') === format(sundayDate, 'M/d')) {
-        // Only log in development mode
-        if (process.env.NODE_ENV === 'development' && false) { // Disabled for now
-          console.log('Detected Saturday date issue - same as Sunday, adding 6 days to fix')
-        }
+        // Fix for Saturday date being same as Sunday
         date.setDate(date.getDate() + 6) // Add 6 days to get from Sunday to Saturday
       }
 
@@ -579,18 +562,12 @@ export function DailyView({ setup, onBack }: DailyViewProps) {
       mondayDate.setDate(startDate.getDate() + 1) // Monday should be startDate + 1
 
       if (date < mondayDate) {
-        // Only log in development mode
-        if (process.env.NODE_ENV === 'development' && false) { // Disabled for now
-          console.log('Detected Saturday date issue - before Monday, adding 7 days to fix')
-        }
+        // Fix for Saturday date being before Monday
         date.setDate(date.getDate() + 7) // Add one week
       }
     }
 
-    // Only log in development mode
-    if (process.env.NODE_ENV === 'development' && false) { // Disabled for now
-      console.log(`Result date for ${day}: ${date.toDateString()} (${format(date, 'M/d')})`)
-    }
+    // Return calculated date
     return date
   }
 
@@ -612,18 +589,11 @@ export function DailyView({ setup, onBack }: DailyViewProps) {
   // Get the time blocks for the active day
   const getTimeBlocks = () => {
     if (!modifiedSetup.weekSchedule || !modifiedSetup.weekSchedule[activeDay] || !modifiedSetup.weekSchedule[activeDay].timeBlocks) {
-      // Only log in development mode
-      if (process.env.NODE_ENV === 'development' && false) { // Disabled for now
-        console.log('No time blocks found for day:', activeDay);
-      }
+      // No time blocks found for this day
       return []
     }
 
     const blocks = modifiedSetup.weekSchedule[activeDay].timeBlocks;
-    // Only log in development mode
-    if (process.env.NODE_ENV === 'development' && false) { // Disabled for now
-      console.log('Time blocks for day:', activeDay, blocks);
-    }
     return blocks;
   }
 
@@ -807,25 +777,10 @@ export function DailyView({ setup, onBack }: DailyViewProps) {
     if (!hour) return []
 
     const allBlocks = getTimeBlocks();
-    // Only log in development mode
-    if (process.env.NODE_ENV === 'development' && false) { // Disabled for now
-      console.log('All blocks before filtering by hour:', allBlocks);
-    }
-
     const filteredBlocks = allBlocks.filter(block => {
       const blockHour = block.start.split(':')[0] + ':00'
-      const matches = blockHour === hour;
-      // Only log in development mode
-      if (process.env.NODE_ENV === 'development' && false) { // Disabled for now
-        console.log(`Block ${block.start}-${block.end}, hour: ${blockHour}, matches ${hour}: ${matches}`);
-      }
-      return matches;
+      return blockHour === hour;
     });
-
-    // Only log in development mode
-    if (process.env.NODE_ENV === 'development' && false) { // Disabled for now
-      console.log('Filtered blocks for hour', hour, ':', filteredBlocks);
-    }
     return filteredBlocks;
   }
 
@@ -1021,131 +976,162 @@ export function DailyView({ setup, onBack }: DailyViewProps) {
     setSelectedEmployeeToReplace({ id: employeeId, name: employeeName });
     setReplacementName('');
     setShowReplaceDialog(true);
+
+    // Log the current state for debugging
+    console.log('Current scheduledEmployees:', scheduledEmployees);
+    console.log('Current modifiedSetup:', modifiedSetup);
   }
 
   // State for replace loading
   const [isReplacing, setIsReplacing] = useState(false);
 
+  // Helper function to update employee data consistently across all data structures
+  const updateEmployeeInSetup = (
+    setup: any,
+    oldEmployeeId: string,
+    oldEmployeeName: string,
+    newEmployeeName: string,
+    activeDay: string
+  ) => {
+    console.log('Replacing employee with ID:', oldEmployeeId, 'Name:', oldEmployeeName, 'New name:', newEmployeeName);
+
+    // Create a new setup object with immutable updates
+    const newSetup = {
+      ...setup,
+      // Update uploadedSchedules array if it exists - using the specific employee ID
+      uploadedSchedules: setup.uploadedSchedules?.map(emp => {
+        // Update the specific employee by ID
+        if (emp.id === oldEmployeeId) {
+          console.log('Found employee to update by ID in uploadedSchedules:', emp);
+          return { ...emp, name: newEmployeeName };
+        }
+        return emp;
+      }),
+      // Update weekSchedule with immutable updates - ONLY for the active day
+      weekSchedule: Object.fromEntries(
+        Object.entries(setup.weekSchedule).map(([day, daySchedule]) => {
+          // If this is not the active day, return it unchanged
+          if (day !== activeDay) {
+            return [day, daySchedule];
+          }
+
+          // Only update the active day
+          return [
+            day,
+            {
+              ...daySchedule,
+              timeBlocks: daySchedule.timeBlocks?.map(block => ({
+                ...block,
+                positions: block.positions?.map(position => {
+                  if (position.employeeId === oldEmployeeId) {
+                    console.log(`Found position to update in ${day} by ID:`, position);
+                    // Keep the same employeeId but update the name
+                    const updatedPosition = { ...position, employeeName: newEmployeeName };
+                    console.log('Position after update:', updatedPosition);
+                    return updatedPosition;
+                  }
+                  return position;
+                })
+              }))
+            }
+          ];
+        })
+      )
+    };
+
+    return newSetup;
+  };
+
   // Handle replace employee
   const handleReplaceEmployee = async () => {
     if (!selectedEmployeeToReplace || !replacementName.trim()) {
-      console.error('REPLACE ERROR: Missing employee or replacement name');
+      toast({
+        title: 'Missing Information',
+        description: 'Please enter a replacement employee name.',
+        variant: 'destructive'
+      });
       return;
     }
 
     try {
+      // Store original state for potential rollback
+      const originalSetup = { ...modifiedSetup };
+      const originalEmployees = [...scheduledEmployees];
+
       // Show loading state
       setIsReplacing(true);
-      console.log('REPLACE: Starting replacement of', selectedEmployeeToReplace.name, 'with', replacementName);
 
-      // Create a deep copy of the setup to modify
-      const newSetup = JSON.parse(JSON.stringify(modifiedSetup));
+      // Apply updates optimistically using the helper function
+      const newSetup = updateEmployeeInSetup(
+        modifiedSetup,
+        selectedEmployeeToReplace.id,
+        selectedEmployeeToReplace.name,
+        replacementName,
+        activeDay
+      );
 
-      // Find the employee in the uploaded schedules and update their name
+      // Count replaced positions for the toast message - ONLY for the active day
+      let replacedCount = 0;
+      const activeDaySchedule = newSetup.weekSchedule[activeDay];
+      if (activeDaySchedule && activeDaySchedule.timeBlocks) {
+        activeDaySchedule.timeBlocks.forEach(block => {
+          if (block.positions) {
+            block.positions.forEach(position => {
+              if (position.employeeId === selectedEmployeeToReplace.id) {
+                replacedCount++;
+              }
+            });
+          }
+        });
+      }
+
+      // Update the employee in scheduledEmployees by ID
       const updatedEmployees = scheduledEmployees.map(emp => {
-        if (emp.id === selectedEmployeeToReplace.id ||
-            emp.name.toLowerCase() === selectedEmployeeToReplace.name.toLowerCase()) {
-          console.log('REPLACE: Found employee to update:', emp.name, 'to', replacementName);
-          return {
-            ...emp,
-            name: replacementName
-          };
+        // Update the specific employee by ID
+        if (emp.id === selectedEmployeeToReplace.id) {
+          console.log('Updating employee in scheduledEmployees by ID:', emp);
+          return { ...emp, name: replacementName };
         }
         return emp;
       });
 
-      // Also update the employee in the setup.employees array if it exists
-      if (newSetup.employees && Array.isArray(newSetup.employees)) {
-        newSetup.employees = newSetup.employees.map(emp => {
-          if (emp.id === selectedEmployeeToReplace.id ||
-              emp.name.toLowerCase() === selectedEmployeeToReplace.name.toLowerCase()) {
-            console.log('REPLACE: Found employee in setup.employees to update:', emp.name, 'to', replacementName);
-            return {
-              ...emp,
-              name: replacementName
-            };
-          }
-          return emp;
-        });
-      }
-
-      // Also update the employee in the setup.uploadedSchedules array if it exists
-      if (newSetup.uploadedSchedules && Array.isArray(newSetup.uploadedSchedules)) {
-        newSetup.uploadedSchedules = newSetup.uploadedSchedules.map(emp => {
-          if (emp.id === selectedEmployeeToReplace.id ||
-              emp.name.toLowerCase() === selectedEmployeeToReplace.name.toLowerCase()) {
-            console.log('REPLACE: Found employee in setup.uploadedSchedules to update:', emp.name, 'to', replacementName);
-            return {
-              ...emp,
-              name: replacementName
-            };
-          }
-          return emp;
-        });
-      }
-
-      // Update all positions with this employee
-      let replacedCount = 0;
-
-      // Update all days immediately for consistency
-      Object.keys(newSetup.weekSchedule).forEach(day => {
-        const daySchedule = newSetup.weekSchedule[day];
-        if (daySchedule && daySchedule.timeBlocks && Array.isArray(daySchedule.timeBlocks)) {
-          daySchedule.timeBlocks.forEach(block => {
-            if (block.positions && Array.isArray(block.positions)) {
-              block.positions.forEach(position => {
-                if (position.employeeId === selectedEmployeeToReplace.id ||
-                    (position.employeeName && position.employeeName.toLowerCase() === selectedEmployeeToReplace.name.toLowerCase())) {
-                  console.log(`REPLACE: Found position to update in ${day}:`, position.name);
-                  position.employeeName = replacementName;
-                  replacedCount++;
-                }
-              });
-            }
-          });
-        }
-      });
-
-      console.log(`REPLACE: Updated employee name and replaced ${replacedCount} positions`);
-
-      // Update the state with the modified setup and employees
-      // This will immediately update the UI
+      // Update UI immediately
       setModifiedSetup(newSetup);
       setScheduledEmployees(updatedEmployees);
 
-      // Close the dialog immediately to improve perceived performance
-      setShowReplaceDialog(false);
+      // Recalculate unassigned employees to refresh the UI
+      calculateUnassignedEmployees(updatedEmployees);
 
-      // Show success toast immediately
+      // Close dialog and show success toast
+      setShowReplaceDialog(false);
       toast({
         title: 'Employee Replaced',
-        description: `${selectedEmployeeToReplace.name} has been replaced with ${replacementName}`
+        description: `${selectedEmployeeToReplace.name} has been replaced with ${replacementName} in ${replacedCount} positions`
       });
 
       // Force a re-render to update the UI
       setActiveHour(activeHour);
 
       // Save changes in the background
-      console.log('REPLACE: Saving changes to server');
-      saveChangesAutomatically('assign', replacementName, selectedEmployeeToReplace.name)
-        .then(() => {
-          console.log('REPLACE: Completed successfully');
-          // Force a refresh to ensure all data is consistent
-          window.location.reload();
-        })
-        .catch(error => {
-          console.error('REPLACE ERROR during background save:', error);
-          toast({
-            title: 'Error Saving',
-            description: 'Changes were made locally but could not be saved to the server. Please refresh the page.',
-            variant: 'destructive'
-          });
-        })
-        .finally(() => {
-          setIsReplacing(false);
+      try {
+        // Use a special 'replace' action type to handle employee replacement
+        await saveChangesAutomatically('replace', replacementName, selectedEmployeeToReplace.name, selectedEmployeeToReplace.id);
+        // Success - no need for page reload
+        setIsReplacing(false);
+      } catch (error) {
+        // Rollback on error
+        setModifiedSetup(originalSetup);
+        setScheduledEmployees(originalEmployees);
+
+        toast({
+          title: 'Error Saving',
+          description: 'Changes could not be saved to the server. Please try again.',
+          variant: 'destructive'
         });
+        setIsReplacing(false);
+      }
     } catch (error) {
-      console.error('REPLACE ERROR:', error);
+      console.error('Error replacing employee:', error);
       toast({
         title: 'Error',
         description: 'Failed to replace employee. Please try again.',
@@ -1433,15 +1419,16 @@ export function DailyView({ setup, onBack }: DailyViewProps) {
   }
 
   // Save the modified setup automatically without page reload
-  const saveChangesAutomatically = async (actionType: 'assign' | 'remove', employeeName?: string, positionName?: string) => {
+  const saveChangesAutomatically = async (actionType: 'assign' | 'remove' | 'replace', employeeName?: string, positionName?: string, employeeId?: string) => {
     try {
-      console.log('Auto-saving changes:', actionType, employeeName, positionName)
-
       // Get the token from localStorage
       const token = localStorage.getItem('token')
       if (!token) {
         throw new Error('No authentication token found')
       }
+
+      // Log the scheduled employees before saving
+      console.log('Saving to DB - scheduledEmployees:', scheduledEmployees);
 
       // Create the payload with all scheduled employees
       const payload = {
@@ -1452,7 +1439,7 @@ export function DailyView({ setup, onBack }: DailyViewProps) {
         uploadedSchedules: scheduledEmployees // Save in the new field
       }
 
-      console.log('Saving payload:', payload)
+      console.log('Saving payload:', payload);
 
       // Call the API to update the setup
       const response = await fetch(`/api/weekly-setups/${setup._id}`, {
@@ -1471,10 +1458,16 @@ export function DailyView({ setup, onBack }: DailyViewProps) {
 
       // Update the original setup with the modified one
       const updatedSetup = await response.json()
-      console.log('Setup updated successfully:', updatedSetup)
+      console.log('Response from server:', updatedSetup);
 
       // Update the setup state with the response from the server
       setOriginalSetup(updatedSetup)
+
+      // Also update the scheduledEmployees state with the response
+      if (updatedSetup.uploadedSchedules && updatedSetup.uploadedSchedules.length > 0) {
+        console.log('Updating scheduledEmployees with server response:', updatedSetup.uploadedSchedules);
+        setScheduledEmployees(updatedSetup.uploadedSchedules);
+      }
 
       // Show a toast message based on the action type
       if (actionType === 'assign' && employeeName && positionName) {
@@ -1486,6 +1479,11 @@ export function DailyView({ setup, onBack }: DailyViewProps) {
         toast({
           title: 'Assignment Removed',
           description: `${employeeName} removed from ${positionName} and changes saved automatically`
+        })
+      } else if (actionType === 'replace' && employeeName && positionName) {
+        toast({
+          title: 'Employee Replaced',
+          description: `${positionName} has been replaced with ${employeeName} and changes saved automatically`
         })
       } else {
         toast({
@@ -1502,7 +1500,8 @@ export function DailyView({ setup, onBack }: DailyViewProps) {
         description: error instanceof Error ? error.message : 'Failed to save changes automatically. Please try manual save.',
         variant: 'destructive'
       })
-      return false
+      // Re-throw the error to be handled by the caller
+      throw error
     }
   }
 
@@ -2053,7 +2052,7 @@ export function DailyView({ setup, onBack }: DailyViewProps) {
       </Dialog>
 
       {/* Employee List Dialog */}
-      <Dialog open={showEmployeeList} onOpenChange={setShowEmployeeList}>
+      <Dialog open={showEmployeeList} onOpenChange={setShowEmployeeList} key={`employee-list-${scheduledEmployees.length}-${JSON.stringify(unassignedEmployees)}`}>
         <DialogContent className="sm:max-w-[600px]">
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2">
@@ -2150,7 +2149,7 @@ export function DailyView({ setup, onBack }: DailyViewProps) {
                         const remainingTime = getRemainingBreakTime(employee.id)
 
                         return (
-                          <div key={employee.id} className={`flex flex-col sm:flex-row sm:items-center sm:justify-between p-4 rounded-md border ${breakStatus === 'active' ? 'bg-amber-50 border-amber-200' : hasHadBreak(employee.id) ? 'bg-green-50 border-green-200 hover:bg-green-100' : 'bg-white hover:bg-blue-50 border-gray-200'}`}>
+                          <div key={`${employee.id}-${employee.name}-${Date.now()}`} className={`flex flex-col sm:flex-row sm:items-center sm:justify-between p-4 rounded-md border ${breakStatus === 'active' ? 'bg-amber-50 border-amber-200' : hasHadBreak(employee.id) ? 'bg-green-50 border-green-200 hover:bg-green-100' : 'bg-white hover:bg-blue-50 border-gray-200'}`}>
                             <div className="flex items-center gap-4">
                               <div className="h-12 w-12 rounded-full bg-blue-100 flex items-center justify-center flex-shrink-0">
                                 <User className="h-6 w-6 text-blue-600" />
@@ -2250,7 +2249,7 @@ export function DailyView({ setup, onBack }: DailyViewProps) {
                           const remainingTime = getRemainingBreakTime(employee.id)
 
                           return (
-                            <div key={employee.id} className={`flex flex-col sm:flex-row sm:items-center sm:justify-between p-4 rounded-md border ${breakStatus === 'active' ? 'bg-amber-50 border-amber-200' : hasHadBreak(employee.id) ? 'bg-green-50 border-green-200 hover:bg-green-100' : 'bg-white hover:bg-green-50 border-gray-200'}`}>
+                            <div key={`${employee.id}-${employee.name}-${Date.now()}`} className={`flex flex-col sm:flex-row sm:items-center sm:justify-between p-4 rounded-md border ${breakStatus === 'active' ? 'bg-amber-50 border-amber-200' : hasHadBreak(employee.id) ? 'bg-green-50 border-green-200 hover:bg-green-100' : 'bg-white hover:bg-green-50 border-gray-200'}`}>
                               <div className="flex items-center gap-4">
                                 <div className="h-12 w-12 rounded-full bg-green-100 flex items-center justify-center flex-shrink-0">
                                   <User className="h-6 w-6 text-green-600" />
@@ -2593,11 +2592,9 @@ export function DailyView({ setup, onBack }: DailyViewProps) {
               Replace Employee
             </DialogTitle>
             <DialogDescription>
-              {selectedEmployeeToReplace ? (
-                <>
-                  <div>Enter the name of the employee who will replace <span className="font-medium">{selectedEmployeeToReplace.name}</span></div>
-                </>
-              ) : 'Enter replacement employee name'}
+              {selectedEmployeeToReplace
+                ? `Enter the name of the employee who will replace ${selectedEmployeeToReplace.name}`
+                : 'Enter replacement employee name'}
             </DialogDescription>
           </DialogHeader>
 
