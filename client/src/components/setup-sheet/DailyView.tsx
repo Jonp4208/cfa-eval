@@ -1256,12 +1256,12 @@ export function DailyView({ setup, onBack }: DailyViewProps) {
     const blockStartMinutes = parseTimeToMinutes(blockStart)
     const blockEndMinutes = parseTimeToMinutes(blockEnd)
 
-    // Add 1 minute to blockStartMinutes to ensure employees who leave exactly at the start time are not included
-    const blockStartPlusOneMinute = blockStartMinutes + 1
-
     // Check if the employee's schedule overlaps with the block
-    // Employee must be available at least 1 minute past the start time of the block
-    return empStartMinutes <= blockEndMinutes && empEndMinutes >= blockStartPlusOneMinute
+    // An employee is available if their schedule overlaps with the time block
+    // This means:
+    // 1. Employee starts before or at the block end AND
+    // 2. Employee ends after or at the block start
+    return empStartMinutes <= blockEndMinutes && empEndMinutes >= blockStartMinutes
   }
 
   // Get employees available for a specific time block
@@ -1303,11 +1303,12 @@ export function DailyView({ setup, onBack }: DailyViewProps) {
         const empStartMinutes = parseTimeToMinutes(empStart)
         const empEndMinutes = parseTimeToMinutes(empEnd)
 
-        // Add 1 minute to blockStartMinutes to ensure employees who leave exactly at the start time are not included
-        const blockStartPlusOneMinute = blockStartMinutes + 1
-
-        // Employee must be available at least 1 minute past the start time of the block
-        return empStartMinutes <= blockEndMinutes && empEndMinutes >= blockStartPlusOneMinute
+        // Check if the employee's schedule overlaps with the block
+        // An employee is available if their schedule overlaps with the time block
+        // This means either:
+        // 1. Employee starts before or at the block end AND
+        // 2. Employee ends after or at the block start
+        return empStartMinutes <= blockEndMinutes && empEndMinutes >= blockStartMinutes
       } catch (error) {
         console.error('Error parsing time for employee:', employee, error)
         return false
