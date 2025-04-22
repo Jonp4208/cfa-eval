@@ -1389,26 +1389,54 @@ export function DailyView({ setup, onBack }: DailyViewProps) {
       // Check if employee is already assigned to another position in this time block
       const isAlreadyAssigned = assignedEmployeeIds.has(employee.id)
 
-      return isAvailable && !isAlreadyAssigned
+      // Debug log for assigned employees
+      if (isAvailable && isAlreadyAssigned) {
+        console.log(`Employee ${employee.name} is available but already assigned to another position`);
+      }
+
+      const result = isAvailable && !isAlreadyAssigned;
+      return result;
     })
+
+    // Debug log for available employees after filtering
+    console.log(`After filtering, found ${availableEmployees.length} available employees:`,
+      availableEmployees.map(e => e.name));
+
+    // Check if Aiden is in the available employees
+    const aidenAvailable = availableEmployees.find(e => e.name.includes('Aiden'));
+    if (aidenAvailable) {
+      console.log('Aiden is in the available employees list');
+    } else {
+      console.log('Aiden is NOT in the available employees list');
+    }
 
     // Filter by area based on the selected position's category
     if (selectedPosition) {
+      console.log(`Selected position category: ${selectedPosition.category}`);
+
       if (selectedPosition.category === 'Kitchen') {
         // For Kitchen positions, only show BOH employees
+        console.log(`Before area filtering: ${availableEmployees.length} employees`);
         availableEmployees = availableEmployees.filter(employee => employee.area === 'BOH')
-        // Only log in development mode
-        if (process.env.NODE_ENV === 'development' && false) { // Disabled for now
-          console.log(`Filtered to ${availableEmployees.length} BOH employees for Kitchen position`)
-        }
+        console.log(`After filtering to BOH: ${availableEmployees.length} employees`);
       } else if (selectedPosition.category === 'Front Counter' || selectedPosition.category === 'Drive Thru') {
         // For Front Counter and Drive Thru positions, only show FOH employees
+        console.log(`Before area filtering: ${availableEmployees.length} employees`);
         availableEmployees = availableEmployees.filter(employee => employee.area === 'FOH')
-        // Only log in development mode
-        if (process.env.NODE_ENV === 'development' && false) { // Disabled for now
-          console.log(`Filtered to ${availableEmployees.length} FOH employees for ${selectedPosition.category} position`)
+        console.log(`After filtering to FOH: ${availableEmployees.length} employees`);
+
+        // Check if Aiden is in the FOH employees
+        const aidenFOH = availableEmployees.find(e => e.name.includes('Aiden'));
+        if (aidenFOH) {
+          console.log('Aiden is in the FOH employees list');
+        } else {
+          console.log('Aiden is NOT in the FOH employees list');
         }
+      } else {
+        console.log(`Unknown position category: ${selectedPosition.category}`);
       }
+    } else {
+      console.log('No selected position for area filtering');
     }
 
     // Sort employees alphabetically by name
