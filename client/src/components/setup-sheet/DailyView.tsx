@@ -509,118 +509,95 @@ export function DailyView({ setup, onBack }: DailyViewProps) {
       return false; // Not scheduled for today
     }
 
-    // Now check if the current time falls within their shift
-    // First try employee.timeBlock (for unassigned employees)
-    let timeBlock = employee.timeBlock;
+    // Parse time to minutes helper function
+    const parseTimeToMinutes = (timeStr: string): number => {
+      try {
+        // Check if time is in AM/PM format
+        if (timeStr.toLowerCase().includes('am') || timeStr.toLowerCase().includes('pm')) {
+          const isPM = timeStr.toLowerCase().includes('pm');
+          const timePart = timeStr.toLowerCase().replace('am', '').replace('pm', '').trim();
+          const [hours, minutes] = timePart.split(':').map(Number);
+          let hour = hours;
 
-    // If no timeBlock directly on employee, try timeBlocks array (for assigned employees)
-    if (!timeBlock && employee.timeBlocks && employee.timeBlocks.length > 0) {
-      // For debugging, log all timeBlocks
-      console.log(`Employee ${employee.name} has ${employee.timeBlocks.length} time blocks:`, employee.timeBlocks);
+          // Convert to 24-hour format
+          if (isPM && hour < 12) hour += 12;
+          if (!isPM && hour === 12) hour = 0;
 
-      // Check all time blocks to see if any overlap with current time
-      // This is important for employees with multiple shifts
-      for (const block of employee.timeBlocks) {
-        const [startTime, endTime] = block.split(' - ');
-        if (!startTime || !endTime) continue;
-
-        try {
-          // Convert times to minutes since midnight for easier comparison
-          const now = new Date();
-          const currentHour = now.getHours();
-          const currentMinute = now.getMinutes();
-          const currentTimeInMinutes = currentHour * 60 + currentMinute;
-
-          // Parse start and end times
-          const parseTimeToMinutes = (timeStr: string): number => {
-            // Check if time is in AM/PM format
-            if (timeStr.toLowerCase().includes('am') || timeStr.toLowerCase().includes('pm')) {
-              const isPM = timeStr.toLowerCase().includes('pm');
-              const timePart = timeStr.toLowerCase().replace('am', '').replace('pm', '').trim();
-              const [hours, minutes] = timePart.split(':').map(Number);
-              let hour = hours;
-
-              // Convert to 24-hour format
-              if (isPM && hour < 12) hour += 12;
-              if (!isPM && hour === 12) hour = 0;
-
-              return hour * 60 + (minutes || 0);
-            } else {
-              // Handle 24-hour format
-              const [hours, minutes] = timeStr.split(':').map(Number);
-              return hours * 60 + (minutes || 0);
-            }
-          };
-
-          const startTimeInMinutes = parseTimeToMinutes(startTime);
-          const endTimeInMinutes = parseTimeToMinutes(endTime);
-
-          // Check if current time is within shift time
-          const isOnShift = currentTimeInMinutes >= startTimeInMinutes && currentTimeInMinutes <= endTimeInMinutes;
-
-          console.log(`Employee ${employee.name} shift check for block ${block}: ${startTime}-${endTime} (${startTimeInMinutes}-${endTimeInMinutes}) vs current ${currentTimeInMinutes} = ${isOnShift}`);
-
-          // If any time block matches, the employee is on shift
-          if (isOnShift) {
-            return true;
-          }
-        } catch (error) {
-          console.error(`Error checking time block ${block} for ${employee.name}:`, error);
+          return hour * 60 + (minutes || 0);
+        } else {
+          // Handle 24-hour format
+          const [hours, minutes] = timeStr.split(':').map(Number);
+          return hours * 60 + (minutes || 0);
         }
+      } catch (error) {
+        console.error(`Error parsing time ${timeStr}:`, error);
+        return 0; // Return 0 as fallback
       }
+    };
 
-      // If we get here, none of the time blocks matched
-      return false;
-    }
-
-    if (!timeBlock) {
-      console.log(`Employee ${employee.name} not on shift: no timeBlock`);
-      return false;
-    }
-
-    const [startTime, endTime] = timeBlock.split(' - ');
-    if (!startTime || !endTime) {
-      console.log(`Employee ${employee.name} not on shift: invalid timeBlock format`);
-      return false;
-    }
-
-    // Convert times to minutes since midnight for easier comparison
+    // Get current time in minutes
     const now = new Date();
     const currentHour = now.getHours();
     const currentMinute = now.getMinutes();
     const currentTimeInMinutes = currentHour * 60 + currentMinute;
 
-    // Parse start and end times - handle both "HH:MM" and "H:MM" formats
-    // Also handle AM/PM format if present
-    const parseTimeToMinutes = (timeStr: string): number => {
-      // Check if time is in AM/PM format
-      if (timeStr.toLowerCase().includes('am') || timeStr.toLowerCase().includes('pm')) {
-        const isPM = timeStr.toLowerCase().includes('pm');
-        const timePart = timeStr.toLowerCase().replace('am', '').replace('pm', '').trim();
-        const [hours, minutes] = timePart.split(':').map(Number);
-        let hour = hours;
+    // Check if a time block overlaps with current time
+    const isTimeBlockCurrent = (block: string): boolean => {
+      try {
+        const [startTime, endTime] = block.split(' - ');
+        if (!startTime || !endTime) return false;
 
-        // Convert to 24-hour format
-        if (isPM && hour < 12) hour += 12;
-        if (!isPM && hour === 12) hour = 0;
+        const startTimeInMinutes = parseTimeToMinutes(startTime);
+        const endTimeInMinutes = parseTimeToMinutes(endTime);
 
-        return hour * 60 + (minutes || 0);
-      } else {
-        // Handle 24-hour format
-        const [hours, minutes] = timeStr.split(':').map(Number);
-        return hours * 60 + (minutes || 0);
+        // Check if current time is within shift time
+        const isOnShift = currentTimeInMinutes >= startTimeInMinutes && currentTimeInMinutes <= endTimeInMinutes;
+
+        console.log(`Employee ${employee.name} shift check for block ${block}: ${startTime}-${endTime} (${startTimeInMinutes}-${endTimeInMinutes}) vs current ${currentTimeInMinutes} = ${isOnShift}`);
+
+        return isOnShift;
+      } catch (error) {
+        console.error(`Error checking time block ${block}:`, error);
+        return false;
       }
     };
 
-    const startTimeInMinutes = parseTimeToMinutes(startTime);
-    const endTimeInMinutes = parseTimeToMinutes(endTime);
+    // TEMPORARY FOR TESTING: Always return true for assigned employees
+    // This will help us determine if the issue is with time parsing or with employee identification
+    if (employee.positions && employee.positions.some(p => p !== 'Scheduled')) {
+      console.log(`Employee ${employee.name} is assigned, returning true for testing`);
+      return true;
+    }
 
-    // Check if current time is within shift time
-    const isOnShift = currentTimeInMinutes >= startTimeInMinutes && currentTimeInMinutes <= endTimeInMinutes;
+    // Check all possible time sources
 
-    console.log(`Employee ${employee.name} shift check: ${startTime}-${endTime} (${startTimeInMinutes}-${endTimeInMinutes}) vs current ${currentTimeInMinutes} = ${isOnShift}`);
+    // 1. Check timeBlock property (usually for unassigned employees)
+    if (employee.timeBlock) {
+      const isOnShift = isTimeBlockCurrent(employee.timeBlock);
+      if (isOnShift) return true;
+    }
 
-    return isOnShift;
+    // 2. Check timeBlocks array (usually for assigned employees)
+    if (employee.timeBlocks && employee.timeBlocks.length > 0) {
+      console.log(`Employee ${employee.name} has ${employee.timeBlocks.length} time blocks:`, employee.timeBlocks);
+
+      // Check if any time block overlaps with current time
+      for (const block of employee.timeBlocks) {
+        const isOnShift = isTimeBlockCurrent(block);
+        if (isOnShift) return true;
+      }
+    }
+
+    // 3. Check if we can find the employee in scheduledEmployees
+    const scheduledEmployee = scheduledEmployees.find(e => e.id === employee.id);
+    if (scheduledEmployee && scheduledEmployee.timeBlock) {
+      console.log(`Found employee ${employee.name} in scheduledEmployees with timeBlock: ${scheduledEmployee.timeBlock}`);
+      const isOnShift = isTimeBlockCurrent(scheduledEmployee.timeBlock);
+      if (isOnShift) return true;
+    }
+
+    console.log(`Employee ${employee.name} not on shift: no matching time block`);
+    return false;
   };
 
   // Helper function to normalize day names for consistent comparison
