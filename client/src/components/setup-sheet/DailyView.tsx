@@ -504,7 +504,6 @@ export function DailyView({ setup, onBack }: DailyViewProps) {
       try {
         // Normalize the time string
         const normalizedTimeStr = timeStr.trim().toLowerCase();
-        console.log(`Parsing time: ${normalizedTimeStr}`);
 
         // Check if time is in AM/PM format
         if (normalizedTimeStr.includes('am') || normalizedTimeStr.includes('pm')) {
@@ -526,7 +525,6 @@ export function DailyView({ setup, onBack }: DailyViewProps) {
 
           // Handle invalid numbers
           if (isNaN(hours)) {
-            console.error(`Invalid hours in time: ${timeStr}`);
             return 0;
           }
 
@@ -537,7 +535,6 @@ export function DailyView({ setup, onBack }: DailyViewProps) {
           if (!isPM && hour === 12) hour = 0;
 
           const result = hour * 60 + (isNaN(minutes) ? 0 : minutes);
-          console.log(`Parsed ${timeStr} to ${result} minutes (${hour}:${isNaN(minutes) ? 0 : minutes})`);
           return result;
         } else {
           // Handle 24-hour format
@@ -547,16 +544,13 @@ export function DailyView({ setup, onBack }: DailyViewProps) {
 
           // Handle invalid numbers
           if (isNaN(hours)) {
-            console.error(`Invalid hours in time: ${timeStr}`);
             return 0;
           }
 
           const result = hours * 60 + (isNaN(minutes) ? 0 : minutes);
-          console.log(`Parsed ${timeStr} to ${result} minutes (${hours}:${isNaN(minutes) ? 0 : minutes})`);
           return result;
         }
       } catch (error) {
-        console.error(`Error parsing time ${timeStr}:`, error);
         return 0; // Return 0 as fallback
       }
     };
@@ -570,10 +564,8 @@ export function DailyView({ setup, onBack }: DailyViewProps) {
     // Check if a time block overlaps with current time
     const isTimeBlockCurrent = (block: string): boolean => {
       try {
-        console.log(`Checking time block: ${block}`);
         const [startTime, endTime] = block.split(' - ');
         if (!startTime || !endTime) {
-          console.log(`Invalid time block format: ${block}`);
           return false;
         }
 
@@ -581,11 +573,8 @@ export function DailyView({ setup, onBack }: DailyViewProps) {
         const endTimeInMinutes = parseTimeToMinutes(endTime);
 
         // Check if current time is within shift time
-        const isOnShift = currentTimeInMinutes >= startTimeInMinutes && currentTimeInMinutes <= endTimeInMinutes;
-        console.log(`Time check: ${startTime}(${startTimeInMinutes}) - ${endTime}(${endTimeInMinutes}) vs current ${currentTimeInMinutes} = ${isOnShift}`);
-        return isOnShift;
+        return currentTimeInMinutes >= startTimeInMinutes && currentTimeInMinutes <= endTimeInMinutes;
       } catch (error) {
-        console.error(`Error checking time block ${block}:`, error);
         return false;
       }
     };
@@ -818,24 +807,14 @@ export function DailyView({ setup, onBack }: DailyViewProps) {
 
   // Filter employees by area, current shift, and sort alphabetically
   const filterEmployeesByArea = (employees: any[]) => {
-    console.log(`Filtering ${employees.length} employees with area=${employeeAreaTab}, currentShift=${showCurrentShiftOnly}`);
-
     // First filter by area if needed
     let filteredEmployees = employeeAreaTab === 'all'
       ? employees
       : employees.filter(employee => employee.area === employeeAreaTab)
 
-    console.log(`After area filter: ${filteredEmployees.length} employees`);
-
     // Then filter by current shift if the toggle is on
     if (showCurrentShiftOnly) {
-      const beforeCount = filteredEmployees.length;
-      filteredEmployees = filteredEmployees.filter(employee => {
-        const isOnShift = isEmployeeOnCurrentShift(employee);
-        console.log(`Employee ${employee.name}: on shift = ${isOnShift}`);
-        return isOnShift;
-      });
-      console.log(`After current shift filter: ${filteredEmployees.length} employees (was ${beforeCount})`);
+      filteredEmployees = filteredEmployees.filter(employee => isEmployeeOnCurrentShift(employee));
     }
 
     // Then sort alphabetically by name
