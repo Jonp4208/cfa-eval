@@ -496,14 +496,29 @@ export function DailyView({ setup, onBack }: DailyViewProps) {
     const normalizedToday = getTodayDayName();
 
     if (normalizedEmpDay && normalizedEmpDay !== normalizedToday) {
+      console.log(`Employee ${employee.name} not on shift: day mismatch (${normalizedEmpDay} vs ${normalizedToday})`);
       return false; // Not scheduled for today
     }
 
     // Now check if the current time falls within their shift
-    if (!employee.timeBlock) return false;
+    // First try employee.timeBlock (for unassigned employees)
+    let timeBlock = employee.timeBlock;
 
-    const [startTime, endTime] = employee.timeBlock.split(' - ');
-    if (!startTime || !endTime) return false;
+    // If no timeBlock directly on employee, try timeBlocks array (for assigned employees)
+    if (!timeBlock && employee.timeBlocks && employee.timeBlocks.length > 0) {
+      timeBlock = employee.timeBlocks[0];
+    }
+
+    if (!timeBlock) {
+      console.log(`Employee ${employee.name} not on shift: no timeBlock`);
+      return false;
+    }
+
+    const [startTime, endTime] = timeBlock.split(' - ');
+    if (!startTime || !endTime) {
+      console.log(`Employee ${employee.name} not on shift: invalid timeBlock format`);
+      return false;
+    }
 
     // Convert times to minutes since midnight for easier comparison
     const now = new Date();
@@ -537,7 +552,11 @@ export function DailyView({ setup, onBack }: DailyViewProps) {
     const endTimeInMinutes = parseTimeToMinutes(endTime);
 
     // Check if current time is within shift time
-    return currentTimeInMinutes >= startTimeInMinutes && currentTimeInMinutes <= endTimeInMinutes;
+    const isOnShift = currentTimeInMinutes >= startTimeInMinutes && currentTimeInMinutes <= endTimeInMinutes;
+
+    console.log(`Employee ${employee.name} shift check: ${startTime}-${endTime} (${startTimeInMinutes}-${endTimeInMinutes}) vs current ${currentTimeInMinutes} = ${isOnShift}`);
+
+    return isOnShift;
   };
 
   // Helper function to normalize day names for consistent comparison
@@ -741,14 +760,19 @@ export function DailyView({ setup, onBack }: DailyViewProps) {
 
   // Filter employees by area, current shift, and sort alphabetically
   const filterEmployeesByArea = (employees: any[]) => {
+    console.log(`Filtering ${employees.length} employees with area=${employeeAreaTab}, currentShift=${showCurrentShiftOnly}`);
+
     // First filter by area if needed
     let filteredEmployees = employeeAreaTab === 'all'
       ? employees
       : employees.filter(employee => employee.area === employeeAreaTab)
 
+    console.log(`After area filter: ${filteredEmployees.length} employees`);
+
     // Then filter by current shift if the toggle is on
     if (showCurrentShiftOnly) {
       filteredEmployees = filteredEmployees.filter(employee => isEmployeeOnCurrentShift(employee))
+      console.log(`After current shift filter: ${filteredEmployees.length} employees`);
     }
 
     // Then sort alphabetically by name
@@ -823,10 +847,14 @@ export function DailyView({ setup, onBack }: DailyViewProps) {
       }
     })
 
-    // Only log in development mode
-    if (process.env.NODE_ENV === 'development' && false) { // Disabled for now
-      console.log(`Total employees for ${activeDay}:`, Array.from(employees.values()).length)
-    }
+    // Log employee information for debugging
+    console.log(`Total employees for ${activeDay}:`, Array.from(employees.values()).length);
+    console.log('Employee details:', Array.from(employees.values()).map(e => ({
+      name: e.name,
+      positions: e.positions,
+      timeBlocks: e.timeBlocks,
+      area: e.area
+    })));
 
     // Convert to array and sort alphabetically by name
     return Array.from(employees.values()).sort((a, b) => a.name.localeCompare(b.name))
