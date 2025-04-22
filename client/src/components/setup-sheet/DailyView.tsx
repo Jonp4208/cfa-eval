@@ -1260,8 +1260,8 @@ export function DailyView({ setup, onBack }: DailyViewProps) {
     // An employee is available if their schedule overlaps with the time block
     // This means:
     // 1. Employee starts before or at the block end AND
-    // 2. Employee ends after or at the block start
-    return empStartMinutes <= blockEndMinutes && empEndMinutes >= blockStartMinutes
+    // 2. Employee ends AFTER (not equal to) the block start
+    return empStartMinutes <= blockEndMinutes && empEndMinutes > blockStartMinutes
   }
 
   // Get employees available for a specific time block
@@ -1305,10 +1305,10 @@ export function DailyView({ setup, onBack }: DailyViewProps) {
 
         // Check if the employee's schedule overlaps with the block
         // An employee is available if their schedule overlaps with the time block
-        // This means either:
+        // This means:
         // 1. Employee starts before or at the block end AND
-        // 2. Employee ends after or at the block start
-        return empStartMinutes <= blockEndMinutes && empEndMinutes >= blockStartMinutes
+        // 2. Employee ends AFTER (not equal to) the block start
+        return empStartMinutes <= blockEndMinutes && empEndMinutes > blockStartMinutes
       } catch (error) {
         console.error('Error parsing time for employee:', employee, error)
         return false
