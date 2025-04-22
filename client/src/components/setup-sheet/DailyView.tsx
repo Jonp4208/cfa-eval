@@ -816,30 +816,24 @@ export function DailyView({ setup, onBack }: DailyViewProps) {
 
   // Filter employees by area, current shift, and sort alphabetically
   const filterEmployeesByArea = (employees: any[]) => {
-    console.log(`Filtering ${employees.length} employees with area=${employeeAreaTab}, currentShift=${showCurrentShiftOnly}`);
-
     // First filter by area if needed
     let filteredEmployees = employeeAreaTab === 'all'
       ? employees
       : employees.filter(employee => employee.area === employeeAreaTab)
 
-    console.log(`After area filter: ${filteredEmployees.length} employees`);
-
     // Then filter by current shift if the toggle is on
     if (showCurrentShiftOnly) {
-      // Check if these are assigned employees (from getDayEmployees) or unassigned employees
-      const isAssignedList = employees === getDayEmployees().filter(e => e.positions.some(p => p !== 'Scheduled'));
-      console.log(`Is assigned employee list: ${isAssignedList}`);
+      // Check if these are assigned or unassigned employees
+      filteredEmployees = filteredEmployees.filter(employee => {
+        // For assigned employees (with positions other than 'Scheduled'), always show them
+        const isAssigned = employee.positions && employee.positions.some(p => p !== 'Scheduled');
+        if (isAssigned) {
+          return true;
+        }
 
-      if (isAssignedList) {
-        // For assigned employees, don't filter by current shift
-        console.log('Not filtering assigned employees by current shift');
-      } else {
-        // For unassigned employees, filter by current shift
-        const beforeCount = filteredEmployees.length;
-        filteredEmployees = filteredEmployees.filter(employee => isEmployeeOnCurrentShift(employee));
-        console.log(`Filtered unassigned employees by current shift: ${filteredEmployees.length} (was ${beforeCount})`);
-      }
+        // For unassigned employees, check if they're currently on shift
+        return isEmployeeOnCurrentShift(employee);
+      });
     }
 
     // Then sort alphabetically by name
