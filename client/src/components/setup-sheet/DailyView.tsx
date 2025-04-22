@@ -451,7 +451,10 @@ export function DailyView({ setup, onBack }: DailyViewProps) {
     if (process.env.NODE_ENV === 'development' && false) { // Disabled for now
       console.log(`Unassigned employees for ${activeDay}:`, unassigned.length)
     }
-    setUnassignedEmployees(unassigned)
+
+    // Sort unassigned employees alphabetically by name
+    const sortedUnassigned = unassigned.sort((a, b) => a.name.localeCompare(b.name))
+    setUnassignedEmployees(sortedUnassigned)
   }
 
   // Get the days of the week from the setup and sort them in correct order (Sunday to Saturday)
@@ -680,11 +683,15 @@ export function DailyView({ setup, onBack }: DailyViewProps) {
     return blocks;
   }
 
-  // Filter employees by area
+  // Filter employees by area and sort alphabetically
   const filterEmployeesByArea = (employees: any[]) => {
-    if (employeeAreaTab === 'all') return employees
+    // First filter by area if needed
+    const filteredEmployees = employeeAreaTab === 'all'
+      ? employees
+      : employees.filter(employee => employee.area === employeeAreaTab)
 
-    return employees.filter(employee => employee.area === employeeAreaTab)
+    // Then sort alphabetically by name
+    return filteredEmployees.sort((a, b) => a.name.localeCompare(b.name))
   }
 
   // Get all employees scheduled for the active day
@@ -759,7 +766,9 @@ export function DailyView({ setup, onBack }: DailyViewProps) {
     if (process.env.NODE_ENV === 'development' && false) { // Disabled for now
       console.log(`Total employees for ${activeDay}:`, Array.from(employees.values()).length)
     }
-    return Array.from(employees.values())
+
+    // Convert to array and sort alphabetically by name
+    return Array.from(employees.values()).sort((a, b) => a.name.localeCompare(b.name))
   }
 
   // Get all employees assigned to the active day
@@ -1386,7 +1395,8 @@ export function DailyView({ setup, onBack }: DailyViewProps) {
       }
     }
 
-    return availableEmployees
+    // Sort employees alphabetically by name
+    return availableEmployees.sort((a, b) => a.name.localeCompare(b.name))
   }
 
   // Handle opening the assign dialog
