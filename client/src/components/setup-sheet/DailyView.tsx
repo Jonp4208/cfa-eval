@@ -1326,10 +1326,14 @@ export function DailyView({ setup, onBack }: DailyViewProps) {
 
     // Check if the selected position is being edited (in which case we want to show the currently assigned employee)
     const editingPositionId = selectedPosition?.id
+    console.log('Currently editing position ID:', editingPositionId);
+    console.log('Current time block:', blockStart, '-', blockEnd);
+    console.log('Current time block in minutes:', blockStartMinutes, '-', blockEndMinutes);
 
     // Check all time blocks for the active day
     if (modifiedSetup.weekSchedule && modifiedSetup.weekSchedule[activeDay]) {
       const timeBlocks = modifiedSetup.weekSchedule[activeDay].timeBlocks || []
+      console.log(`Found ${timeBlocks.length} time blocks for ${activeDay}`);
 
       timeBlocks.forEach(block => {
         // Only consider blocks that overlap with the current time block
@@ -1342,20 +1346,28 @@ export function DailyView({ setup, onBack }: DailyViewProps) {
           (blockStartMinutes <= blockEndMin && blockEndMinutes >= blockStartMin)
         )
 
+        console.log(`Time block ${block.start} - ${block.end} (${blockStartMin} - ${blockEndMin}) overlaps with current block: ${overlaps}`);
+
         if (overlaps) {
+          console.log(`Checking positions in overlapping block ${block.start} - ${block.end}:`, block.positions);
+
           block.positions.forEach(position => {
             // Skip the position we're currently editing
             if (position.id === editingPositionId) {
+              console.log(`Skipping position we're currently editing: ${position.name}`);
               return
             }
 
             if (position.employeeId) {
+              console.log(`Adding assigned employee ID: ${position.employeeId} (${position.employeeName}) from position ${position.name}`);
               assignedEmployeeIds.add(position.employeeId)
             }
           })
         }
       })
     }
+
+    console.log('All assigned employee IDs:', Array.from(assignedEmployeeIds));
 
     // Only log in development mode
     if (process.env.NODE_ENV === 'development' && false) { // Disabled for now
@@ -1413,17 +1425,23 @@ export function DailyView({ setup, onBack }: DailyViewProps) {
     // Filter by area based on the selected position's category
     if (selectedPosition) {
       console.log(`Selected position category: ${selectedPosition.category}`);
+      console.log(`Selected position section: ${selectedPosition.section}`);
 
-      if (selectedPosition.category === 'Kitchen') {
+      // Log all employees with their areas
+      console.log('All employees with areas:', availableEmployees.map(e => `${e.name}: ${e.area}`));
+
+      if (selectedPosition.category === 'Kitchen' || selectedPosition.section === 'BOH') {
         // For Kitchen positions, only show BOH employees
         console.log(`Before area filtering: ${availableEmployees.length} employees`);
         availableEmployees = availableEmployees.filter(employee => employee.area === 'BOH')
-        console.log(`After filtering to BOH: ${availableEmployees.length} employees`);
-      } else if (selectedPosition.category === 'Front Counter' || selectedPosition.category === 'Drive Thru') {
+        console.log(`After filtering to BOH: ${availableEmployees.length} employees:`,
+          availableEmployees.map(e => e.name));
+      } else if (selectedPosition.category === 'Front Counter' || selectedPosition.category === 'Drive Thru' || selectedPosition.section === 'FOH') {
         // For Front Counter and Drive Thru positions, only show FOH employees
         console.log(`Before area filtering: ${availableEmployees.length} employees`);
         availableEmployees = availableEmployees.filter(employee => employee.area === 'FOH')
-        console.log(`After filtering to FOH: ${availableEmployees.length} employees`);
+        console.log(`After filtering to FOH: ${availableEmployees.length} employees:`,
+          availableEmployees.map(e => e.name));
 
         // Check if Aiden is in the FOH employees
         const aidenFOH = availableEmployees.find(e => e.name.includes('Aiden'));
