@@ -3,7 +3,8 @@ import { Card } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
-import { Clock, User, Calendar, ArrowLeft, Coffee, Play, Pause, Download, Printer, RefreshCw, Search, Filter, ChevronDown, X, Check, Save } from 'lucide-react'
+import { Clock, User, Calendar, ArrowLeft, Coffee, Play, Pause, Download, Printer, RefreshCw, Search, Filter, ChevronDown, X, Check, Save, Plus } from 'lucide-react'
+import { AddPositionDialog } from './AddPositionDialog'
 import { format, isToday, parseISO } from 'date-fns'
 import { formatHourTo12Hour } from '@/lib/utils/date-utils'
 import { useNavigate } from 'react-router-dom'
@@ -141,6 +142,8 @@ export function DailyView({ setup, onBack }: DailyViewProps) {
   const [selectedEmployeeToReplace, setSelectedEmployeeToReplace] = useState<{id: string, name: string} | null>(null)
   const [replacementName, setReplacementName] = useState('')
   const replaceDialogRef = useRef<HTMLDivElement>(null)
+  const [showAddPositionDialog, setShowAddPositionDialog] = useState(false)
+  const [selectedTimeBlock, setSelectedTimeBlock] = useState<TimeBlock | null>(null)
   const [modifiedSetup, setModifiedSetup] = useState<any>(setup)
   const [originalSetup, setOriginalSetup] = useState<any>(setup)
   const [scheduledEmployees, setScheduledEmployees] = useState<Array<{id: string, name: string, timeBlock: string, area?: string, day?: string}>>([])
@@ -1405,6 +1408,60 @@ export function DailyView({ setup, onBack }: DailyViewProps) {
     setShowAssignDialog(true)
   }
 
+  // Handle opening the add position dialog
+  const handleAddPositionClick = (timeBlock: any) => {
+    // Store the time block and category information
+    setSelectedTimeBlock({
+      id: timeBlock.id,
+      start: timeBlock.start,
+      end: timeBlock.end,
+      positions: timeBlock.positions || [],
+      category: timeBlock.category // Store the category for the new position
+    })
+    setShowAddPositionDialog(true)
+  }
+
+  // Handle adding a new position
+  const handleAddPosition = (newPosition: Omit<Position, 'id'>) => {
+    if (!selectedTimeBlock) return
+
+    // Create a new position with a unique ID
+    const position: Position = {
+      id: crypto.randomUUID(),
+      name: newPosition.name,
+      category: newPosition.category,
+      section: newPosition.category === 'Kitchen' ? 'BOH' : 'FOH'
+    }
+
+    // Update the modified setup with the new position
+    setModifiedSetup(prev => {
+      // Create a deep copy of the previous state
+      const updated = JSON.parse(JSON.stringify(prev))
+
+      // Find the time block and add the position
+      if (updated.weekSchedule && updated.weekSchedule[activeDay]) {
+        const timeBlocks = updated.weekSchedule[activeDay].timeBlocks || []
+        const blockIndex = timeBlocks.findIndex(block => block.id === selectedTimeBlock.id)
+
+        if (blockIndex !== -1) {
+          // Add the position to the time block
+          updated.weekSchedule[activeDay].timeBlocks[blockIndex].positions.push(position)
+        }
+      }
+
+      return updated
+    })
+
+    // Save changes automatically
+    saveChangesAutomatically('add', undefined, position.name)
+
+    // Show success message
+    toast({
+      title: 'Position Added',
+      description: `Added ${position.name} to ${selectedTimeBlock.start} - ${selectedTimeBlock.end}`,
+    })
+  }
+
   // Effect to handle focus when assign dialog opens
   useEffect(() => {
     if (showAssignDialog && assignDialogRef.current) {
@@ -1866,7 +1923,9 @@ export function DailyView({ setup, onBack }: DailyViewProps) {
                               {isCurrent && <div className="h-2 w-2 rounded-full bg-green-500 mr-2 animate-pulse"></div>}
                               <h4 className="text-sm font-medium">{formatHourTo12Hour(block.start)} - {formatHourTo12Hour(block.end)}</h4>
                             </div>
-                            {isCurrent && <Badge className="bg-blue-500 text-white">Current</Badge>}
+                            <div className="flex items-center gap-2">
+                              {isCurrent && <Badge className="bg-blue-500 text-white">Current</Badge>}
+                            </div>
                           </div>
 
                           <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
@@ -1950,6 +2009,22 @@ export function DailyView({ setup, onBack }: DailyViewProps) {
                                         </div>
                                       )
                                     })}
+
+                                    {/* Add Position option */}
+                                    <div
+                                      className="flex justify-between items-center p-2 rounded-md border border-dashed border-gray-300 bg-gray-50 cursor-pointer hover:bg-gray-100 mt-2"
+                                      onClick={() => handleAddPositionClick({...block, category})}
+                                    >
+                                      <div className="flex items-center gap-2">
+                                        <Plus className="h-4 w-4 text-gray-500" />
+                                        <div>
+                                          <div className="font-medium text-sm text-gray-500">
+                                            Add Position
+                                          </div>
+                                          <div className="text-xs text-gray-400">{category}</div>
+                                        </div>
+                                      </div>
+                                    </div>
                                   </div>
                                 )
                               })
@@ -2033,6 +2108,22 @@ export function DailyView({ setup, onBack }: DailyViewProps) {
                                         </div>
                                       )
                                     })}
+
+                                    {/* Add Position option */}
+                                    <div
+                                      className="flex justify-between items-center p-2 rounded-md border border-dashed border-gray-300 bg-gray-50 cursor-pointer hover:bg-gray-100 mt-2"
+                                      onClick={() => handleAddPositionClick({...block, category})}
+                                    >
+                                      <div className="flex items-center gap-2">
+                                        <Plus className="h-4 w-4 text-gray-500" />
+                                        <div>
+                                          <div className="font-medium text-sm text-gray-500">
+                                            Add Position
+                                          </div>
+                                          <div className="text-xs text-gray-400">{category}</div>
+                                        </div>
+                                      </div>
+                                    </div>
                                   </div>
                                 )
                               })
@@ -2675,6 +2766,14 @@ export function DailyView({ setup, onBack }: DailyViewProps) {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      {/* Add Position Dialog */}
+      <AddPositionDialog
+        open={showAddPositionDialog}
+        onOpenChange={setShowAddPositionDialog}
+        onAddPosition={handleAddPosition}
+        timeBlock={selectedTimeBlock || { id: '', start: '', end: '', positions: [] }}
+      />
 
       {/* Replace Employee Dialog */}
       <Dialog open={showReplaceDialog} onOpenChange={setShowReplaceDialog}>
