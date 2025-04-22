@@ -491,6 +491,15 @@ export function DailyView({ setup, onBack }: DailyViewProps) {
 
   // Check if an employee is currently on shift
   const isEmployeeOnCurrentShift = (employee: any): boolean => {
+    // For debugging, log the employee object structure
+    console.log(`Checking if employee is on shift:`, {
+      name: employee.name,
+      day: employee.day,
+      timeBlock: employee.timeBlock,
+      timeBlocks: employee.timeBlocks,
+      positions: employee.positions
+    });
+
     // First check if the employee is scheduled for today
     const normalizedEmpDay = employee.day ? normalizeDay(employee.day) : null;
     const normalizedToday = getTodayDayName();
@@ -506,7 +515,62 @@ export function DailyView({ setup, onBack }: DailyViewProps) {
 
     // If no timeBlock directly on employee, try timeBlocks array (for assigned employees)
     if (!timeBlock && employee.timeBlocks && employee.timeBlocks.length > 0) {
-      timeBlock = employee.timeBlocks[0];
+      // For debugging, log all timeBlocks
+      console.log(`Employee ${employee.name} has ${employee.timeBlocks.length} time blocks:`, employee.timeBlocks);
+
+      // Check all time blocks to see if any overlap with current time
+      // This is important for employees with multiple shifts
+      for (const block of employee.timeBlocks) {
+        const [startTime, endTime] = block.split(' - ');
+        if (!startTime || !endTime) continue;
+
+        try {
+          // Convert times to minutes since midnight for easier comparison
+          const now = new Date();
+          const currentHour = now.getHours();
+          const currentMinute = now.getMinutes();
+          const currentTimeInMinutes = currentHour * 60 + currentMinute;
+
+          // Parse start and end times
+          const parseTimeToMinutes = (timeStr: string): number => {
+            // Check if time is in AM/PM format
+            if (timeStr.toLowerCase().includes('am') || timeStr.toLowerCase().includes('pm')) {
+              const isPM = timeStr.toLowerCase().includes('pm');
+              const timePart = timeStr.toLowerCase().replace('am', '').replace('pm', '').trim();
+              const [hours, minutes] = timePart.split(':').map(Number);
+              let hour = hours;
+
+              // Convert to 24-hour format
+              if (isPM && hour < 12) hour += 12;
+              if (!isPM && hour === 12) hour = 0;
+
+              return hour * 60 + (minutes || 0);
+            } else {
+              // Handle 24-hour format
+              const [hours, minutes] = timeStr.split(':').map(Number);
+              return hours * 60 + (minutes || 0);
+            }
+          };
+
+          const startTimeInMinutes = parseTimeToMinutes(startTime);
+          const endTimeInMinutes = parseTimeToMinutes(endTime);
+
+          // Check if current time is within shift time
+          const isOnShift = currentTimeInMinutes >= startTimeInMinutes && currentTimeInMinutes <= endTimeInMinutes;
+
+          console.log(`Employee ${employee.name} shift check for block ${block}: ${startTime}-${endTime} (${startTimeInMinutes}-${endTimeInMinutes}) vs current ${currentTimeInMinutes} = ${isOnShift}`);
+
+          // If any time block matches, the employee is on shift
+          if (isOnShift) {
+            return true;
+          }
+        } catch (error) {
+          console.error(`Error checking time block ${block} for ${employee.name}:`, error);
+        }
+      }
+
+      // If we get here, none of the time blocks matched
+      return false;
     }
 
     if (!timeBlock) {
@@ -781,12 +845,18 @@ export function DailyView({ setup, onBack }: DailyViewProps) {
 
   // Get all employees scheduled for the active day
   const getDayEmployees = () => {
+    console.log('Getting day employees for:', activeDay);
     const employees = new Map<string, { id: string, name: string, positions: string[], timeBlocks: string[], area?: string }>()
 
     // First, add all positions with employeeId to the map
-    getTimeBlocks().forEach(block => {
+    const timeBlocks = getTimeBlocks();
+    console.log(`Found ${timeBlocks.length} time blocks for ${activeDay}:`, timeBlocks);
+
+    timeBlocks.forEach(block => {
+      console.log(`Processing block ${block.start}-${block.end} with ${block.positions.length} positions`);
       block.positions.forEach((position: any) => {
         if (position.employeeId) {
+          console.log(`Found assigned position: ${position.name}, Employee: ${position.employeeName} (${position.employeeId})`, position);
           // Create a unique ID if employeeId exists but no name
           const employeeId = position.employeeId
 
