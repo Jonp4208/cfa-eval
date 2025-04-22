@@ -823,15 +823,8 @@ export function DailyView({ setup, onBack }: DailyViewProps) {
 
     // Then filter by current shift if the toggle is on
     if (showCurrentShiftOnly) {
-      // Check if these are assigned or unassigned employees
       filteredEmployees = filteredEmployees.filter(employee => {
-        // For assigned employees (with positions other than 'Scheduled'), always show them
-        const isAssigned = employee.positions && employee.positions.some(p => p !== 'Scheduled');
-        if (isAssigned) {
-          return true;
-        }
-
-        // For unassigned employees, check if they're currently on shift
+        // Check if employee is currently on shift based on their time blocks
         return isEmployeeOnCurrentShift(employee);
       });
     }
