@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from 'react'
+import { useState, useEffect, useRef, useMemo } from 'react'
 import { Card } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
@@ -491,21 +491,16 @@ export function DailyView({ setup, onBack }: DailyViewProps) {
 
   // Check if an employee is currently on shift
   const isEmployeeOnCurrentShift = (employee: any): boolean => {
-    // For debugging, log the employee object structure
-    console.log(`Checking if employee is on shift:`, {
-      name: employee.name,
-      day: employee.day,
-      timeBlock: employee.timeBlock,
-      timeBlocks: employee.timeBlocks,
-      positions: employee.positions
-    });
+    // For assigned employees, always return true (as requested)
+    if (employee.positions && employee.positions.some(p => p !== 'Scheduled')) {
+      return true;
+    }
 
     // First check if the employee is scheduled for today
     const normalizedEmpDay = employee.day ? normalizeDay(employee.day) : null;
     const normalizedToday = getTodayDayName();
 
     if (normalizedEmpDay && normalizedEmpDay !== normalizedToday) {
-      console.log(`Employee ${employee.name} not on shift: day mismatch (${normalizedEmpDay} vs ${normalizedToday})`);
       return false; // Not scheduled for today
     }
 
@@ -530,7 +525,6 @@ export function DailyView({ setup, onBack }: DailyViewProps) {
           return hours * 60 + (minutes || 0);
         }
       } catch (error) {
-        console.error(`Error parsing time ${timeStr}:`, error);
         return 0; // Return 0 as fallback
       }
     };
@@ -551,23 +545,11 @@ export function DailyView({ setup, onBack }: DailyViewProps) {
         const endTimeInMinutes = parseTimeToMinutes(endTime);
 
         // Check if current time is within shift time
-        const isOnShift = currentTimeInMinutes >= startTimeInMinutes && currentTimeInMinutes <= endTimeInMinutes;
-
-        console.log(`Employee ${employee.name} shift check for block ${block}: ${startTime}-${endTime} (${startTimeInMinutes}-${endTimeInMinutes}) vs current ${currentTimeInMinutes} = ${isOnShift}`);
-
-        return isOnShift;
+        return currentTimeInMinutes >= startTimeInMinutes && currentTimeInMinutes <= endTimeInMinutes;
       } catch (error) {
-        console.error(`Error checking time block ${block}:`, error);
         return false;
       }
     };
-
-    // TEMPORARY FOR TESTING: Always return true for assigned employees
-    // This will help us determine if the issue is with time parsing or with employee identification
-    if (employee.positions && employee.positions.some(p => p !== 'Scheduled')) {
-      console.log(`Employee ${employee.name} is assigned, returning true for testing`);
-      return true;
-    }
 
     // Check all possible time sources
 
@@ -579,8 +561,6 @@ export function DailyView({ setup, onBack }: DailyViewProps) {
 
     // 2. Check timeBlocks array (usually for assigned employees)
     if (employee.timeBlocks && employee.timeBlocks.length > 0) {
-      console.log(`Employee ${employee.name} has ${employee.timeBlocks.length} time blocks:`, employee.timeBlocks);
-
       // Check if any time block overlaps with current time
       for (const block of employee.timeBlocks) {
         const isOnShift = isTimeBlockCurrent(block);
@@ -591,12 +571,10 @@ export function DailyView({ setup, onBack }: DailyViewProps) {
     // 3. Check if we can find the employee in scheduledEmployees
     const scheduledEmployee = scheduledEmployees.find(e => e.id === employee.id);
     if (scheduledEmployee && scheduledEmployee.timeBlock) {
-      console.log(`Found employee ${employee.name} in scheduledEmployees with timeBlock: ${scheduledEmployee.timeBlock}`);
       const isOnShift = isTimeBlockCurrent(scheduledEmployee.timeBlock);
       if (isOnShift) return true;
     }
 
-    console.log(`Employee ${employee.name} not on shift: no matching time block`);
     return false;
   };
 
@@ -800,40 +778,34 @@ export function DailyView({ setup, onBack }: DailyViewProps) {
   }
 
   // Filter employees by area, current shift, and sort alphabetically
-  const filterEmployeesByArea = (employees: any[]) => {
-    console.log(`Filtering ${employees.length} employees with area=${employeeAreaTab}, currentShift=${showCurrentShiftOnly}`);
+  const filterEmployeesByArea = useMemo(() => {
+    return (employees: any[]) => {
+      // First filter by area if needed
+      let filteredEmployees = employeeAreaTab === 'all'
+        ? employees
+        : employees.filter(employee => employee.area === employeeAreaTab)
 
-    // First filter by area if needed
-    let filteredEmployees = employeeAreaTab === 'all'
-      ? employees
-      : employees.filter(employee => employee.area === employeeAreaTab)
+      // Then filter by current shift if the toggle is on
+      if (showCurrentShiftOnly) {
+        filteredEmployees = filteredEmployees.filter(employee => isEmployeeOnCurrentShift(employee))
+      }
 
-    console.log(`After area filter: ${filteredEmployees.length} employees`);
-
-    // Then filter by current shift if the toggle is on
-    if (showCurrentShiftOnly) {
-      filteredEmployees = filteredEmployees.filter(employee => isEmployeeOnCurrentShift(employee))
-      console.log(`After current shift filter: ${filteredEmployees.length} employees`);
+      // Then sort alphabetically by name
+      return filteredEmployees.sort((a, b) => a.name.localeCompare(b.name))
     }
-
-    // Then sort alphabetically by name
-    return filteredEmployees.sort((a, b) => a.name.localeCompare(b.name))
-  }
+  }, [employeeAreaTab, showCurrentShiftOnly])
 
   // Get all employees scheduled for the active day
-  const getDayEmployees = () => {
-    console.log('Getting day employees for:', activeDay);
-    const employees = new Map<string, { id: string, name: string, positions: string[], timeBlocks: string[], area?: string }>()
+  const getDayEmployees = useMemo(() => {
+    return () => {
+      const employees = new Map<string, { id: string, name: string, positions: string[], timeBlocks: string[], area?: string }>()
 
     // First, add all positions with employeeId to the map
     const timeBlocks = getTimeBlocks();
-    console.log(`Found ${timeBlocks.length} time blocks for ${activeDay}:`, timeBlocks);
 
     timeBlocks.forEach(block => {
-      console.log(`Processing block ${block.start}-${block.end} with ${block.positions.length} positions`);
       block.positions.forEach((position: any) => {
         if (position.employeeId) {
-          console.log(`Found assigned position: ${position.name}, Employee: ${position.employeeName} (${position.employeeId})`, position);
           // Create a unique ID if employeeId exists but no name
           const employeeId = position.employeeId
 
@@ -894,18 +866,13 @@ export function DailyView({ setup, onBack }: DailyViewProps) {
       }
     })
 
-    // Log employee information for debugging
-    console.log(`Total employees for ${activeDay}:`, Array.from(employees.values()).length);
-    console.log('Employee details:', Array.from(employees.values()).map(e => ({
-      name: e.name,
-      positions: e.positions,
-      timeBlocks: e.timeBlocks,
-      area: e.area
-    })));
+    // Return the employees for the active day
+    // console.log(`Total employees for ${activeDay}:`, Array.from(employees.values()).length);
 
     // Convert to array and sort alphabetically by name
     return Array.from(employees.values()).sort((a, b) => a.name.localeCompare(b.name))
-  }
+    }
+  }, [activeDay, modifiedSetup])
 
   // Get all employees assigned to the active day
   const getAssignedEmployees = () => {
