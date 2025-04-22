@@ -491,10 +491,8 @@ export function DailyView({ setup, onBack }: DailyViewProps) {
 
   // Check if an employee is currently on shift
   const isEmployeeOnCurrentShift = (employee: any): boolean => {
-    // For assigned employees, always return true (as requested)
-    if (employee.positions && employee.positions.some(p => p !== 'Scheduled')) {
-      return true;
-    }
+    // For assigned employees, check if they have positions other than 'Scheduled'
+    const isAssigned = employee.positions && employee.positions.some(p => p !== 'Scheduled');
 
     // First check if the employee is scheduled for today
     const normalizedEmpDay = employee.day ? normalizeDay(employee.day) : null;
@@ -551,6 +549,12 @@ export function DailyView({ setup, onBack }: DailyViewProps) {
       }
     };
 
+    // If this is an assigned employee, always show them
+    if (isAssigned) {
+      return true;
+    }
+
+    // For unassigned employees, check if they're currently on shift
     // Check all possible time sources
 
     // 1. Check timeBlock property (usually for unassigned employees)
@@ -778,22 +782,20 @@ export function DailyView({ setup, onBack }: DailyViewProps) {
   }
 
   // Filter employees by area, current shift, and sort alphabetically
-  const filterEmployeesByArea = useMemo(() => {
-    return (employees: any[]) => {
-      // First filter by area if needed
-      let filteredEmployees = employeeAreaTab === 'all'
-        ? employees
-        : employees.filter(employee => employee.area === employeeAreaTab)
+  const filterEmployeesByArea = (employees: any[]) => {
+    // First filter by area if needed
+    let filteredEmployees = employeeAreaTab === 'all'
+      ? employees
+      : employees.filter(employee => employee.area === employeeAreaTab)
 
-      // Then filter by current shift if the toggle is on
-      if (showCurrentShiftOnly) {
-        filteredEmployees = filteredEmployees.filter(employee => isEmployeeOnCurrentShift(employee))
-      }
-
-      // Then sort alphabetically by name
-      return filteredEmployees.sort((a, b) => a.name.localeCompare(b.name))
+    // Then filter by current shift if the toggle is on
+    if (showCurrentShiftOnly) {
+      filteredEmployees = filteredEmployees.filter(employee => isEmployeeOnCurrentShift(employee))
     }
-  }, [employeeAreaTab, showCurrentShiftOnly])
+
+    // Then sort alphabetically by name
+    return filteredEmployees.sort((a, b) => a.name.localeCompare(b.name))
+  }
 
   // Get all employees scheduled for the active day
   const getDayEmployees = useMemo(() => {
