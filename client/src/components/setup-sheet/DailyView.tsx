@@ -1260,9 +1260,9 @@ export function DailyView({ setup, onBack }: DailyViewProps) {
     // An employee is available if their schedule overlaps with the time block
     // This means:
     // 1. Employee starts before or at the block end AND
-    // 2. Employee ends after the block start
-    // Note: We use >= instead of > to include employees who end exactly at the block end
-    return empStartMinutes <= blockEndMinutes && empEndMinutes >= blockStartMinutes
+    // 2. Employee ends AFTER (not equal to) the block start
+    // Note: We use > instead of >= to exclude employees who end exactly at the block start
+    return empStartMinutes <= blockEndMinutes && empEndMinutes > blockStartMinutes
   }
 
   // Get employees available for a specific time block
@@ -1310,9 +1310,9 @@ export function DailyView({ setup, onBack }: DailyViewProps) {
         console.log(`Employee time in minutes: ${empStartMinutes} - ${empEndMinutes}`);
         console.log(`Block time in minutes: ${blockStartMinutes} - ${blockEndMinutes}`);
         console.log(`Condition 1: ${empStartMinutes} <= ${blockEndMinutes} = ${empStartMinutes <= blockEndMinutes}`);
-        console.log(`Condition 2: ${empEndMinutes} >= ${blockStartMinutes} = ${empEndMinutes >= blockStartMinutes}`);
+        console.log(`Condition 2: ${empEndMinutes} > ${blockStartMinutes} = ${empEndMinutes > blockStartMinutes}`);
 
-        const isAvailable = empStartMinutes <= blockEndMinutes && empEndMinutes >= blockStartMinutes;
+        const isAvailable = empStartMinutes <= blockEndMinutes && empEndMinutes > blockStartMinutes;
         console.log(`Is available: ${isAvailable}`);
 
         return isAvailable;
