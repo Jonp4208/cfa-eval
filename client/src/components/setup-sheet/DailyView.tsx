@@ -500,7 +500,15 @@ export function DailyView({ setup, onBack }: DailyViewProps) {
 
   // Check if an employee is currently on shift
   const isEmployeeOnCurrentShift = (employee: any): boolean => {
-    // First check if the employee is scheduled for today
+    // Check if this is an assigned employee (has positions other than 'Scheduled')
+    const isAssigned = employee.positions && employee.positions.some(p => p !== 'Scheduled');
+
+    // Always show assigned employees when Current Shift Only is enabled
+    if (isAssigned) {
+      return true;
+    }
+
+    // For unassigned employees, check if they're scheduled for today
     const normalizedEmpDay = employee.day ? normalizeDay(employee.day) : null;
     const normalizedToday = getTodayDayName();
 
