@@ -1283,19 +1283,13 @@ export function DailyView({ setup, onBack }: DailyViewProps) {
     // Helper function to check if an employee's schedule overlaps with the block
     const isAvailableForTimeBlock = (employee) => {
       if (!employee.timeBlock) {
-        // Only log warnings in development mode
-        if (process.env.NODE_ENV === 'development') {
-          console.warn('Employee missing timeBlock:', employee)
-        }
+        console.warn('Employee missing timeBlock:', employee)
         return false
       }
 
       const [empStart, empEnd] = employee.timeBlock.split(' - ')
       if (!empStart || !empEnd) {
-        // Only log warnings in development mode
-        if (process.env.NODE_ENV === 'development') {
-          console.warn('Invalid timeBlock format:', employee.timeBlock)
-        }
+        console.warn('Invalid timeBlock format:', employee.timeBlock)
         return false
       }
 
@@ -1308,7 +1302,19 @@ export function DailyView({ setup, onBack }: DailyViewProps) {
         // This means:
         // 1. Employee starts before or at the block end AND
         // 2. Employee ends AFTER (not equal to) the block start
-        return empStartMinutes <= blockEndMinutes && empEndMinutes > blockStartMinutes
+
+        // Debug log for employee availability
+        console.log(`Checking availability for ${employee.name}: ${employee.timeBlock}`);
+        console.log(`Block time: ${blockStart} - ${blockEnd}`);
+        console.log(`Employee time in minutes: ${empStartMinutes} - ${empEndMinutes}`);
+        console.log(`Block time in minutes: ${blockStartMinutes} - ${blockEndMinutes}`);
+        console.log(`Condition 1: ${empStartMinutes} <= ${blockEndMinutes} = ${empStartMinutes <= blockEndMinutes}`);
+        console.log(`Condition 2: ${empEndMinutes} > ${blockStartMinutes} = ${empEndMinutes > blockStartMinutes}`);
+
+        const isAvailable = empStartMinutes <= blockEndMinutes && empEndMinutes > blockStartMinutes;
+        console.log(`Is available: ${isAvailable}`);
+
+        return isAvailable;
       } catch (error) {
         console.error('Error parsing time for employee:', employee, error)
         return false
@@ -1364,9 +1370,15 @@ export function DailyView({ setup, onBack }: DailyViewProps) {
              employee.day.toLowerCase() === activeDay
     })
 
-    // Only log in development mode
-    if (process.env.NODE_ENV === 'development' && false) { // Disabled for now
-      console.log(`Found ${employeesForDay.length} employees for ${activeDay}`)
+    // Debug log for all employees for the day
+    console.log(`Found ${employeesForDay.length} employees for ${activeDay}:`, employeesForDay.map(e => `${e.name}: ${e.timeBlock}`));
+
+    // Log specific employee if they exist
+    const aidenEmployee = employeesForDay.find(e => e.name.includes('Aiden'));
+    if (aidenEmployee) {
+      console.log('Found Aiden:', aidenEmployee);
+    } else {
+      console.log('Aiden not found in employees for day');
     }
 
     // Filter to those available for this time block and not already assigned
