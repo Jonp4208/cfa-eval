@@ -500,15 +500,7 @@ export function DailyView({ setup, onBack }: DailyViewProps) {
 
   // Check if an employee is currently on shift
   const isEmployeeOnCurrentShift = (employee: any): boolean => {
-    // Check if this is an assigned employee (has positions other than 'Scheduled')
-    const isAssigned = employee.positions && employee.positions.some(p => p !== 'Scheduled');
-
-    // Always show assigned employees when Current Shift Only is enabled
-    if (isAssigned) {
-      return true;
-    }
-
-    // For unassigned employees, check if they're scheduled for today
+    // First check if the employee is scheduled for today
     const normalizedEmpDay = employee.day ? normalizeDay(employee.day) : null;
     const normalizedToday = getTodayDayName();
 
@@ -824,14 +816,30 @@ export function DailyView({ setup, onBack }: DailyViewProps) {
 
   // Filter employees by area, current shift, and sort alphabetically
   const filterEmployeesByArea = (employees: any[]) => {
+    console.log(`Filtering ${employees.length} employees with area=${employeeAreaTab}, currentShift=${showCurrentShiftOnly}`);
+
     // First filter by area if needed
     let filteredEmployees = employeeAreaTab === 'all'
       ? employees
       : employees.filter(employee => employee.area === employeeAreaTab)
 
+    console.log(`After area filter: ${filteredEmployees.length} employees`);
+
     // Then filter by current shift if the toggle is on
     if (showCurrentShiftOnly) {
-      filteredEmployees = filteredEmployees.filter(employee => isEmployeeOnCurrentShift(employee));
+      // Check if these are assigned employees (from getDayEmployees) or unassigned employees
+      const isAssignedList = employees === getDayEmployees().filter(e => e.positions.some(p => p !== 'Scheduled'));
+      console.log(`Is assigned employee list: ${isAssignedList}`);
+
+      if (isAssignedList) {
+        // For assigned employees, don't filter by current shift
+        console.log('Not filtering assigned employees by current shift');
+      } else {
+        // For unassigned employees, filter by current shift
+        const beforeCount = filteredEmployees.length;
+        filteredEmployees = filteredEmployees.filter(employee => isEmployeeOnCurrentShift(employee));
+        console.log(`Filtered unassigned employees by current shift: ${filteredEmployees.length} (was ${beforeCount})`);
+      }
     }
 
     // Then sort alphabetically by name
