@@ -1342,9 +1342,12 @@ export function DailyView({ setup, onBack }: DailyViewProps) {
         const blockEndMin = parseTimeToMinutes(block.end)
 
         // Check if this block overlaps with the selected time block
+        // Two blocks overlap if one starts before the other ends AND one ends after the other starts
+        // We use strict inequality (< and >) to avoid considering blocks that only touch at endpoints as overlapping
+        // This ensures that 5-8 PM and 8-9 PM are not considered overlapping
         const overlaps = (
-          (blockStartMin <= blockEndMinutes && blockEndMin >= blockStartMinutes) ||
-          (blockStartMinutes <= blockEndMin && blockEndMinutes >= blockStartMin)
+          (blockStartMin < blockEndMinutes && blockEndMin > blockStartMinutes) ||
+          (blockStartMinutes < blockEndMin && blockEndMinutes > blockStartMin)
         )
 
         console.log(`Time block ${block.start} - ${block.end} (${blockStartMin} - ${blockEndMin}) overlaps with current block: ${overlaps}`);
