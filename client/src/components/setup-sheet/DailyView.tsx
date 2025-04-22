@@ -502,24 +502,61 @@ export function DailyView({ setup, onBack }: DailyViewProps) {
     // Parse time to minutes helper function
     const parseTimeToMinutes = (timeStr: string): number => {
       try {
+        // Normalize the time string
+        const normalizedTimeStr = timeStr.trim().toLowerCase();
+        console.log(`Parsing time: ${normalizedTimeStr}`);
+
         // Check if time is in AM/PM format
-        if (timeStr.toLowerCase().includes('am') || timeStr.toLowerCase().includes('pm')) {
-          const isPM = timeStr.toLowerCase().includes('pm');
-          const timePart = timeStr.toLowerCase().replace('am', '').replace('pm', '').trim();
-          const [hours, minutes] = timePart.split(':').map(Number);
+        if (normalizedTimeStr.includes('am') || normalizedTimeStr.includes('pm')) {
+          const isPM = normalizedTimeStr.includes('pm');
+          // Remove AM/PM and any extra spaces
+          const timePart = normalizedTimeStr
+            .replace('am', '')
+            .replace('pm', '')
+            .replace('a.m.', '')
+            .replace('p.m.', '')
+            .replace('a.m', '')
+            .replace('p.m', '')
+            .trim();
+
+          // Split into hours and minutes
+          const parts = timePart.split(':');
+          const hours = parseInt(parts[0], 10);
+          const minutes = parts.length > 1 ? parseInt(parts[1], 10) : 0;
+
+          // Handle invalid numbers
+          if (isNaN(hours)) {
+            console.error(`Invalid hours in time: ${timeStr}`);
+            return 0;
+          }
+
           let hour = hours;
 
           // Convert to 24-hour format
           if (isPM && hour < 12) hour += 12;
           if (!isPM && hour === 12) hour = 0;
 
-          return hour * 60 + (minutes || 0);
+          const result = hour * 60 + (isNaN(minutes) ? 0 : minutes);
+          console.log(`Parsed ${timeStr} to ${result} minutes (${hour}:${isNaN(minutes) ? 0 : minutes})`);
+          return result;
         } else {
           // Handle 24-hour format
-          const [hours, minutes] = timeStr.split(':').map(Number);
-          return hours * 60 + (minutes || 0);
+          const parts = normalizedTimeStr.split(':');
+          const hours = parseInt(parts[0], 10);
+          const minutes = parts.length > 1 ? parseInt(parts[1], 10) : 0;
+
+          // Handle invalid numbers
+          if (isNaN(hours)) {
+            console.error(`Invalid hours in time: ${timeStr}`);
+            return 0;
+          }
+
+          const result = hours * 60 + (isNaN(minutes) ? 0 : minutes);
+          console.log(`Parsed ${timeStr} to ${result} minutes (${hours}:${isNaN(minutes) ? 0 : minutes})`);
+          return result;
         }
       } catch (error) {
+        console.error(`Error parsing time ${timeStr}:`, error);
         return 0; // Return 0 as fallback
       }
     };
