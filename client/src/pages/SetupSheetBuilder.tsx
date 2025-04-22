@@ -188,11 +188,25 @@ export function SetupSheetBuilder() {
   }
 
   // Helper function to format time consistently
-  const formatTime = (timeString: string): string => {
+  const formatTime = (timeString: string | number): string => {
     if (!timeString) return '00:00'
 
+    // Handle Excel decimal time format (e.g., 0.6770833333333334 = 4:15 PM)
+    if (typeof timeString === 'number' || !isNaN(Number(timeString))) {
+      const decimalTime = typeof timeString === 'number' ? timeString : Number(timeString);
+
+      // Excel stores times as decimal fractions of a 24-hour day
+      // 0.5 = 12:00 PM, 0.75 = 6:00 PM, etc.
+      const totalMinutes = Math.round(decimalTime * 24 * 60);
+      const hours = Math.floor(totalMinutes / 60);
+      const minutes = totalMinutes % 60;
+
+      return `${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}`;
+    }
+
+    // For string time formats
     // Clean up the time string
-    const cleanTime = timeString.trim().toLowerCase();
+    const cleanTime = timeString.toString().trim().toLowerCase();
 
     // Handle various time formats
     // Try to parse as 24-hour format first
@@ -252,17 +266,30 @@ export function SetupSheetBuilder() {
     console.log('Unrecognized time format:', timeString);
 
     // If all else fails, return as is
-    return timeString
+    return timeString.toString()
   }
 
   // Helper function to normalize day names
   const normalizeDay = (dayString: string): string | null => {
     if (!dayString) return null
 
-    const normalizedDay = dayString.toLowerCase().trim()
+    // Convert to string in case we get a number or other type
+    const dayStr = String(dayString).toLowerCase().trim()
+
+    // Debug log to track day normalization
+    console.log(`Normalizing day: '${dayString}' (type: ${typeof dayString})`)
 
     // Map common day abbreviations and variations to standard format
     const dayMap: Record<string, string> = {
+      // Full names
+      'monday': 'monday',
+      'tuesday': 'tuesday',
+      'wednesday': 'wednesday',
+      'thursday': 'thursday',
+      'friday': 'friday',
+      'saturday': 'saturday',
+      'sunday': 'sunday',
+      // Common abbreviations
       'mon': 'monday',
       'm': 'monday',
       'tues': 'tuesday',
@@ -278,28 +305,43 @@ export function SetupSheetBuilder() {
       'sat': 'saturday',
       's': 'saturday',
       'sun': 'sunday',
-      'su': 'sunday'
+      'su': 'sunday',
+      // Numbers (Excel might use these)
+      '1': 'monday',
+      '2': 'tuesday',
+      '3': 'wednesday',
+      '4': 'thursday',
+      '5': 'friday',
+      '6': 'saturday',
+      '0': 'sunday',
+      '7': 'sunday'
     }
 
-    // Check if the input matches a day name or abbreviation
-    if (Object.keys(dayMap).includes(normalizedDay)) {
-      return dayMap[normalizedDay]
+    // Direct lookup in the map
+    if (dayMap[dayStr]) {
+      console.log(`Day normalized via direct lookup: '${dayString}' -> '${dayMap[dayStr]}'`)
+      return dayMap[dayStr]
     }
 
     // Check if the input starts with a day name
     for (const [abbr, fullDay] of Object.entries(dayMap)) {
-      if (normalizedDay.startsWith(abbr)) {
+      if (dayStr.startsWith(abbr) && abbr.length > 1) { // Only use abbr with length > 1 to avoid false matches
+        console.log(`Day normalized via prefix: '${dayString}' -> '${fullDay}'`)
         return fullDay
       }
     }
 
-    // Check if the input is already a full day name
-    const days = ['monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'sunday']
-    if (days.includes(normalizedDay)) {
-      return normalizedDay
+    // Try to extract day name from a date string (e.g., "Thursday, June 15")
+    const dayNames = ['sunday', 'monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday']
+    for (const day of dayNames) {
+      if (dayStr.includes(day)) {
+        console.log(`Day normalized via substring: '${dayString}' -> '${day}'`)
+        return day
+      }
     }
 
-    // If we can't determine the day, return null
+    // If we can't determine the day, log and return null
+    console.log(`Could not normalize day: '${dayString}'`)
     return null
   }
 
@@ -439,6 +481,7 @@ export function SetupSheetBuilder() {
         description: "Please select start and end dates",
         variant: "destructive"
       })
+      setIsSaving(false);
       return
     }
 
@@ -448,14 +491,15 @@ export function SetupSheetBuilder() {
         description: "Please select a template",
         variant: "destructive"
       })
+      setIsSaving(false);
       return
     }
 
     try {
       // Show saving indicator
-      toast({
+      const savingToast = toast({
         title: "Saving",
-        description: "Saving your weekly setup..."
+        description: "Preparing your weekly setup..."
       })
 
       // Get the current assignments directly from the EmployeeAssignment component
@@ -485,17 +529,57 @@ export function SetupSheetBuilder() {
         finalSetupName = `Week of ${month}/${endDay}`;
       }
 
+      // Update the toast to show progress
+      toast({
+        title: "Saving",
+        description: "Processing employee data...",
+        id: savingToast
+      })
+
       // Prepare employee data - only include essential fields to reduce payload size
+      // Process in batches to avoid UI freezing
+      const batchSize = 100;
+      let simplifiedEmployees = [];
+
       // Filter out employees that don't have a day assigned (they're not scheduled)
-      const simplifiedEmployees = employees
-        .filter(emp => emp.day) // Only include employees with a day assigned
-        .map(emp => ({
+      const employeesWithDay = employees.filter(emp => emp.day);
+
+      for (let i = 0; i < employeesWithDay.length; i += batchSize) {
+        // Process a batch of employees
+        const batch = employeesWithDay.slice(i, i + batchSize);
+
+        // Update progress toast
+        if (employeesWithDay.length > batchSize) {
+          toast({
+            title: "Saving",
+            description: `Processing employees: ${Math.min(i + batchSize, employeesWithDay.length)}/${employeesWithDay.length}`,
+            id: savingToast
+          })
+        }
+
+        // Process this batch
+        const batchResult = batch.map(emp => ({
           id: emp.id,
           name: emp.name,
           timeBlock: emp.timeBlock,
           area: emp.area,
-          day: emp.day
+          day: normalizeDay(emp.day) // Normalize day names for consistency
         }));
+
+        simplifiedEmployees = [...simplifiedEmployees, ...batchResult];
+
+        // Add a small delay to keep UI responsive
+        if (employeesWithDay.length > batchSize) {
+          await new Promise(resolve => setTimeout(resolve, 10));
+        }
+      }
+
+      // Update toast for next step
+      toast({
+        title: "Saving",
+        description: "Optimizing schedule data...",
+        id: savingToast
+      });
 
       // Optimize weekSchedule by removing empty timeBlocks and positions
       const optimizedWeekSchedule = Object.entries(finalWeekSchedule).reduce((acc, [day, daySchedule]) => {
@@ -551,47 +635,75 @@ export function SetupSheetBuilder() {
         return;
       }
 
+      // Update toast for final step
+      toast({
+        title: "Saving",
+        description: "Sending data to server...",
+        id: savingToast
+      })
+
       // Add a small delay to ensure UI responsiveness
       await new Promise(resolve => setTimeout(resolve, 100));
 
-      const savedSetup = await createWeeklySetup(weeklySetup);
-
-      console.log('Setup saved successfully:', savedSetup);
-
-      // Check if there was a warning about employee data
-      if (savedSetup._warning) {
+      // Set a timeout to update the toast if the save is taking a long time
+      const timeoutId = setTimeout(() => {
         toast({
-          title: "Partial Success",
-          description: "Setup saved, but employee data was too large and was not saved.",
-          variant: "warning"
-        });
-      } else {
+          title: "Still Saving",
+          description: "This is taking longer than expected. Please wait...",
+          id: savingToast
+        })
+      }, 5000); // Show after 5 seconds
+
+      try {
+        const savedSetup = await createWeeklySetup(weeklySetup);
+        clearTimeout(timeoutId); // Clear the timeout
+        console.log('Setup saved successfully:', savedSetup);
+
+        // Check if there was a warning about employee data
+        if (savedSetup._warning) {
+          toast({
+            title: "Partial Success",
+            description: "Setup saved, but employee data was too large and was not saved.",
+            variant: "warning"
+          });
+        } else {
+          toast({
+            title: "Success",
+            description: "Weekly setup saved successfully"
+          });
+        }
+
+        setShowSaveDialog(false)
+        setIsSaving(false) // Reset saving state
+
+        // Navigate to the setup view
+        navigate(`/setup-view/${savedSetup._id}`);
+      } catch (err) {
+        clearTimeout(timeoutId); // Clear the timeout on error
+        setIsSaving(false) // Reset saving state on error
+        console.error('Error saving weekly setup:', err);
+
+        // More detailed error message
+        let errorMessage = "Failed to save weekly setup";
+        if (err instanceof Error) {
+          errorMessage = err.message;
+        } else if (typeof err === 'object' && err !== null) {
+          errorMessage = JSON.stringify(err);
+        }
+
         toast({
-          title: "Success",
-          description: "Weekly setup saved successfully"
-        });
+          title: "Error",
+          description: errorMessage,
+          variant: "destructive"
+        })
       }
-
-      setShowSaveDialog(false)
-      setIsSaving(false) // Reset saving state
-
-      // Navigate to the setup view
-      navigate(`/setup-view/${savedSetup._id}`);
-    } catch (err) {
+    } catch (outerErr) {
       setIsSaving(false) // Reset saving state on error
-      console.error('Error saving weekly setup:', err);
-
-      // More detailed error message
-      let errorMessage = "Failed to save weekly setup";
-      if (err instanceof Error) {
-        errorMessage = err.message;
-      } else if (typeof err === 'object' && err !== null) {
-        errorMessage = JSON.stringify(err);
-      }
+      console.error('Outer error in save process:', outerErr);
 
       toast({
         title: "Error",
-        description: errorMessage,
+        description: "An unexpected error occurred while saving. Please try again.",
         variant: "destructive"
       })
     }
@@ -657,7 +769,7 @@ export function SetupSheetBuilder() {
                     variant="outline"
                     size="sm"
                     onClick={() => {
-                      // Create a sample Excel file for download
+                      // Create a sample Excel file for download with various time formats
                       const worksheet = XLSX.utils.json_to_sheet([
                         {
                           'Employee Name': 'John Smith',
@@ -668,24 +780,31 @@ export function SetupSheetBuilder() {
                         },
                         {
                           'Employee Name': 'Jane Doe',
-                          'Start Time': '12:00',
-                          'End Time': '20:00',
+                          'Start Time': '12:00 PM',  // 12-hour format with AM/PM
+                          'End Time': '8:00 PM',
                           'Area': 'Drive Thru',
                           'Day': 'Tuesday'
                         },
                         {
                           'Employee Name': 'Bob Johnson',
-                          'Start Time': '10:00',
-                          'End Time': '18:00',
+                          'Start Time': 0.4166666667,  // Excel decimal time (10:00 AM)
+                          'End Time': 0.75,           // Excel decimal time (6:00 PM)
                           'Area': 'Kitchen',
                           'Day': 'Wednesday'
                         },
                         {
                           'Employee Name': 'Sarah Williams',
-                          'Start Time': '09:00',
-                          'End Time': '17:00',
+                          'Start Time': '9a',         // Short format with AM/PM
+                          'End Time': '5p',
                           'Area': 'Front Counter',
                           'Day': 'Thursday'
+                        },
+                        {
+                          'Employee Name': 'Michael Brown',
+                          'Start Time': 0.3125,       // Excel decimal time (7:30 AM)
+                          'End Time': 0.6458333333,   // Excel decimal time (3:30 PM)
+                          'Area': 'BOH',
+                          'Day': 'Friday'
                         }
                       ])
                       const workbook = XLSX.utils.book_new()
@@ -715,6 +834,7 @@ export function SetupSheetBuilder() {
                     <div>
                       <p>Drag and drop your schedule export file here, or click to select</p>
                       <p className="text-sm text-gray-500 mt-2">Supports .xlsx and .xls files</p>
+                      <p className="text-sm text-gray-500 mt-1">Supports various time formats including Excel decimal times</p>
                     </div>
                   )}
                 </div>

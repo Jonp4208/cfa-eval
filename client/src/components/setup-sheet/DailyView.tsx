@@ -434,7 +434,14 @@ export function DailyView({ setup, onBack }: DailyViewProps) {
     // Filter out employees that are already assigned
     const unassigned = allEmployees.filter(emp => {
       // Check if this employee is for the current day or has no day specified
-      const isForActiveDay = !emp.day || emp.day === activeDay || emp.day.toLowerCase() === activeDay
+      // Normalize the day name for consistent comparison
+      const normalizedEmpDay = emp.day ? normalizeDay(emp.day) : null;
+      const normalizedActiveDay = activeDay.toLowerCase();
+
+      // Debug log to track day comparison
+      console.log(`Day comparison for ${emp.name}: Employee day=${normalizedEmpDay}, Active day=${normalizedActiveDay}`);
+
+      const isForActiveDay = !normalizedEmpDay || normalizedEmpDay === normalizedActiveDay;
 
       // Only include employees for this day that aren't already assigned
       return isForActiveDay && !assignedEmployeeIds.has(emp.id)
@@ -472,6 +479,82 @@ export function DailyView({ setup, onBack }: DailyViewProps) {
       'sunday': 'Sun'
     }
     return shortNames[day] || day.substring(0, 3)
+  }
+
+  // Helper function to normalize day names for consistent comparison
+  const normalizeDay = (dayString: string): string | null => {
+    if (!dayString) return null
+
+    // Convert to string in case we get a number or other type
+    const dayStr = String(dayString).toLowerCase().trim()
+
+    // Debug log to track day normalization
+    console.log(`Normalizing day in DailyView: '${dayString}' (type: ${typeof dayString})`)
+
+    // Map common day abbreviations and variations to standard format
+    const dayMap: Record<string, string> = {
+      // Full names
+      'monday': 'monday',
+      'tuesday': 'tuesday',
+      'wednesday': 'wednesday',
+      'thursday': 'thursday',
+      'friday': 'friday',
+      'saturday': 'saturday',
+      'sunday': 'sunday',
+      // Common abbreviations
+      'mon': 'monday',
+      'm': 'monday',
+      'tues': 'tuesday',
+      'tue': 'tuesday',
+      't': 'tuesday',
+      'wed': 'wednesday',
+      'w': 'wednesday',
+      'thurs': 'thursday',
+      'thu': 'thursday',
+      'th': 'thursday',
+      'fri': 'friday',
+      'f': 'friday',
+      'sat': 'saturday',
+      's': 'saturday',
+      'sun': 'sunday',
+      'su': 'sunday',
+      // Numbers (Excel might use these)
+      '1': 'monday',
+      '2': 'tuesday',
+      '3': 'wednesday',
+      '4': 'thursday',
+      '5': 'friday',
+      '6': 'saturday',
+      '0': 'sunday',
+      '7': 'sunday'
+    }
+
+    // Direct lookup in the map
+    if (dayMap[dayStr]) {
+      console.log(`Day normalized via direct lookup in DailyView: '${dayString}' -> '${dayMap[dayStr]}'`)
+      return dayMap[dayStr]
+    }
+
+    // Check if the input starts with a day name
+    for (const [abbr, fullDay] of Object.entries(dayMap)) {
+      if (dayStr.startsWith(abbr) && abbr.length > 1) { // Only use abbr with length > 1 to avoid false matches
+        console.log(`Day normalized via prefix in DailyView: '${dayString}' -> '${fullDay}'`)
+        return fullDay
+      }
+    }
+
+    // Try to extract day name from a date string (e.g., "Thursday, June 15")
+    const dayNames = ['sunday', 'monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday']
+    for (const day of dayNames) {
+      if (dayStr.includes(day)) {
+        console.log(`Day normalized via substring in DailyView: '${dayString}' -> '${day}'`)
+        return day
+      }
+    }
+
+    // If we can't determine the day, log and return null
+    console.log(`Could not normalize day in DailyView: '${dayString}'`)
+    return null
   }
 
   // Get the date for a specific day based on the setup's start date

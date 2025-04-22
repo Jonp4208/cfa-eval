@@ -21,8 +21,8 @@ import {
 interface Employee {
   id: string
   name: string
-  shiftStart: string
-  shiftEnd: string
+  shiftStart: string | number
+  shiftEnd: string | number
   area: 'FOH' | 'BOH'
   day?: string | null
 }
@@ -38,8 +38,8 @@ interface Position {
 
 interface TimeBlock {
   id: string
-  start: string
-  end: string
+  start: string | number
+  end: string | number
   positions: Position[]
 }
 
@@ -343,9 +343,22 @@ export function EmployeeAssignment({ employees, template, onSave, showSaveButton
 
   const isEmployeeAvailableDuringBlock = (employee: Employee, block: TimeBlock) => {
     // Handle special cases for time format
-    const normalizeTime = (time: string) => {
+    const normalizeTime = (time: string | number) => {
+      // Handle Excel decimal time format (e.g., 0.6770833333333334 = 4:15 PM)
+      if (typeof time === 'number' || !isNaN(Number(time))) {
+        const decimalTime = typeof time === 'number' ? time : Number(time);
+
+        // Excel stores times as decimal fractions of a 24-hour day
+        // 0.5 = 12:00 PM, 0.75 = 6:00 PM, etc.
+        const totalMinutes = Math.round(decimalTime * 24 * 60);
+        const hours = Math.floor(totalMinutes / 60);
+        const minutes = totalMinutes % 60;
+
+        return `${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}`;
+      }
+
       // Clean up the time string
-      const cleanTime = time.trim().toLowerCase();
+      const cleanTime = time.toString().trim().toLowerCase();
 
       // Handle AM/PM format with various notations
       if (cleanTime.endsWith('a') || cleanTime.endsWith('p') ||
