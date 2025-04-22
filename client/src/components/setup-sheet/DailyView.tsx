@@ -135,8 +135,8 @@ export function DailyView({ setup, onBack }: DailyViewProps) {
   const [areaTab, setAreaTab] = useState('service') // 'service' for FC/Drive or 'kitchen' for Kitchen
   const [activeHour, setActiveHour] = useState<string | null>(null)
   const [showEmployeeList, setShowEmployeeList] = useState(false)
-  const [employeeAreaTab, setEmployeeAreaTab] = useState('all') // 'all', 'FOH', or 'BOH'
-  const [showCurrentShiftOnly, setShowCurrentShiftOnly] = useState(false) // Filter to show only employees currently on shift
+  const [employeeAreaTab, setEmployeeAreaTab] = useState('FOH') // 'all', 'FOH', or 'BOH'
+  const [showCurrentShiftOnly, setShowCurrentShiftOnly] = useState(true) // Filter to show only employees currently on shift
   const [showAssignDialog, setShowAssignDialog] = useState(false)
   const assignDialogRef = useRef<HTMLDivElement>(null)
   const [selectedPosition, setSelectedPosition] = useState<Position | null>(null)
@@ -186,6 +186,15 @@ export function DailyView({ setup, onBack }: DailyViewProps) {
     console.log('originalSetup changed, refreshing employee data');
     fetchScheduledEmployees();
   }, [originalSetup])
+
+  // Reset filter values when employee dialog is opened
+  useEffect(() => {
+    if (showEmployeeList) {
+      // Set default filters when dialog opens
+      setEmployeeAreaTab('FOH');
+      setShowCurrentShiftOnly(true);
+    }
+  }, [showEmployeeList])
 
   // Check if a weekly setup has positions
   const hasPositions = (setup) => {
