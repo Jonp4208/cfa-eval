@@ -491,9 +491,6 @@ export function DailyView({ setup, onBack }: DailyViewProps) {
 
   // Check if an employee is currently on shift
   const isEmployeeOnCurrentShift = (employee: any): boolean => {
-    // For assigned employees, check if they have positions other than 'Scheduled'
-    const isAssigned = employee.positions && employee.positions.some(p => p !== 'Scheduled');
-
     // First check if the employee is scheduled for today
     const normalizedEmpDay = employee.day ? normalizeDay(employee.day) : null;
     const normalizedToday = getTodayDayName();
@@ -536,26 +533,27 @@ export function DailyView({ setup, onBack }: DailyViewProps) {
     // Check if a time block overlaps with current time
     const isTimeBlockCurrent = (block: string): boolean => {
       try {
+        console.log(`Checking time block: ${block}`);
         const [startTime, endTime] = block.split(' - ');
-        if (!startTime || !endTime) return false;
+        if (!startTime || !endTime) {
+          console.log(`Invalid time block format: ${block}`);
+          return false;
+        }
 
         const startTimeInMinutes = parseTimeToMinutes(startTime);
         const endTimeInMinutes = parseTimeToMinutes(endTime);
 
         // Check if current time is within shift time
-        return currentTimeInMinutes >= startTimeInMinutes && currentTimeInMinutes <= endTimeInMinutes;
+        const isOnShift = currentTimeInMinutes >= startTimeInMinutes && currentTimeInMinutes <= endTimeInMinutes;
+        console.log(`Time check: ${startTime}(${startTimeInMinutes}) - ${endTime}(${endTimeInMinutes}) vs current ${currentTimeInMinutes} = ${isOnShift}`);
+        return isOnShift;
       } catch (error) {
+        console.error(`Error checking time block ${block}:`, error);
         return false;
       }
     };
 
-    // If this is an assigned employee, always show them
-    if (isAssigned) {
-      return true;
-    }
-
-    // For unassigned employees, check if they're currently on shift
-    // Check all possible time sources
+    // Check all possible time sources to see if employee is currently on shift
 
     // 1. Check timeBlock property (usually for unassigned employees)
     if (employee.timeBlock) {
@@ -783,14 +781,24 @@ export function DailyView({ setup, onBack }: DailyViewProps) {
 
   // Filter employees by area, current shift, and sort alphabetically
   const filterEmployeesByArea = (employees: any[]) => {
+    console.log(`Filtering ${employees.length} employees with area=${employeeAreaTab}, currentShift=${showCurrentShiftOnly}`);
+
     // First filter by area if needed
     let filteredEmployees = employeeAreaTab === 'all'
       ? employees
       : employees.filter(employee => employee.area === employeeAreaTab)
 
+    console.log(`After area filter: ${filteredEmployees.length} employees`);
+
     // Then filter by current shift if the toggle is on
     if (showCurrentShiftOnly) {
-      filteredEmployees = filteredEmployees.filter(employee => isEmployeeOnCurrentShift(employee))
+      const beforeCount = filteredEmployees.length;
+      filteredEmployees = filteredEmployees.filter(employee => {
+        const isOnShift = isEmployeeOnCurrentShift(employee);
+        console.log(`Employee ${employee.name}: on shift = ${isOnShift}`);
+        return isOnShift;
+      });
+      console.log(`After current shift filter: ${filteredEmployees.length} employees (was ${beforeCount})`);
     }
 
     // Then sort alphabetically by name
