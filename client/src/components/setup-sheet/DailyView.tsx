@@ -3,6 +3,7 @@ import { Card } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
+import { Switch } from '@/components/ui/switch'
 import { Clock, User, Calendar, ArrowLeft, Coffee, Play, Pause, Download, Printer, RefreshCw, Search, Filter, ChevronDown, X, Check, Save, Plus } from 'lucide-react'
 import { AddPositionDialog } from './AddPositionDialog'
 import { format, isToday, parseISO } from 'date-fns'
@@ -135,6 +136,7 @@ export function DailyView({ setup, onBack }: DailyViewProps) {
   const [activeHour, setActiveHour] = useState<string | null>(null)
   const [showEmployeeList, setShowEmployeeList] = useState(false)
   const [employeeAreaTab, setEmployeeAreaTab] = useState('all') // 'all', 'FOH', or 'BOH'
+  const [showCurrentShiftOnly, setShowCurrentShiftOnly] = useState(false) // Filter to show only employees currently on shift
   const [showAssignDialog, setShowAssignDialog] = useState(false)
   const assignDialogRef = useRef<HTMLDivElement>(null)
   const [selectedPosition, setSelectedPosition] = useState<Position | null>(null)
@@ -487,6 +489,41 @@ export function DailyView({ setup, onBack }: DailyViewProps) {
     return shortNames[day] || day.substring(0, 3)
   }
 
+  // Check if an employee is currently on shift
+  const isEmployeeOnCurrentShift = (employee: any): boolean => {
+    // First check if the employee is scheduled for today
+    const normalizedEmpDay = employee.day ? normalizeDay(employee.day) : null;
+    const normalizedToday = getTodayDayName();
+
+    if (normalizedEmpDay && normalizedEmpDay !== normalizedToday) {
+      return false; // Not scheduled for today
+    }
+
+    // Now check if the current time falls within their shift
+    if (!employee.timeBlock) return false;
+
+    const [startTime, endTime] = employee.timeBlock.split(' - ');
+    if (!startTime || !endTime) return false;
+
+    // Convert times to minutes since midnight for easier comparison
+    const now = new Date();
+    const currentHour = now.getHours();
+    const currentMinute = now.getMinutes();
+    const currentTimeInMinutes = currentHour * 60 + currentMinute;
+
+    // Parse start and end times
+    const startHour = parseInt(startTime.split(':')[0]);
+    const startMinute = parseInt(startTime.split(':')[1]) || 0;
+    const startTimeInMinutes = startHour * 60 + startMinute;
+
+    const endHour = parseInt(endTime.split(':')[0]);
+    const endMinute = parseInt(endTime.split(':')[1]) || 0;
+    const endTimeInMinutes = endHour * 60 + endMinute;
+
+    // Check if current time is within shift time
+    return currentTimeInMinutes >= startTimeInMinutes && currentTimeInMinutes <= endTimeInMinutes;
+  };
+
   // Helper function to normalize day names for consistent comparison
   const normalizeDay = (dayString: string): string | null => {
     if (!dayString) return null
@@ -686,12 +723,17 @@ export function DailyView({ setup, onBack }: DailyViewProps) {
     return blocks;
   }
 
-  // Filter employees by area and sort alphabetically
+  // Filter employees by area, current shift, and sort alphabetically
   const filterEmployeesByArea = (employees: any[]) => {
     // First filter by area if needed
-    const filteredEmployees = employeeAreaTab === 'all'
+    let filteredEmployees = employeeAreaTab === 'all'
       ? employees
       : employees.filter(employee => employee.area === employeeAreaTab)
+
+    // Then filter by current shift if the toggle is on
+    if (showCurrentShiftOnly) {
+      filteredEmployees = filteredEmployees.filter(employee => isEmployeeOnCurrentShift(employee))
+    }
 
     // Then sort alphabetically by name
     return filteredEmployees.sort((a, b) => a.name.localeCompare(b.name))
@@ -2353,9 +2395,7 @@ export function DailyView({ setup, onBack }: DailyViewProps) {
                 <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-3 mb-4">
                   <div className="flex items-center gap-2">
                     <Badge className="bg-blue-600">
-                      {employeeAreaTab === 'all'
-                        ? scheduledEmployees.length
-                        : scheduledEmployees.filter(e => e.area === employeeAreaTab).length}
+                      {filterEmployeesByArea(scheduledEmployees).length}
                     </Badge>
                     <span className="text-sm font-medium">
                       {employeeAreaTab === 'all'
@@ -2363,14 +2403,33 @@ export function DailyView({ setup, onBack }: DailyViewProps) {
                         : employeeAreaTab === 'FOH' ? 'FOH Employees' : 'BOH Employees'}
                     </span>
                   </div>
-                  <div className="relative w-full sm:w-auto">
-                    <div className="relative">
-                      <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
-                      <input
-                        type="text"
-                        placeholder="Search employees..."
-                        className="pl-9 pr-3 py-2 text-sm border rounded-md w-full sm:w-[220px] focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                      />
+                  <div className="flex items-center gap-3">
+                    {/* Current Shift Toggle */}
+                    <div className="flex items-center gap-2">
+                      <div className="flex items-center space-x-2">
+                        <Switch
+                          id="current-shift-toggle"
+                          checked={showCurrentShiftOnly}
+                          onCheckedChange={setShowCurrentShiftOnly}
+                          className={`${showCurrentShiftOnly ? 'bg-blue-600' : 'bg-gray-200'}`}
+                        />
+                        <label
+                          htmlFor="current-shift-toggle"
+                          className="text-sm font-medium cursor-pointer"
+                        >
+                          Current Shift Only
+                        </label>
+                      </div>
+                    </div>
+                    <div className="relative w-full sm:w-auto">
+                      <div className="relative">
+                        <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
+                        <input
+                          type="text"
+                          placeholder="Search employees..."
+                          className="pl-9 pr-3 py-2 text-sm border rounded-md w-full sm:w-[220px] focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                        />
+                      </div>
                     </div>
                   </div>
                 </div>
