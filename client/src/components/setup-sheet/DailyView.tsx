@@ -4,7 +4,7 @@ import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Switch } from '@/components/ui/switch'
-import { Clock, User, Calendar, Coffee, RefreshCw, Search, X, Check, Save, Plus } from 'lucide-react'
+import { Clock, User, Calendar, Coffee, RefreshCw, Search, X, Check, Plus } from 'lucide-react'
 import { format } from 'date-fns'
 import { formatHourTo12Hour } from '@/lib/utils/date-utils'
 import { useNavigate } from 'react-router-dom'
@@ -1205,8 +1205,64 @@ export function DailyView({ setup, onBack }: DailyViewProps) {
   // Handle starting a break from the dialog
   const handleStartBreak = async () => {
     if (selectedEmployee) {
-      await startBreak(selectedEmployee.id, selectedEmployee.name, parseInt(breakDuration))
-      setShowBreakDialog(false)
+      try {
+        // Create a new break object
+        const newBreak: EmployeeBreak = {
+          employeeId: selectedEmployee.id,
+          employeeName: selectedEmployee.name,
+          startTime: new Date().toISOString(),
+          duration: parseInt(breakDuration),
+          status: 'active',
+          hadBreak: true
+        }
+
+        // Add the break to the employee breaks array
+        setEmployeeBreaks(prev => [...prev, newBreak])
+
+        // Update the employee in scheduledEmployees to mark that they've had a break
+        const updatedEmployees = scheduledEmployees.map(emp => {
+          if (emp.id === selectedEmployee.id) {
+            // Create or update the breaks array for this employee
+            const updatedBreaks = emp.breaks ? [...emp.breaks] : []
+            updatedBreaks.push({
+              startTime: newBreak.startTime,
+              duration: newBreak.duration,
+              status: newBreak.status
+            })
+
+            return {
+              ...emp,
+              hadBreak: true,
+              breaks: updatedBreaks
+            }
+          }
+          return emp
+        })
+
+        // Update the scheduledEmployees state
+        setScheduledEmployees(updatedEmployees)
+
+        // Close the dialog
+        setShowBreakDialog(false)
+
+        // Save the changes to the server automatically
+        await saveChangesAutomatically('assign', selectedEmployee.name, `${breakDuration} minute break`)
+
+        // Set a timeout to notify when the break should end
+        setTimeout(() => {
+          toast({
+            title: 'Break Ending',
+            description: `${selectedEmployee.name}'s ${breakDuration} minute break is ending now`
+          })
+        }, parseInt(breakDuration) * 60 * 1000)
+      } catch (error) {
+        console.error('Error starting break:', error)
+        toast({
+          title: 'Error',
+          description: 'Failed to start break. Please try again.',
+          variant: 'destructive'
+        })
+      }
     }
   }
 
@@ -1632,7 +1688,7 @@ export function DailyView({ setup, onBack }: DailyViewProps) {
   }
 
   // Handle adding a new position
-  const handleAddPosition = (newPosition: any) => {
+  const handleAddPosition = async (newPosition: any) => {
     if (!selectedTimeBlock) return
 
     // Create a new position with a unique ID
@@ -1644,34 +1700,42 @@ export function DailyView({ setup, onBack }: DailyViewProps) {
       employeeId: undefined
     }
 
-    // Update the modified setup with the new position
-    setModifiedSetup((prev: any) => {
-      // Create a deep copy of the previous state
-      const updated = JSON.parse(JSON.stringify(prev))
+    try {
+      // Update the modified setup with the new position
+      setModifiedSetup((prev: any) => {
+        // Create a deep copy of the previous state
+        const updated = JSON.parse(JSON.stringify(prev))
 
-      // Find the time block and add the position
-      if (updated.weekSchedule && updated.weekSchedule[activeDay]) {
-        const timeBlocks = updated.weekSchedule[activeDay].timeBlocks || []
-        const blockIndex = timeBlocks.findIndex((block: any) => block.id === selectedTimeBlock.id)
+        // Find the time block and add the position
+        if (updated.weekSchedule && updated.weekSchedule[activeDay]) {
+          const timeBlocks = updated.weekSchedule[activeDay].timeBlocks || []
+          const blockIndex = timeBlocks.findIndex((block: any) => block.id === selectedTimeBlock.id)
 
-        if (blockIndex !== -1) {
-          // Add the position to the time block
-          updated.weekSchedule[activeDay].timeBlocks[blockIndex].positions.push(position)
+          if (blockIndex !== -1) {
+            // Add the position to the time block
+            updated.weekSchedule[activeDay].timeBlocks[blockIndex].positions.push(position)
+          }
         }
-      }
 
-      return updated
-    })
+        return updated
+      })
 
-    // Save changes automatically
-    // Commented out as 'add' is not a valid action type
-    // saveChangesAutomatically('add', undefined, position.name)
+      // Save changes automatically using 'assign' as the action type
+      await saveChangesAutomatically('assign', undefined, position.name)
 
-    // Show success message
-    toast({
-      title: 'Position Added',
-      description: `Added ${position.name} to ${selectedTimeBlock.start} - ${selectedTimeBlock.end}`,
-    })
+      // Show success message
+      toast({
+        title: 'Position Added',
+        description: `Added ${position.name} to ${selectedTimeBlock.start} - ${selectedTimeBlock.end}`,
+      })
+    } catch (error) {
+      console.error('Error adding position:', error)
+      toast({
+        title: 'Error',
+        description: 'Failed to add position. Please try again.',
+        variant: 'destructive'
+      })
+    }
   }
 
   // Effect to handle focus when assign dialog opens
@@ -1683,7 +1747,7 @@ export function DailyView({ setup, onBack }: DailyViewProps) {
   }, [showAssignDialog])
 
   // Handle assigning an employee to a position
-  const handleAssignEmployee = async (employeeId: string, employeeName: string) => {
+  const handleAssignEmployee = (employeeId: string, employeeName: string) => {
     if (!selectedPosition) return
 
     try {
@@ -1696,6 +1760,9 @@ export function DailyView({ setup, onBack }: DailyViewProps) {
       const finalEmployeeName = employeeName && employeeName !== 'Unknown Employee'
         ? employeeName
         : selectedPosition.name
+
+      // Store the original position data in case we need to revert
+      const originalPosition = JSON.parse(JSON.stringify(selectedPosition))
 
       // Find the position in the setup and update it
       const daySchedule = newSetup.weekSchedule[activeDay]
@@ -1711,18 +1778,53 @@ export function DailyView({ setup, onBack }: DailyViewProps) {
         })
       }
 
-      // Update the state with the modified setup
+      // Immediately update the UI for a responsive feel
       setModifiedSetup(newSetup)
       setShowAssignDialog(false)
 
       // Recalculate unassigned employees after assignment
       calculateUnassignedEmployees(scheduledEmployees)
 
-      // Auto-save the changes
-      await saveChangesAutomatically('assign', finalEmployeeName, selectedPosition.name)
+      // Show a toast message immediately
+      toast({
+        title: 'Assignment Updated',
+        description: `${finalEmployeeName} assigned to ${selectedPosition.name}`
+      })
 
       // Force a re-render to update the UI
       setActiveHour(activeHour)
+
+      // Save changes in the background
+      saveChangesAutomatically('assign', finalEmployeeName, selectedPosition.name).catch(error => {
+        console.error('Error saving assignment:', error)
+
+        // Revert the UI changes if the save fails
+        const revertedSetup = JSON.parse(JSON.stringify(modifiedSetup))
+        const revertDaySchedule = revertedSetup.weekSchedule[activeDay]
+        if (revertDaySchedule && revertDaySchedule.timeBlocks) {
+          revertDaySchedule.timeBlocks.forEach((block: TimeBlock) => {
+            block.positions.forEach((pos: Position) => {
+              if (pos.id === originalPosition.id) {
+                pos.employeeId = originalPosition.employeeId
+                pos.employeeName = originalPosition.employeeName
+              }
+            })
+          })
+        }
+
+        // Update the UI with the reverted changes
+        setModifiedSetup(revertedSetup)
+
+        // Show error toast
+        toast({
+          title: 'Error Saving',
+          description: 'Failed to save assignment. Changes have been reverted.',
+          variant: 'destructive'
+        })
+
+        // Force a re-render to update the UI with reverted changes
+        setActiveHour(activeHour)
+      })
     } catch (error) {
       console.error('Error assigning employee:', error)
       toast({
@@ -1734,12 +1836,15 @@ export function DailyView({ setup, onBack }: DailyViewProps) {
   }
 
   // Handle removing an employee from a position
-  const handleRemoveAssignment = async (position: Position) => {
+  const handleRemoveAssignment = (position: Position) => {
     try {
       console.log('Removing assignment from position:', position)
 
       // Create a deep copy of the setup to modify
       const newSetup = JSON.parse(JSON.stringify(modifiedSetup))
+
+      // Store the original position data in case we need to revert
+      const originalPosition = JSON.parse(JSON.stringify(position))
 
       // Store employee name for the toast message
       let removedEmployeeName = ''
@@ -1759,17 +1864,52 @@ export function DailyView({ setup, onBack }: DailyViewProps) {
         })
       }
 
-      // Update the state with the modified setup
+      // Immediately update the UI for a responsive feel
       setModifiedSetup(newSetup)
 
       // Recalculate unassigned employees after removing assignment
       calculateUnassignedEmployees(scheduledEmployees)
 
-      // Auto-save the changes
-      await saveChangesAutomatically('remove', removedEmployeeName, position.name)
+      // Show a toast message immediately
+      toast({
+        title: 'Assignment Removed',
+        description: `${removedEmployeeName} removed from ${position.name}`
+      })
 
       // Force a re-render to update the UI
       setActiveHour(activeHour)
+
+      // Save changes in the background
+      saveChangesAutomatically('remove', removedEmployeeName, position.name).catch(error => {
+        console.error('Error saving removal:', error)
+
+        // Revert the UI changes if the save fails
+        const revertedSetup = JSON.parse(JSON.stringify(modifiedSetup))
+        const revertDaySchedule = revertedSetup.weekSchedule[activeDay]
+        if (revertDaySchedule && revertDaySchedule.timeBlocks) {
+          revertDaySchedule.timeBlocks.forEach((block: TimeBlock) => {
+            block.positions.forEach((pos: Position) => {
+              if (pos.id === originalPosition.id) {
+                pos.employeeId = originalPosition.employeeId
+                pos.employeeName = originalPosition.employeeName
+              }
+            })
+          })
+        }
+
+        // Update the UI with the reverted changes
+        setModifiedSetup(revertedSetup)
+
+        // Show error toast
+        toast({
+          title: 'Error Saving',
+          description: 'Failed to save removal. Changes have been reverted.',
+          variant: 'destructive'
+        })
+
+        // Force a re-render to update the UI with reverted changes
+        setActiveHour(activeHour)
+      })
     } catch (error) {
       console.error('Error removing assignment:', error)
       toast({
@@ -1780,17 +1920,31 @@ export function DailyView({ setup, onBack }: DailyViewProps) {
     }
   }
 
+  // State for tracking when changes are being saved
+  const [isSaving, setIsSaving] = useState(false);
+
+  // Reference to track the last save operation
+  const saveOperationRef = useRef<{ timestamp: number, promise: Promise<any> | null }>({ timestamp: 0, promise: null });
+
   // Save the modified setup automatically without page reload
-  const saveChangesAutomatically = async (actionType: 'assign' | 'remove' | 'replace', employeeName?: string, positionName?: string) => {
+  const saveChangesAutomatically = async (_actionType: 'assign' | 'remove' | 'replace', _employeeName?: string, _positionName?: string) => {
     try {
+      const now = Date.now();
+
+      // If there's a save operation in progress that started less than 500ms ago, return that promise
+      // This prevents multiple rapid saves for the same operation
+      if (saveOperationRef.current.promise && now - saveOperationRef.current.timestamp < 500) {
+        return saveOperationRef.current.promise;
+      }
+
+      // Set saving state to show loading indicator
+      setIsSaving(true);
+
       // Get the token from localStorage
       const token = localStorage.getItem('token')
       if (!token) {
         throw new Error('No authentication token found')
       }
-
-      // Log the scheduled employees before saving
-      console.log('Saving to DB - scheduledEmployees:', scheduledEmployees);
 
       // Create the payload with all scheduled employees
       const payload = {
@@ -1801,135 +1955,76 @@ export function DailyView({ setup, onBack }: DailyViewProps) {
         uploadedSchedules: scheduledEmployees // Save in the new field
       }
 
-      console.log('Saving payload:', payload);
+      // Create the save promise
+      const savePromise = (async () => {
+        try {
+          // Call the API to update the setup
+          const response = await fetch(`/api/weekly-setups/${setup._id}`, {
+            method: 'PUT',
+            headers: {
+              'Content-Type': 'application/json',
+              'Authorization': `Bearer ${token}`
+            },
+            body: JSON.stringify(payload),
+          })
 
-      // Call the API to update the setup
-      const response = await fetch(`/api/weekly-setups/${setup._id}`, {
-        method: 'PUT',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`
-        },
-        body: JSON.stringify(payload),
-      })
+          if (!response.ok) {
+            const errorData = await response.json()
+            throw new Error(errorData.message || 'Failed to save changes')
+          }
 
-      if (!response.ok) {
-        const errorData = await response.json()
-        throw new Error(errorData.message || 'Failed to save changes')
-      }
+          // Update the original setup with the modified one
+          const updatedSetup = await response.json()
 
-      // Update the original setup with the modified one
-      const updatedSetup = await response.json()
-      console.log('Response from server:', updatedSetup);
+          // Update the setup state with the response from the server
+          setOriginalSetup(updatedSetup)
 
-      // Update the setup state with the response from the server
-      setOriginalSetup(updatedSetup)
+          // Also update the scheduledEmployees state with the response
+          if (updatedSetup.uploadedSchedules && updatedSetup.uploadedSchedules.length > 0) {
+            setScheduledEmployees(updatedSetup.uploadedSchedules);
+          }
 
-      // Also update the scheduledEmployees state with the response
-      if (updatedSetup.uploadedSchedules && updatedSetup.uploadedSchedules.length > 0) {
-        console.log('Updating scheduledEmployees with server response:', updatedSetup.uploadedSchedules);
-        setScheduledEmployees(updatedSetup.uploadedSchedules);
-      }
+          // Recalculate unassigned employees to refresh the UI
+          calculateUnassignedEmployees(updatedSetup.uploadedSchedules || scheduledEmployees);
 
-      // Show a toast message based on the action type
-      if (actionType === 'assign' && employeeName && positionName) {
-        toast({
-          title: 'Assignment Saved',
-          description: `${employeeName} assigned to ${positionName} and changes saved automatically`
-        })
-      } else if (actionType === 'remove' && employeeName && positionName) {
-        toast({
-          title: 'Assignment Removed',
-          description: `${employeeName} removed from ${positionName} and changes saved automatically`
-        })
-      } else if (actionType === 'replace' && employeeName && positionName) {
-        toast({
-          title: 'Employee Replaced',
-          description: `${positionName} has been replaced with ${employeeName} and changes saved automatically`
-        })
-      } else {
-        toast({
-          title: 'Changes Saved',
-          description: 'Your changes have been saved automatically'
-        })
-      }
+          // We don't need to show toast messages here anymore since they're shown immediately in the handler functions
 
-      return true
+          // Clear saving state
+          setIsSaving(false);
+          return true;
+        } catch (error) {
+          // Clear saving state
+          setIsSaving(false);
+          // Re-throw the error to be handled by the caller
+          throw error;
+        } finally {
+          // Clear the current save operation reference
+          saveOperationRef.current.promise = null;
+        }
+      })();
+
+      // Store the current save operation
+      saveOperationRef.current = {
+        timestamp: now,
+        promise: savePromise
+      };
+
+      return savePromise;
     } catch (error) {
       console.error('Error saving setup:', error)
       toast({
         title: 'Error Saving',
-        description: error instanceof Error ? error.message : 'Failed to save changes automatically. Please try manual save.',
+        description: error instanceof Error ? error.message : 'Failed to save changes.',
         variant: 'destructive'
       })
+      // Clear saving state
+      setIsSaving(false);
       // Re-throw the error to be handled by the caller
       throw error
     }
   }
 
-  // Save the modified setup with page reload (manual save)
-  const handleSaveChanges = async () => {
-    try {
-      // Show loading toast
-      toast({
-        title: 'Saving Changes',
-        description: 'Please wait while we save your changes...'
-      })
-
-      // Get the token from localStorage
-      const token = localStorage.getItem('token')
-      if (!token) {
-        throw new Error('No authentication token found')
-      }
-
-      // Create the payload with all scheduled employees
-      const payload = {
-        name: modifiedSetup.name,
-        startDate: modifiedSetup.startDate,
-        endDate: modifiedSetup.endDate,
-        weekSchedule: modifiedSetup.weekSchedule,
-        uploadedSchedules: scheduledEmployees // Save in the new field
-      }
-
-      // Call the API to update the setup
-      const response = await fetch(`/api/weekly-setups/${setup._id}`, {
-        method: 'PUT',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`
-        },
-        body: JSON.stringify(payload),
-      })
-
-      if (!response.ok) {
-        const errorData = await response.json()
-        throw new Error(errorData.message || 'Failed to save changes')
-      }
-
-      // Update the original setup with the modified one
-      const updatedSetup = await response.json()
-
-      // Update the setup state with the response from the server
-      setOriginalSetup(updatedSetup)
-
-      toast({
-        title: 'Changes Saved',
-        description: 'Your changes have been saved successfully'
-      })
-
-      // Refresh the page to show the updated setup
-      setTimeout(() => {
-        window.location.reload()
-      }, 1500)
-    } catch (error) {
-      console.error('Error saving setup:', error)
-      toast({
-        title: 'Error',
-        description: error instanceof Error ? error.message : 'Failed to save changes. Please try again.',
-        variant: 'destructive'
-      })
-    }
-  }
+  // This function has been replaced by the automatic saving functionality
 
   // Get time blocks for the current day
   getTimeBlocks()
@@ -1945,24 +2040,31 @@ export function DailyView({ setup, onBack }: DailyViewProps) {
         <div className="flex flex-col sm:flex-row gap-2 px-2">
           {/* Action buttons - full width on mobile */}
           <Button
-            variant="outline"
-            size="sm"
-            onClick={() => setShowEmployeeList(true)}
-            className="h-10 border-gray-200 w-full sm:w-auto flex-1 sm:flex-none"
-          >
-            <User className="h-4 w-4 mr-2" />
-            <span className="font-medium">Employees</span>
-          </Button>
-
-          <Button
             variant="default"
             size="sm"
-            onClick={handleSaveChanges}
-            className="h-10 bg-red-600 hover:bg-red-700 w-full sm:w-auto flex-1 sm:flex-none"
+            onClick={() => setShowEmployeeList(true)}
+            className="h-10 w-full sm:w-auto flex-1 sm:flex-none bg-red-600 hover:bg-red-700 border-0 shadow-sm hover:shadow-md transition-all duration-200 text-white font-medium"
           >
-            <Save className="h-4 w-4 mr-2" />
-            Save & Refresh
+            <div className="flex items-center">
+              <div className="flex items-center justify-center bg-white bg-opacity-20 rounded-full p-1 mr-2">
+                <User className="h-4 w-4 text-white" />
+              </div>
+              <span className="font-medium">Employees</span>
+              <div className="flex items-center ml-2">
+                <span className="bg-white bg-opacity-25 text-white text-xs font-bold px-2 py-0.5 rounded-full">
+                  {scheduledEmployees.length}
+                </span>
+              </div>
+            </div>
           </Button>
+
+          {/* Loading indicator shown when changes are being saved */}
+          {isSaving && (
+            <div className="h-10 flex items-center justify-center px-4 w-full sm:w-auto flex-1 sm:flex-none">
+              <RefreshCw className="h-4 w-4 mr-2 animate-spin text-red-600" />
+              <span className="text-sm text-red-600 font-medium">Saving...</span>
+            </div>
+          )}
         </div>
       </div>
 
