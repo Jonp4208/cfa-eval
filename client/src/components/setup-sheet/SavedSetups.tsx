@@ -93,53 +93,48 @@ export function SavedSetups({ onSelectSetup }: { onSelectSetup: (setupId: string
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           {filteredSetups.map(setup => (
-            <Card key={setup._id} className="overflow-hidden hover:shadow-md transition-shadow duration-300">
-              <div className="bg-gray-50 border-b pb-3 px-4 pt-4">
+            <Card key={setup._id} className="overflow-hidden hover:shadow-md transition-shadow duration-300 border-2 border-gray-100 rounded-xl">
+              {/* Header with gradient background */}
+              <div className="bg-gradient-to-r from-[#E51636] to-[#D01530] pb-3 px-4 pt-4 text-white relative">
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-2">
-                    <Calendar className="w-5 h-5 text-red-600" />
-                    <h3 className="font-semibold text-lg">{setup.name}</h3>
+                    <Calendar className="w-5 h-5 text-white" />
+                    <h3 className="font-bold text-lg">{setup.name}</h3>
                   </div>
                   {setup.isShared && (
-                    <Badge variant="outline" className="bg-blue-50 text-blue-600 border-blue-200 flex items-center gap-1">
+                    <Badge variant="outline" className="bg-white/20 text-white border-white/30 flex items-center gap-1">
                       <Share2 className="h-3 w-3" />
                       Shared
                     </Badge>
                   )}
                 </div>
-                <p className="text-sm text-gray-500 mt-1">
+                <p className="text-sm text-white/90 mt-2 font-medium">
                   {format(new Date(setup.startDate), 'MMM d')} - {format(new Date(setup.endDate), 'MMM d, yyyy')}
-                  <span className="ml-1 text-xs text-gray-400">
+                  <span className="ml-1 text-xs text-white/80">
                     (Sun - Sat)
                   </span>
                 </p>
               </div>
 
-              <div className="p-4">
-                <div className="mb-4">
-                  <div className="flex justify-between items-center mb-2">
-                    <p className="text-sm text-gray-500">Assigned positions:</p>
-                    <Badge variant="outline" className="bg-red-50 text-red-600 border-red-200">
-                      {countAssignedPositions(setup)} Positions
-                    </Badge>
-                  </div>
-
-                  {setup.isShared && (
-                    <div className="flex items-center gap-2 text-sm text-gray-500 mt-2">
-                      <User className="h-4 w-4 text-blue-500" />
-                      <span>Created by {setup.user?.name || 'Unknown'}</span>
-                    </div>
-                  )}
+              <div className="p-5 bg-white">
+                {/* Creator information */}
+                <div className="flex items-center gap-2 text-sm text-gray-600 mb-4">
+                  <User className="h-4 w-4 text-[#E51636]" />
+                  <span>
+                    {setup.user ?
+                      `Created by ${typeof setup.user === 'string' ? 'Team Member' : setup.user.name || 'Team Member'}` :
+                      'Created by Team Member'}
+                  </span>
                 </div>
 
-                <div className="flex justify-end space-x-2 pt-2 border-t">
+                <div className="flex justify-end space-x-3 pt-2">
                   <Button
                     variant="outline"
                     size="sm"
-                    className="hover:bg-red-50 hover:text-red-600 hover:border-red-200"
+                    className="bg-white border-[#E51636] text-[#E51636] hover:bg-[#E51636]/5 hover:text-[#E51636] hover:border-[#E51636] min-h-[40px] px-4 rounded-md"
                     onClick={() => onSelectSetup(setup._id)}
                   >
-                    <Eye className="h-4 w-4 mr-1" /> View
+                    <Eye className="h-4 w-4 mr-2" /> View
                   </Button>
 
                   <AlertDialog
@@ -152,10 +147,10 @@ export function SavedSetups({ onSelectSetup }: { onSelectSetup: (setupId: string
                       <Button
                         variant="outline"
                         size="sm"
-                        className="hover:bg-red-50 hover:text-red-600 hover:border-red-200"
+                        className="bg-white border-gray-300 text-gray-600 hover:bg-red-50 hover:text-red-600 hover:border-red-200 min-h-[40px] px-4 rounded-md"
                         onClick={() => setSetupToDelete(setup._id)}
                       >
-                        <Trash2 className="h-4 w-4 mr-1" /> Delete
+                        <Trash2 className="h-4 w-4 mr-2" /> Delete
                       </Button>
                     </AlertDialogTrigger>
                     <AlertDialogContent>
@@ -184,40 +179,4 @@ export function SavedSetups({ onSelectSetup }: { onSelectSetup: (setupId: string
   )
 }
 
-// Helper function to count assigned positions in a setup
-function countAssignedPositions(setup: any) {
-  let count = 0
 
-  // Check if weekSchedule exists
-  if (!setup?.weekSchedule) {
-    console.warn('Setup is missing weekSchedule:', setup);
-    return 0;
-  }
-
-  try {
-    Object.values(setup.weekSchedule).forEach((day: any) => {
-      // Check if day and timeBlocks exist
-      if (!day || !day.timeBlocks) {
-        console.warn('Day is missing timeBlocks:', day);
-        return; // Skip this day
-      }
-
-      day.timeBlocks.forEach((block: any) => {
-        // Check if block and positions exist
-        if (!block || !block.positions) {
-          console.warn('Block is missing positions:', block);
-          return; // Skip this block
-        }
-
-        block.positions.forEach((position: any) => {
-          if (position?.employeeId) count++
-        })
-      })
-    })
-  } catch (error) {
-    console.error('Error counting assigned positions:', error);
-    return 0;
-  }
-
-  return count
-}
