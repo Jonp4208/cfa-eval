@@ -158,9 +158,6 @@ export function DailyView({ setup, onBack }: DailyViewProps) {
 
       // Set the active hour to the closest hour or the first available hour
       setActiveHour(closestHour || availableHours[0])
-
-      // Log for debugging
-      console.log(`Setting active hour to ${closestHour || availableHours[0]} (closest to current time)`)
     }
 
     // Fetch scheduled employees when the active day changes
@@ -208,12 +205,7 @@ export function DailyView({ setup, onBack }: DailyViewProps) {
 
   // Initialize modifiedSetup when setup changes
   useEffect(() => {
-    // Only log in development mode
-    if (process.env.NODE_ENV === 'development' && false) { // Disabled for now
-      console.log('Setup received:', setup);
-      console.log('Setup weekSchedule:', setup.weekSchedule);
-      console.log('Setup has positions:', hasPositions(setup));
-    }
+    // Development logging removed
 
     // If the setup doesn't have positions, we need to add them from the template
     if (!hasPositions(setup)) {
@@ -599,8 +591,7 @@ export function DailyView({ setup, onBack }: DailyViewProps) {
     // Convert to string in case we get a number or other type
     const dayStr = String(dayString).toLowerCase().trim()
 
-    // Debug log to track day normalization
-    console.log(`Normalizing day in DailyView: '${dayString}' (type: ${typeof dayString})`)
+    // Normalize the day string for consistent comparison
 
     // Map common day abbreviations and variations to standard format
     const dayMap: Record<string, string> = {
@@ -642,14 +633,12 @@ export function DailyView({ setup, onBack }: DailyViewProps) {
 
     // Direct lookup in the map
     if (dayMap[dayStr]) {
-      console.log(`Day normalized via direct lookup in DailyView: '${dayString}' -> '${dayMap[dayStr]}'`)
       return dayMap[dayStr]
     }
 
     // Check if the input starts with a day name
     for (const [abbr, fullDay] of Object.entries(dayMap)) {
       if (dayStr.startsWith(abbr) && abbr.length > 1) { // Only use abbr with length > 1 to avoid false matches
-        console.log(`Day normalized via prefix in DailyView: '${dayString}' -> '${fullDay}'`)
         return fullDay
       }
     }
@@ -658,13 +647,11 @@ export function DailyView({ setup, onBack }: DailyViewProps) {
     const dayNames = ['sunday', 'monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday']
     for (const day of dayNames) {
       if (dayStr.includes(day)) {
-        console.log(`Day normalized via substring in DailyView: '${dayString}' -> '${day}'`)
         return day
       }
     }
 
-    // If we can't determine the day, log and return null
-    console.log(`Could not normalize day in DailyView: '${dayString}'`)
+    // If we can't determine the day, return null
     return null
   }
 
@@ -1989,7 +1976,7 @@ export function DailyView({ setup, onBack }: DailyViewProps) {
               <span className="font-medium">Employees</span>
               <div className="flex items-center ml-2">
                 <span className="bg-white bg-opacity-25 text-white text-xs font-bold px-2 py-0.5 rounded-full">
-                  {scheduledEmployees.length}
+                  {scheduledEmployees.filter(employee => !employee.day || employee.day === activeDay || employee.day.toLowerCase() === activeDay).length}
                 </span>
               </div>
             </div>
@@ -2491,7 +2478,7 @@ export function DailyView({ setup, onBack }: DailyViewProps) {
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2">
               <User className="h-5 w-5 text-blue-600" />
-              Employees for {format(getDateForDay(activeDay), 'EEEE, MMMM d')}
+              Employees for {format(getDateForDay(activeDay), 'EEEE, MMMM d')} ({scheduledEmployees.filter(employee => !employee.day || employee.day === activeDay || employee.day.toLowerCase() === activeDay).length})
             </DialogTitle>
             <DialogDescription>
               Manage employee breaks and view assignments
