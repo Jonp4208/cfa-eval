@@ -141,6 +141,7 @@ export function DailyView({ setup, onBack }: DailyViewProps) {
   const [originalSetup, setOriginalSetup] = useState<Setup>(setup)
   const [scheduledEmployees, setScheduledEmployees] = useState<Employee[]>([])
   const [unassignedEmployees, setUnassignedEmployees] = useState<Employee[]>([])
+  const [searchTerm, setSearchTerm] = useState('')
   const navigate = useNavigate()
   const { toast } = useToast()
 
@@ -778,7 +779,7 @@ export function DailyView({ setup, onBack }: DailyViewProps) {
     return blocks;
   }
 
-  // Filter employees by area, current shift, and sort alphabetically
+  // Filter employees by area, current shift, search term, and sort alphabetically
   const filterEmployeesByArea = (employees: any[]) => {
     // First filter by area if needed
     let filteredEmployees = employeeAreaTab === 'all'
@@ -793,8 +794,13 @@ export function DailyView({ setup, onBack }: DailyViewProps) {
       });
     }
 
-    // Log for debugging
-    console.log(`Filtering ${employees.length} employees by area '${employeeAreaTab}' resulted in ${filteredEmployees.length} employees`);
+    // Then filter by search term if one is provided
+    if (searchTerm.trim() !== '') {
+      const searchTermLower = searchTerm.toLowerCase();
+      filteredEmployees = filteredEmployees.filter(employee => {
+        return employee.name.toLowerCase().includes(searchTermLower);
+      });
+    }
 
     // Then sort alphabetically by name
     return filteredEmployees.sort((a: any, b: any) => a.name.localeCompare(b.name))
@@ -1586,6 +1592,14 @@ export function DailyView({ setup, onBack }: DailyViewProps) {
           return employee;
         }).filter(employee => employee.area === requiredArea);
       }
+    }
+
+    // Filter by search term if one is provided
+    if (searchTerm.trim() !== '') {
+      const searchTermLower = searchTerm.toLowerCase();
+      availableEmployees = availableEmployees.filter(employee => {
+        return employee.name.toLowerCase().includes(searchTermLower);
+      });
     }
 
     // Sort employees alphabetically by name
@@ -2473,7 +2487,12 @@ export function DailyView({ setup, onBack }: DailyViewProps) {
       </Dialog>
 
       {/* Employee List Dialog */}
-      <Dialog open={showEmployeeList} onOpenChange={setShowEmployeeList} key={`employee-list-${scheduledEmployees.length}-${JSON.stringify(unassignedEmployees)}`}>
+      <Dialog open={showEmployeeList} onOpenChange={(open) => {
+        setShowEmployeeList(open);
+        if (!open) {
+          setSearchTerm('');
+        }
+      }} key={`employee-list-${scheduledEmployees.length}-${JSON.stringify(unassignedEmployees)}`}>
         <DialogContent className="sm:max-w-[600px]">
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2">
@@ -2560,6 +2579,8 @@ export function DailyView({ setup, onBack }: DailyViewProps) {
                           type="text"
                           placeholder="Search employees..."
                           className="pl-9 pr-3 py-2 text-sm border rounded-md w-full sm:w-[220px] focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                          value={searchTerm}
+                          onChange={(e) => setSearchTerm(e.target.value)}
                         />
                       </div>
                     </div>
@@ -2646,7 +2667,10 @@ export function DailyView({ setup, onBack }: DailyViewProps) {
           </div>
 
           <DialogFooter>
-            <Button variant="outline" onClick={() => setShowEmployeeList(false)} className="w-full sm:w-auto">
+            <Button variant="outline" onClick={() => {
+              setShowEmployeeList(false);
+              setSearchTerm('');
+            }} className="w-full sm:w-auto">
               <X className="h-4 w-4 mr-2" />
               Close
             </Button>
@@ -2655,7 +2679,13 @@ export function DailyView({ setup, onBack }: DailyViewProps) {
       </Dialog>
 
       {/* Enhanced Assign Employee Dialog */}
-      <Dialog open={showAssignDialog} onOpenChange={setShowAssignDialog}>
+      <Dialog open={showAssignDialog} onOpenChange={(open) => {
+        setShowAssignDialog(open);
+        if (!open) {
+          setSearchTerm('');
+          setSelectedPosition(null);
+        }
+      }}>
         <DialogContent className="sm:max-w-[500px]" ref={assignDialogRef} tabIndex={0}>
           <DialogHeader>
             <DialogTitle className="flex items-center">
@@ -2704,6 +2734,8 @@ export function DailyView({ setup, onBack }: DailyViewProps) {
                           className="pl-8 pr-2 py-1 text-sm border rounded-md w-[180px]"
                           autoFocus={false}
                           tabIndex={-1}
+                          value={searchTerm}
+                          onChange={(e) => setSearchTerm(e.target.value)}
                         />
                       </div>
                     </div>
@@ -2753,7 +2785,10 @@ export function DailyView({ setup, onBack }: DailyViewProps) {
           </div>
 
           <DialogFooter className="flex justify-between">
-            <Button variant="outline" onClick={() => setShowAssignDialog(false)}>Cancel</Button>
+            <Button variant="outline" onClick={() => {
+              setShowAssignDialog(false);
+              setSearchTerm('');
+            }}>Cancel</Button>
             {selectedPosition && selectedPosition.employeeId && (
               <Button
                 variant="outline"
