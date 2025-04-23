@@ -2178,18 +2178,7 @@ export function DailyView({ setup, onBack }: DailyViewProps) {
             {activeHour && allHours.length > 0 && (
               <div className="mb-6 space-y-2">
                 <h3 className="text-md font-semibold flex items-center">
-                  <div className={`flex h-5 w-5 items-center justify-center rounded-full ${activeDay === getTodayDayName() && parseInt(activeHour) === new Date().getHours() ? 'bg-blue-200 animate-pulse' : 'bg-blue-100'} mr-2`}>
-                    <Clock className="h-3 w-3 text-blue-600" />
-                  </div>
-                  <span className="text-blue-800">{formatHourTo12Hour(activeHour)} - {formatHourTo12Hour(parseInt(activeHour) + 1)}</span>
-                  {activeDay === getTodayDayName() && parseInt(activeHour) === new Date().getHours() && (
-                    <>
-                      <Badge className="ml-2 bg-blue-500 text-white">Current Hour</Badge>
-                      <span className="ml-2 text-sm text-blue-600 font-normal">
-                        Current time: {formatHourTo12Hour(`${new Date().getHours()}:${new Date().getMinutes()}`)}
-                      </span>
-                    </>
-                  )}
+                  {/* Removed duplicate time display */}
                 </h3>
 
                 {hourTimeBlocks.length === 0 ? (
