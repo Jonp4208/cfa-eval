@@ -4,13 +4,11 @@ import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Switch } from '@/components/ui/switch'
-import { Clock, User, Calendar, ArrowLeft, Coffee, Play, Pause, Download, Printer, RefreshCw, Search, Filter, ChevronDown, X, Check, Save, Plus } from 'lucide-react'
-import { AddPositionDialog } from './AddPositionDialog'
-import { format, isToday, parseISO } from 'date-fns'
+import { Clock, User, Calendar, Coffee, RefreshCw, Search, X, Check, Save, Plus } from 'lucide-react'
+import { format } from 'date-fns'
 import { formatHourTo12Hour } from '@/lib/utils/date-utils'
 import { useNavigate } from 'react-router-dom'
 import { useToast } from '@/components/ui/use-toast'
-import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip'
 import { Progress } from '@/components/ui/progress'
 import {
   Dialog,
@@ -19,7 +17,6 @@ import {
   DialogFooter,
   DialogHeader,
   DialogTitle,
-  DialogTrigger,
 } from "@/components/ui/dialog"
 import {
   Select,
@@ -29,14 +26,24 @@ import {
   SelectValue,
 } from "@/components/ui/select"
 
-// Define types for our component props
-interface DailyViewProps {
-  setup: any
-  onBack: () => void
-}
+// Import our components
+import {
+  AssignedEmployeesSection,
+  UnassignedEmployeesSection,
+  AllEmployeesSection,
+  NoEmployeesMessage
+} from './sections'
+import {
+  BreakDialog,
+  AssignEmployeeDialog,
+  ReplaceEmployeeDialog
+} from './dialogs'
+import { AddPositionDialog } from './AddPositionDialog'
 
-type BreakStatus = 'none' | 'active' | 'completed'
+// Import types
+import { Setup, Employee, Position, TimeBlock, Break, BreakStatus, DaySchedule, DailyViewProps } from './types'
 
+// Local interface for employee break tracking
 interface EmployeeBreak {
   employeeId: string
   employeeName: string
@@ -47,27 +54,11 @@ interface EmployeeBreak {
   hadBreak: boolean // Flag to indicate if employee has had a break today
 }
 
+// Extended position interface for break tracking
 interface PositionWithBreak extends Position {
   breakStatus?: BreakStatus
   breakStartTime?: string
   breakEndTime?: string
-}
-
-interface Position {
-  id: string
-  name: string
-  category: string
-  employeeId?: string
-  employeeName?: string
-  blockStart?: string
-  blockEnd?: string
-}
-
-interface TimeBlock {
-  id: string
-  start: string
-  end: string
-  positions: Position[]
 }
 
 export function DailyView({ setup, onBack }: DailyViewProps) {
@@ -93,7 +84,7 @@ export function DailyView({ setup, onBack }: DailyViewProps) {
     // If the difference is approximately 6 days (accounting for time differences),
     // we assume this is a standard week
     if (diffDays >= 5 && diffDays <= 7) {
-      const weekDates = {};
+      const weekDates: Record<string, Date> = {};
       const dayNames = ['sunday', 'monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday'];
 
       // Start with the start date and add days to get each day of the week
@@ -146,10 +137,10 @@ export function DailyView({ setup, onBack }: DailyViewProps) {
   const replaceDialogRef = useRef<HTMLDivElement>(null)
   const [showAddPositionDialog, setShowAddPositionDialog] = useState(false)
   const [selectedTimeBlock, setSelectedTimeBlock] = useState<TimeBlock | null>(null)
-  const [modifiedSetup, setModifiedSetup] = useState<any>(setup)
-  const [originalSetup, setOriginalSetup] = useState<any>(setup)
-  const [scheduledEmployees, setScheduledEmployees] = useState<Array<{id: string, name: string, timeBlock: string, area?: string, day?: string}>>([])
-  const [unassignedEmployees, setUnassignedEmployees] = useState<Array<{id: string, name: string, timeBlock: string, area?: string, day?: string}>>([])
+  const [modifiedSetup, setModifiedSetup] = useState<Setup>(setup)
+  const [originalSetup, setOriginalSetup] = useState<Setup>(setup)
+  const [scheduledEmployees, setScheduledEmployees] = useState<Employee[]>([])
+  const [unassignedEmployees, setUnassignedEmployees] = useState<Employee[]>([])
   const navigate = useNavigate()
   const { toast } = useToast()
 
@@ -197,14 +188,14 @@ export function DailyView({ setup, onBack }: DailyViewProps) {
   }, [showEmployeeList])
 
   // Check if a weekly setup has positions
-  const hasPositions = (setup) => {
+  const hasPositions = (setup: Setup) => {
     if (!setup || !setup.weekSchedule) return false;
 
     let positionCount = 0;
     Object.keys(setup.weekSchedule).forEach(day => {
       const daySchedule = setup.weekSchedule[day];
       if (daySchedule && daySchedule.timeBlocks) {
-        daySchedule.timeBlocks.forEach(block => {
+        daySchedule.timeBlocks.forEach((block: any) => {
           if (block.positions && block.positions.length > 0) {
             positionCount += block.positions.length;
           }
@@ -237,10 +228,8 @@ export function DailyView({ setup, onBack }: DailyViewProps) {
 
     // Initialize scheduledEmployees from uploadedSchedules if available
     if (setup.uploadedSchedules && setup.uploadedSchedules.length > 0) {
-      // Only log in development mode
-      if (process.env.NODE_ENV === 'development' && false) { // Disabled for now
-        console.log('Loading uploaded schedules:', setup.uploadedSchedules.length);
-      }
+      // Logging is disabled for now
+      // console.log('Loading uploaded schedules:', setup.uploadedSchedules.length);
       setScheduledEmployees(setup.uploadedSchedules);
 
       // Load break information from uploaded schedules
@@ -249,10 +238,8 @@ export function DailyView({ setup, onBack }: DailyViewProps) {
       // If no uploadedSchedules, try to extract from positions as before
       const extractedEmployees = extractEmployeesFromPositions();
       if (extractedEmployees.length > 0) {
-        // Only log in development mode
-        if (process.env.NODE_ENV === 'development' && false) { // Disabled for now
-          console.log('Extracted employees from positions:', extractedEmployees.length);
-        }
+        // Logging is disabled for now
+        // console.log('Extracted employees from positions:', extractedEmployees.length);
         setScheduledEmployees(extractedEmployees);
       }
     }
@@ -263,10 +250,8 @@ export function DailyView({ setup, onBack }: DailyViewProps) {
 
   // Load break information from uploaded schedules
   const loadBreakInformation = (employees: any[]) => {
-    // Only log in development mode
-    if (process.env.NODE_ENV === 'development' && false) { // Disabled for now
-      console.log('Loading break information from employees:', employees.length);
-    }
+    // Logging is disabled for now
+    // console.log('Loading break information from employees:', employees.length);
 
     const breaks: EmployeeBreak[] = [];
 
@@ -274,7 +259,7 @@ export function DailyView({ setup, onBack }: DailyViewProps) {
       // Check if employee has break information
       if (employee.breaks && employee.breaks.length > 0) {
         // Add each break to the breaks array
-        employee.breaks.forEach(breakInfo => {
+        employee.breaks.forEach((breakInfo: any) => {
           if (breakInfo.status === 'active' || breakInfo.status === 'completed') {
             breaks.push({
               employeeId: employee.id,
@@ -303,10 +288,8 @@ export function DailyView({ setup, onBack }: DailyViewProps) {
       }
     });
 
-    // Only log in development mode
-    if (process.env.NODE_ENV === 'development' && false) { // Disabled for now
-      console.log('Loaded breaks:', breaks.length);
-    }
+    // Logging is disabled for now
+    // console.log('Loaded breaks:', breaks.length);
     setEmployeeBreaks(breaks);
     setBreaksLoaded(true);
   }
@@ -324,9 +307,9 @@ export function DailyView({ setup, onBack }: DailyViewProps) {
         // Check if the day has time blocks
         if (daySchedule && daySchedule.timeBlocks) {
           // Loop through each time block
-          daySchedule.timeBlocks.forEach(block => {
+          daySchedule.timeBlocks.forEach((block: any) => {
             // Loop through each position in the time block
-            block.positions.forEach(position => {
+            block.positions.forEach((position: any) => {
               // If the position has an employee assigned
               if (position.employeeId && position.employeeName) {
                 // Add the employee to the map if not already there
@@ -361,7 +344,7 @@ export function DailyView({ setup, onBack }: DailyViewProps) {
       console.log('Fetching scheduled employees from originalSetup:', originalSetup);
 
       // Create an array to hold all employees
-      let allEmployees = []
+      let allEmployees: Employee[] = []
 
       // First check if we have uploadedSchedules in the original setup
       if (originalSetup.uploadedSchedules && Array.isArray(originalSetup.uploadedSchedules) && originalSetup.uploadedSchedules.length > 0) {
@@ -373,13 +356,14 @@ export function DailyView({ setup, onBack }: DailyViewProps) {
         console.log('Found employees in setup.employees:', setup.employees.length);
 
         // Map the employees to the format we need
-        const mappedEmployees = setup.employees.map(emp => ({
+        const mappedEmployees = setup.employees.map((emp: any) => ({
           id: emp.id,
           name: emp.name,
           timeBlock: `${emp.shiftStart} - ${emp.shiftEnd}`,
           area: emp.area,
-          day: emp.day
-        }))
+          day: emp.day,
+          positions: [] // Add empty positions array to satisfy Employee interface
+        }) as Employee)
 
         allEmployees = mappedEmployees
       }
@@ -387,14 +371,12 @@ export function DailyView({ setup, onBack }: DailyViewProps) {
       // Also extract employees from positions (in case there are employees assigned to positions but not in setup.employees)
       const extractedEmployees = extractEmployeesFromPositions()
       if (extractedEmployees.length > 0) {
-        // Only log in development mode
-        if (process.env.NODE_ENV === 'development' && false) { // Disabled for now
-          console.log('Extracted employees from positions:', extractedEmployees.length)
-        }
+        // Logging is disabled for now
+        // console.log('Extracted employees from positions:', extractedEmployees.length)
 
         // Add extracted employees that aren't already in allEmployees
-        extractedEmployees.forEach(extractedEmp => {
-          if (!allEmployees.some(emp => emp.id === extractedEmp.id)) {
+        extractedEmployees.forEach((extractedEmp: any) => {
+          if (!allEmployees.some((emp: any) => emp.id === extractedEmp.id)) {
             allEmployees.push(extractedEmp)
           }
         })
@@ -402,10 +384,8 @@ export function DailyView({ setup, onBack }: DailyViewProps) {
 
       // If we found any employees (either in setup.employees or in positions)
       if (allEmployees.length > 0) {
-        // Only log in development mode
-        if (process.env.NODE_ENV === 'development' && false) { // Disabled for now
-          console.log('Total employees found:', allEmployees.length)
-        }
+        // Logging is disabled for now
+        // console.log('Total employees found:', allEmployees.length)
         setScheduledEmployees(allEmployees)
         calculateUnassignedEmployees(allEmployees)
         return
@@ -428,7 +408,7 @@ export function DailyView({ setup, onBack }: DailyViewProps) {
   }
 
   // Calculate unassigned employees based on assigned positions
-  const calculateUnassignedEmployees = (allEmployees) => {
+  const calculateUnassignedEmployees = (allEmployees: any[]) => {
     // Get all assigned employee IDs
     const assignedEmployeeIds = new Set<string>()
 
@@ -436,8 +416,8 @@ export function DailyView({ setup, onBack }: DailyViewProps) {
     if (modifiedSetup.weekSchedule && modifiedSetup.weekSchedule[activeDay]) {
       const timeBlocks = modifiedSetup.weekSchedule[activeDay].timeBlocks || []
 
-      timeBlocks.forEach(block => {
-        block.positions.forEach(position => {
+      timeBlocks.forEach((block: any) => {
+        block.positions.forEach((position: any) => {
           if (position.employeeId) {
             assignedEmployeeIds.add(position.employeeId)
           }
@@ -446,7 +426,7 @@ export function DailyView({ setup, onBack }: DailyViewProps) {
     }
 
     // Filter out employees that are already assigned
-    const unassigned = allEmployees.filter(emp => {
+    const unassigned = allEmployees.filter((emp: any) => {
       // Check if this employee is for the current day or has no day specified
       // Normalize the day name for consistent comparison
       const normalizedEmpDay = emp.day ? normalizeDay(emp.day) : null;
@@ -461,13 +441,11 @@ export function DailyView({ setup, onBack }: DailyViewProps) {
       return isForActiveDay && !assignedEmployeeIds.has(emp.id)
     })
 
-    // Only log in development mode
-    if (process.env.NODE_ENV === 'development' && false) { // Disabled for now
-      console.log(`Unassigned employees for ${activeDay}:`, unassigned.length)
-    }
+    // Logging is disabled for now
+    // console.log(`Unassigned employees for ${activeDay}:`, unassigned.length)
 
     // Sort unassigned employees alphabetically by name
-    const sortedUnassigned = unassigned.sort((a, b) => a.name.localeCompare(b.name))
+    const sortedUnassigned = unassigned.sort((a: any, b: any) => a.name.localeCompare(b.name))
     setUnassignedEmployees(sortedUnassigned)
   }
 
@@ -729,7 +707,7 @@ export function DailyView({ setup, onBack }: DailyViewProps) {
     }
 
     // Get the index for the requested day
-    const targetDayIndex = dayToIndex[day]
+    const targetDayIndex = dayToIndex[day as keyof typeof dayToIndex]
     if (targetDayIndex === undefined) {
       console.error('Invalid day name:', day)
       return startDate
@@ -829,8 +807,11 @@ export function DailyView({ setup, onBack }: DailyViewProps) {
       });
     }
 
+    // Log for debugging
+    console.log(`Filtering ${employees.length} employees by area '${employeeAreaTab}' resulted in ${filteredEmployees.length} employees`);
+
     // Then sort alphabetically by name
-    return filteredEmployees.sort((a, b) => a.name.localeCompare(b.name))
+    return filteredEmployees.sort((a: any, b: any) => a.name.localeCompare(b.name))
   }
 
   // Get all employees scheduled for the active day
@@ -841,7 +822,7 @@ export function DailyView({ setup, onBack }: DailyViewProps) {
     // First, add all positions with employeeId to the map
     const timeBlocks = getTimeBlocks();
 
-    timeBlocks.forEach(block => {
+    timeBlocks.forEach((block: any) => {
       block.positions.forEach((position: any) => {
         if (position.employeeId) {
           // Create a unique ID if employeeId exists but no name
@@ -857,12 +838,22 @@ export function DailyView({ setup, onBack }: DailyViewProps) {
             // Find the employee in scheduledEmployees to get area information
             const scheduledEmployee = scheduledEmployees.find(e => e.id === employeeId)
 
+            // Determine area based on position category if not available from scheduledEmployee
+            let area = scheduledEmployee?.area;
+            if (!area) {
+              if (position.category === 'Kitchen') {
+                area = 'BOH';
+              } else if (position.category === 'Front Counter' || position.category === 'Drive Thru') {
+                area = 'FOH';
+              }
+            }
+
             employees.set(employeeId, {
               id: employeeId,
               name: employeeName,
               positions: [],
               timeBlocks: [],
-              area: scheduledEmployee?.area
+              area: area
             })
           } else if (employees.get(employeeId)!.name === 'Unknown Employee' && employeeName !== 'Unknown Employee') {
             // Update the name if we found a better one
@@ -878,13 +869,22 @@ export function DailyView({ setup, onBack }: DailyViewProps) {
           if (!employee.timeBlocks.includes(timeBlock)) {
             employee.timeBlocks.push(timeBlock)
           }
+
+          // Update area if it's still not set but we can determine it from the position
+          if (!employee.area) {
+            if (position.category === 'Kitchen') {
+              employee.area = 'BOH';
+            } else if (position.category === 'Front Counter' || position.category === 'Drive Thru') {
+              employee.area = 'FOH';
+            }
+          }
         }
       })
     })
 
     // Add ALL scheduled employees from the setup
     // This ensures we show all 86 employees in the employee list dialog
-    scheduledEmployees.forEach(scheduledEmployee => {
+    scheduledEmployees.forEach((scheduledEmployee: any) => {
       // Filter employees for the current day if they have day information
       // If no day is specified, include them for all days
       const isForActiveDay = !scheduledEmployee.day ||
@@ -900,17 +900,24 @@ export function DailyView({ setup, onBack }: DailyViewProps) {
             timeBlocks: [scheduledEmployee.timeBlock],
             area: scheduledEmployee.area
           })
+        } else if (!employees.get(scheduledEmployee.id)!.area && scheduledEmployee.area) {
+          // Update area if it wasn't set before but is available in scheduledEmployee
+          employees.get(scheduledEmployee.id)!.area = scheduledEmployee.area;
         }
       }
     })
 
-    // Return the employees for the active day
-    // console.log(`Total employees for ${activeDay}:`, Array.from(employees.values()).length);
+    // Log for debugging
+    const result = Array.from(employees.values());
+    const fohCount = result.filter(e => e.area === 'FOH').length;
+    const bohCount = result.filter(e => e.area === 'BOH').length;
+    const unknownCount = result.filter(e => !e.area).length;
+    console.log(`Total employees for ${activeDay}: ${result.length} (FOH: ${fohCount}, BOH: ${bohCount}, Unknown: ${unknownCount})`);
 
     // Convert to array and sort alphabetically by name
-    return Array.from(employees.values()).sort((a, b) => a.name.localeCompare(b.name))
+    return result.sort((a, b) => a.name.localeCompare(b.name))
     }
-  }, [activeDay, modifiedSetup])
+  }, [activeDay, modifiedSetup, scheduledEmployees])
 
   // Get all employees assigned to the active day
   const getAssignedEmployees = () => {
@@ -961,7 +968,7 @@ export function DailyView({ setup, onBack }: DailyViewProps) {
     const timeBlocks = getTimeBlocks()
 
     // Extract the hours from the time blocks
-    timeBlocks.forEach(block => {
+    timeBlocks.forEach((block: any) => {
       const startHour = block.start.split(':')[0] + ':00'
       hours.add(startHour)
     })
@@ -1010,7 +1017,7 @@ export function DailyView({ setup, onBack }: DailyViewProps) {
     if (!hour) return []
 
     const allBlocks = getTimeBlocks();
-    const filteredBlocks = allBlocks.filter(block => {
+    const filteredBlocks = allBlocks.filter((block: any) => {
       const blockHour = block.start.split(':')[0] + ':00'
       return blockHour === hour;
     });
@@ -1038,7 +1045,7 @@ export function DailyView({ setup, onBack }: DailyViewProps) {
     setEmployeeBreaks(prev => [...prev, newBreak])
 
     // Update the employee in scheduledEmployees
-    const updatedEmployees = scheduledEmployees.map(emp => {
+    const updatedEmployees = scheduledEmployees.map((emp: any) => {
       if (emp.id === employeeId) {
         // Create a new breaks array or use the existing one
         const breaks = emp.breaks || []
@@ -1095,13 +1102,13 @@ export function DailyView({ setup, onBack }: DailyViewProps) {
     const employee = employeeBreaks.find(b => b.employeeId === employeeId && b.status === 'active')
 
     // Update the employee in scheduledEmployees
-    const updatedEmployees = scheduledEmployees.map(emp => {
+    const updatedEmployees = scheduledEmployees.map((emp: any) => {
       if (emp.id === employeeId) {
         // Create a new breaks array or use the existing one
         const breaks = emp.breaks || []
 
         // Find the active break and update it
-        const updatedBreaks = breaks.map(brk => {
+        const updatedBreaks = breaks.map((brk: any) => {
           if (brk.status === 'active') {
             return {
               ...brk,
@@ -1172,8 +1179,8 @@ export function DailyView({ setup, onBack }: DailyViewProps) {
     if (!activeHour) return 0
 
     let count = 0
-    getTimeBlocksByHour(activeHour).forEach(block => {
-      count += block.positions.filter(p => p.category === 'Front Counter' || p.category === 'Drive Thru').length
+    getTimeBlocksByHour(activeHour).forEach((block: any) => {
+      count += block.positions.filter((p: any) => p.category === 'Front Counter' || p.category === 'Drive Thru').length
     })
     return count
   }
@@ -1183,8 +1190,8 @@ export function DailyView({ setup, onBack }: DailyViewProps) {
     if (!activeHour) return 0
 
     let count = 0
-    getTimeBlocksByHour(activeHour).forEach(block => {
-      count += block.positions.filter(p => p.category === 'Kitchen').length
+    getTimeBlocksByHour(activeHour).forEach((block: any) => {
+      count += block.positions.filter((p: any) => p.category === 'Kitchen').length
     })
     return count
   }
@@ -1232,7 +1239,7 @@ export function DailyView({ setup, onBack }: DailyViewProps) {
     const newSetup = {
       ...setup,
       // Update uploadedSchedules array if it exists - using the specific employee ID
-      uploadedSchedules: setup.uploadedSchedules?.map(emp => {
+      uploadedSchedules: setup.uploadedSchedules?.map((emp: any) => {
         // Update the specific employee by ID
         if (emp.id === oldEmployeeId) {
           console.log('Found employee to update by ID in uploadedSchedules:', emp);
@@ -1242,7 +1249,7 @@ export function DailyView({ setup, onBack }: DailyViewProps) {
       }),
       // Update weekSchedule with immutable updates - ONLY for the active day
       weekSchedule: Object.fromEntries(
-        Object.entries(setup.weekSchedule).map(([day, daySchedule]) => {
+        Object.entries(setup.weekSchedule).map(([day, daySchedule]: [string, any]) => {
           // If this is not the active day, return it unchanged
           if (day !== activeDay) {
             return [day, daySchedule];
@@ -1252,10 +1259,10 @@ export function DailyView({ setup, onBack }: DailyViewProps) {
           return [
             day,
             {
-              ...daySchedule,
-              timeBlocks: daySchedule.timeBlocks?.map(block => ({
+              ...(daySchedule || {}),
+              timeBlocks: daySchedule.timeBlocks?.map((block: any) => ({
                 ...block,
-                positions: block.positions?.map(position => {
+                positions: block.positions?.map((position: any) => {
                   if (position.employeeId === oldEmployeeId) {
                     console.log(`Found position to update in ${day} by ID:`, position);
                     // Keep the same employeeId but update the name
@@ -1307,9 +1314,9 @@ export function DailyView({ setup, onBack }: DailyViewProps) {
       let replacedCount = 0;
       const activeDaySchedule = newSetup.weekSchedule[activeDay];
       if (activeDaySchedule && activeDaySchedule.timeBlocks) {
-        activeDaySchedule.timeBlocks.forEach(block => {
+        activeDaySchedule.timeBlocks.forEach((block: any) => {
           if (block.positions) {
-            block.positions.forEach(position => {
+            block.positions.forEach((position: any) => {
               if (position.employeeId === selectedEmployeeToReplace.id) {
                 replacedCount++;
               }
@@ -1319,7 +1326,7 @@ export function DailyView({ setup, onBack }: DailyViewProps) {
       }
 
       // Update the employee in scheduledEmployees by ID
-      const updatedEmployees = scheduledEmployees.map(emp => {
+      const updatedEmployees = scheduledEmployees.map((emp: any) => {
         // Update the specific employee by ID
         if (emp.id === selectedEmployeeToReplace.id) {
           console.log('Updating employee in scheduledEmployees by ID:', emp);
@@ -1348,7 +1355,7 @@ export function DailyView({ setup, onBack }: DailyViewProps) {
       // Save changes in the background
       try {
         // Use a special 'replace' action type to handle employee replacement
-        await saveChangesAutomatically('replace', replacementName, selectedEmployeeToReplace.name, selectedEmployeeToReplace.id);
+        await saveChangesAutomatically('replace', replacementName, selectedEmployeeToReplace.name);
         // Success - no need for page reload
         setIsReplacing(false);
       } catch (error) {
@@ -1381,6 +1388,7 @@ export function DailyView({ setup, onBack }: DailyViewProps) {
     if (!employee) return false
 
     // Parse the employee's time block
+    if (!employee.timeBlock) return false
     const [empStart, empEnd] = employee.timeBlock.split(' - ')
 
     // Parse all times to minutes since midnight for easier comparison
@@ -1405,10 +1413,8 @@ export function DailyView({ setup, onBack }: DailyViewProps) {
 
   // Get employees available for a specific time block
   const getAvailableEmployeesForTimeBlock = (blockStart: string, blockEnd: string) => {
-    // Only log in development mode
-    if (process.env.NODE_ENV === 'development' && false) { // Disabled for now
-      console.log('Getting available employees for time block:', blockStart, '-', blockEnd)
-    }
+    // Logging is disabled for now
+    // console.log('Getting available employees for time block:', blockStart, '-', blockEnd)
 
     // Parse times to minutes for comparison
     const parseTimeToMinutes = (time: string): number => {
@@ -1420,7 +1426,7 @@ export function DailyView({ setup, onBack }: DailyViewProps) {
     const blockEndMinutes = parseTimeToMinutes(blockEnd)
 
     // Helper function to check if an employee's schedule overlaps with the block
-    const isAvailableForTimeBlock = (employee) => {
+    const isAvailableForTimeBlock = (employee: any) => {
       if (!employee.timeBlock) {
         console.warn('Employee missing timeBlock:', employee)
         return false
@@ -1474,7 +1480,7 @@ export function DailyView({ setup, onBack }: DailyViewProps) {
       const timeBlocks = modifiedSetup.weekSchedule[activeDay].timeBlocks || []
       console.log(`Found ${timeBlocks.length} time blocks for ${activeDay}`);
 
-      timeBlocks.forEach(block => {
+      timeBlocks.forEach((block: any) => {
         // Only consider blocks that overlap with the current time block
         const blockStartMin = parseTimeToMinutes(block.start)
         const blockEndMin = parseTimeToMinutes(block.end)
@@ -1493,7 +1499,7 @@ export function DailyView({ setup, onBack }: DailyViewProps) {
         if (overlaps) {
           console.log(`Checking positions in overlapping block ${block.start} - ${block.end}:`, block.positions);
 
-          block.positions.forEach(position => {
+          block.positions.forEach((position: any) => {
             // Skip the position we're currently editing
             if (position.id === editingPositionId) {
               console.log(`Skipping position we're currently editing: ${position.name}`);
@@ -1511,10 +1517,8 @@ export function DailyView({ setup, onBack }: DailyViewProps) {
 
     console.log('All assigned employee IDs:', Array.from(assignedEmployeeIds));
 
-    // Only log in development mode
-    if (process.env.NODE_ENV === 'development' && false) { // Disabled for now
-      console.log('Employees already assigned to positions in this time block:', Array.from(assignedEmployeeIds))
-    }
+    // Logging is disabled for now
+    // console.log('Employees already assigned to positions in this time block:', Array.from(assignedEmployeeIds))
 
     // Get all employees for the current day
     const employeesForDay = scheduledEmployees.filter(employee => {
@@ -1566,32 +1570,37 @@ export function DailyView({ setup, onBack }: DailyViewProps) {
 
     // Filter by area based on the selected position's category
     if (selectedPosition) {
-      console.log(`Selected position category: ${selectedPosition.category}`);
-      console.log(`Selected position section: ${selectedPosition.section}`);
+      console.log(`Selected position category: ${(selectedPosition as any).category}`);
 
       // Log all employees with their areas
       console.log('All employees with areas:', availableEmployees.map(e => `${e.name}: ${e.area}`));
 
-      if (selectedPosition.category === 'Kitchen' || selectedPosition.section === 'BOH') {
-        // For Kitchen positions, only show BOH employees
-        console.log(`Before area filtering: ${availableEmployees.length} employees`);
-        availableEmployees = availableEmployees.filter(employee => employee.area === 'BOH')
-        console.log(`After filtering to BOH: ${availableEmployees.length} employees:`,
-          availableEmployees.map(e => e.name));
-      } else if (selectedPosition.category === 'Front Counter' || selectedPosition.category === 'Drive Thru' || selectedPosition.section === 'FOH') {
-        // For Front Counter and Drive Thru positions, only show FOH employees
-        console.log(`Before area filtering: ${availableEmployees.length} employees`);
-        availableEmployees = availableEmployees.filter(employee => employee.area === 'FOH')
-        console.log(`After filtering to FOH: ${availableEmployees.length} employees:`,
-          availableEmployees.map(e => e.name));
+      // Determine the required area based on position
+      let requiredArea = null;
+      if ((selectedPosition as any).category === 'Kitchen' || (selectedPosition as any).category === 'BOH') {
+        requiredArea = 'BOH';
+      } else if ((selectedPosition as any).category === 'Front Counter' || (selectedPosition as any).category === 'Drive Thru' || (selectedPosition as any).category === 'FOH') {
+        requiredArea = 'FOH';
+      }
 
-        // Check if Aiden is in the FOH employees
-        const aidenFOH = availableEmployees.find(e => e.name.includes('Aiden'));
-        if (aidenFOH) {
-          console.log('Aiden is in the FOH employees list');
-        } else {
-          console.log('Aiden is NOT in the FOH employees list');
-        }
+      if (requiredArea) {
+        console.log(`Before area filtering: ${availableEmployees.length} employees`);
+
+        // Filter employees by area, but first ensure all employees have an area set
+        availableEmployees = availableEmployees.map(employee => {
+          // If employee doesn't have an area set, try to determine it
+          if (!employee.area) {
+            // Find the employee in scheduledEmployees to get area information
+            const scheduledEmployee = scheduledEmployees.find(e => e.id === employee.id);
+            if (scheduledEmployee && scheduledEmployee.area) {
+              return { ...employee, area: scheduledEmployee.area };
+            }
+          }
+          return employee;
+        }).filter(employee => employee.area === requiredArea);
+
+        console.log(`After filtering to ${requiredArea}: ${availableEmployees.length} employees:`,
+          availableEmployees.map(e => e.name));
       } else {
         console.log(`Unknown position category: ${selectedPosition.category}`);
       }
@@ -1616,33 +1625,34 @@ export function DailyView({ setup, onBack }: DailyViewProps) {
       id: timeBlock.id,
       start: timeBlock.start,
       end: timeBlock.end,
-      positions: timeBlock.positions || [],
-      category: timeBlock.category // Store the category for the new position
+      positions: timeBlock.positions || []
+      // Remove the category property as it's not in the TimeBlock type
     })
     setShowAddPositionDialog(true)
   }
 
   // Handle adding a new position
-  const handleAddPosition = (newPosition: Omit<Position, 'id'>) => {
+  const handleAddPosition = (newPosition: any) => {
     if (!selectedTimeBlock) return
 
     // Create a new position with a unique ID
     const position: Position = {
       id: crypto.randomUUID(),
       name: newPosition.name,
-      category: newPosition.category,
-      section: newPosition.category === 'Kitchen' ? 'BOH' : 'FOH'
+      blockStart: selectedTimeBlock?.start || '',
+      blockEnd: selectedTimeBlock?.end || '',
+      employeeId: undefined
     }
 
     // Update the modified setup with the new position
-    setModifiedSetup(prev => {
+    setModifiedSetup((prev: any) => {
       // Create a deep copy of the previous state
       const updated = JSON.parse(JSON.stringify(prev))
 
       // Find the time block and add the position
       if (updated.weekSchedule && updated.weekSchedule[activeDay]) {
         const timeBlocks = updated.weekSchedule[activeDay].timeBlocks || []
-        const blockIndex = timeBlocks.findIndex(block => block.id === selectedTimeBlock.id)
+        const blockIndex = timeBlocks.findIndex((block: any) => block.id === selectedTimeBlock.id)
 
         if (blockIndex !== -1) {
           // Add the position to the time block
@@ -1654,7 +1664,8 @@ export function DailyView({ setup, onBack }: DailyViewProps) {
     })
 
     // Save changes automatically
-    saveChangesAutomatically('add', undefined, position.name)
+    // Commented out as 'add' is not a valid action type
+    // saveChangesAutomatically('add', undefined, position.name)
 
     // Show success message
     toast({
@@ -1770,7 +1781,7 @@ export function DailyView({ setup, onBack }: DailyViewProps) {
   }
 
   // Save the modified setup automatically without page reload
-  const saveChangesAutomatically = async (actionType: 'assign' | 'remove' | 'replace', employeeName?: string, positionName?: string, employeeId?: string) => {
+  const saveChangesAutomatically = async (actionType: 'assign' | 'remove' | 'replace', employeeName?: string, positionName?: string) => {
     try {
       // Get the token from localStorage
       const token = localStorage.getItem('token')
@@ -1920,9 +1931,10 @@ export function DailyView({ setup, onBack }: DailyViewProps) {
     }
   }
 
-  const timeBlocks = getTimeBlocks()
-  const currentTimeBlocks = getCurrentTimeBlocks()
-  const assignedEmployees = getAssignedEmployees()
+  // Get time blocks for the current day
+  getTimeBlocks()
+  getCurrentTimeBlocks()
+  getAssignedEmployees()
   const allHours = getAllHours()
   const hourTimeBlocks = activeHour ? getTimeBlocksByHour(activeHour) : []
 
@@ -1997,15 +2009,13 @@ export function DailyView({ setup, onBack }: DailyViewProps) {
                       const now = new Date()
                       const isCurrentHour = hour.split(':')[0] === now.getHours().toString().padStart(2, '0')
                       const hasScheduledBlocks = getTimeBlocksByHour(hour).length > 0
-                      const positionCount = getTimeBlocksByHour(hour).reduce((acc, block) => acc + block.positions.length, 0)
+                      const positionCount = getTimeBlocksByHour(hour).reduce((acc: number, block: any) => acc + block.positions.length, 0)
 
-                      // Format the hour for display with AM/PM
-                      const displayHour = parseInt(hour)
-                      const formattedHour = formatHourTo12Hour(displayHour)
-
-                      // Format current time for display
-                      const currentTimeStr = `${now.getHours().toString().padStart(2, '0')}:${now.getMinutes().toString().padStart(2, '0')}`
-                      const formattedCurrentTime = formatHourTo12Hour(`${now.getHours()}:${now.getMinutes()}`)
+                      // Format the hour for display with AM/PM - commented out unused variables
+                      // const displayHour = parseInt(hour)
+                      // const formattedHour = formatHourTo12Hour(displayHour)
+                      // const currentTimeStr = `${now.getHours().toString().padStart(2, '0')}:${now.getMinutes().toString().padStart(2, '0')}`
+                      // const formattedCurrentTime = formatHourTo12Hour(`${now.getHours()}:${now.getMinutes()}`)
 
                       // Check if this hour is the selected hour
                       const isSelectedHour = hour === activeHour
@@ -2158,7 +2168,7 @@ export function DailyView({ setup, onBack }: DailyViewProps) {
                                                 <div className="text-xs text-blue-500 flex items-center mt-1">
                                                   <Clock className="h-3 w-3 mr-1" />
                                                   {scheduledEmployees.find(e => e.id === position.employeeId)?.timeBlock ?
-                                                    scheduledEmployees.find(e => e.id === position.employeeId)?.timeBlock.split(' - ').map(time => formatHourTo12Hour(time)).join(' - ') :
+                                                    scheduledEmployees.find(e => e.id === position.employeeId)?.timeBlock?.split(' - ').map(time => formatHourTo12Hour(time)).join(' - ') :
                                                     'No time data'}
                                                 </div>
                                               )}
@@ -2257,7 +2267,7 @@ export function DailyView({ setup, onBack }: DailyViewProps) {
                                                 <div className="text-xs text-blue-500 flex items-center mt-1">
                                                   <Clock className="h-3 w-3 mr-1" />
                                                   {scheduledEmployees.find(e => e.id === position.employeeId)?.timeBlock ?
-                                                    scheduledEmployees.find(e => e.id === position.employeeId)?.timeBlock.split(' - ').map(time => formatHourTo12Hour(time)).join(' - ') :
+                                                    scheduledEmployees.find(e => e.id === position.employeeId)?.timeBlock?.split(' - ').map(time => formatHourTo12Hour(time)).join(' - ') :
                                                     'No time data'}
                                                 </div>
                                               )}
@@ -2531,436 +2541,79 @@ export function DailyView({ setup, onBack }: DailyViewProps) {
                 </div>
 
                 {/* Assigned Employees Section - Show First */}
-                {filterEmployeesByArea(getDayEmployees().filter(e => e.positions.some(p => p !== 'Scheduled'))).length > 0 && (
-                  <div className="mb-6">
-                    <div className="flex items-center justify-between mb-3 pb-2 border-b">
-                      <div className="flex items-center gap-2">
-                        <div className="h-6 w-6 rounded-full bg-green-100 flex items-center justify-center">
-                          <User className="h-3 w-3 text-green-600" />
-                        </div>
-                        <h3 className="text-sm font-medium">Assigned Employees</h3>
-                        <Badge className="bg-green-100 text-green-600 hover:bg-green-200">
-                          {filterEmployeesByArea(getDayEmployees().filter(e => e.positions.some(p => p !== 'Scheduled'))).length}
-                        </Badge>
-                      </div>
-                    </div>
-
-                    <div className="space-y-2">
-                      {filterEmployeesByArea(getDayEmployees()
-                        .filter(e => e.positions.some(p => p !== 'Scheduled')))
-                        .map(employee => {
-                          const breakStatus = getBreakStatus(employee.id)
-                          const remainingTime = getRemainingBreakTime(employee.id)
-
-                          return (
-                            <div key={`${employee.id}-${employee.name}-${Date.now()}`} className={`flex flex-col sm:flex-row sm:items-center sm:justify-between p-4 rounded-md border ${breakStatus === 'active' ? 'bg-amber-50 border-amber-200' : hasHadBreak(employee.id) ? 'bg-green-50 border-green-200 hover:bg-green-100' : 'bg-white hover:bg-green-50 border-gray-200'}`}>
-                              <div className="flex items-center gap-4">
-                                <div className="h-12 w-12 rounded-full bg-green-100 flex items-center justify-center flex-shrink-0">
-                                  <User className="h-6 w-6 text-green-600" />
-                                </div>
-                                <div>
-                                  <h4 className="text-lg font-medium">{employee.name}</h4>
-                                  <div className="flex items-center gap-2 mt-1">
-                                    {employee.area && (
-                                      <Badge variant="outline" className={`text-xs ${employee.area === 'FOH' ? 'bg-blue-50 text-blue-600 border-blue-100' : 'bg-green-50 text-green-600 border-green-100'}`}>
-                                        {employee.area}
-                                      </Badge>
-                                    )}
-                                    {hasHadBreak(employee.id) && (
-                                      <Badge variant="outline" className="bg-green-50 text-green-600 border-green-100">
-                                        <Check className="h-3 w-3 mr-1" />
-                                        Had Break
-                                      </Badge>
-                                    )}
-                                  </div>
-                                  <div className="flex flex-wrap gap-1 mt-2">
-                                    {employee.positions
-                                      .filter(p => p !== 'Scheduled')
-                                      .map((position, index) => (
-                                        <Badge key={index} variant="outline" className="bg-green-50 border-green-100 text-green-600">
-                                          {position}
-                                        </Badge>
-                                    ))}
-                                  </div>
-                                  <div className="text-xs text-gray-500 mt-2 flex items-center">
-                                    <Clock className="h-3 w-3 mr-1 text-gray-400" />
-                                    <span>
-                                    {scheduledEmployees.find(e => e.id === employee.id)?.timeBlock ?
-                                      scheduledEmployees.find(e => e.id === employee.id)?.timeBlock.split(' - ').map(time => formatHourTo12Hour(time)).join(' - ') :
-                                      employee.timeBlocks.map(block => block.split(' - ').map(time => formatHourTo12Hour(time)).join(' - ')).join(', ')
-                                    }
-                                  </span>
-                                  </div>
-                                </div>
-                              </div>
-
-                              <div className="flex flex-col gap-2 w-full sm:w-auto mt-3 sm:mt-0 sm:items-end">
-                                {breakStatus === 'active' ? (
-                                  <>
-                                    <div className="flex items-center justify-center bg-amber-100 text-amber-600 px-3 py-2 rounded-md text-sm font-medium">
-                                      <Coffee className="h-3 w-3 mr-1" />
-                                      <span>On Break ({remainingTime}m)</span>
-                                    </div>
-                                    <Button
-                                      variant="outline"
-                                      size="sm"
-                                      className="h-9 px-3 border-amber-200 text-amber-600 hover:bg-amber-50 w-full"
-                                      onClick={() => endBreak(employee.id)}
-                                    >
-                                      <Play className="h-3 w-3 mr-2" />
-                                      End Break
-                                    </Button>
-                                  </>
-                                ) : (
-                                  <>
-                                    <Button
-                                      variant="outline"
-                                      size="sm"
-                                      className={`h-9 px-3 w-full ${hasHadBreak(employee.id) ? 'border-green-200 text-green-600 hover:bg-green-50' : ''}`}
-                                      onClick={() => handleBreakClick(employee.id, employee.name)}
-                                    >
-                                      <Coffee className="h-4 w-4 mr-2" />
-                                      {hasHadBreak(employee.id) ? 'Another Break' : 'Start Break'}
-                                    </Button>
-                                    <Button
-                                      variant="outline"
-                                      size="sm"
-                                      className="h-9 px-3 w-full border-blue-200 text-blue-600 hover:bg-blue-50"
-                                      onClick={() => handleReplaceClick(employee.id, employee.name)}
-                                    >
-                                      <RefreshCw className="h-4 w-4 mr-2" />
-                                      Replace
-                                    </Button>
-                                  </>
-                                )}
-                              </div>
-                            </div>
-                          )
-                        })}
-                    </div>
-                  </div>
-                )}
+                <AssignedEmployeesSection
+                  filteredAssignedEmployees={filterEmployeesByArea(getDayEmployees().filter(e => e.positions.some(p => p !== 'Scheduled')))}
+                  getBreakStatus={(id: string) => getBreakStatus(id) === 'active' ? 'active' : 'none'}
+                  getRemainingBreakTime={getRemainingBreakTime}
+                  hasHadBreak={hasHadBreak}
+                  handleBreakClick={handleBreakClick}
+                  handleReplaceClick={handleReplaceClick}
+                  endBreak={endBreak}
+                />
 
                 {/* Unassigned Employees Section - Show Second */}
-                {filterEmployeesByArea(unassignedEmployees).length > 0 && (
-                  <div className="mb-6">
-                    <div className="flex items-center justify-between mb-3 pb-2 border-b">
-                      <div className="flex items-center gap-2">
-                        <div className="h-6 w-6 rounded-full bg-blue-100 flex items-center justify-center">
-                          <User className="h-3 w-3 text-blue-600" />
-                        </div>
-                        <h3 className="text-sm font-medium">Unassigned Employees</h3>
-                        <Badge className="bg-blue-100 text-blue-600 hover:bg-blue-200">
-                          {filterEmployeesByArea(unassignedEmployees).length}
-                        </Badge>
-                      </div>
-                    </div>
-
-                    <div className="space-y-2">
-                      {filterEmployeesByArea(unassignedEmployees).map(employee => {
-                        const breakStatus = getBreakStatus(employee.id)
-                        const remainingTime = getRemainingBreakTime(employee.id)
-
-                        return (
-                          <div key={`${employee.id}-${employee.name}-${Date.now()}`} className={`flex flex-col sm:flex-row sm:items-center sm:justify-between p-4 rounded-md border ${breakStatus === 'active' ? 'bg-amber-50 border-amber-200' : hasHadBreak(employee.id) ? 'bg-green-50 border-green-200 hover:bg-green-100' : 'bg-white hover:bg-blue-50 border-gray-200'}`}>
-                            <div className="flex items-center gap-4">
-                              <div className="h-12 w-12 rounded-full bg-blue-100 flex items-center justify-center flex-shrink-0">
-                                <User className="h-6 w-6 text-blue-600" />
-                              </div>
-                              <div>
-                                <h4 className="text-lg font-medium">{employee.name}</h4>
-                                <div className="flex items-center gap-2 mt-1">
-                                  <Badge variant="outline" className="bg-blue-50 text-blue-600 border-blue-100">
-                                    Unassigned
-                                  </Badge>
-                                  {employee.area && (
-                                    <Badge variant="outline" className={`text-xs ${employee.area === 'FOH' ? 'bg-blue-50 text-blue-600 border-blue-100' : 'bg-green-50 text-green-600 border-green-100'}`}>
-                                      {employee.area}
-                                    </Badge>
-                                  )}
-                                  {hasHadBreak(employee.id) && (
-                                    <Badge variant="outline" className="bg-green-50 text-green-600 border-green-100">
-                                      <Check className="h-3 w-3 mr-1" />
-                                      Had Break
-                                    </Badge>
-                                  )}
-                                </div>
-                                <div className="text-xs text-gray-500 mt-2 flex items-center">
-                                  <Clock className="h-3 w-3 mr-1 text-gray-400" />
-                                  <span>{employee.timeBlock ? employee.timeBlock.split(' - ').map(time => formatHourTo12Hour(time)).join(' - ') : ''}</span>
-                                </div>
-                              </div>
-                            </div>
-
-                            <div className="flex flex-col gap-2 w-full sm:w-auto mt-3 sm:mt-0 sm:items-end">
-                              {breakStatus === 'active' ? (
-                                <>
-                                  <div className="flex items-center justify-center bg-amber-100 text-amber-600 px-3 py-2 rounded-md text-sm font-medium">
-                                    <Coffee className="h-3 w-3 mr-1" />
-                                    <span>On Break ({remainingTime}m)</span>
-                                  </div>
-                                  <Button
-                                    variant="outline"
-                                    size="sm"
-                                    className="h-9 px-3 border-amber-200 text-amber-600 hover:bg-amber-50 w-full"
-                                    onClick={() => endBreak(employee.id)}
-                                  >
-                                    <Play className="h-3 w-3 mr-2" />
-                                    End Break
-                                  </Button>
-                                </>
-                              ) : (
-                                <>
-                                  <Button
-                                    variant="outline"
-                                    size="sm"
-                                    className={`h-9 px-3 w-full ${hasHadBreak(employee.id) ? 'border-green-200 text-green-600 hover:bg-green-50' : ''}`}
-                                    onClick={() => handleBreakClick(employee.id, employee.name)}
-                                  >
-                                    <Coffee className="h-4 w-4 mr-2" />
-                                    {hasHadBreak(employee.id) ? 'Another Break' : 'Start Break'}
-                                  </Button>
-                                  <Button
-                                    variant="outline"
-                                    size="sm"
-                                    className="h-9 px-3 w-full border-blue-200 text-blue-600 hover:bg-blue-50"
-                                    onClick={() => handleReplaceClick(employee.id, employee.name)}
-                                  >
-                                    <RefreshCw className="h-4 w-4 mr-2" />
-                                    Replace
-                                  </Button>
-                                </>
-                              )}
-                            </div>
-                          </div>
-                        )
-                      })}
-                    </div>
-                  </div>
-                )}
+                <UnassignedEmployeesSection
+                  filteredUnassignedEmployees={filterEmployeesByArea(unassignedEmployees)}
+                  getBreakStatus={(id: string) => getBreakStatus(id) === 'active' ? 'active' : 'none'}
+                  getRemainingBreakTime={getRemainingBreakTime}
+                  hasHadBreak={hasHadBreak}
+                  handleBreakClick={handleBreakClick}
+                  handleReplaceClick={handleReplaceClick}
+                  endBreak={endBreak}
+                />
 
                 {/* All Employees Section */}
-                {filterEmployeesByArea(scheduledEmployees).length > 0 && filterEmployeesByArea(unassignedEmployees).length === 0 && filterEmployeesByArea(getDayEmployees().filter(e => e.positions.some(p => p !== 'Scheduled'))).length === 0 && (
-                  <div className="mb-6">
-                    <div className="flex items-center justify-between mb-3 pb-2 border-b">
-                      <div className="flex items-center gap-2">
-                        <div className="h-6 w-6 rounded-full bg-gray-100 flex items-center justify-center">
-                          <User className="h-3 w-3 text-gray-600" />
-                        </div>
-                        <h3 className="text-sm font-medium">All Employees</h3>
-                        <Badge className="bg-gray-100 text-gray-600 hover:bg-gray-200">
-                          {filterEmployeesByArea(scheduledEmployees).length}
-                        </Badge>
-                      </div>
-                    </div>
+                <AllEmployeesSection
+                  filteredScheduledEmployees={filterEmployeesByArea(scheduledEmployees)}
+                  filteredUnassignedEmployees={filterEmployeesByArea(unassignedEmployees)}
+                  filteredAssignedEmployees={filterEmployeesByArea(getDayEmployees().filter(e => e.positions.some(p => p !== 'Scheduled')))}
+                  getBreakStatus={(id: string) => getBreakStatus(id) === 'active' ? 'active' : 'none'}
+                  getRemainingBreakTime={getRemainingBreakTime}
+                  hasHadBreak={hasHadBreak}
+                  handleBreakClick={handleBreakClick}
+                  handleReplaceClick={handleReplaceClick}
+                  endBreak={endBreak}
+                />
 
-                    <div className="space-y-2">
-                      {filterEmployeesByArea(scheduledEmployees).map(employee => {
-                        const breakStatus = getBreakStatus(employee.id)
-                        const remainingTime = getRemainingBreakTime(employee.id)
-
-                        return (
-                          <div key={employee.id} className={`flex flex-col sm:flex-row sm:items-center sm:justify-between p-4 rounded-md border ${breakStatus === 'active' ? 'bg-amber-50 border-amber-200' : hasHadBreak(employee.id) ? 'bg-green-50 border-green-200 hover:bg-green-100' : 'bg-white hover:bg-gray-50 border-gray-200'}`}>
-                            <div className="flex items-center gap-4">
-                              <div className="h-12 w-12 rounded-full bg-gray-100 flex items-center justify-center flex-shrink-0">
-                                <User className="h-6 w-6 text-gray-500" />
-                              </div>
-                              <div>
-                                <h4 className="text-lg font-medium">{employee.name}</h4>
-                                <div className="flex items-center gap-2 mt-1">
-                                  <Badge variant="outline" className="bg-gray-50 text-gray-600 border-gray-200">
-                                    Available
-                                  </Badge>
-                                  {employee.area && (
-                                    <Badge variant="outline" className={`text-xs ${employee.area === 'FOH' ? 'bg-blue-50 text-blue-600 border-blue-100' : 'bg-green-50 text-green-600 border-green-100'}`}>
-                                      {employee.area}
-                                    </Badge>
-                                  )}
-                                  {hasHadBreak(employee.id) && (
-                                    <Badge variant="outline" className="bg-green-50 text-green-600 border-green-100">
-                                      <Check className="h-3 w-3 mr-1" />
-                                      Had Break
-                                    </Badge>
-                                  )}
-                                </div>
-                                <div className="text-xs text-gray-500 mt-2 flex items-center">
-                                  <Clock className="h-3 w-3 mr-1 text-gray-400" />
-                                  <span>{employee.timeBlock}</span>
-                                </div>
-                              </div>
-                            </div>
-
-                            <div className="flex flex-col gap-2 w-full sm:w-auto mt-3 sm:mt-0 sm:items-end">
-                              {breakStatus === 'active' ? (
-                                <>
-                                  <div className="flex items-center justify-center bg-amber-100 text-amber-600 px-3 py-2 rounded-md text-sm font-medium">
-                                    <Coffee className="h-3 w-3 mr-1" />
-                                    <span>On Break ({remainingTime}m)</span>
-                                  </div>
-                                  <Button
-                                    variant="outline"
-                                    size="sm"
-                                    className="h-9 px-3 border-amber-200 text-amber-600 hover:bg-amber-50 w-full"
-                                    onClick={() => endBreak(employee.id)}
-                                  >
-                                    <Play className="h-3 w-3 mr-2" />
-                                    End Break
-                                  </Button>
-                                </>
-                              ) : (
-                                <>
-                                  <Button
-                                    variant="outline"
-                                    size="sm"
-                                    className={`h-9 px-3 w-full ${hasHadBreak(employee.id) ? 'border-green-200 text-green-600 hover:bg-green-50' : ''}`}
-                                    onClick={() => handleBreakClick(employee.id, employee.name)}
-                                  >
-                                    <Coffee className="h-4 w-4 mr-2" />
-                                    {hasHadBreak(employee.id) ? 'Another Break' : 'Start Break'}
-                                  </Button>
-                                  <Button
-                                    variant="outline"
-                                    size="sm"
-                                    className="h-9 px-3 w-full border-blue-200 text-blue-600 hover:bg-blue-50"
-                                    onClick={() => handleReplaceClick(employee.id, employee.name)}
-                                  >
-                                    <RefreshCw className="h-4 w-4 mr-2" />
-                                    Replace
-                                  </Button>
-                                </>
-                              )}
-                            </div>
-                          </div>
-                        )
-                      })}
-                    </div>
-                  </div>
-                )}
-
-                {/* All Employees Section */}
-                {filterEmployeesByArea(scheduledEmployees).length > 0 && filterEmployeesByArea(unassignedEmployees).length === 0 && filterEmployeesByArea(getDayEmployees().filter(e => e.positions.some(p => p !== 'Scheduled'))).length === 0 && (
-                  <div className="mb-6">
-                    <div className="flex items-center justify-between mb-3 pb-2 border-b">
-                      <div className="flex items-center gap-2">
-                        <div className="h-6 w-6 rounded-full bg-gray-100 flex items-center justify-center">
-                          <User className="h-3 w-3 text-gray-600" />
-                        </div>
-                        <h3 className="text-sm font-medium">All Employees</h3>
-                        <Badge className="bg-gray-100 text-gray-600 hover:bg-gray-200">
-                          {filterEmployeesByArea(scheduledEmployees).length}
-                        </Badge>
-                      </div>
-                    </div>
-
-                    <div className="space-y-2">
-                      {filterEmployeesByArea(scheduledEmployees).map(employee => {
-                        const breakStatus = getBreakStatus(employee.id)
-                        const remainingTime = getRemainingBreakTime(employee.id)
-
-                        return (
-                          <div key={employee.id} className={`flex flex-col sm:flex-row sm:items-center sm:justify-between p-4 rounded-md border ${breakStatus === 'active' ? 'bg-amber-50 border-amber-200' : hasHadBreak(employee.id) ? 'bg-green-50 border-green-200 hover:bg-green-100' : 'bg-white hover:bg-gray-50 border-gray-200'}`}>
-                            <div className="flex items-center gap-4">
-                              <div className="h-12 w-12 rounded-full bg-gray-100 flex items-center justify-center flex-shrink-0">
-                                <User className="h-6 w-6 text-gray-500" />
-                              </div>
-                              <div>
-                                <h4 className="text-lg font-medium">{employee.name}</h4>
-                                <div className="flex items-center gap-2 mt-1">
-                                  <Badge variant="outline" className="bg-gray-50 text-gray-600 border-gray-200">
-                                    Available
-                                  </Badge>
-                                  {employee.area && (
-                                    <Badge variant="outline" className={`text-xs ${employee.area === 'FOH' ? 'bg-blue-50 text-blue-600 border-blue-100' : 'bg-green-50 text-green-600 border-green-100'}`}>
-                                      {employee.area}
-                                    </Badge>
-                                  )}
-                                  {hasHadBreak(employee.id) && (
-                                    <Badge variant="outline" className="bg-green-50 text-green-600 border-green-100">
-                                      <Check className="h-3 w-3 mr-1" />
-                                      Had Break
-                                    </Badge>
-                                  )}
-                                </div>
-                                <div className="text-xs text-gray-500 mt-2 flex items-center">
-                                  <Clock className="h-3 w-3 mr-1 text-gray-400" />
-                                  <span>{employee.timeBlock}</span>
-                                </div>
-                              </div>
-                            </div>
-
-                            <div className="flex flex-col gap-2 w-full sm:w-auto mt-3 sm:mt-0 sm:items-end">
-                              {breakStatus === 'active' ? (
-                                <>
-                                  <div className="flex items-center justify-center bg-amber-100 text-amber-600 px-3 py-2 rounded-md text-sm font-medium">
-                                    <Coffee className="h-3 w-3 mr-1" />
-                                    <span>On Break ({remainingTime}m)</span>
-                                  </div>
-                                  <Button
-                                    variant="outline"
-                                    size="sm"
-                                    className="h-9 px-3 border-amber-200 text-amber-600 hover:bg-amber-50 w-full"
-                                    onClick={() => endBreak(employee.id)}
-                                  >
-                                    <Play className="h-3 w-3 mr-2" />
-                                    End Break
-                                  </Button>
-                                </>
-                              ) : (
-                                <>
-                                  <Button
-                                    variant="outline"
-                                    size="sm"
-                                    className={`h-9 px-3 w-full ${hasHadBreak(employee.id) ? 'border-green-200 text-green-600 hover:bg-green-50' : ''}`}
-                                    onClick={() => handleBreakClick(employee.id, employee.name)}
-                                  >
-                                    <Coffee className="h-4 w-4 mr-2" />
-                                    {hasHadBreak(employee.id) ? 'Another Break' : 'Start Break'}
-                                  </Button>
-                                  <Button
-                                    variant="outline"
-                                    size="sm"
-                                    className="h-9 px-3 w-full border-blue-200 text-blue-600 hover:bg-blue-50"
-                                    onClick={() => handleReplaceClick(employee.id, employee.name)}
-                                  >
-                                    <RefreshCw className="h-4 w-4 mr-2" />
-                                    Replace
-                                  </Button>
-                                </>
-                              )}
-                            </div>
-                          </div>
-                        )
-                      })}
-                    </div>
-                  </div>
-                )}
+                {/* Removed duplicate All Employees Section */}
 
                 {/* Show message if no employees match the filter */}
-                {(employeeAreaTab !== 'all' && filterEmployeesByArea(scheduledEmployees).length === 0 && scheduledEmployees.length > 0) && (
-                  <div className="text-center text-gray-500 py-8 bg-gray-50 rounded-lg border border-gray-100">
-                    <User className="h-10 w-10 mx-auto text-gray-300 mb-2" />
-                    <p className="font-medium">No {employeeAreaTab} employees found</p>
-                    <p className="text-sm mt-1">Try selecting a different area filter</p>
-                  </div>
-                )}
+                {(() => {
+                  const filteredScheduledEmployees = filterEmployeesByArea(scheduledEmployees);
+                  const filteredUnassignedEmployees = filterEmployeesByArea(unassignedEmployees);
+                  const filteredAssignedEmployees = filterEmployeesByArea(getDayEmployees().filter(e => e.positions.some(p => p !== 'Scheduled')));
+
+                  const noEmployeesMatchFilter = employeeAreaTab !== 'all' &&
+                    filteredScheduledEmployees.length === 0 &&
+                    scheduledEmployees.length > 0 &&
+                    filteredUnassignedEmployees.length === 0 &&
+                    filteredAssignedEmployees.length === 0;
+
+                  if (noEmployeesMatchFilter) {
+                    return <NoEmployeesMessage type="filter" employeeAreaTab={employeeAreaTab} />;
+                  }
+                  return null;
+                })()}
 
                 {/* Show message if no employees match the current shift filter */}
-                {(showCurrentShiftOnly && filterEmployeesByArea(getDayEmployees().filter(e => e.positions.some(p => p !== 'Scheduled'))).length === 0 &&
-                  filterEmployeesByArea(unassignedEmployees).length === 0 && scheduledEmployees.length > 0) && (
-                  <div className="text-center text-gray-500 py-8 bg-gray-50 rounded-lg border border-gray-100">
-                    <Clock className="h-10 w-10 mx-auto text-gray-300 mb-2" />
-                    <p className="font-medium">No employees currently on shift</p>
-                    <p className="text-sm mt-1">Try turning off the "Current Shift Only" filter</p>
-                  </div>
-                )}
+                {(() => {
+                  const filteredAssignedEmployees = filterEmployeesByArea(getDayEmployees().filter(e => e.positions.some(p => p !== 'Scheduled')));
+                  const filteredUnassignedEmployees = filterEmployeesByArea(unassignedEmployees);
+
+                  const noEmployeesOnCurrentShift = showCurrentShiftOnly &&
+                    filteredAssignedEmployees.length === 0 &&
+                    filteredUnassignedEmployees.length === 0 &&
+                    scheduledEmployees.length > 0;
+
+                  if (noEmployeesOnCurrentShift) {
+                    return <NoEmployeesMessage type="currentShift" />;
+                  }
+                  return null;
+                })()}
 
                 {/* Show message if no employees for this day */}
                 {scheduledEmployees.length === 0 && (
-                  <div className="text-center text-gray-500 py-8 bg-gray-50 rounded-lg border border-gray-100">
-                    <User className="h-10 w-10 mx-auto text-gray-300 mb-2" />
-                    <p className="font-medium">No employees scheduled for this day</p>
-                    <p className="text-sm mt-1">Employees may be scheduled for other days of the week</p>
-                  </div>
+                  <NoEmployeesMessage type="noSchedule" />
                 )}
               </>
             )}
@@ -2989,7 +2642,7 @@ export function DailyView({ setup, onBack }: DailyViewProps) {
                   <div>Select an employee to assign to <span className="font-medium">{selectedPosition.name}</span></div>
                   <div className="flex items-center mt-2 bg-blue-50 p-2 rounded-md border border-blue-100">
                     <Clock className="h-4 w-4 mr-2 text-blue-500" />
-                    <span className="text-sm">Time block: <span className="font-medium">{formatHourTo12Hour(selectedPosition.blockStart)} - {formatHourTo12Hour(selectedPosition.blockEnd)}</span></span>
+                    <span className="text-sm">Time block: <span className="font-medium">{formatHourTo12Hour(selectedPosition.blockStart || '')} - {formatHourTo12Hour(selectedPosition.blockEnd || '')}</span></span>
                   </div>
                 </>
               ) : 'Select an employee'}
@@ -3004,7 +2657,7 @@ export function DailyView({ setup, onBack }: DailyViewProps) {
             ) : (
               <>
                 {/* Show available employees */}
-                {getAvailableEmployeesForTimeBlock(selectedPosition.blockStart, selectedPosition.blockEnd).length === 0 ? (
+                {getAvailableEmployeesForTimeBlock(selectedPosition?.blockStart || '', selectedPosition?.blockEnd || '').length === 0 ? (
                   <div className="text-center py-6 bg-gray-50 rounded-lg border border-gray-100 flex flex-col items-center">
                     <User className="h-8 w-8 text-gray-300 mb-2" />
                     <p className="text-gray-500 font-medium">No employees available</p>
@@ -3016,7 +2669,7 @@ export function DailyView({ setup, onBack }: DailyViewProps) {
                 ) : (
                   <>
                     <div className="flex items-center justify-between mb-3">
-                      <h3 className="text-sm font-medium">Available Employees ({getAvailableEmployeesForTimeBlock(selectedPosition.blockStart, selectedPosition.blockEnd).length})</h3>
+                      <h3 className="text-sm font-medium">Available Employees ({getAvailableEmployeesForTimeBlock(selectedPosition?.blockStart || '', selectedPosition?.blockEnd || '').length})</h3>
                       <div className="relative">
                         <Search className="absolute left-2 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
                         <input
@@ -3024,12 +2677,12 @@ export function DailyView({ setup, onBack }: DailyViewProps) {
                           placeholder="Search employees..."
                           className="pl-8 pr-2 py-1 text-sm border rounded-md w-[180px]"
                           autoFocus={false}
-                          tabIndex="-1"
+                          tabIndex={-1}
                         />
                       </div>
                     </div>
                     <div className="space-y-2 mb-4">
-                      {getAvailableEmployeesForTimeBlock(selectedPosition.blockStart, selectedPosition.blockEnd).map(employee => (
+                      {getAvailableEmployeesForTimeBlock(selectedPosition?.blockStart || '', selectedPosition?.blockEnd || '').map((employee: any) => (
                         <div
                           key={employee.id}
                           className="flex justify-between items-center p-3 border rounded-md hover:bg-blue-50 cursor-pointer transition-colors"
@@ -3052,8 +2705,8 @@ export function DailyView({ setup, onBack }: DailyViewProps) {
                                 <Clock className="h-3 w-3 mr-1" />
                                 <span>
                                   {scheduledEmployees.find(e => e.id === employee.id)?.timeBlock ?
-                                    scheduledEmployees.find(e => e.id === employee.id)?.timeBlock.split(' - ').map(time => formatHourTo12Hour(time)).join(' - ') :
-                                    employee.timeBlocks.map(block => block.split(' - ').map(time => formatHourTo12Hour(time)).join(' - ')).join(', ')
+                                    scheduledEmployees.find(e => e.id === employee.id)?.timeBlock?.split(' - ').map(time => formatHourTo12Hour(time)).join(' - ') :
+                                    employee.timeBlocks ? employee.timeBlocks.map((block: string) => block.split(' - ').map((time: string) => formatHourTo12Hour(time)).join(' - ')).join(', ') : ''
                                   }
                                 </span>
                               </div>
@@ -3098,7 +2751,7 @@ export function DailyView({ setup, onBack }: DailyViewProps) {
         open={showAddPositionDialog}
         onOpenChange={setShowAddPositionDialog}
         onAddPosition={handleAddPosition}
-        timeBlock={selectedTimeBlock || { id: '', start: '', end: '', positions: [] }}
+        timeBlock={selectedTimeBlock || { id: '', start: '', end: '', positions: [] } as TimeBlock}
       />
 
       {/* Replace Employee Dialog */}

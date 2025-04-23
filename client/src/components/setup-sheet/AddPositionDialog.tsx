@@ -13,22 +13,8 @@ import {
 } from '@/components/ui/dialog'
 import { Plus } from 'lucide-react'
 
-interface Position {
-  id: string
-  name: string
-  category: string
-  section?: string
-  employeeId?: string
-  employeeName?: string
-}
-
-interface TimeBlock {
-  id: string
-  start: string
-  end: string
-  positions: Position[]
-  category?: string
-}
+// Import types from types.ts
+import { Position, TimeBlock } from './types'
 
 interface AddPositionDialogProps {
   open: boolean
