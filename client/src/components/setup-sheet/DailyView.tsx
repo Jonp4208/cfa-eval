@@ -1182,6 +1182,44 @@ export function DailyView({ setup, onBack }: DailyViewProps) {
     return count
   }
 
+  // Get employees scheduled for the current hour
+  const getEmployeesForCurrentHour = () => {
+    if (!activeHour) return 0
+
+    // Parse the active hour to minutes for comparison
+    const hourStart = parseInt(activeHour) * 60
+    const hourEnd = (parseInt(activeHour) + 1) * 60
+
+    // Filter employees scheduled for the current day and hour
+    return scheduledEmployees.filter(employee => {
+      // Check if employee is scheduled for the current day
+      const isForActiveDay = !employee.day ||
+                            employee.day === activeDay ||
+                            employee.day.toLowerCase() === activeDay
+
+      if (!isForActiveDay || !employee.timeBlock) return false
+
+      // Parse employee time block
+      const [empStart, empEnd] = employee.timeBlock.split(' - ')
+      if (!empStart || !empEnd) return false
+
+      // Parse times to minutes
+      const parseTimeToMinutes = (time: string): number => {
+        const [hours, minutes] = time.split(':').map(Number)
+        return hours * 60 + (minutes || 0)
+      }
+
+      const empStartMinutes = parseTimeToMinutes(empStart)
+      const empEndMinutes = parseTimeToMinutes(empEnd)
+
+      // Check if employee's schedule overlaps with the current hour
+      // An employee is scheduled for the hour if:
+      // 1. Employee starts before or at the hour end AND
+      // 2. Employee ends after the hour start
+      return empStartMinutes < hourEnd && empEndMinutes > hourStart
+    }).length
+  }
+
   // Handle opening the break dialog
   const handleBreakClick = (employeeId: string, employeeName: string) => {
     setSelectedEmployee({ id: employeeId, name: employeeName })
@@ -1990,7 +2028,7 @@ export function DailyView({ setup, onBack }: DailyViewProps) {
               <span className="font-medium">Employees</span>
               <div className="flex items-center ml-2">
                 <span className="bg-white bg-opacity-25 text-white text-xs font-bold px-2 py-0.5 rounded-full">
-                  {scheduledEmployees.filter(employee => !employee.day || employee.day === activeDay || employee.day.toLowerCase() === activeDay).length}
+                  {getEmployeesForCurrentHour()}
                 </span>
               </div>
             </div>
@@ -2497,7 +2535,7 @@ export function DailyView({ setup, onBack }: DailyViewProps) {
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2">
               <User className="h-5 w-5 text-blue-600" />
-              Employees for {format(getDateForDay(activeDay), 'EEEE, MMMM d')} ({scheduledEmployees.filter(employee => !employee.day || employee.day === activeDay || employee.day.toLowerCase() === activeDay).length})
+              Employees for {format(getDateForDay(activeDay), 'EEEE, MMMM d')} {activeHour && `${formatHourTo12Hour(activeHour)}-${formatHourTo12Hour(parseInt(activeHour) + 1)}`} ({getEmployeesForCurrentHour()})
             </DialogTitle>
             <DialogDescription>
               Manage employee breaks and view assignments
