@@ -1504,16 +1504,7 @@ export function DailyView({ setup, onBack }: DailyViewProps) {
         // 1. Employee starts before or at the block end AND
         // 2. Employee ends AFTER (not equal to) the block start
 
-        // Debug log for employee availability
-        console.log(`Checking availability for ${employee.name}: ${employee.timeBlock}`);
-        console.log(`Block time: ${blockStart} - ${blockEnd}`);
-        console.log(`Employee time in minutes: ${empStartMinutes} - ${empEndMinutes}`);
-        console.log(`Block time in minutes: ${blockStartMinutes} - ${blockEndMinutes}`);
-        console.log(`Condition 1: ${empStartMinutes} <= ${blockEndMinutes} = ${empStartMinutes <= blockEndMinutes}`);
-        console.log(`Condition 2: ${empEndMinutes} > ${blockStartMinutes} = ${empEndMinutes > blockStartMinutes}`);
-
         const isAvailable = empStartMinutes <= blockEndMinutes && empEndMinutes > blockStartMinutes;
-        console.log(`Is available: ${isAvailable}`);
 
         return isAvailable;
       } catch (error) {
@@ -1527,14 +1518,10 @@ export function DailyView({ setup, onBack }: DailyViewProps) {
 
     // Check if the selected position is being edited (in which case we want to show the currently assigned employee)
     const editingPositionId = selectedPosition?.id
-    console.log('Currently editing position ID:', editingPositionId);
-    console.log('Current time block:', blockStart, '-', blockEnd);
-    console.log('Current time block in minutes:', blockStartMinutes, '-', blockEndMinutes);
 
     // Check all time blocks for the active day
     if (modifiedSetup.weekSchedule && modifiedSetup.weekSchedule[activeDay]) {
       const timeBlocks = modifiedSetup.weekSchedule[activeDay].timeBlocks || []
-      console.log(`Found ${timeBlocks.length} time blocks for ${activeDay}`);
 
       timeBlocks.forEach((block: any) => {
         // Only consider blocks that overlap with the current time block
@@ -1550,20 +1537,15 @@ export function DailyView({ setup, onBack }: DailyViewProps) {
           (blockStartMinutes < blockEndMin && blockEndMinutes > blockStartMin)
         )
 
-        console.log(`Time block ${block.start} - ${block.end} (${blockStartMin} - ${blockEndMin}) overlaps with current block: ${overlaps}`);
-
         if (overlaps) {
-          console.log(`Checking positions in overlapping block ${block.start} - ${block.end}:`, block.positions);
 
           block.positions.forEach((position: any) => {
             // Skip the position we're currently editing
             if (position.id === editingPositionId) {
-              console.log(`Skipping position we're currently editing: ${position.name}`);
               return
             }
 
             if (position.employeeId) {
-              console.log(`Adding assigned employee ID: ${position.employeeId} (${position.employeeName}) from position ${position.name}`);
               assignedEmployeeIds.add(position.employeeId)
             }
           })
@@ -1571,10 +1553,7 @@ export function DailyView({ setup, onBack }: DailyViewProps) {
       })
     }
 
-    console.log('All assigned employee IDs:', Array.from(assignedEmployeeIds));
-
-    // Logging is disabled for now
-    // console.log('Employees already assigned to positions in this time block:', Array.from(assignedEmployeeIds))
+    // All assigned employee IDs are now in the assignedEmployeeIds Set
 
     // Get all employees for the current day
     const employeesForDay = scheduledEmployees.filter(employee => {
@@ -1584,16 +1563,7 @@ export function DailyView({ setup, onBack }: DailyViewProps) {
              employee.day.toLowerCase() === activeDay
     })
 
-    // Debug log for all employees for the day
-    console.log(`Found ${employeesForDay.length} employees for ${activeDay}:`, employeesForDay.map(e => `${e.name}: ${e.timeBlock}`));
-
-    // Log specific employee if they exist
-    const aidenEmployee = employeesForDay.find(e => e.name.includes('Aiden'));
-    if (aidenEmployee) {
-      console.log('Found Aiden:', aidenEmployee);
-    } else {
-      console.log('Aiden not found in employees for day');
-    }
+    // Filter employees for the current day
 
     // Filter to those available for this time block and not already assigned
     let availableEmployees = employeesForDay.filter(employee => {
@@ -1603,34 +1573,16 @@ export function DailyView({ setup, onBack }: DailyViewProps) {
       // Check if employee is already assigned to another position in this time block
       const isAlreadyAssigned = assignedEmployeeIds.has(employee.id)
 
-      // Debug log for assigned employees
-      if (isAvailable && isAlreadyAssigned) {
-        console.log(`Employee ${employee.name} is available but already assigned to another position`);
-      }
+      // Skip employees who are available but already assigned
 
       const result = isAvailable && !isAlreadyAssigned;
       return result;
     })
 
-    // Debug log for available employees after filtering
-    console.log(`After filtering, found ${availableEmployees.length} available employees:`,
-      availableEmployees.map(e => e.name));
-
-    // Check if Aiden is in the available employees
-    const aidenAvailable = availableEmployees.find(e => e.name.includes('Aiden'));
-    if (aidenAvailable) {
-      console.log('Aiden is in the available employees list');
-    } else {
-      console.log('Aiden is NOT in the available employees list');
-    }
+    // Filter available employees
 
     // Filter by area based on the selected position's category
     if (selectedPosition) {
-      console.log(`Selected position category: ${(selectedPosition as any).category}`);
-
-      // Log all employees with their areas
-      console.log('All employees with areas:', availableEmployees.map(e => `${e.name}: ${e.area}`));
-
       // Determine the required area based on position
       let requiredArea = null;
       if ((selectedPosition as any).category === 'Kitchen' || (selectedPosition as any).category === 'BOH') {
@@ -1640,7 +1592,6 @@ export function DailyView({ setup, onBack }: DailyViewProps) {
       }
 
       if (requiredArea) {
-        console.log(`Before area filtering: ${availableEmployees.length} employees`);
 
         // Filter employees by area, but first ensure all employees have an area set
         availableEmployees = availableEmployees.map(employee => {
@@ -1654,14 +1605,7 @@ export function DailyView({ setup, onBack }: DailyViewProps) {
           }
           return employee;
         }).filter(employee => employee.area === requiredArea);
-
-        console.log(`After filtering to ${requiredArea}: ${availableEmployees.length} employees:`,
-          availableEmployees.map(e => e.name));
-      } else {
-        console.log(`Unknown position category: ${selectedPosition.category}`);
       }
-    } else {
-      console.log('No selected position for area filtering');
     }
 
     // Sort employees alphabetically by name
@@ -1751,7 +1695,7 @@ export function DailyView({ setup, onBack }: DailyViewProps) {
     if (!selectedPosition) return
 
     try {
-      console.log('Assigning employee:', employeeId, employeeName, 'to position:', selectedPosition)
+      // Assign employee to position
 
       // Create a deep copy of the setup to modify
       const newSetup = JSON.parse(JSON.stringify(modifiedSetup))
@@ -1838,7 +1782,7 @@ export function DailyView({ setup, onBack }: DailyViewProps) {
   // Handle removing an employee from a position
   const handleRemoveAssignment = (position: Position) => {
     try {
-      console.log('Removing assignment from position:', position)
+      // Remove assignment from position
 
       // Create a deep copy of the setup to modify
       const newSetup = JSON.parse(JSON.stringify(modifiedSetup))
@@ -1855,7 +1799,7 @@ export function DailyView({ setup, onBack }: DailyViewProps) {
         daySchedule.timeBlocks.forEach((block: TimeBlock) => {
           block.positions.forEach((pos: Position) => {
             if (pos.id === position.id) {
-              console.log('Found position to update:', pos)
+              // Update position information
               removedEmployeeName = pos.employeeName || 'Employee'
               pos.employeeId = undefined
               pos.employeeName = undefined
