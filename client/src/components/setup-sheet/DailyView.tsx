@@ -432,8 +432,7 @@ export function DailyView({ setup, onBack }: DailyViewProps) {
       const normalizedEmpDay = emp.day ? normalizeDay(emp.day) : null;
       const normalizedActiveDay = activeDay.toLowerCase();
 
-      // Debug log to track day comparison
-      console.log(`Day comparison for ${emp.name}: Employee day=${normalizedEmpDay}, Active day=${normalizedActiveDay}`);
+      // Check if employee is scheduled for the active day
 
       const isForActiveDay = !normalizedEmpDay || normalizedEmpDay === normalizedActiveDay;
 
@@ -907,14 +906,8 @@ export function DailyView({ setup, onBack }: DailyViewProps) {
       }
     })
 
-    // Log for debugging
-    const result = Array.from(employees.values());
-    const fohCount = result.filter(e => e.area === 'FOH').length;
-    const bohCount = result.filter(e => e.area === 'BOH').length;
-    const unknownCount = result.filter(e => !e.area).length;
-    console.log(`Total employees for ${activeDay}: ${result.length} (FOH: ${fohCount}, BOH: ${bohCount}, Unknown: ${unknownCount})`);
-
     // Convert to array and sort alphabetically by name
+    const result = Array.from(employees.values());
     return result.sort((a, b) => a.name.localeCompare(b.name))
     }
   }, [activeDay, modifiedSetup, scheduledEmployees])
@@ -1298,7 +1291,7 @@ export function DailyView({ setup, onBack }: DailyViewProps) {
       uploadedSchedules: setup.uploadedSchedules?.map((emp: any) => {
         // Update the specific employee by ID
         if (emp.id === oldEmployeeId) {
-          console.log('Found employee to update by ID in uploadedSchedules:', emp);
+          // Update employee name
           return { ...emp, name: newEmployeeName };
         }
         return emp;
@@ -1320,10 +1313,8 @@ export function DailyView({ setup, onBack }: DailyViewProps) {
                 ...block,
                 positions: block.positions?.map((position: any) => {
                   if (position.employeeId === oldEmployeeId) {
-                    console.log(`Found position to update in ${day} by ID:`, position);
                     // Keep the same employeeId but update the name
                     const updatedPosition = { ...position, employeeName: newEmployeeName };
-                    console.log('Position after update:', updatedPosition);
                     return updatedPosition;
                   }
                   return position;
@@ -1385,7 +1376,7 @@ export function DailyView({ setup, onBack }: DailyViewProps) {
       const updatedEmployees = scheduledEmployees.map((emp: any) => {
         // Update the specific employee by ID
         if (emp.id === selectedEmployeeToReplace.id) {
-          console.log('Updating employee in scheduledEmployees by ID:', emp);
+          // Update employee name in scheduledEmployees
           return { ...emp, name: replacementName };
         }
         return emp;
@@ -1437,6 +1428,9 @@ export function DailyView({ setup, onBack }: DailyViewProps) {
     }
   }
 
+  // NOTE: This function is kept for reference but is not currently used
+  // The functionality is now handled by the isAvailableForTimeBlock function inside getAvailableEmployeesForTimeBlock
+  /*
   // Check if an employee is available for a specific time block
   const isEmployeeAvailableForTimeBlock = (employeeId: string, blockStart: string, blockEnd: string): boolean => {
     // Find the employee in the scheduledEmployees array
@@ -1466,6 +1460,7 @@ export function DailyView({ setup, onBack }: DailyViewProps) {
     // Note: We use > instead of >= to exclude employees who end exactly at the block start
     return empStartMinutes <= blockEndMinutes && empEndMinutes > blockStartMinutes
   }
+  */
 
   // Get employees available for a specific time block
   const getAvailableEmployeesForTimeBlock = (blockStart: string, blockEnd: string) => {
@@ -1484,13 +1479,13 @@ export function DailyView({ setup, onBack }: DailyViewProps) {
     // Helper function to check if an employee's schedule overlaps with the block
     const isAvailableForTimeBlock = (employee: any) => {
       if (!employee.timeBlock) {
-        console.warn('Employee missing timeBlock:', employee)
+        // Employee has no time block defined
         return false
       }
 
       const [empStart, empEnd] = employee.timeBlock.split(' - ')
       if (!empStart || !empEnd) {
-        console.warn('Invalid timeBlock format:', employee.timeBlock)
+        // Invalid time block format
         return false
       }
 
@@ -1504,11 +1499,9 @@ export function DailyView({ setup, onBack }: DailyViewProps) {
         // 1. Employee starts before or at the block end AND
         // 2. Employee ends AFTER (not equal to) the block start
 
-        const isAvailable = empStartMinutes <= blockEndMinutes && empEndMinutes > blockStartMinutes;
-
-        return isAvailable;
+        return empStartMinutes <= blockEndMinutes && empEndMinutes > blockStartMinutes;
       } catch (error) {
-        console.error('Error parsing time for employee:', employee, error)
+        // Error parsing time
         return false
       }
     }
@@ -1714,7 +1707,7 @@ export function DailyView({ setup, onBack }: DailyViewProps) {
         daySchedule.timeBlocks.forEach((block: TimeBlock) => {
           block.positions.forEach((pos: Position) => {
             if (pos.id === selectedPosition.id) {
-              console.log('Found position to update:', pos)
+              // Update position with employee information
               pos.employeeId = employeeId
               pos.employeeName = finalEmployeeName
             }
