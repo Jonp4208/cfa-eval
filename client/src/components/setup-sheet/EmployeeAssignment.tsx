@@ -419,14 +419,7 @@ export function EmployeeAssignment({ employees, template, onSave, showSaveButton
     // This is true if the block starts before the shift ends AND the block ends after the shift starts
     const hasOverlap = blockStart < shiftEnd && blockEnd > shiftStart;
 
-    // Debug logs only when needed - comment out in production
-    // Uncomment these lines for debugging time issues
-    /*
-    console.log(`Employee ${employee.name} availability check:`);
-    console.log(`  Block: ${block.start} - ${block.end} → Normalized: ${normalizedBlockStart} - ${normalizedBlockEnd}`);
-    console.log(`  Shift: ${employee.shiftStart} - ${employee.shiftEnd} → Normalized: ${normalizedShiftStart} - ${normalizedShiftEnd}`);
-    console.log(`  Overlap: ${hasOverlap}`);
-    */
+    // Debug logs removed for production
 
     // More lenient check: consider an employee available if their shift overlaps with the time block
     return hasOverlap;

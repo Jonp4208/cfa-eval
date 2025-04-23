@@ -1,7 +1,7 @@
 import React from 'react';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { User, Coffee, Play, RefreshCw, Check, Clock } from 'lucide-react';
+import { User, Coffee, Play, RefreshCw, Check, Clock, Pencil } from 'lucide-react';
 import { formatHourTo12Hour } from '@/lib/utils/date-utils';
 
 interface UnassignedEmployeesSectionProps {
@@ -47,13 +47,13 @@ export const UnassignedEmployeesSection: React.FC<UnassignedEmployeesSectionProp
           const remainingTime = getRemainingBreakTime(employee.id);
 
           return (
-            <div 
-              key={`${employee.id}-${employee.name}-${Date.now()}`} 
+            <div
+              key={`${employee.id}-${employee.name}-${Date.now()}`}
               className={`flex flex-col sm:flex-row sm:items-center sm:justify-between p-4 rounded-md border ${
-                breakStatus === 'active' 
-                  ? 'bg-amber-50 border-amber-200' 
-                  : hasHadBreak(employee.id) 
-                    ? 'bg-green-50 border-green-200 hover:bg-green-100' 
+                breakStatus === 'active'
+                  ? 'bg-amber-50 border-amber-200'
+                  : hasHadBreak(employee.id)
+                    ? 'bg-green-50 border-green-200 hover:bg-green-100'
                     : 'bg-white hover:bg-blue-50 border-gray-200'
               }`}
             >
@@ -69,8 +69,8 @@ export const UnassignedEmployeesSection: React.FC<UnassignedEmployeesSectionProp
                     </Badge>
                     {employee.area && (
                       <Badge variant="outline" className={`text-xs ${
-                        employee.area === 'FOH' 
-                          ? 'bg-blue-50 text-blue-600 border-blue-100' 
+                        employee.area === 'FOH'
+                          ? 'bg-blue-50 text-blue-600 border-blue-100'
                           : 'bg-green-50 text-green-600 border-green-100'
                       }`}>
                         {employee.area}
@@ -86,8 +86,8 @@ export const UnassignedEmployeesSection: React.FC<UnassignedEmployeesSectionProp
                   <div className="text-xs text-gray-500 mt-2 flex items-center">
                     <Clock className="h-3 w-3 mr-1 text-gray-400" />
                     <span>
-                      {employee.timeBlock ? 
-                        employee.timeBlock.split(' - ').map(time => formatHourTo12Hour(time)).join(' - ') : 
+                      {employee.timeBlock ?
+                        employee.timeBlock.split(' - ').map(time => formatHourTo12Hour(time)).join(' - ') :
                         ''}
                     </span>
                   </div>
@@ -130,8 +130,8 @@ export const UnassignedEmployeesSection: React.FC<UnassignedEmployeesSectionProp
                       className="h-9 px-3 w-full border-blue-200 text-blue-600 hover:bg-blue-50"
                       onClick={() => handleReplaceClick(employee.id, employee.name)}
                     >
-                      <RefreshCw className="h-4 w-4 mr-2" />
-                      Replace
+                      <Pencil className="h-4 w-4 mr-2" />
+                      Edit
                     </Button>
                   </>
                 )}

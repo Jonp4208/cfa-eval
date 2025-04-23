@@ -1,7 +1,7 @@
 import React from 'react';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { User, Coffee, Play, RefreshCw, Check, Clock } from 'lucide-react';
+import { User, Coffee, Play, RefreshCw, Check, Clock, Pencil } from 'lucide-react';
 
 interface AllEmployeesSectionProps {
   filteredScheduledEmployees: any[];
@@ -27,8 +27,8 @@ export const AllEmployeesSection: React.FC<AllEmployeesSectionProps> = ({
   endBreak
 }) => {
   // Only show this section if we have scheduled employees but no unassigned or assigned employees
-  if (!(filteredScheduledEmployees.length > 0 && 
-        filteredUnassignedEmployees.length === 0 && 
+  if (!(filteredScheduledEmployees.length > 0 &&
+        filteredUnassignedEmployees.length === 0 &&
         filteredAssignedEmployees.length === 0)) {
     return null;
   }
@@ -53,13 +53,13 @@ export const AllEmployeesSection: React.FC<AllEmployeesSectionProps> = ({
           const remainingTime = getRemainingBreakTime(employee.id);
 
           return (
-            <div 
-              key={employee.id} 
+            <div
+              key={employee.id}
               className={`flex flex-col sm:flex-row sm:items-center sm:justify-between p-4 rounded-md border ${
-                breakStatus === 'active' 
-                  ? 'bg-amber-50 border-amber-200' 
-                  : hasHadBreak(employee.id) 
-                    ? 'bg-green-50 border-green-200 hover:bg-green-100' 
+                breakStatus === 'active'
+                  ? 'bg-amber-50 border-amber-200'
+                  : hasHadBreak(employee.id)
+                    ? 'bg-green-50 border-green-200 hover:bg-green-100'
                     : 'bg-white hover:bg-gray-50 border-gray-200'
               }`}
             >
@@ -75,8 +75,8 @@ export const AllEmployeesSection: React.FC<AllEmployeesSectionProps> = ({
                     </Badge>
                     {employee.area && (
                       <Badge variant="outline" className={`text-xs ${
-                        employee.area === 'FOH' 
-                          ? 'bg-blue-50 text-blue-600 border-blue-100' 
+                        employee.area === 'FOH'
+                          ? 'bg-blue-50 text-blue-600 border-blue-100'
                           : 'bg-green-50 text-green-600 border-green-100'
                       }`}>
                         {employee.area}
@@ -132,8 +132,8 @@ export const AllEmployeesSection: React.FC<AllEmployeesSectionProps> = ({
                       className="h-9 px-3 w-full border-blue-200 text-blue-600 hover:bg-blue-50"
                       onClick={() => handleReplaceClick(employee.id, employee.name)}
                     >
-                      <RefreshCw className="h-4 w-4 mr-2" />
-                      Replace
+                      <Pencil className="h-4 w-4 mr-2" />
+                      Edit
                     </Button>
                   </>
                 )}

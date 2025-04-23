@@ -4,7 +4,7 @@ import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Switch } from '@/components/ui/switch'
-import { Clock, User, Calendar, Coffee, RefreshCw, Search, X, Check, Plus } from 'lucide-react'
+import { Clock, User, Calendar, Coffee, RefreshCw, Search, X, Check, Plus, UserPlus } from 'lucide-react'
 import { format } from 'date-fns'
 import { formatHourTo12Hour } from '@/lib/utils/date-utils'
 import { useNavigate } from 'react-router-dom'
@@ -36,7 +36,7 @@ import {
 import {
   BreakDialog,
   AssignEmployeeDialog,
-  ReplaceEmployeeDialog
+  EditEmployeeDialog
 } from './dialogs'
 import { AddPositionDialog } from './AddPositionDialog'
 
@@ -1070,12 +1070,22 @@ export function DailyView({ setup, onBack }: DailyViewProps) {
         title: 'Break Ending',
         description: `${employeeName}'s ${duration} minute break is ending now`
       })
+
+      // Automatically end the break when the duration is reached
+      endBreak(employeeId)
     }, duration * 60 * 1000)
   }
 
   // End a break for an employee
   const endBreak = async (employeeId: string) => {
     const now = new Date()
+    const formattedEndTime = `${now.getHours()}:${now.getMinutes().toString().padStart(2, '0')}`
+
+    // Find the employee in the breaks array before updating state
+    const employee = employeeBreaks.find(b => b.employeeId === employeeId && b.status === 'active')
+
+    // Skip if no active break is found
+    if (!employee) return
 
     // Update the employeeBreaks state
     setEmployeeBreaks(prev => prev.map(brk =>
@@ -1083,9 +1093,6 @@ export function DailyView({ setup, onBack }: DailyViewProps) {
         ? { ...brk, endTime: now.toISOString(), status: 'completed' }
         : brk
     ))
-
-    // Find the employee in the breaks array
-    const employee = employeeBreaks.find(b => b.employeeId === employeeId && b.status === 'active')
 
     // Update the employee in scheduledEmployees
     const updatedEmployees = scheduledEmployees.map((emp: any) => {
@@ -1121,12 +1128,17 @@ export function DailyView({ setup, onBack }: DailyViewProps) {
     // Save the changes to the server
     await saveChangesAutomatically('assign')
 
-    if (employee) {
-      toast({
-        title: 'Break Ended',
-        description: `${employee.employeeName}'s break has ended`
-      })
-    }
+    // Format the time for display (12-hour format)
+    const hours = now.getHours()
+    const minutes = now.getMinutes().toString().padStart(2, '0')
+    const ampm = hours >= 12 ? 'PM' : 'AM'
+    const displayHours = hours % 12 || 12
+    const formattedTime = `${displayHours}:${minutes} ${ampm}`
+
+    toast({
+      title: 'Break Ended',
+      description: `${employee.employeeName}'s break ended at ${formattedTime}`
+    })
   }
 
   // Get break status for an employee
@@ -1272,12 +1284,15 @@ export function DailyView({ setup, onBack }: DailyViewProps) {
         // Save the changes to the server automatically
         await saveChangesAutomatically('assign', selectedEmployee.name, `${breakDuration} minute break`)
 
-        // Set a timeout to notify when the break should end
+        // Set a timeout to notify when the break should end and automatically end it
         setTimeout(() => {
           toast({
             title: 'Break Ending',
             description: `${selectedEmployee.name}'s ${breakDuration} minute break is ending now`
           })
+
+          // Automatically end the break when the duration is reached
+          endBreak(selectedEmployee.id)
         }, parseInt(breakDuration) * 60 * 1000)
       } catch (error) {
         console.error('Error starting break:', error)
@@ -1290,9 +1305,9 @@ export function DailyView({ setup, onBack }: DailyViewProps) {
     }
   }
 
-  // Handle replace button click
+  // Handle replace button click (now edit button)
   const handleReplaceClick = (employeeId: string, employeeName: string) => {
-    console.log('REPLACE CLICK: Opening replace dialog for', employeeName, '(ID:', employeeId, ')');
+    console.log('EDIT CLICK: Opening edit dialog for', employeeName, '(ID:', employeeId, ')');
     setSelectedEmployeeToReplace({ id: employeeId, name: employeeName });
     setReplacementName('');
     setShowReplaceDialog(true);
@@ -1300,6 +1315,142 @@ export function DailyView({ setup, onBack }: DailyViewProps) {
     // Log the current state for debugging
     console.log('Current scheduledEmployees:', scheduledEmployees);
     console.log('Current modifiedSetup:', modifiedSetup);
+  }
+
+  // Handle delete employee from all positions
+  const handleDeleteEmployee = async (employeeId: string) => {
+    try {
+      // Store original state for potential rollback
+      const originalSetup = { ...modifiedSetup };
+      const originalEmployees = [...scheduledEmployees];
+
+      // Find the employee name for toast messages
+      const employeeToDelete = scheduledEmployees.find(emp => emp.id === employeeId);
+      const employeeName = employeeToDelete?.name || 'Employee';
+
+      // Create a deep copy of the setup to modify
+      const newSetup = JSON.parse(JSON.stringify(modifiedSetup));
+
+      // Track how many positions were affected
+      let removedCount = 0;
+
+      // Remove the employee from all positions in all days, not just the active day
+      // This ensures the employee is completely removed from the setup
+      Object.keys(newSetup.weekSchedule).forEach(day => {
+        const daySchedule = newSetup.weekSchedule[day];
+        if (daySchedule && daySchedule.timeBlocks) {
+          daySchedule.timeBlocks.forEach((block: TimeBlock) => {
+            block.positions.forEach((pos: Position) => {
+              if (pos.employeeId === employeeId) {
+                // Clear the employee assignment
+                pos.employeeId = undefined;
+                pos.employeeName = undefined;
+                removedCount++;
+              }
+            });
+          });
+        }
+      });
+
+      // IMPORTANT: Also remove the employee from the uploadedSchedules array
+      // This ensures the employee is removed from the database
+      if (newSetup.uploadedSchedules) {
+        const originalLength = newSetup.uploadedSchedules.length;
+        newSetup.uploadedSchedules = newSetup.uploadedSchedules.filter(
+          (emp: any) => emp.id !== employeeId
+        );
+        const newLength = newSetup.uploadedSchedules.length;
+        console.log(`Removed employee ${employeeId} from uploadedSchedules. Before: ${originalLength}, After: ${newLength}`);
+      }
+
+      // If the setup has an employees array, remove from there too
+      if (newSetup.employees && Array.isArray(newSetup.employees)) {
+        const originalLength = newSetup.employees.length;
+        newSetup.employees = newSetup.employees.filter(
+          (emp: any) => emp.id !== employeeId
+        );
+        const newLength = newSetup.employees.length;
+        console.log(`Removed employee ${employeeId} from employees array. Before: ${originalLength}, After: ${newLength}`);
+      }
+
+      // Update the UI immediately
+      setModifiedSetup(newSetup);
+
+      // Update scheduledEmployees to reflect the removal
+      const updatedEmployees = scheduledEmployees.filter(emp => emp.id !== employeeId);
+      setScheduledEmployees(updatedEmployees);
+
+      // Recalculate unassigned employees
+      calculateUnassignedEmployees(updatedEmployees);
+
+      // Show success toast
+      toast({
+        title: 'Employee Removed',
+        description: `${employeeName} has been removed from all positions`
+      });
+
+      // Force a re-render to update the UI
+      setActiveHour(activeHour);
+
+      // Get the token from localStorage
+      const token = localStorage.getItem('token');
+      if (!token) {
+        throw new Error('No authentication token found');
+      }
+
+      // Save changes to the server
+      try {
+        // Create the payload with all scheduled employees
+        const payload = {
+          name: newSetup.name,
+          startDate: newSetup.startDate,
+          endDate: newSetup.endDate,
+          weekSchedule: newSetup.weekSchedule,
+          uploadedSchedules: newSetup.uploadedSchedules || updatedEmployees,
+          employees: newSetup.employees || [] // Include the employees array if it exists
+        };
+
+        // Call the API directly to ensure we're sending the correct data
+        const response = await fetch(`/api/weekly-setups/${setup._id}`, {
+          method: 'PUT',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${token}`
+          },
+          body: JSON.stringify(payload),
+        });
+
+        if (!response.ok) {
+          const errorData = await response.json();
+          throw new Error(errorData.message || 'Failed to save changes');
+        }
+
+        // Update the original setup with the response from the server
+        const updatedSetup = await response.json();
+        setOriginalSetup(updatedSetup);
+
+        console.log('Employee successfully deleted and changes saved to server');
+      } catch (error) {
+        console.error('Error saving employee removal:', error);
+
+        // Revert changes on error
+        setModifiedSetup(originalSetup);
+        setScheduledEmployees(originalEmployees);
+
+        toast({
+          title: 'Error Saving',
+          description: 'Changes could not be saved to the server. Please try again.',
+          variant: 'destructive'
+        });
+      }
+    } catch (error) {
+      console.error('Error deleting employee:', error);
+      toast({
+        title: 'Error',
+        description: 'Failed to delete employee. Please try again.',
+        variant: 'destructive'
+      });
+    }
   }
 
   // State for replace loading
@@ -1456,6 +1607,117 @@ export function DailyView({ setup, onBack }: DailyViewProps) {
         variant: 'destructive'
       });
       setIsReplacing(false);
+    }
+  }
+
+  // Handle adding a new employee
+  const handleAddEmployee = async (name: string, area: 'FOH' | 'BOH', startTime: string, endTime: string) => {
+    try {
+      if (!name.trim() || !area || !startTime || !endTime) {
+        toast({
+          title: 'Missing Information',
+          description: 'Please fill in all fields to add an employee.',
+          variant: 'destructive'
+        })
+        return
+      }
+
+      // Create a deep copy of the modified setup
+      const updatedSetup = JSON.parse(JSON.stringify(modifiedSetup))
+
+      // Generate a unique ID for the new employee
+      const newEmployeeId = `emp_${Date.now()}_${Math.floor(Math.random() * 1000)}`
+
+      // Create the new employee object
+      const newEmployee = {
+        id: newEmployeeId,
+        name: name.trim(),
+        area: area,
+        timeBlock: `${startTime} - ${endTime}`,
+        day: activeDay,
+        positions: ['Scheduled'] // Mark as scheduled but not assigned to a position
+      }
+
+      // Add the employee to uploadedSchedules
+      if (!updatedSetup.uploadedSchedules) {
+        updatedSetup.uploadedSchedules = []
+      }
+      updatedSetup.uploadedSchedules.push(newEmployee)
+
+      // If the setup has an employees array, add the employee there too
+      if (updatedSetup.employees && Array.isArray(updatedSetup.employees)) {
+        updatedSetup.employees.push({
+          id: newEmployeeId,
+          name: name.trim(),
+          area: area,
+          shiftStart: startTime,
+          shiftEnd: endTime,
+          day: activeDay
+        })
+      }
+
+      // Update the state
+      setModifiedSetup(updatedSetup)
+
+      // Update the scheduledEmployees state
+      setScheduledEmployees([...scheduledEmployees, newEmployee])
+
+      // Recalculate unassigned employees
+      calculateUnassignedEmployees([...scheduledEmployees, newEmployee])
+
+      // Show a toast message
+      toast({
+        title: 'Employee Added',
+        description: `${name} has been added to the schedule for ${formatDayName(activeDay)}`
+      })
+
+      // Save changes in the background
+      const token = localStorage.getItem('token')
+      if (!token) {
+        throw new Error('No authentication token found')
+      }
+
+      // Create the payload with all scheduled employees
+      const payload = {
+        name: updatedSetup.name,
+        startDate: updatedSetup.startDate,
+        endDate: updatedSetup.endDate,
+        weekSchedule: updatedSetup.weekSchedule,
+        uploadedSchedules: updatedSetup.uploadedSchedules,
+        employees: updatedSetup.employees
+      }
+
+      // Call the API directly to ensure we have complete control over the payload
+      const response = await fetch(`/api/weekly-setups/${setup._id}`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
+        body: JSON.stringify(payload),
+      })
+
+      if (!response.ok) {
+        const errorData = await response.json()
+        throw new Error(errorData.message || 'Failed to save changes')
+      }
+
+      // Update the original setup with the response from the server
+      const updatedSetupFromServer = await response.json()
+      setOriginalSetup(updatedSetupFromServer)
+
+      // Close the dialog
+      setShowReplaceDialog(false)
+
+      return true
+    } catch (error) {
+      console.error('Error adding employee:', error)
+      toast({
+        title: 'Error',
+        description: 'Failed to add employee. Please try again.',
+        variant: 'destructive'
+      })
+      return false
     }
   }
 
@@ -1928,7 +2190,7 @@ export function DailyView({ setup, onBack }: DailyViewProps) {
         startDate: modifiedSetup.startDate,
         endDate: modifiedSetup.endDate,
         weekSchedule: modifiedSetup.weekSchedule,
-        uploadedSchedules: scheduledEmployees // Save in the new field
+        uploadedSchedules: modifiedSetup.uploadedSchedules || scheduledEmployees // Use uploadedSchedules from modifiedSetup if available
       }
 
       // Create the save promise
@@ -2614,6 +2876,23 @@ export function DailyView({ setup, onBack }: DailyViewProps) {
                   </div>
                 </div>
 
+                {/* Add Employee Button */}
+                <div className="mb-4">
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className="w-full border-green-200 text-green-600 hover:bg-green-50 flex items-center justify-center"
+                    onClick={() => {
+                      setSelectedEmployeeToReplace(null);
+                      setReplacementName('');
+                      setShowReplaceDialog(true);
+                    }}
+                  >
+                    <UserPlus className="h-4 w-4 mr-2" />
+                    Add Employee
+                  </Button>
+                </div>
+
                 {/* Assigned Employees Section - Show First */}
                 <AssignedEmployeesSection
                   filteredAssignedEmployees={filterEmployeesByArea(getDayEmployees().filter(e => e.positions.some(p => p !== 'Scheduled')))}
@@ -2842,70 +3121,19 @@ export function DailyView({ setup, onBack }: DailyViewProps) {
         timeBlock={selectedTimeBlock || { id: '', start: '', end: '', positions: [] } as TimeBlock}
       />
 
-      {/* Replace Employee Dialog */}
-      <Dialog open={showReplaceDialog} onOpenChange={setShowReplaceDialog}>
-        <DialogContent className="sm:max-w-[425px]" ref={replaceDialogRef}>
-          <DialogHeader>
-            <DialogTitle className="flex items-center">
-              <RefreshCw className="h-5 w-5 mr-2 text-blue-500" />
-              Replace Employee
-            </DialogTitle>
-            <DialogDescription>
-              {selectedEmployeeToReplace
-                ? `Enter the name of the employee who will replace ${selectedEmployeeToReplace.name}`
-                : 'Enter replacement employee name'}
-            </DialogDescription>
-          </DialogHeader>
-
-          <div className="py-4 space-y-4">
-            {selectedEmployeeToReplace && (
-              <div className="p-3 rounded-lg border bg-blue-50 border-blue-100">
-                <div className="flex items-center gap-3">
-                  <div className="h-10 w-10 rounded-full flex items-center justify-center bg-blue-100">
-                    <User className="h-5 w-5 text-blue-600" />
-                  </div>
-                  <div>
-                    <h4 className="font-medium">{selectedEmployeeToReplace.name}</h4>
-                    <p className="text-sm text-gray-500">Will be replaced with:</p>
-                  </div>
-                </div>
-              </div>
-            )}
-
-            <div className="space-y-2">
-              <label className="text-sm font-medium">Replacement Employee Name</label>
-              <Input
-                type="text"
-                placeholder="Enter name..."
-                value={replacementName}
-                onChange={(e) => setReplacementName(e.target.value)}
-                className="w-full"
-              />
-            </div>
-          </div>
-
-          <DialogFooter>
-            <Button variant="outline" onClick={() => setShowReplaceDialog(false)} disabled={isReplacing}>Cancel</Button>
-            <Button
-              onClick={handleReplaceEmployee}
-              className="bg-blue-500 hover:bg-blue-600"
-              disabled={!replacementName.trim() || isReplacing}
-            >
-              {isReplacing ? (
-                <>
-                  <RefreshCw className="h-4 w-4 mr-2 animate-spin" />
-                  Replacing...
-                </>
-              ) : (
-                <>
-                  <RefreshCw className="h-4 w-4 mr-2" />
-                  Replace
-                </>
-              )}
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
+      {/* Edit Employee Dialog */}
+      <EditEmployeeDialog
+        open={showReplaceDialog}
+        onOpenChange={setShowReplaceDialog}
+        selectedEmployee={selectedEmployeeToReplace}
+        replacementName={replacementName}
+        setReplacementName={setReplacementName}
+        handleReplaceEmployee={handleReplaceEmployee}
+        handleDeleteEmployee={handleDeleteEmployee}
+        handleAddEmployee={handleAddEmployee}
+        isReplacing={isReplacing}
+        dialogRef={replaceDialogRef}
+      />
     </div>
   )
 }
