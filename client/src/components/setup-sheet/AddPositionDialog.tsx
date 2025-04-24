@@ -44,15 +44,23 @@ export function AddPositionDialog({
 
     if (!positionName.trim()) return
 
+    console.log('Adding position with name:', positionName);
+    console.log('Selected category:', category);
+
     // Create the new position
     const newPosition: Omit<Position, 'id'> = {
       name: positionName.trim(),
       category: category,
-      section: category === 'Kitchen' ? 'BOH' : 'FOH'
+      section: category === 'Kitchen' ? 'BOH' : 'FOH',
+      blockStart: timeBlock.start,
+      blockEnd: timeBlock.end
     }
+
+    console.log('New position object:', newPosition);
 
     // Add the position
     onAddPosition(newPosition)
+    console.log('Position added with blockStart:', timeBlock.start, 'and blockEnd:', timeBlock.end)
 
     // Reset form
     setPositionName('')

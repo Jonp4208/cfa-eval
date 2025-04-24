@@ -315,13 +315,108 @@ export const updateWeeklySetup = async (req, res) => {
       }
     }
 
+    // Log the incoming weekSchedule data for debugging
+    console.log('Updating weekly setup with ID:', id);
+    console.log('Existing weekSchedule structure:', JSON.stringify(existingSetup.weekSchedule, null, 2));
+    console.log('New weekSchedule structure:', JSON.stringify(weekSchedule, null, 2));
+
+    // Check if the weekSchedule has the expected structure
+    if (weekSchedule) {
+      // Log the days in the weekSchedule
+      console.log('Days in weekSchedule:', Object.keys(weekSchedule));
+
+      // Check each day for timeBlocks
+      Object.keys(weekSchedule).forEach(day => {
+        if (weekSchedule[day] && weekSchedule[day].timeBlocks) {
+          console.log(`Day ${day} has ${weekSchedule[day].timeBlocks.length} time blocks`);
+
+          // Check each time block for positions
+          weekSchedule[day].timeBlocks.forEach((block, index) => {
+            console.log(`Time block ${index} (${block.start}-${block.end}) has ${block.positions ? block.positions.length : 0} positions`);
+
+            // Log position details
+            if (block.positions && block.positions.length > 0) {
+              block.positions.forEach(position => {
+                console.log(`Position: ${position.name}, Category: ${position.category}, Section: ${position.section}`);
+              });
+            }
+          });
+        } else {
+          console.log(`Day ${day} has no time blocks or is not properly structured`);
+        }
+      });
+    } else {
+      console.log('No weekSchedule provided in the update');
+    }
+
+    // Create a deep copy of the existing setup's weekSchedule to ensure we don't lose any data
+    let mergedWeekSchedule = JSON.parse(JSON.stringify(existingSetup.weekSchedule || {}));
+
+    // If weekSchedule is provided in the request, merge it with the existing weekSchedule
+    if (weekSchedule) {
+      // For each day in the new weekSchedule
+      Object.keys(weekSchedule).forEach(day => {
+        if (!mergedWeekSchedule[day]) {
+          // If the day doesn't exist in the merged schedule, add it
+          mergedWeekSchedule[day] = weekSchedule[day];
+        } else if (weekSchedule[day] && weekSchedule[day].timeBlocks) {
+          // If the day exists, ensure timeBlocks array exists
+          if (!mergedWeekSchedule[day].timeBlocks) {
+            mergedWeekSchedule[day].timeBlocks = [];
+          }
+
+          // For each time block in the new weekSchedule for this day
+          weekSchedule[day].timeBlocks.forEach(newTimeBlock => {
+            // Find if this time block already exists in the merged schedule
+            const existingTimeBlockIndex = mergedWeekSchedule[day].timeBlocks.findIndex(
+              block => block.id === newTimeBlock.id
+            );
+
+            if (existingTimeBlockIndex === -1) {
+              // If the time block doesn't exist, add it
+              mergedWeekSchedule[day].timeBlocks.push(newTimeBlock);
+              console.log(`Added new time block ${newTimeBlock.id} to ${day}`);
+            } else {
+              // If the time block exists, update it
+              // Ensure positions array exists
+              if (!mergedWeekSchedule[day].timeBlocks[existingTimeBlockIndex].positions) {
+                mergedWeekSchedule[day].timeBlocks[existingTimeBlockIndex].positions = [];
+              }
+
+              // For each position in the new time block
+              if (newTimeBlock.positions) {
+                newTimeBlock.positions.forEach(newPosition => {
+                  // Find if this position already exists in the merged time block
+                  const existingPositionIndex = mergedWeekSchedule[day].timeBlocks[existingTimeBlockIndex].positions.findIndex(
+                    pos => pos.id === newPosition.id
+                  );
+
+                  if (existingPositionIndex === -1) {
+                    // If the position doesn't exist, add it
+                    mergedWeekSchedule[day].timeBlocks[existingTimeBlockIndex].positions.push(newPosition);
+                    console.log(`Added new position ${newPosition.name} to time block ${newTimeBlock.id} on ${day}`);
+                  } else {
+                    // If the position exists, update it
+                    mergedWeekSchedule[day].timeBlocks[existingTimeBlockIndex].positions[existingPositionIndex] = newPosition;
+                    console.log(`Updated position ${newPosition.name} in time block ${newTimeBlock.id} on ${day}`);
+                  }
+                });
+              }
+            }
+          });
+        }
+      });
+    }
+
+    console.log('Final merged weekSchedule structure:', JSON.stringify(mergedWeekSchedule, null, 2));
+
     const updatedSetup = await WeeklySetup.findByIdAndUpdate(
       id,
       {
         name: name || existingSetup.name,
         startDate: startDate || existingSetup.startDate,
         endDate: endDate || existingSetup.endDate,
-        weekSchedule: weekSchedule || existingSetup.weekSchedule,
+        weekSchedule: mergedWeekSchedule,
         uploadedSchedules: uploadedSchedules || existingSetup.uploadedSchedules,
         isShared: isShared !== undefined ? isShared : existingSetup.isShared,
         updatedAt: new Date()
@@ -331,6 +426,8 @@ export const updateWeeklySetup = async (req, res) => {
 
     console.log(`Updated weekly setup with ${uploadedSchedules?.length || existingSetup.uploadedSchedules?.length || 0} uploaded employees`);
 
+    // Log the updated setup structure to verify it was saved correctly
+    console.log('Updated weekSchedule structure:', JSON.stringify(updatedSetup.weekSchedule, null, 2));
     console.log('Weekly setup updated successfully:', id);
     res.status(200).json(updatedSetup);
   } catch (error) {

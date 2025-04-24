@@ -1914,52 +1914,152 @@ export function DailyView({ setup, onBack }: DailyViewProps) {
 
   // Handle opening the add position dialog
   const handleAddPositionClick = (timeBlock: any) => {
+    console.log('Opening add position dialog for time block:', timeBlock);
+
     // Store the time block and category information
-    setSelectedTimeBlock({
+    const timeBlockData = {
       id: timeBlock.id,
       start: timeBlock.start,
       end: timeBlock.end,
-      positions: timeBlock.positions || []
-      // Remove the category property as it's not in the TimeBlock type
-    })
-    setShowAddPositionDialog(true)
+      positions: timeBlock.positions || [],
+      category: timeBlock.category // Keep the category property for the AddPositionDialog
+    };
+
+    console.log('Setting selected time block:', timeBlockData);
+    setSelectedTimeBlock(timeBlockData);
+    setShowAddPositionDialog(true);
   }
 
   // Handle adding a new position
   const handleAddPosition = async (newPosition: any) => {
     if (!selectedTimeBlock) return
 
+    console.log('Adding new position:', newPosition);
+    console.log('Selected time block:', selectedTimeBlock);
+    console.log('Active day:', activeDay);
+
     // Create a new position with a unique ID
     const position: Position = {
       id: crypto.randomUUID(),
       name: newPosition.name,
-      blockStart: selectedTimeBlock?.start || '',
-      blockEnd: selectedTimeBlock?.end || '',
-      employeeId: undefined
+      blockStart: newPosition.blockStart || selectedTimeBlock?.start || '',
+      blockEnd: newPosition.blockEnd || selectedTimeBlock?.end || '',
+      employeeId: undefined,
+      category: newPosition.category,
+      section: newPosition.section
     }
 
+    console.log('Created position object:', position);
+
     try {
-      // Update the modified setup with the new position
-      setModifiedSetup((prev: any) => {
-        // Create a deep copy of the previous state
-        const updated = JSON.parse(JSON.stringify(prev))
+      // First, fetch the latest setup data from the server to ensure we have the most up-to-date data
+      const token = localStorage.getItem('token')
+      if (!token) {
+        throw new Error('No authentication token found')
+      }
 
-        // Find the time block and add the position
-        if (updated.weekSchedule && updated.weekSchedule[activeDay]) {
-          const timeBlocks = updated.weekSchedule[activeDay].timeBlocks || []
-          const blockIndex = timeBlocks.findIndex((block: any) => block.id === selectedTimeBlock.id)
+      // Fetch the latest setup data
+      const fetchResponse = await fetch(`/api/weekly-setups/${setup._id}`, {
+        method: 'GET',
+        headers: {
+          'Authorization': `Bearer ${token}`
+        }
+      });
 
-          if (blockIndex !== -1) {
-            // Add the position to the time block
-            updated.weekSchedule[activeDay].timeBlocks[blockIndex].positions.push(position)
-          }
+      if (!fetchResponse.ok) {
+        const errorData = await fetchResponse.json();
+        throw new Error(errorData.message || 'Failed to fetch latest setup data');
+      }
+
+      // Get the latest setup data
+      const latestSetup = await fetchResponse.json();
+      console.log('Latest setup data from server:', latestSetup);
+
+      // Create a deep copy of the latest setup
+      const updatedSetup = JSON.parse(JSON.stringify(latestSetup));
+
+      console.log('Current weekSchedule structure:', updatedSetup.weekSchedule);
+
+      // Ensure the day structure exists
+      if (!updatedSetup.weekSchedule) {
+        updatedSetup.weekSchedule = {};
+      }
+
+      if (!updatedSetup.weekSchedule[activeDay]) {
+        updatedSetup.weekSchedule[activeDay] = { timeBlocks: [] };
+      }
+
+      if (!updatedSetup.weekSchedule[activeDay].timeBlocks) {
+        updatedSetup.weekSchedule[activeDay].timeBlocks = [];
+      }
+
+      // Find the time block
+      const timeBlocks = updatedSetup.weekSchedule[activeDay].timeBlocks;
+      const blockIndex = timeBlocks.findIndex((block: any) => block.id === selectedTimeBlock.id);
+
+      console.log('Time block index:', blockIndex);
+
+      if (blockIndex !== -1) {
+        // Add the position to the time block
+        if (!updatedSetup.weekSchedule[activeDay].timeBlocks[blockIndex].positions) {
+          updatedSetup.weekSchedule[activeDay].timeBlocks[blockIndex].positions = [];
         }
 
-        return updated
+        updatedSetup.weekSchedule[activeDay].timeBlocks[blockIndex].positions.push(position);
+        console.log('Position added to time block');
+      } else {
+        console.error('Time block not found in the day schedule');
+
+        // If the time block doesn't exist, create it
+        const newTimeBlock = {
+          id: selectedTimeBlock.id,
+          start: selectedTimeBlock.start,
+          end: selectedTimeBlock.end,
+          positions: [position]
+        };
+
+        updatedSetup.weekSchedule[activeDay].timeBlocks.push(newTimeBlock);
+        console.log('Created new time block with position');
+      }
+
+      console.log('Updated setup structure:', updatedSetup.weekSchedule[activeDay]);
+
+      // Create the payload with the updated setup
+      const payload = {
+        name: updatedSetup.name,
+        startDate: updatedSetup.startDate,
+        endDate: updatedSetup.endDate,
+        weekSchedule: updatedSetup.weekSchedule,
+        uploadedSchedules: updatedSetup.uploadedSchedules || scheduledEmployees
+      }
+
+      console.log('Sending payload to server:', JSON.stringify(payload));
+
+      // Call the API to update the setup
+      const response = await fetch(`/api/weekly-setups/${setup._id}`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
+        body: JSON.stringify(payload),
       })
 
-      // Save changes automatically using 'assign' as the action type
-      await saveChangesAutomatically('assign', undefined, position.name)
+      if (!response.ok) {
+        const errorData = await response.json()
+        throw new Error(errorData.message || 'Failed to save changes')
+      }
+
+      // Update the original setup with the response from the server
+      const updatedSetupFromServer = await response.json()
+      console.log('Response from server:', updatedSetupFromServer);
+
+      // Update both states to ensure consistency
+      setOriginalSetup(updatedSetupFromServer)
+      setModifiedSetup(updatedSetupFromServer)
+
+      // Force a re-render of the UI
+      setActiveHour(activeHour)
 
       // Show success message
       toast({
@@ -1968,11 +2068,59 @@ export function DailyView({ setup, onBack }: DailyViewProps) {
       })
     } catch (error) {
       console.error('Error adding position:', error)
+
+      // Log detailed error information
+      if (error instanceof Error) {
+        console.error('Error details:', error.message);
+        console.error('Error stack:', error.stack);
+      }
+
+      // Check if the error is related to the API call
+      let errorMessage = 'Failed to add position';
+      if (error instanceof Error) {
+        errorMessage = error.message;
+
+        // Add more context to the error message
+        if (error.message.includes('fetch')) {
+          errorMessage = `Network error: ${error.message}`;
+        } else if (error.message.includes('JSON')) {
+          errorMessage = `Data format error: ${error.message}`;
+        }
+      }
+
+      // Show error toast with detailed information
       toast({
-        title: 'Error',
-        description: 'Failed to add position. Please try again.',
+        title: 'Error Saving Position',
+        description: `${errorMessage}. Please try again.`,
         variant: 'destructive'
       })
+
+      // Log the current state for debugging
+      console.error('Current setup state:', modifiedSetup);
+      console.error('Selected time block:', selectedTimeBlock);
+      console.error('Active day:', activeDay);
+
+      // Try to fetch the current state from the server to see what's actually saved
+      try {
+        const token = localStorage.getItem('token');
+        if (token) {
+          fetch(`/api/weekly-setups/${setup._id}`, {
+            method: 'GET',
+            headers: {
+              'Authorization': `Bearer ${token}`
+            }
+          })
+          .then(response => response.json())
+          .then(data => {
+            console.log('Current server state:', data);
+          })
+          .catch(fetchError => {
+            console.error('Error fetching current server state:', fetchError);
+          });
+        }
+      } catch (fetchError) {
+        console.error('Error in error handler:', fetchError);
+      }
     }
   }
 
@@ -2169,9 +2317,13 @@ export function DailyView({ setup, onBack }: DailyViewProps) {
     try {
       const now = Date.now();
 
+      console.log('Saving changes automatically:', _actionType, _employeeName, _positionName);
+      console.log('Current weekSchedule structure:', modifiedSetup.weekSchedule);
+
       // If there's a save operation in progress that started less than 500ms ago, return that promise
       // This prevents multiple rapid saves for the same operation
       if (saveOperationRef.current.promise && now - saveOperationRef.current.timestamp < 500) {
+        console.log('Save operation already in progress, reusing promise');
         return saveOperationRef.current.promise;
       }
 
@@ -2184,14 +2336,32 @@ export function DailyView({ setup, onBack }: DailyViewProps) {
         throw new Error('No authentication token found')
       }
 
+      // Create a deep copy of the current setup to ensure we're not modifying the original
+      const setupToSave = JSON.parse(JSON.stringify(modifiedSetup));
+
+      // Ensure the day structure exists for all days in the weekSchedule
+      if (setupToSave.weekSchedule) {
+        Object.keys(setupToSave.weekSchedule).forEach(day => {
+          if (!setupToSave.weekSchedule[day]) {
+            setupToSave.weekSchedule[day] = { timeBlocks: [] };
+          }
+
+          if (!setupToSave.weekSchedule[day].timeBlocks) {
+            setupToSave.weekSchedule[day].timeBlocks = [];
+          }
+        });
+      }
+
       // Create the payload with all scheduled employees
       const payload = {
-        name: modifiedSetup.name,
-        startDate: modifiedSetup.startDate,
-        endDate: modifiedSetup.endDate,
-        weekSchedule: modifiedSetup.weekSchedule,
-        uploadedSchedules: modifiedSetup.uploadedSchedules || scheduledEmployees // Use uploadedSchedules from modifiedSetup if available
+        name: setupToSave.name,
+        startDate: setupToSave.startDate,
+        endDate: setupToSave.endDate,
+        weekSchedule: setupToSave.weekSchedule,
+        uploadedSchedules: setupToSave.uploadedSchedules || scheduledEmployees // Use uploadedSchedules from modifiedSetup if available
       }
+
+      console.log('Sending payload to server:', payload);
 
       // Create the save promise
       const savePromise = (async () => {
@@ -2211,11 +2381,13 @@ export function DailyView({ setup, onBack }: DailyViewProps) {
             throw new Error(errorData.message || 'Failed to save changes')
           }
 
-          // Update the original setup with the modified one
+          // Update the original setup with the response from the server
           const updatedSetup = await response.json()
+          console.log('Response from server:', updatedSetup);
 
-          // Update the setup state with the response from the server
+          // Update both states to ensure consistency
           setOriginalSetup(updatedSetup)
+          setModifiedSetup(updatedSetup)
 
           // Also update the scheduledEmployees state with the response
           if (updatedSetup.uploadedSchedules && updatedSetup.uploadedSchedules.length > 0) {
@@ -2231,6 +2403,14 @@ export function DailyView({ setup, onBack }: DailyViewProps) {
           setIsSaving(false);
           return true;
         } catch (error) {
+          console.error('Error in saveChangesAutomatically:', error);
+
+          // Log detailed error information
+          if (error instanceof Error) {
+            console.error('Error details:', error.message);
+            console.error('Error stack:', error.stack);
+          }
+
           // Clear saving state
           setIsSaving(false);
           // Re-throw the error to be handled by the caller

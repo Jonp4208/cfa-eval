@@ -9,6 +9,8 @@ const positionSchema = new mongoose.Schema({
     type: String,
     required: true
   },
+  blockStart: String,
+  blockEnd: String,
   category: String,
   section: {
     type: String,
