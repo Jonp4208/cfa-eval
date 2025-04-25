@@ -327,6 +327,7 @@ export default function LandingPage() {
                   onClick={() => navigate('/register')}
                 >
                   Start Free Trial
+                  <ArrowRight className="ml-2 h-5 w-5" />
                 </Button>
                 <Button
                   size="lg"
