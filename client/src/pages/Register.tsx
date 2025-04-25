@@ -77,60 +77,65 @@ export default function Register() {
 
   if (isSubmitted) {
     return (
-      <div className="min-h-screen bg-gradient-to-b from-[#E51636]/5 to-white flex flex-col justify-center py-12 px-4 sm:px-6 lg:px-8">
-        <div className="sm:mx-auto sm:w-full sm:max-w-md">
-          <div className="flex justify-center mb-6">
-            <img src="/cfa-logo.svg" alt="Chick-fil-A Logo" className="h-16" />
-          </div>
-          <Card className="border-0 shadow-xl overflow-hidden">
-            <div className="h-2 bg-[#E51636]"></div>
-            <CardContent className="pt-8 pb-8">
-              <div className="text-center">
-                <div className="mx-auto flex items-center justify-center h-16 w-16 rounded-full bg-[#E51636]/10 mb-6 border-2 border-[#E51636]/20">
-                  <CheckCircle className="h-8 w-8 text-[#E51636]" />
+      <div className="min-h-screen bg-gradient-to-b from-[#E51636]/5 to-white flex flex-col justify-center py-12 px-4 sm:px-6 lg:px-8 relative">
+        <div className="absolute inset-0 pointer-events-none opacity-20" style={{ backgroundImage: 'url(/pattern-bg.svg)', backgroundSize: '60px 60px' }}></div>
+        <div className="relative z-10">
+          <div className="sm:mx-auto sm:w-full sm:max-w-md">
+            <div className="flex justify-center mb-6">
+              <h1 className="text-3xl font-bold text-[#E51636]">LD Growth</h1>
+            </div>
+            <Card className="border-0 shadow-xl overflow-hidden">
+              <div className="h-2 bg-[#E51636]"></div>
+              <CardContent className="pt-8 pb-8">
+                <div className="text-center">
+                  <div className="mx-auto flex items-center justify-center h-16 w-16 rounded-full bg-[#E51636]/10 mb-6 border-2 border-[#E51636]/20">
+                    <CheckCircle className="h-8 w-8 text-[#E51636]" />
+                  </div>
+                  <h2 className="text-2xl font-bold text-[#E51636] mb-3">Thank You!</h2>
+                  <p className="text-gray-700 mb-8 max-w-sm mx-auto">
+                    Your request for a free trial has been received. We'll contact you shortly to get you set up with your LD Growth account.
+                  </p>
+                  <Button
+                    onClick={() => navigate('/')}
+                    className="bg-[#E51636] hover:bg-[#DD0031] text-white px-8 py-2 text-lg font-semibold shadow-md hover:shadow-lg transition-all duration-200 transform hover:scale-[1.02]"
+                  >
+                    Return to Home
+                  </Button>
                 </div>
-                <h2 className="text-2xl font-bold text-[#E51636] mb-3">Thank You!</h2>
-                <p className="text-gray-700 mb-8 max-w-sm mx-auto">
-                  Your request for a free trial has been received. We'll contact you shortly to get you set up with your LD Growth account.
-                </p>
-                <Button
-                  onClick={() => navigate('/')}
-                  className="bg-[#E51636] hover:bg-[#DD0031] text-white px-8 py-2 text-lg font-semibold shadow-md hover:shadow-lg transition-all duration-200 transform hover:scale-[1.02]"
-                >
-                  Return to Home
-                </Button>
-              </div>
-            </CardContent>
-          </Card>
+              </CardContent>
+            </Card>
+          </div>
         </div>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-[#E51636]/5 to-white flex flex-col justify-center py-12 px-4 sm:px-6 lg:px-8">
-      <div className="sm:mx-auto sm:w-full sm:max-w-xl">
-        <div className="flex justify-center mb-6">
-          <img src="/cfa-logo.svg" alt="Chick-fil-A Logo" className="h-16" />
-        </div>
-        <h1 className="text-center text-3xl font-bold text-[#E51636] mb-4">
-          Start Your Free Trial
-        </h1>
-        <p className="text-center text-gray-700 mb-8">
-          Fill out the form below to get started with your 30-day free trial of LD Growth
-        </p>
+    <div className="min-h-screen bg-gradient-to-b from-[#E51636]/5 to-white flex flex-col justify-center py-12 px-4 sm:px-6 lg:px-8 relative">
+      <div className="absolute inset-0 pointer-events-none opacity-20" style={{ backgroundImage: 'url(/pattern-bg.svg)', backgroundSize: '60px 60px' }}></div>
+      <div className="relative z-10">
+        <div className="sm:mx-auto sm:w-full sm:max-w-xl">
+          <div className="flex justify-center mb-6">
+            <h1 className="text-3xl font-bold text-[#E51636]">LD Growth</h1>
+          </div>
+          <h1 className="text-center text-3xl font-bold text-[#E51636] mb-4">
+            Start Your Free Trial
+          </h1>
+          <p className="text-center text-gray-700 mb-8">
+            Fill out the form below to get started with your 30-day free trial of LD Growth
+          </p>
 
-        <Card className="border-0 shadow-xl bg-white overflow-hidden">
-          <div className="h-2 bg-[#E51636]"></div>
-          <CardHeader className="bg-gradient-to-r from-[#E51636]/10 to-white">
-            <CardTitle className="text-xl font-bold text-[#E51636]">Request Your Free Trial</CardTitle>
-            <CardDescription className="text-gray-700">
-              No credit card required. Get full access to all features for 30 days.
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            <form onSubmit={handleSubmit} className="space-y-5">
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+          <Card className="border-0 shadow-xl bg-white overflow-hidden">
+            <div className="h-2 bg-[#E51636]"></div>
+            <CardHeader className="bg-gradient-to-r from-[#E51636]/10 to-white">
+              <CardTitle className="text-xl font-bold text-[#E51636]">Request Your Free Trial</CardTitle>
+              <CardDescription className="text-gray-700">
+                No credit card required. Get full access to all features for 30 days.
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <form onSubmit={handleSubmit} className="space-y-5">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
                 <div>
                   <label htmlFor="name" className="block text-sm font-medium text-[#E51636]">
                     Full Name*
@@ -353,6 +358,7 @@ export default function Register() {
             </form>
           </CardContent>
         </Card>
+        </div>
       </div>
     </div>
   );
