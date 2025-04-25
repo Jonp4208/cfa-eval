@@ -204,41 +204,95 @@ export function DailyView({ setup, onBack }: DailyViewProps) {
     return positionCount > 0;
   };
 
+  // Function to load cached data from localStorage
+  const loadCachedData = () => {
+    if (!setup || !setup._id) return false;
+
+    try {
+      const cachedDataString = localStorage.getItem(`setup_cache_${setup._id}`);
+      if (!cachedDataString) return false;
+
+      const cachedData = JSON.parse(cachedDataString);
+
+      // Check if cache is still valid (less than 30 minutes old)
+      const cacheAge = Date.now() - cachedData.timestamp;
+      const cacheValidityPeriod = 30 * 60 * 1000; // 30 minutes in milliseconds
+
+      if (cacheAge > cacheValidityPeriod) {
+        // Cache is too old, remove it
+        localStorage.removeItem(`setup_cache_${setup._id}`);
+        return false;
+      }
+
+      // Use the cached data
+      console.log('Using cached setup data');
+
+      // Update the setup with cached data
+      const updatedSetup = {
+        ...setup,
+        uploadedSchedules: cachedData.uploadedSchedules,
+        employees: cachedData.employees
+      };
+
+      return updatedSetup;
+    } catch (error) {
+      console.warn('Failed to load cached setup data:', error);
+      return false;
+    }
+  };
+
   // Initialize modifiedSetup when setup changes
   useEffect(() => {
-    // Development logging removed
+    // Try to load cached data first
+    const cachedSetup = loadCachedData();
 
-    // If the setup doesn't have positions, we need to add them from the template
-    if (!hasPositions(setup)) {
-      // Only log in development mode
-      if (process.env.NODE_ENV === 'development' && false) { // Disabled for now
-        console.log('Setup has no positions, need to add them from template');
+    // If we have valid cached data, use it
+    if (cachedSetup) {
+      // Set the original setup with cached data
+      setModifiedSetup(cachedSetup);
+      setOriginalSetup(cachedSetup);
+
+      // Initialize scheduledEmployees from cached uploadedSchedules
+      if (cachedSetup.uploadedSchedules && cachedSetup.uploadedSchedules.length > 0) {
+        setScheduledEmployees(cachedSetup.uploadedSchedules);
+
+        // Load break information from cached uploadedSchedules
+        loadBreakInformation(cachedSetup.uploadedSchedules);
+
+        // Recalculate unassigned employees
+        calculateUnassignedEmployees(cachedSetup.uploadedSchedules);
       }
-    }
-
-    setModifiedSetup(setup);
-    setOriginalSetup(setup);
-
-    // Initialize scheduledEmployees from uploadedSchedules if available
-    if (setup.uploadedSchedules && setup.uploadedSchedules.length > 0) {
-      // Logging is disabled for now
-      // console.log('Loading uploaded schedules:', setup.uploadedSchedules.length);
-      setScheduledEmployees(setup.uploadedSchedules);
-
-      // Load break information from uploaded schedules
-      loadBreakInformation(setup.uploadedSchedules);
     } else {
-      // If no uploadedSchedules, try to extract from positions as before
-      const extractedEmployees = extractEmployeesFromPositions();
-      if (extractedEmployees.length > 0) {
-        // Logging is disabled for now
-        // console.log('Extracted employees from positions:', extractedEmployees.length);
-        setScheduledEmployees(extractedEmployees);
-      }
-    }
+      // No valid cache, use the data from props
 
-    // Recalculate unassigned employees
-    calculateUnassignedEmployees(setup.uploadedSchedules || []);
+      // If the setup doesn't have positions, we need to add them from the template
+      if (!hasPositions(setup)) {
+        // Only log in development mode
+        if (process.env.NODE_ENV === 'development' && false) { // Disabled for now
+          console.log('Setup has no positions, need to add them from template');
+        }
+      }
+
+      setModifiedSetup(setup);
+      setOriginalSetup(setup);
+
+      // Initialize scheduledEmployees from uploadedSchedules if available
+      if (setup.uploadedSchedules && setup.uploadedSchedules.length > 0) {
+        setScheduledEmployees(setup.uploadedSchedules);
+
+        // Load break information from uploadedSchedules
+        loadBreakInformation(setup.uploadedSchedules);
+      } else {
+        // If no uploadedSchedules, try to extract from positions as before
+        const extractedEmployees = extractEmployeesFromPositions();
+        if (extractedEmployees.length > 0) {
+          setScheduledEmployees(extractedEmployees);
+        }
+      }
+
+      // Recalculate unassigned employees
+      calculateUnassignedEmployees(setup.uploadedSchedules || []);
+    }
   }, [setup])
 
   // Load break information from uploaded schedules
@@ -1613,13 +1667,25 @@ export function DailyView({ setup, onBack }: DailyViewProps) {
   // Handle adding a new employee
   const handleAddEmployee = async (name: string, area: 'FOH' | 'BOH', startTime: string, endTime: string) => {
     try {
+      console.log('Adding employee with:', { name, area, startTime, endTime, activeDay });
+
       if (!name.trim() || !area || !startTime || !endTime) {
         toast({
           title: 'Missing Information',
           description: 'Please fill in all fields to add an employee.',
           variant: 'destructive'
         })
-        return
+        return false;
+      }
+
+      // Validate time format
+      if (!startTime.includes(':') || !endTime.includes(':')) {
+        toast({
+          title: 'Invalid Time Format',
+          description: 'Time must be in format HH:MM',
+          variant: 'destructive'
+        });
+        return false;
       }
 
       // Create a deep copy of the modified setup
@@ -1637,6 +1703,8 @@ export function DailyView({ setup, onBack }: DailyViewProps) {
         day: activeDay,
         positions: ['Scheduled'] // Mark as scheduled but not assigned to a position
       }
+
+      console.log('Created new employee object:', newEmployee);
 
       // Add the employee to uploadedSchedules
       if (!updatedSetup.uploadedSchedules) {
@@ -1660,7 +1728,7 @@ export function DailyView({ setup, onBack }: DailyViewProps) {
       setModifiedSetup(updatedSetup)
 
       // Update the scheduledEmployees state
-      setScheduledEmployees([...scheduledEmployees, newEmployee])
+      setScheduledEmployees(prev => [...prev, newEmployee])
 
       // Recalculate unassigned employees
       calculateUnassignedEmployees([...scheduledEmployees, newEmployee])
@@ -1687,6 +1755,11 @@ export function DailyView({ setup, onBack }: DailyViewProps) {
         employees: updatedSetup.employees
       }
 
+      console.log('Sending payload to server:', {
+        setupId: setup._id,
+        employeeCount: updatedSetup.uploadedSchedules.length
+      });
+
       // Call the API directly to ensure we have complete control over the payload
       const response = await fetch(`/api/weekly-setups/${setup._id}`, {
         method: 'PUT',
@@ -1702,13 +1775,48 @@ export function DailyView({ setup, onBack }: DailyViewProps) {
         throw new Error(errorData.message || 'Failed to save changes')
       }
 
-      // Update the original setup with the response from the server
+      // Get the response data but don't immediately update the state
       const updatedSetupFromServer = await response.json()
-      setOriginalSetup(updatedSetupFromServer)
+
+      // Instead of replacing the entire setup, just update the necessary parts
+      // This prevents a full re-render and refresh of the UI
+      setOriginalSetup(prevSetup => {
+        // Create a new object that preserves the reference equality of unchanged properties
+        return {
+          ...prevSetup,
+          uploadedSchedules: updatedSetupFromServer.uploadedSchedules,
+          employees: updatedSetupFromServer.employees
+        };
+      });
+
+      // Update the modified setup in the same way to keep them in sync
+      setModifiedSetup(prevSetup => {
+        return {
+          ...prevSetup,
+          uploadedSchedules: updatedSetupFromServer.uploadedSchedules,
+          employees: updatedSetupFromServer.employees
+        };
+      });
+
+      // Save to localStorage for caching
+      try {
+        // Store only the essential data to avoid exceeding storage limits
+        const cacheData = {
+          setupId: setup._id,
+          timestamp: Date.now(),
+          uploadedSchedules: updatedSetupFromServer.uploadedSchedules,
+          employees: updatedSetupFromServer.employees
+        };
+        localStorage.setItem(`setup_cache_${setup._id}`, JSON.stringify(cacheData));
+      } catch (cacheError) {
+        // If caching fails, just log it but continue
+        console.warn('Failed to cache setup data:', cacheError);
+      }
 
       // Close the dialog
       setShowReplaceDialog(false)
 
+      console.log('Employee added successfully:', name);
       return true
     } catch (error) {
       console.error('Error adding employee:', error)

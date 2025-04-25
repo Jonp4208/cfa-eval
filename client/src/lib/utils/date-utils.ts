@@ -106,12 +106,20 @@ export function formatHourTo12Hour(hour: string | number): string {
     }
   }
 
-  // Parse the hour
+  // Parse the hour and minutes
   let hourNum: number;
+  let minutes: string = '00';
+
   if (typeof hour === 'string') {
     // Handle formats like "14:00" or "14"
     const parts = hour.split(':');
     hourNum = parseInt(parts[0]);
+
+    // Extract minutes if available
+    if (parts.length > 1) {
+      minutes = parts[1].padStart(2, '0');
+    }
+
     if (isNaN(hourNum)) {
       return hour; // Return original if parsing fails
     }
@@ -128,5 +136,5 @@ export function formatHourTo12Hour(hour: string | number): string {
   // Check if the original hour had minutes
   const hasMinutes = typeof hour === 'string' && hour.indexOf(':') > -1;
 
-  return `${hour12}${hasMinutes ? ':00' : ''} ${ampm}`;
+  return `${hour12}:${hasMinutes ? minutes : '00'} ${ampm}`;
 }
