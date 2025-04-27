@@ -5,8 +5,8 @@ import { Input } from '@/components/ui/input'
 import { ScrollArea } from '@/components/ui/scroll-area'
 import { Badge } from '@/components/ui/badge'
 import { Pencil, Plus, X, CheckCircle2 } from 'lucide-react'
-import axios from 'axios'
 import { useToast } from '@/components/ui/use-toast'
+import { kitchenService } from '@/services/kitchenService'
 
 interface EditChecklistDialogProps {
   open: boolean
@@ -131,23 +131,11 @@ export function EditChecklistDialog({ open, onOpenChange, type, items, onSave }:
 
       console.log('Sending formatted items to API:', itemsToSave)
 
-      // Use direct axios call with the correct base URL
-      const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000'
-      // Log the exact payload we're sending
+      // Use the kitchenService instead of direct axios call
       console.log('PUT request payload:', { items: itemsToSave })
 
-      const response = await axios.put(
-        `${API_URL}/api/kitchen/checklists/shift/${type}`,
-        { items: itemsToSave },
-        {
-          headers: {
-            'Content-Type': 'application/json',
-            'Authorization': `Bearer ${localStorage.getItem('token')}`
-          }
-        }
-      )
-
-      const updatedItems = response.data
+      // Use the kitchenService to update the checklist items
+      const updatedItems = await kitchenService.updateShiftChecklistItems(type, itemsToSave)
       console.log('Checklist items updated successfully:', updatedItems)
 
       // Force a delay to ensure the server has time to process the update

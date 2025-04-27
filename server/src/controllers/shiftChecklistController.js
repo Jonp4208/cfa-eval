@@ -141,7 +141,8 @@ export const updateChecklistItems = async (req, res) => {
   const { type } = req.params
   const { items } = req.body
 
-  logger.debug(`[KITCHEN] updateChecklistItems called for type: ${type}`)
+  logger.info(`[KITCHEN] updateChecklistItems called for type: ${type}`)
+  logger.info(`[KITCHEN] Received ${items.length} items to update`)
 
   if (!['opening', 'transition', 'closing'].includes(type)) {
     logger.warn(`[KITCHEN] Invalid checklist type: ${type}`)
@@ -163,37 +164,97 @@ export const updateChecklistItems = async (req, res) => {
 
   // Start a session for the transaction
   const session = await ShiftChecklistItem.startSession()
-  logger.debug(`[KITCHEN] Started MongoDB session for transaction`)
+  logger.info(`[KITCHEN] Started MongoDB session for transaction`)
 
   try {
     await session.withTransaction(async () => {
-      // Deactivate all existing items
-      logger.debug(`[KITCHEN] Deactivating all existing items of type: ${type}`)
+      // First, get existing items to preserve their IDs
+      const existingItems = await ShiftChecklistItem.find({
+        type,
+        isActive: true
+      }).session(session);
+
+      logger.info(`[KITCHEN] Found ${existingItems.length} existing active items`)
+
+      // Create a map of existing items by label for quick lookup
+      const existingItemsByLabel = {};
+      existingItems.forEach(item => {
+        existingItemsByLabel[item.label] = item;
+      });
+
+      // Log the existing items map
+      logger.info(`[KITCHEN] Existing items map created with ${Object.keys(existingItemsByLabel).length} entries`)
+
+      // Deactivate all existing items first
+      logger.info(`[KITCHEN] Deactivating all existing items of type: ${type}`)
       const deactivateResult = await ShiftChecklistItem.updateMany(
         { type },
         { isActive: false },
         { session }
       )
-      logger.debug(`[KITCHEN] Deactivated ${deactivateResult.modifiedCount} existing items`)
+      logger.info(`[KITCHEN] Deactivated ${deactivateResult.modifiedCount} existing items`)
+
+      // Process items to preserve IDs when possible
+      const itemsToCreate = [];
+      const itemsToUpdate = [];
+
+      items.forEach((item, index) => {
+        // Check if this item already exists (by label)
+        const existingItem = existingItemsByLabel[item.label];
+
+        if (existingItem) {
+          // If it exists, update it instead of creating a new one
+          itemsToUpdate.push({
+            updateOne: {
+              filter: { _id: existingItem._id },
+              update: {
+                label: item.label,
+                isRequired: item.isRequired || false,
+                type,
+                order: index,
+                isActive: true
+              }
+            }
+          });
+        } else {
+          // If it's new, create it
+          itemsToCreate.push({
+            label: item.label,
+            isRequired: item.isRequired || false,
+            type,
+            order: index,
+            isActive: true
+          });
+        }
+      });
+
+      logger.info(`[KITCHEN] Items to update: ${itemsToUpdate.length}, Items to create: ${itemsToCreate.length}`)
+
+      // Update existing items
+      if (itemsToUpdate.length > 0) {
+        const bulkUpdateResult = await ShiftChecklistItem.bulkWrite(itemsToUpdate, { session });
+        logger.info(`[KITCHEN] Updated ${bulkUpdateResult.modifiedCount} existing items`)
+      }
 
       // Create new items
-      logger.debug(`[KITCHEN] Creating ${items.length} new items`)
-      const newItemsData = items.map((item, index) => ({
-        label: item.label,
-        isRequired: item.isRequired || false,
+      let newItems = [];
+      if (itemsToCreate.length > 0) {
+        newItems = await ShiftChecklistItem.create(itemsToCreate, {
+          session,
+          ordered: true
+        });
+        logger.info(`[KITCHEN] Created ${newItems.length} new items`)
+      }
+
+      // Get all updated items to return
+      const updatedItems = await ShiftChecklistItem.find({
         type,
-        order: index,
         isActive: true
-      }))
+      }).sort('order').session(session);
 
-      // Fix: Add ordered: true option when creating multiple documents with a session
-      const newItems = await ShiftChecklistItem.create(newItemsData, {
-        session,
-        ordered: true  // This fixes the error
-      })
-      logger.debug(`[KITCHEN] Successfully created ${newItems.length} new items`)
+      logger.info(`[KITCHEN] Returning ${updatedItems.length} total items`)
 
-      const response = newItems.map(item => ({
+      const response = updatedItems.map(item => ({
         id: item._id,
         label: item.label,
         isRequired: item.isRequired,
@@ -201,12 +262,13 @@ export const updateChecklistItems = async (req, res) => {
         order: item.order,
         createdAt: item.createdAt,
         updatedAt: item.updatedAt
-      }))
+      }));
 
       res.json(response)
     })
   } catch (error) {
     logger.error(`[KITCHEN] Error updating checklist items:`, error)
+    logger.error(`[KITCHEN] Error stack:`, error.stack)
     res.status(500).json({ message: 'Error updating checklist items', error: error.message })
   } finally {
     session.endSession()
