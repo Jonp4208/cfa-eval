@@ -642,38 +642,39 @@ export default function Layout({ children }: { children: React.ReactNode }) {
         >
           <div
             ref={menuRef}
-            className="absolute right-0 top-0 bottom-0 w-[85%] max-w-[320px] bg-white shadow-xl overflow-y-auto"
+            className="absolute right-0 top-0 bottom-0 w-[85%] max-w-[320px] bg-white shadow-xl overflow-y-auto overscroll-contain thin-scrollbar"
+            style={{ height: '100%', maxHeight: '100vh' }}
             onClick={(e) => e.stopPropagation()}
           >
-            <div className="p-4 border-b flex items-center justify-between">
+            <div className="p-3 border-b flex items-center justify-between">
               <div className="flex items-center gap-2">
-                <div className="w-8 h-8 rounded-full bg-gray-100 flex items-center justify-center">
+                <div className="w-7 h-7 rounded-full bg-gray-100 flex items-center justify-center">
                   <User2 className="w-4 h-4 text-gray-600" />
                 </div>
                 <div>
-                  <div className="font-medium">{user?.firstName} {user?.lastName}</div>
+                  <div className="font-medium text-sm">{user?.firstName} {user?.lastName}</div>
                 </div>
               </div>
               <button
                 onClick={() => setIsMobileMenuOpen(false)}
-                className="p-2 rounded-lg hover:bg-gray-100 transition-colors duration-200"
+                className="p-1.5 rounded-lg hover:bg-gray-100 transition-colors duration-200"
               >
                 <X className="w-5 h-5 text-gray-500" />
               </button>
             </div>
 
             {/* Notifications Section - Moved to top */}
-            <div className="p-4 border-b">
-              <div className="flex items-center justify-between mb-2">
-                <h3 className="font-medium text-gray-900">{t('common.notifications', 'Notifications')}</h3>
+            <div className="p-3 border-b">
+              <div className="flex items-center justify-between mb-1">
+                <h3 className="font-medium text-gray-900 text-sm">{t('common.notifications', 'Notifications')}</h3>
                 {notificationCount > 0 && (
-                  <span className="px-2 py-0.5 rounded-full text-xs font-medium bg-red-100 text-red-600">
+                  <span className="px-1.5 py-0.5 rounded-full text-xs font-medium bg-red-100 text-red-600">
                     {notificationCount}
                   </span>
                 )}
               </div>
 
-              <div className="max-h-[30vh] overflow-y-auto rounded-lg bg-gray-50 mb-2" style={{ overscrollBehavior: 'contain' }}>
+              <div className="max-h-[15vh] overflow-y-auto rounded-lg bg-gray-50 mb-1 thin-scrollbar" style={{ overscrollBehavior: 'contain' }}>
                 <NotificationList
                   onDismiss={() => {
                     // Refresh notification count after dismissal
@@ -696,7 +697,7 @@ export default function Layout({ children }: { children: React.ReactNode }) {
               </div>
             </div>
 
-            <div className="p-2 overflow-y-auto max-h-[calc(100vh-280px)]" style={{ overscrollBehavior: 'contain' }}>
+            <div className="p-2 overflow-y-auto thin-scrollbar" style={{ overscrollBehavior: 'contain', maxHeight: 'calc(100vh - 170px)' }}>
               {menuItems
                 .filter(item => item.show)
                 .map(item => {
@@ -711,7 +712,7 @@ export default function Layout({ children }: { children: React.ReactNode }) {
                         <button
                           onClick={() => setActiveSubmenu(activeSubmenu === item.href ? null : item.href)}
                           className={cn(
-                            "w-full px-4 py-3 flex items-center justify-between rounded-lg",
+                            "w-full px-3 py-2 flex items-center justify-between rounded-lg",
                             (isActive || item.submenu.some(sub => location.pathname.startsWith(sub.href)))
                               ? "bg-red-50 text-red-600"
                               : "hover:bg-gray-50 text-gray-700"
@@ -740,7 +741,7 @@ export default function Layout({ children }: { children: React.ReactNode }) {
                                     setIsMobileMenuOpen(false);
                                   }}
                                   className={cn(
-                                    "w-full px-4 py-2 flex items-center gap-3 rounded-lg my-1",
+                                    "w-full px-3 py-1.5 flex items-center gap-2 rounded-lg my-0.5 text-sm",
                                     isSubActive ? "bg-red-50 text-red-600" : "hover:bg-gray-50 text-gray-700"
                                   )}
                                 >
@@ -768,7 +769,7 @@ export default function Layout({ children }: { children: React.ReactNode }) {
                         setIsMobileMenuOpen(false);
                       }}
                       className={cn(
-                        "w-full px-4 py-3 flex items-center gap-3 rounded-lg mb-1",
+                        "w-full px-3 py-2 flex items-center gap-2 rounded-lg mb-0.5",
                         isActive ? "bg-red-50 text-red-600" : "hover:bg-gray-50 text-gray-700"
                       )}
                     >
@@ -785,13 +786,13 @@ export default function Layout({ children }: { children: React.ReactNode }) {
             </div>
 
             {/* Settings and Logout */}
-            <div className="p-4 border-t pb-safe safe-area-bottom">
+            <div className="p-3 border-t pb-safe safe-area-bottom">
               <button
                 onClick={() => {
                   navigate('/settings');
                   setIsMobileMenuOpen(false);
                 }}
-                className="w-full px-4 py-3 flex items-center gap-3 rounded-lg mb-2 hover:bg-gray-50"
+                className="w-full px-3 py-2 flex items-center gap-2 rounded-lg mb-1 hover:bg-gray-50"
               >
                 <Settings className="w-5 h-5 text-gray-500" />
                 <span className="font-medium">{t('navigation.settings')}</span>
@@ -802,7 +803,7 @@ export default function Layout({ children }: { children: React.ReactNode }) {
                   logout();
                   setIsMobileMenuOpen(false);
                 }}
-                className="w-full px-4 py-3 flex items-center gap-3 rounded-lg text-red-600 hover:bg-red-50"
+                className="w-full px-3 py-2 flex items-center gap-2 rounded-lg text-red-600 hover:bg-red-50"
               >
                 <LogOut className="w-5 h-5" />
                 <span className="font-medium">{t('auth.logout')}</span>

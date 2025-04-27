@@ -23,12 +23,7 @@ export function MobileNav() {
   const { t } = useTranslation();
 
   const navItems = [
-    {
-      icon: Home,
-      label: t('navigation.dashboard'),
-      href: '/',
-      show: true
-    },
+    // Dashboard removed - users can click the logo to go to home page
     {
       icon: CheckSquare,
       label: 'FOH Tasks',
@@ -65,7 +60,7 @@ export function MobileNav() {
 
   return (
     <nav className="min-[938px]:hidden fixed bottom-0 left-0 right-0 bg-white border-t z-[9999] shadow-[0_-1px_3px_rgba(0,0,0,0.1)]" style={{ touchAction: 'manipulation', position: 'fixed', bottom: 0 }}>
-      <div className="flex items-center justify-around pb-safe safe-area-bottom">
+      <div className="flex items-center justify-between px-2 pb-safe safe-area-bottom">
         {/* Bottom navigation items */}
         {navItems
           .filter(item => item.show)
@@ -80,15 +75,15 @@ export function MobileNav() {
                 key={item.href}
                 onClick={() => navigate(item.href)}
                 className={cn(
-                  "flex flex-col items-center gap-1 p-2 min-w-[64px] min-h-[64px] touch-manipulation mobile-nav-button",
+                  "flex flex-col items-center gap-0.5 py-2 px-1 flex-1 touch-manipulation mobile-nav-button",
                   "transition-colors duration-200 relative", // Added relative positioning
                   "active:opacity-70", // Added active state for better touch feedback
                   isActive ? "text-red-600" : "text-gray-500 hover:text-gray-900"
                 )}
                 style={{ touchAction: 'manipulation' }} // Ensure touch events work properly
               >
-                <Icon className="w-6 h-6" />
-                <span className="text-xs font-medium">{item.label}</span>
+                <Icon className="w-5 h-5" />
+                <span className="text-xs font-medium truncate w-full text-center">{item.label}</span>
               </button>
             );
           })}
