@@ -10,6 +10,8 @@
   "scripts": {
     "dev": "node src/index.js",
     "start": "node src/index.js",
+    "quiet": "node run-server.js --log-level=WARN",
+    "verbose": "node run-server.js --log-level=DEBUG",
     "cleanup-shifts": "node cleanup-shifts.js"
   },
   "dependencies": {

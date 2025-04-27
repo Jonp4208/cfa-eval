@@ -1,49 +1,43 @@
 import jwt from 'jsonwebtoken';
 import User from '../models/User.js';
+import logger from '../utils/logger.js';
 
 export const auth = async (req, res, next) => {
   try {
-    console.log('Auth middleware - Request received:', req.method, req.url)
+    // Only log the path in debug mode, not the full URL which can contain sensitive data
+    logger.debug(`Auth: ${req.method} ${req.path}`);
     const token = req.header('Authorization')?.replace('Bearer ', '');
 
     if (!token) {
-      console.log('Auth middleware - No token provided')
+      logger.debug('Auth: No token provided');
       return res.status(401).json({ message: 'No auth token' });
     }
 
     let decoded;
     try {
-      console.log('Auth middleware - Verifying token')
       decoded = jwt.verify(token, process.env.JWT_SECRET);
-      console.log('Auth middleware - Token verified:', decoded)
+      // Don't log the token contents
     } catch (error) {
-      console.error('Token verification error:', error);
+      logger.error('Token verification error:', error);
 
       // Check if it's a token expiration error
       if (error.name === 'TokenExpiredError') {
-        // Log detailed information about the token expiration
         const expiredAt = new Date(error.expiredAt);
         const now = new Date();
         const gracePeriodMs = 24 * 60 * 60 * 1000; // 24 hours grace period
+        const minutesExpired = (now.getTime() - expiredAt.getTime()) / 1000 / 60;
 
-        console.log('Token expiration details:', {
-          expiredAt: expiredAt.toISOString(),
-          currentTime: now.toISOString(),
-          timeDifference: (now.getTime() - expiredAt.getTime()) / 1000 / 60, // minutes
-          url: req.originalUrl,
-          method: req.method
-        });
+        // Only log minimal information at debug level
+        logger.debug(`Token expired ${Math.round(minutesExpired)} minutes ago`);
 
         // Special handling for April 6, 2025 - always apply grace period
         const isApril6_2025 = now.getFullYear() === 2025 && now.getMonth() === 3 && now.getDate() === 6;
 
         // If the token expired within the grace period or it's April 6, 2025, try to verify it ignoring expiration
         if (now.getTime() - expiredAt.getTime() < gracePeriodMs || isApril6_2025) {
-          console.log('Applying grace period due to:', isApril6_2025 ? 'special date (April 6, 2025)' : 'recent expiration');
+          logger.debug('Applying grace period for expired token');
           try {
-            console.log('Auth middleware - Token expired recently, applying grace period');
             decoded = jwt.verify(token, process.env.JWT_SECRET, { ignoreExpiration: true });
-            console.log('Auth middleware - Token accepted within grace period');
 
             // Since the token is valid but expired, find the user and generate a new token
             const userId = decoded.userId;
@@ -55,7 +49,7 @@ export const auth = async (req, res, next) => {
               .select('+position +role +isAdmin +departments +name +email +status');
 
             if (!user || !user.store) {
-              console.log('Auth middleware - User not found or no store for grace period token');
+              logger.debug('Auth: User not found for grace period token');
               return res.status(401).json({ message: 'Invalid user data' });
             }
 
@@ -75,15 +69,15 @@ export const auth = async (req, res, next) => {
               userId: user._id
             };
 
-            console.log('Auth middleware - Grace period applied, new token generated');
+            logger.debug('Auth: Grace period applied, new token generated');
             return next();
           } catch (innerError) {
             // If there's still an error, it's not just an expiration issue
-            console.error('Token verification failed even with grace period:', innerError);
+            logger.error('Token verification failed with grace period:', innerError);
             return res.status(401).json({ message: 'Invalid token' });
           }
         } else {
-          console.log('Auth middleware - Token expired beyond grace period, checking for refresh token')
+          logger.debug('Auth: Token expired beyond grace period');
 
           // Check if there's a refresh token in the request
           const refreshToken = req.header('X-Refresh-Token');
@@ -91,7 +85,7 @@ export const auth = async (req, res, next) => {
             try {
               // Verify the refresh token
               const refreshDecoded = jwt.verify(refreshToken, process.env.JWT_REFRESH_SECRET || process.env.JWT_SECRET);
-              console.log('Auth middleware - Refresh token verified:', refreshDecoded)
+              logger.debug('Auth: Refresh token verified');
 
               // Find the user
               const user = await User.findById(refreshDecoded.userId)
@@ -102,7 +96,7 @@ export const auth = async (req, res, next) => {
                 .select('+position +role +isAdmin +departments +name +email +status');
 
               if (!user || !user.store) {
-                console.log('Auth middleware - Invalid refresh token: user not found or no store')
+                logger.debug('Auth: Invalid refresh token - user not found');
                 return res.status(401).json({ message: 'Invalid refresh token' });
               }
 
@@ -122,15 +116,15 @@ export const auth = async (req, res, next) => {
                 userId: user._id
               };
 
-              console.log('Auth middleware - Token refreshed successfully')
+              logger.debug('Auth: Token refreshed successfully');
               return next();
             } catch (refreshError) {
-              console.error('Refresh token verification error:', refreshError);
+              logger.error('Refresh token verification error:', refreshError);
               return res.status(401).json({ message: 'Token expired' });
             }
           }
 
-          console.log('Auth middleware - No refresh token provided')
+          logger.debug('Auth: No refresh token provided');
           return res.status(401).json({ message: 'Token expired' });
         }
       }
@@ -143,11 +137,11 @@ export const auth = async (req, res, next) => {
     }
 
     if (!decoded || !decoded.userId) {
-      console.log('Auth middleware - Invalid token payload:', decoded)
+      logger.debug('Auth: Invalid token payload');
       return res.status(401).json({ message: 'Invalid token payload' });
     }
 
-    console.log('Auth middleware - Finding user:', decoded.userId)
+    // Find user without logging the ID (for privacy)
     const user = await User.findOne({ _id: decoded.userId })
       .populate({
         path: 'store',
@@ -158,12 +152,12 @@ export const auth = async (req, res, next) => {
       .select('+position +role +isAdmin +departments +name +email +status');
 
     if (!user) {
-      console.log('Auth middleware - User not found')
+      logger.debug('Auth: User not found');
       return res.status(401).json({ message: 'User not found' });
     }
 
     if (!user.store) {
-      console.log('Auth middleware - User has no store')
+      logger.debug('Auth: User has no store');
       return res.status(400).json({ message: 'User has no associated store' });
     }
 
@@ -172,7 +166,7 @@ export const auth = async (req, res, next) => {
 
     // Ensure critical fields exist
     if (!userObj._id || !userObj.store?._id) {
-      console.error('Missing critical user data:', {
+      logger.error('Missing critical user data', {
         hasId: !!userObj._id,
         hasStore: !!userObj.store,
         hasStoreId: !!userObj.store?._id
@@ -185,10 +179,11 @@ export const auth = async (req, res, next) => {
       userId: userObj._id
     };
 
-    console.log('Auth middleware - Authentication successful')
+    // Only log authentication success at debug level
+    logger.debug('Auth: Success');
     next();
   } catch (error) {
-    console.error('Auth middleware error:', error);
+    logger.error('Auth middleware error:', error);
     res.status(500).json({
       message: 'Server error in auth middleware',
       error: error.message

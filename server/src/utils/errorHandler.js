@@ -1,5 +1,6 @@
 import { ApiError } from './ApiError.js';
 import * as Sentry from "@sentry/node";
+import logger from './logger.js';
 
 /**
  * Wraps an async route handler to catch errors and pass them to Express error handler
@@ -9,8 +10,8 @@ import * as Sentry from "@sentry/node";
 export const handleAsync = (fn) => {
   return (req, res, next) => {
     Promise.resolve(fn(req, res, next)).catch((err) => {
-      console.error('Error:', err);
-      
+      logger.error('Route handler error:', err);
+
       if (err instanceof ApiError) {
         return res.status(err.statusCode).json({
           status: err.status,
@@ -36,17 +37,19 @@ export const errorHandler = (err, req, res, next) => {
 
   // Development error response
   if (process.env.NODE_ENV === 'development') {
+    logger.error(`Error handling request to ${req.method} ${req.url}:`, err);
     res.status(err.statusCode).json({
       status: err.status,
       error: err,
       message: err.message,
       stack: err.stack
     });
-  } 
+  }
   // Production error response
   else {
     // Operational, trusted error: send message to client
     if (err.isOperational) {
+      logger.warn(`Operational error on ${req.method} ${req.url}:`, { message: err.message, code: err.statusCode });
       res.status(err.statusCode).json({
         status: err.status,
         message: err.message
@@ -54,7 +57,7 @@ export const errorHandler = (err, req, res, next) => {
     }
     // Programming or other unknown error: don't leak error details
     else {
-      console.error('ERROR 💥', err);
+      logger.error(`Unhandled error on ${req.method} ${req.url}:`, err);
       res.status(500).json({
         status: 'error',
         message: 'Something went wrong!'
@@ -106,14 +109,12 @@ export const handleError = (error, category, context = {}) => {
     environment: process.env.NODE_ENV || 'development'
   };
 
-  // Log to console in development
-  if (process.env.NODE_ENV !== 'production') {
-    console.error('Error:', {
-      message: error.message,
-      stack: error.stack,
-      context: enrichedContext
-    });
-  }
+  // Log using our logger
+  logger.error(`Error [${category}]:`, {
+    message: error.message,
+    stack: error.stack,
+    context: enrichedContext
+  });
 
   // Report to Sentry
   Sentry.withScope(scope => {
@@ -129,13 +130,13 @@ export const handleError = (error, category, context = {}) => {
 // Retry mechanism for async operations
 export const withRetry = async (operation, maxRetries = 3, delay = 1000) => {
   let lastError;
-  
+
   for (let attempt = 1; attempt <= maxRetries; attempt++) {
     try {
       return await operation();
     } catch (error) {
       lastError = error;
-      
+
       // Log retry attempt
       Sentry.addBreadcrumb({
         category: 'retry',
@@ -144,12 +145,12 @@ export const withRetry = async (operation, maxRetries = 3, delay = 1000) => {
       });
 
       if (attempt === maxRetries) break;
-      
+
       // Wait before next retry
       await new Promise(resolve => setTimeout(resolve, delay * attempt));
     }
   }
-  
+
   throw lastError;
 };
 
@@ -163,4 +164,4 @@ export const asyncHandler = (fn) => (req, res, next) => {
     });
     next(error);
   });
-}; 
+};

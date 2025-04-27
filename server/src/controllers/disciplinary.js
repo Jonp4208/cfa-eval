@@ -4,19 +4,20 @@ import Notification from '../models/Notification.js';
 import { handleAsync } from '../utils/errorHandler.js';
 import { ApiError } from '../utils/ApiError.js';
 import { sendEmail } from '../utils/email.js';
+import logger from '../utils/logger.js';
 
 // Get all disciplinary incidents
 export const getAllIncidents = handleAsync(async (req, res) => {
   // First, update any incidents that need status correction
   await Disciplinary.updateMany(
-    { 
+    {
       $or: [
         { status: 'Open' },
         { status: { $exists: false } }
       ]
     },
-    { 
-      $set: { 
+    {
+      $set: {
         status: 'Pending Acknowledgment',
       }
     }
@@ -25,7 +26,7 @@ export const getAllIncidents = handleAsync(async (req, res) => {
   // Build query based on user position and store
   const { store, position, _id } = req.user;
   let query = { store };
-  
+
   // Check if user has restricted access (Team Member or Trainer)
   const hasRestrictedAccess = ['Team Member', 'Trainer'].includes(position);
 
@@ -33,16 +34,9 @@ export const getAllIncidents = handleAsync(async (req, res) => {
   if (hasRestrictedAccess) {
     query.employee = _id;
   }
-  
-  console.log('Disciplinary getAllIncidents - User details:', {
-    id: _id,
-    name: req.user.name,
-    position,
-    hasRestrictedAccess,
-    store
-  });
-  
-  console.log('Disciplinary getAllIncidents - Query conditions:', JSON.stringify(query, null, 2));
+
+  // Only log minimal information at debug level
+  logger.debug(`Disciplinary: Fetching incidents for store ${store._id}`);
 
   // Get incidents based on the query
   const incidents = await Disciplinary.find(query)
@@ -51,16 +45,8 @@ export const getAllIncidents = handleAsync(async (req, res) => {
     .populate('createdBy', 'name')
     .sort('-createdAt');
 
-  console.log('Disciplinary getAllIncidents - Found incidents:', {
-    count: incidents.length,
-    incidents: incidents.map(i => ({
-      id: i._id,
-      status: i.status,
-      store: i.store,
-      employee: i.employee?._id,
-      employeeName: i.employee?.name
-    }))
-  });
+  // Log only the count, not the details
+  logger.debug(`Disciplinary: Found ${incidents.length} incidents`);
 
   res.json(incidents);
 });
@@ -68,13 +54,13 @@ export const getAllIncidents = handleAsync(async (req, res) => {
 // Get a single incident by ID
 export const getIncidentById = handleAsync(async (req, res) => {
   const { position, _id } = req.user;
-  
+
   const incident = await Disciplinary.findById(req.params.id)
     .populate('employee', 'name position department startDate')
     .populate('supervisor', 'name')
     .populate('createdBy', 'name')
     .populate('followUps.by', 'name');
-  
+
   if (!incident) {
     return res.status(404).json({ message: 'Incident not found' });
   }
@@ -86,7 +72,7 @@ export const getIncidentById = handleAsync(async (req, res) => {
   if (hasRestrictedAccess && incident.employee._id.toString() !== _id.toString()) {
     return res.status(403).json({ message: 'Not authorized to view this incident' });
   }
-  
+
   res.json(incident);
 });
 
@@ -159,7 +145,7 @@ export const createIncident = handleAsync(async (req, res) => {
             <div style="background-color: #E4002B; padding: 20px; border-radius: 8px; margin-bottom: 30px;">
               <h1 style="color: white; margin: 0;">New Disciplinary Incident</h1>
             </div>
-            
+
             <div style="background-color: #f8f8f8; padding: 20px; border-radius: 8px; margin-bottom: 30px;">
               <h2 style="color: #333; margin-top: 0;">Incident Details</h2>
               <p><strong>Date:</strong> ${new Date(date).toLocaleDateString()}</p>
@@ -215,7 +201,7 @@ export const createIncident = handleAsync(async (req, res) => {
   });
 
   // Create notifications for all managers
-  await Promise.all(managers.map(manager => 
+  await Promise.all(managers.map(manager =>
     Notification.create({
       user: manager._id,
       store: req.user.store._id,
@@ -315,7 +301,7 @@ export const acknowledgeIncident = handleAsync(async (req, res) => {
             <div style="background-color: #E4002B; padding: 20px; border-radius: 8px; margin-bottom: 30px;">
               <h1 style="color: white; margin: 0;">Disciplinary Incident Acknowledgment</h1>
             </div>
-            
+
             <div style="background-color: #f8f8f8; padding: 20px; border-radius: 8px; margin-bottom: 30px;">
               <h2 style="color: #333; margin-top: 0;">Incident Details</h2>
               <p><strong>Employee:</strong> ${incident.employee.name} (${incident.employee.position})</p>
@@ -451,7 +437,7 @@ export const completeFollowUp = handleAsync(async (req, res) => {
 // Add a document to an incident
 export const addDocument = handleAsync(async (req, res) => {
   const { name, type, url } = req.body;
-  
+
   const incident = await Disciplinary.findById(req.params.id);
   if (!incident) {
     return res.status(404).json({ message: 'Incident not found' });
@@ -473,7 +459,7 @@ export const addDocument = handleAsync(async (req, res) => {
 // Delete an incident
 export const deleteIncident = handleAsync(async (req, res) => {
   const incident = await Disciplinary.findByIdAndDelete(req.params.id);
-  
+
   if (!incident) {
     return res.status(404).json({ message: 'Incident not found' });
   }
@@ -500,7 +486,7 @@ export const getEmployeeIncidents = handleAsync(async (req, res) => {
     .populate('supervisor', 'name')
     .populate('createdBy', 'name')
     .sort('-createdAt');
-  
+
   console.log('Found incidents:', incidents);
   res.json(incidents);
 });
@@ -510,20 +496,20 @@ export const getAllDisciplinaryIncidents = async (req, res) => {
     try {
         const { store } = req.user;
         console.log('Getting all disciplinary incidents for store:', store);
-        
+
         const incidents = await Disciplinary.find({ store })
             .populate('employee', 'name')
             .populate('supervisor', 'name')
             .sort('-date');
-            
+
         console.log('Found incidents:', incidents);
-        
+
         res.json(incidents);
     } catch (error) {
         console.error('Error getting disciplinary incidents:', error);
-        res.status(500).json({ 
+        res.status(500).json({
             message: 'Error getting disciplinary incidents',
-            error: error.message 
+            error: error.message
         });
     }
 };
@@ -531,22 +517,22 @@ export const getAllDisciplinaryIncidents = async (req, res) => {
 // Update existing incidents with proper status
 export const updateExistingIncidents = handleAsync(async (req, res) => {
   const { store } = req.user;
-  
+
   // Update all incidents that have 'Open' status or no status
   const result = await Disciplinary.updateMany(
-    { 
+    {
       $or: [
         { status: 'Open' },
         { status: { $exists: false } }
       ]
     },
-    { 
-      $set: { 
+    {
+      $set: {
         status: 'Pending Acknowledgment',
       }
     }
   );
-  
+
   res.json({
     message: 'Updated existing incidents',
     modifiedCount: result.modifiedCount
@@ -578,7 +564,7 @@ export const sendDisciplinaryEmail = handleAsync(async (req, res) => {
         <div style="background-color: #E4002B; padding: 20px; border-radius: 8px; margin-bottom: 30px;">
           <h1 style="color: white; margin: 0;">Disciplinary Incident Report</h1>
         </div>
-        
+
         <div style="background-color: #f8f8f8; padding: 20px; border-radius: 8px; margin-bottom: 30px;">
           <h2 style="color: #333; margin-top: 0;">Incident Details</h2>
           <p><strong>Employee:</strong> ${incident.employee.name} (${incident.employee.position})</p>
@@ -646,7 +632,7 @@ export const sendDisciplinaryEmail = handleAsync(async (req, res) => {
 // Send notification for unacknowledged disciplinary incident
 export const sendUnacknowledgedNotification = handleAsync(async (req, res) => {
   const { id } = req.params;
-  
+
   console.log('Attempting to send unacknowledged notification for incident:', id);
 
   const incident = await Disciplinary.findOne({
@@ -687,7 +673,7 @@ export const sendUnacknowledgedNotification = handleAsync(async (req, res) => {
             <div style="background-color: #E4002B; padding: 20px; border-radius: 8px; margin-bottom: 30px;">
               <h1 style="color: white; margin: 0;">Disciplinary Acknowledgment Required</h1>
             </div>
-            
+
             <div style="background-color: #f8f8f8; padding: 20px; border-radius: 8px; margin-bottom: 30px;">
               <h2 style="color: #333; margin-top: 0;">Incident Details</h2>
               <p><strong>Type:</strong> ${incident.type}</p>
@@ -699,7 +685,7 @@ export const sendUnacknowledgedNotification = handleAsync(async (req, res) => {
             <div style="margin-bottom: 30px;">
               <p>Please log in to acknowledge this disciplinary incident. Your acknowledgment is required to complete this process.</p>
               <p style="margin: 30px 0;">
-                <a href="https://cfa-eval-app.vercel.app/disciplinary/${incident._id}" 
+                <a href="https://cfa-eval-app.vercel.app/disciplinary/${incident._id}"
                    style="display: inline-block; background-color: #E4002B; color: white; padding: 12px 24px; text-decoration: none; border-radius: 8px; font-weight: 500;">
                   Acknowledge Incident
                 </a>
@@ -721,7 +707,7 @@ export const sendUnacknowledgedNotification = handleAsync(async (req, res) => {
     }
   }
 
-  res.json({ 
+  res.json({
     message: 'Notification sent successfully'
   });
-}); 
+});

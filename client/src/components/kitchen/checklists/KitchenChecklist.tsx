@@ -284,6 +284,7 @@ export function KitchenChecklist({ type = 'opening' }: ShiftChecklistProps) {
 
   // Handle edit checklist
   const handleEditChecklist = () => {
+    console.log('Opening edit dialog')
     setIsEditDialogOpen(true)
   }
 
@@ -357,7 +358,12 @@ export function KitchenChecklist({ type = 'opening' }: ShiftChecklistProps) {
             <Button
               variant="outline"
               size="sm"
-              onClick={handleEditChecklist}
+              onClick={(e) => {
+                e.preventDefault()
+                e.stopPropagation()
+                console.log('Customize List button clicked')
+                handleEditChecklist()
+              }}
               className="flex items-center gap-2 text-[#E51636] border-[#E51636] hover:bg-[#E51636]/5 w-full sm:w-auto h-10 sm:h-9 rounded-lg transition-all duration-200"
             >
               <Pencil className="h-4 w-4" />
@@ -478,10 +484,14 @@ export function KitchenChecklist({ type = 'opening' }: ShiftChecklistProps) {
       {/* Edit Dialog */}
       <EditChecklistDialog
         open={isEditDialogOpen}
-        onOpenChange={setIsEditDialogOpen}
+        onOpenChange={(open) => {
+          console.log('Setting edit dialog open state to:', open)
+          setIsEditDialogOpen(open)
+        }}
         type={activeTab}
         items={allItems[activeTab] || []}
         onSave={() => {
+          console.log('Dialog save callback triggered')
           queryClient.invalidateQueries({ queryKey: ['kitchen-checklist'] })
         }}
       />

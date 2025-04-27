@@ -22,6 +22,10 @@ const shiftChecklistItemSchema = new mongoose.Schema({
   isActive: {
     type: Boolean,
     default: true
+  },
+  store: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'Store'
   }
 }, {
   timestamps: true
@@ -70,4 +74,4 @@ const ShiftChecklistCompletion = mongoose.model('ShiftChecklistCompletion', shif
 export {
   ShiftChecklistItem,
   ShiftChecklistCompletion
-} 
+}

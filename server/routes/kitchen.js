@@ -5,29 +5,42 @@ import * as shiftChecklistController from '../controllers/shiftChecklistControll
 
 const router = express.Router()
 
-// Shift Checklist Routes
+// Simple task routes like FOH
 router.get(
-  '/checklists/shift/:type',
+  '/tasks',
   auth,
   asyncHandler(shiftChecklistController.getChecklistItems)
 )
 
-router.put(
-  '/checklists/shift/:type',
+router.post(
+  '/tasks',
   auth,
-  asyncHandler(shiftChecklistController.updateChecklistItems)
+  asyncHandler(shiftChecklistController.createChecklistItem)
+)
+
+router.put(
+  '/tasks/:id',
+  auth,
+  asyncHandler(shiftChecklistController.updateChecklistItem)
+)
+
+router.delete(
+  '/tasks/:id',
+  auth,
+  asyncHandler(shiftChecklistController.deleteChecklistItem)
 )
 
 router.post(
-  '/checklists/shift/:type/complete',
+  '/tasks/:id/complete',
   auth,
   asyncHandler(shiftChecklistController.completeChecklist)
 )
 
+// Keep the completions endpoint
 router.get(
-  '/checklists/shift/:type/completions',
+  '/completions',
   auth,
   asyncHandler(shiftChecklistController.getChecklistCompletions)
 )
 
-export default router 
+export default router

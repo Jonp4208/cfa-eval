@@ -4,6 +4,7 @@ import mongoose from 'mongoose';
 import dotenv from 'dotenv';
 import path from 'path';
 import { fileURLToPath } from 'url';
+import logger from './utils/logger.js';
 
 // Routes
 import authRoutes from './routes/auth.js';
@@ -66,16 +67,19 @@ app.use(cors({
 app.use(express.json({ limit: '50mb' }));
 app.use(express.urlencoded({ extended: true, limit: '50mb' }));
 
-// Debug middleware for route matching
+// Debug middleware for route matching - only log at debug level
 app.use((req, res, next) => {
-  console.log(`${req.method} ${req.url}`);
+  // Skip logging for static assets and common browser requests
+  if (!req.url.includes('.') && !req.url.includes('favicon.ico')) {
+    logger.request(req);
+  }
   next();
 });
 
 // Custom error handler for payload size errors
 app.use((err, req, res, next) => {
   if (err instanceof SyntaxError && err.status === 413) {
-    console.error('Request entity too large:', err);
+    logger.error('Request entity too large:', err);
     return res.status(413).json({
       error: 'Payload too large',
       message: 'The data you are trying to send is too large. Please reduce the size of your request.',
@@ -84,7 +88,7 @@ app.use((err, req, res, next) => {
   }
 
   if (err instanceof SyntaxError && err.status === 400 && 'body' in err) {
-    console.error('Invalid JSON:', err);
+    logger.error('Invalid JSON:', err);
     return res.status(400).json({
       error: 'Invalid JSON',
       message: 'The request contains invalid JSON.',
@@ -175,7 +179,7 @@ apiRouter.use(errorHandler);
 
 // Handle 404s for API routes
 apiRouter.all('*', (req, res) => {
-  console.log('404 Not Found:', req.url);
+  logger.info('404 Not Found:', { url: req.url, method: req.method });
   res.status(404).json({ message: 'API endpoint not found' });
 });
 

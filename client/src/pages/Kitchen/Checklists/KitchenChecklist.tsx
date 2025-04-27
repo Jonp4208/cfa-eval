@@ -5,20 +5,22 @@ import { Card } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { useToast } from '@/components/ui/use-toast'
-import { CheckCircle2, RefreshCw, Loader2, Sun, Moon, ArrowLeftRight } from 'lucide-react'
-import { useAuth } from '@/hooks/useAuth'
+import { CheckCircle2, Loader2, Sun, Moon, ArrowLeftRight, Pencil } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { KitchenTaskList } from '@/components/kitchen/checklists/KitchenTaskList'
+import { EditChecklistDialog } from '@/components/kitchen/checklists/EditChecklistDialog'
 import { getTodayDateString, isNewDay } from '@/lib/utils/date-utils'
 
 type ShiftType = 'opening' | 'transition' | 'closing'
 
-interface KitchenTask {
+// Define the task interface for type safety
+interface Task {
   id: string
   label: string
   isRequired?: boolean
   isCompleted: boolean
   type: ShiftType
+  order?: number
   completedBy?: {
     id: string
     name: string
@@ -28,12 +30,9 @@ interface KitchenTask {
 
 export function KitchenChecklist() {
   const [activeTab, setActiveTab] = useState<ShiftType>('opening')
+  const [isEditDialogOpen, setIsEditDialogOpen] = useState(false)
   const { toast } = useToast()
   const queryClient = useQueryClient()
-  const { user } = useAuth()
-
-  // State to track if we need to force refresh
-  const [refreshTrigger, setRefreshTrigger] = useState(0)
 
   // Get today's date in YYYY-MM-DD format using our utility function
   const today = getTodayDateString()
@@ -93,8 +92,8 @@ export function KitchenChecklist() {
   }, [queryClient, today])
 
   // Fetch tasks for the active tab
-  const { data: tasks = [], isLoading } = useQuery({
-    queryKey: ['kitchen-tasks', activeTab, today, refreshTrigger],
+  const { data: tasks = [] as Task[], isLoading } = useQuery<Task[]>({
+    queryKey: ['kitchen-tasks', activeTab, today],
     queryFn: async () => {
       console.log(`Fetching ${activeTab} kitchen tasks`)
       try {
@@ -124,13 +123,13 @@ export function KitchenChecklist() {
           const latestCompletion = completions[0]
 
           // Create a map of completed items
-          const completedItemsMap = {}
-          latestCompletion.items.forEach(item => {
+          const completedItemsMap: Record<string, boolean> = {}
+          latestCompletion.items.forEach((item: { id: string, isCompleted: boolean }) => {
             completedItemsMap[item.id] = item.isCompleted
           })
 
           // Update the items with completion status
-          return baseItems.map(item => ({
+          return baseItems.map((item: any) => ({
             ...item,
             isCompleted: completedItemsMap[item.id] === true,
             completedBy: completedItemsMap[item.id] ? latestCompletion.completedBy : undefined,
@@ -164,7 +163,7 @@ export function KitchenChecklist() {
       }
 
       // Find the task in the current list
-      const task = tasks.find(t => t.id === taskId)
+      const task = tasks.find((t: Task) => t.id === taskId)
 
       if (!task) {
         throw new Error('Task not found')
@@ -176,7 +175,7 @@ export function KitchenChecklist() {
 
         // Create a simple payload with just the one item being toggled
         const payload = {
-          items: tasks.map(item => ({
+          items: tasks.map((item: Task) => ({
             id: item.id,
             isCompleted: item.id === taskId ? false : item.isCompleted
           })),
@@ -203,7 +202,7 @@ export function KitchenChecklist() {
 
       // Create a simple payload with just the one item being toggled
       const payload = {
-        items: tasks.map(item => ({
+        items: tasks.map((item: Task) => ({
           id: item.id,
           isCompleted: item.id === taskId ? true : item.isCompleted
         })),
@@ -272,18 +271,19 @@ export function KitchenChecklist() {
     completeTaskMutation.mutate(taskId)
   }
 
-  // Handle refresh
-  const handleRefresh = () => {
-    setRefreshTrigger(prev => prev + 1)
+  // Handle edit checklist
+  const handleEditChecklist = () => {
+    console.log('Opening edit dialog')
+    setIsEditDialogOpen(true)
   }
 
   // Calculate statistics
   const totalTasks = tasks.length
-  const completedTasks = tasks.filter(task => task.isCompleted).length
+  const completedTasks = tasks.filter((task: Task) => task.isCompleted).length
   const completionPercentage = totalTasks > 0 ? Math.round((completedTasks / totalTasks) * 100) : 0
 
   // Check if all required tasks are completed
-  const hasIncompleteRequired = tasks.some(task => task.isRequired && !task.isCompleted)
+  const hasIncompleteRequired = tasks.some((task: Task) => task.isRequired && !task.isCompleted)
 
   return (
     <div className="space-y-4 sm:space-y-6">
@@ -317,16 +317,20 @@ export function KitchenChecklist() {
               </p>
             </div>
           </div>
-          <div className="flex gap-2 w-full sm:w-auto">
+          <div className="flex flex-wrap gap-2 w-full sm:w-auto">
             <Button
               variant="outline"
               size="sm"
-              onClick={handleRefresh}
-              disabled={isLoading}
-              className="flex items-center justify-center gap-2 text-gray-600 border-gray-300 hover:bg-gray-50 w-full sm:w-auto h-9 rounded-lg transition-all duration-200 touch-manipulation active-scale"
+              onClick={(e) => {
+                e.preventDefault()
+                e.stopPropagation()
+                console.log('Customize List button clicked')
+                handleEditChecklist()
+              }}
+              className="flex items-center gap-2 text-[#E51636] border-[#E51636] hover:bg-[#E51636]/5 w-full sm:w-auto h-9 rounded-lg transition-all duration-200 touch-manipulation active-scale"
             >
-              <RefreshCw className={`h-4 w-4 ${isLoading ? 'animate-spin' : ''}`} />
-              <span>Refresh</span>
+              <Pencil className="h-4 w-4" />
+              <span>Customize List</span>
             </Button>
           </div>
         </div>
@@ -399,6 +403,22 @@ export function KitchenChecklist() {
           </Tabs>
         </div>
       </Card>
+
+      {/* Edit Dialog */}
+      <EditChecklistDialog
+        open={isEditDialogOpen}
+        onOpenChange={(open) => {
+          console.log('Setting edit dialog open state to:', open)
+          setIsEditDialogOpen(open)
+        }}
+        type={activeTab}
+        items={tasks || []}
+        onSave={() => {
+          console.log('Dialog save callback triggered')
+          queryClient.invalidateQueries({ queryKey: ['kitchen-checklist'] })
+          queryClient.invalidateQueries({ queryKey: ['kitchen-tasks', activeTab, today] })
+        }}
+      />
     </div>
   )
 }

@@ -22,15 +22,9 @@ const router = express.Router();
 // All routes require authentication
 router.use(auth);
 
-// Debug middleware for route matching
+// Debug middleware for route matching - only log at debug level
 router.use((req, res, next) => {
-  console.log('Documentation Route Debug:', {
-    url: req.url,
-    method: req.method,
-    params: req.params,
-    path: req.path,
-    baseUrl: req.baseUrl
-  });
+  // Skip detailed logging for the dashboard page
   next();
 });
 

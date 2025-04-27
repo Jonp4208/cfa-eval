@@ -1,4 +1,5 @@
 import nodemailer from 'nodemailer';
+import logger from './logger.js';
 
 const MAX_RETRIES = 3;
 const RETRY_DELAY = 5000; // 5 seconds
@@ -15,11 +16,12 @@ const createTransporter = () => {
     }
   };
 
-  console.log('Creating email transporter with config:', {
-    ...config,
+  logger.debug('Creating email transporter with config:', {
+    host: config.host,
+    port: config.port,
+    secure: config.secure,
     auth: {
-      user: config.auth.user,
-      pass: config.auth.pass ? '****' : undefined
+      user: config.auth.user
     }
   });
 
@@ -28,30 +30,27 @@ const createTransporter = () => {
 
 export const verifyEmailConfig = async () => {
   try {
-    console.log('Starting email configuration verification...');
-    
+    logger.info('Starting email configuration verification...');
+
     if (!process.env.EMAIL_USER || !process.env.EMAIL_PASSWORD) {
       throw new Error('Missing required email configuration environment variables');
     }
-    
-    console.log('Email configuration variables:', {
-      EMAIL_USER: process.env.EMAIL_USER,
-      EMAIL_PASSWORD: process.env.EMAIL_PASSWORD ? '****' : undefined
+
+    logger.debug('Email configuration variables:', {
+      EMAIL_USER: process.env.EMAIL_USER
     });
-    
-    console.log('Creating test transporter...');
+
+    logger.debug('Creating test transporter...');
     const transporter = createTransporter();
-    
-    console.log('Verifying transporter...');
+
+    logger.debug('Verifying transporter...');
     await transporter.verify();
-    console.log('Email configuration verified successfully');
+    logger.info('Email configuration verified successfully');
     return true;
   } catch (error) {
-    console.error('Email configuration error:', {
-      error: error,
+    logger.error('Email configuration error:', {
       message: error.message,
-      code: error.code,
-      response: error.response
+      code: error.code
     });
     return false;
   }
@@ -59,8 +58,8 @@ export const verifyEmailConfig = async () => {
 
 export const sendEmailWithRetry = async ({ to, subject, html }, retries = 0) => {
   try {
-    console.log(`Attempting to send email (attempt ${retries + 1}/${MAX_RETRIES})...`);
-    
+    logger.debug(`Attempting to send email (attempt ${retries + 1}/${MAX_RETRIES})...`);
+
     const transporter = createTransporter();
     const mailOptions = {
       from: process.env.EMAIL_USER,
@@ -69,29 +68,27 @@ export const sendEmailWithRetry = async ({ to, subject, html }, retries = 0) => 
       html
     };
 
-    console.log('Mail options:', {
+    logger.debug('Mail options:', {
       from: process.env.EMAIL_USER,
       to,
       subject
     });
 
     const result = await transporter.sendMail(mailOptions);
-    console.log('Email sent successfully:', result);
+    logger.info('Email sent successfully:', { messageId: result.messageId });
     return result;
   } catch (error) {
-    console.error(`Email sending failed (attempt ${retries + 1}/${MAX_RETRIES}):`, {
-      error: error,
+    logger.error(`Email sending failed (attempt ${retries + 1}/${MAX_RETRIES}):`, {
       message: error.message,
-      code: error.code,
-      response: error.response
+      code: error.code
     });
-    
+
     if (retries < MAX_RETRIES - 1) {
-      console.log(`Retrying in ${RETRY_DELAY/1000} seconds...`);
+      logger.info(`Retrying in ${RETRY_DELAY/1000} seconds...`);
       await new Promise(resolve => setTimeout(resolve, RETRY_DELAY));
       return sendEmailWithRetry({ to, subject, html }, retries + 1);
     }
-    
+
     throw new Error(`Failed to send email after ${MAX_RETRIES} attempts: ${error.message}`);
   }
 };
@@ -99,7 +96,7 @@ export const sendEmailWithRetry = async ({ to, subject, html }, retries = 0) => 
 // Backward compatibility wrapper
 export const sendEmail = async ({ to, subject, html }) => {
   try {
-    console.log('Preparing to send email:', {
+    logger.debug('Preparing to send email:', {
       to,
       subject,
       from: process.env.EMAIL_USER
@@ -114,18 +111,16 @@ export const sendEmail = async ({ to, subject, html }) => {
     };
 
     const result = await transporter.sendMail(mailOptions);
-    console.log('Email sent successfully:', {
-      messageId: result.messageId,
-      response: result.response
+    logger.info('Email sent successfully:', {
+      messageId: result.messageId
     });
     return result;
   } catch (error) {
-    console.error('Failed to send email:', {
-      error: error.message,
+    logger.error('Failed to send email:', {
+      message: error.message,
       code: error.code,
-      command: error.command,
-      response: error.response
+      command: error.command
     });
     throw error;
   }
-}; 
+};

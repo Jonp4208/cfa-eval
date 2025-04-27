@@ -5,6 +5,7 @@ import Disciplinary from '../models/Disciplinary.js';
 import { handleAsync } from '../utils/errorHandler.js';
 import { ApiError } from '../utils/ApiError.js';
 import { sendEmail } from '../utils/email.js';
+import logger from '../utils/logger.js';
 
 // Get all documentation and disciplinary records combined
 export const getAllCombinedRecords = handleAsync(async (req, res) => {
@@ -84,15 +85,8 @@ export const getAllDocuments = handleAsync(async (req, res) => {
     query.employee = _id;
   }
 
-  console.log('Documentation getAllDocuments - User details:', {
-    id: _id,
-    name: req.user.name,
-    position,
-    hasRestrictedAccess,
-    store
-  });
-
-  console.log('Documentation getAllDocuments - Query conditions:', JSON.stringify(query, null, 2));
+  // Only log minimal information at debug level
+  logger.debug(`Documentation: Fetching documents for store ${store._id}`);
 
   // Get documents based on the query
   const documents = await Documentation.find(query)
@@ -101,16 +95,8 @@ export const getAllDocuments = handleAsync(async (req, res) => {
     .populate('createdBy', 'name')
     .sort('-createdAt');
 
-  console.log('Documentation getAllDocuments - Found documents:', {
-    count: documents.length,
-    documents: documents.map(d => ({
-      id: d._id,
-      status: d.status,
-      store: d.store,
-      employee: d.employee?._id,
-      employeeName: d.employee?.name
-    }))
-  });
+  // Log only the count, not the details
+  logger.debug(`Documentation: Found ${documents.length} documents`);
 
   res.json(documents);
 });

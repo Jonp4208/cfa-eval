@@ -440,6 +440,14 @@ export const kitchenService = {
     return response.data;
   },
 
+  // Initialize shift checklist with default items
+  initializeShiftChecklist: async (force: boolean = false): Promise<any> => {
+    const response = await api.post(`/api/kitchen/checklists/shift-initialize`, {}, {
+      params: { force: force ? 'true' : 'false' }
+    });
+    return response.data;
+  },
+
   // Update daily checklist items configuration
   updateDailyChecklistItems: async (items: DailyChecklistItems): Promise<void> => {
     await api.post('/api/kitchen/food-safety/config/daily-items', { items })

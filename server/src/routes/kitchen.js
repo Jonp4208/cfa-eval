@@ -1109,6 +1109,16 @@ router.get('/cleaning/tasks/:id/completions', auth, async (req, res) => {
 })
 
 // Shift Checklist Routes
+
+// Initialize checklist with default items
+// Note: This route needs to be before the /:type routes to avoid conflicts
+router.post(
+  '/checklists/shift-initialize',
+  auth,
+  expressAsyncHandler(shiftChecklistController.initializeChecklist)
+)
+
+// Type-specific routes
 router.get(
   '/checklists/shift/:type',
   auth,

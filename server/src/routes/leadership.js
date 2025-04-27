@@ -5,6 +5,7 @@ import { StoreSubscription } from '../models/index.js'
 import LeadershipPlan from '../models/LeadershipPlan.js'
 import LeadershipProgress from '../models/LeadershipProgress.js'
 import User from '../models/User.js'
+import logger from '../utils/logger.js'
 
 const router = express.Router()
 
@@ -278,13 +279,14 @@ router.get('/analytics', auth, checkSubscription, async (req, res) => {
 
 // Get subscription status
 router.get('/subscription-status', auth, async (req, res) => {
-  console.log('Subscription status requested by user:', req.user._id, 'for store:', req.user.store);
+  // Use logger.debug instead of console.log for subscription status checks
+  logger.debug('Subscription status check');
   try {
     // Extract the store ID using the utility function
     const storeId = extractStoreId(req.user);
 
     if (!storeId) {
-      console.error('Failed to extract store ID in subscription-status endpoint');
+      logger.error('Failed to extract store ID in subscription-status endpoint');
       return res.status(400).json({ message: 'Invalid store ID' });
     }
 

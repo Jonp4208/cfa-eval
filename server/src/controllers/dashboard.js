@@ -1,4 +1,5 @@
 import { Settings, Store, User, Evaluation, Template, Disciplinary, Notification, TrainingProgress } from '../models/index.js';
+import logger from '../utils/logger.js';
 
 // Get dashboard statistics
 export const getDashboardStats = async (req, res) => {
@@ -138,7 +139,7 @@ export const getDashboardStats = async (req, res) => {
         const notificationsToCreate = [];
         const evaluationsWithNotifications = await Promise.all(upcomingEvaluations.map(async (evaluation) => {
             if (!evaluation || !evaluation.employee || !evaluation.evaluator) {
-                console.error('Invalid evaluation data:', evaluation);
+                logger.error('Invalid evaluation data:', evaluation);
                 return null;
             }
 
@@ -207,7 +208,7 @@ export const getDashboardStats = async (req, res) => {
                     notificationId: notification._id
                 };
             } catch (error) {
-                console.error('Error creating notification:', error);
+                logger.error('Error creating notification:', error);
                 return {
                     ...evaluation,
                     notificationId: null
@@ -221,7 +222,7 @@ export const getDashboardStats = async (req, res) => {
             try {
                 await Notification.insertMany(notificationsToCreate);
             } catch (error) {
-                console.error('Error saving notifications:', error);
+                logger.error('Error saving notifications:', error);
             }
         }
 
@@ -238,7 +239,7 @@ export const getDashboardStats = async (req, res) => {
             .limit(10)
             .lean();
         } catch (error) {
-            console.error('Error fetching recent activity:', error);
+            logger.error('Error fetching recent activity:', error);
         }
 
         // Get new hires count (employees hired in the last 60 days)
@@ -253,9 +254,10 @@ export const getDashboardStats = async (req, res) => {
                 startDate: { $gte: sixtyDaysAgo }
             });
 
-            console.log('New hires count:', newHiresCount);
+            // Only log at debug level
+            logger.debug(`New hires count: ${newHiresCount}`);
         } catch (error) {
-            console.error('Error fetching new hires count:', error);
+            logger.error('Error fetching new hires count:', error);
         }
 
         res.json({
@@ -277,7 +279,7 @@ export const getDashboardStats = async (req, res) => {
             }))
         });
     } catch (error) {
-        console.error('Error getting dashboard stats:', error);
+        logger.error('Error getting dashboard stats:', error);
         res.status(500).json({
             message: 'Error getting dashboard stats',
             error: error.message
@@ -307,7 +309,7 @@ export const getRecentActivity = async (req, res) => {
         const activity = await getActivityLogs(storeId);
         res.json({ activity });
     } catch (error) {
-        console.error('Recent activity error:', error);
+        logger.error('Recent activity error:', error);
         res.status(500).json({ message: 'Error fetching recent activity' });
     }
 };
@@ -376,9 +378,8 @@ export const getTeamMemberDashboard = async (req, res) => {
             return res.status(404).json({ message: 'User not found' });
         }
 
-        // Add more detailed debug logging
-        console.log('User evaluations raw:', user.evaluations);
-        console.log('Finding next evaluation for user:', user._id);
+        // Only log minimal information at debug level
+        logger.debug(`Finding next evaluation for user ${user._id}`);
 
         // Find next evaluation
         const nextEvaluation = await Evaluation.findOne({
@@ -393,17 +394,10 @@ export const getTeamMemberDashboard = async (req, res) => {
         .populate('evaluator', 'name')
         .lean();
 
-        console.log('Next evaluation found:', nextEvaluation);
+        // Log only basic information about the result
+        logger.debug(`Next evaluation found: ${nextEvaluation ? 'yes' : 'no'}`);
 
-        // Add debug logging
-        console.log('All evaluations:', user.evaluations?.map(e => ({
-            id: e._id,
-            status: e.status,
-            deleted: e.deleted,
-            scheduledDate: e.scheduledDate
-        })));
-
-        console.log('Finding last completed evaluation for user:', user._id);
+        logger.debug(`Finding last completed evaluation for user ${user._id}`);
         // Find last completed evaluation with a separate query
         const lastCompletedEvaluation = await Evaluation.findOne({
             employee: user._id,
@@ -415,7 +409,7 @@ export const getTeamMemberDashboard = async (req, res) => {
         .select('completedDate')
         .lean();
 
-        console.log('Last completed evaluation found:', lastCompletedEvaluation);
+        logger.debug(`Last completed evaluation found: ${lastCompletedEvaluation ? 'yes' : 'no'}`);
 
         // Get completed evaluations count (excluding deleted)
         const completedEvaluations = user.evaluations?.filter(e => e.status === 'completed' && !e.deleted) || [];
