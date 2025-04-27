@@ -335,6 +335,11 @@ router.post('/bulk-import', auth, upload.single('file'), async (req, res) => {
 
         for (const row of results) {
           try {
+            // Skip comment lines
+            if (row.name && row.name.startsWith('#')) {
+              continue;
+            }
+
             // Check if user already exists
             const existingUser = await User.findOne({ email: row.email });
             if (existingUser) {
@@ -345,13 +350,61 @@ router.post('/bulk-import', auth, upload.single('file'), async (req, res) => {
             // Generate a random password
             const password = User.generateRandomPassword();
 
+            // Process departments - convert from comma-separated string to array
+            let departments = [];
+            if (row.departments) {
+              // Handle quoted comma-separated values
+              departments = row.departments.split(',').map(dept => dept.trim());
+            } else if (row.department) {
+              // For backward compatibility
+              departments = [row.department.trim()];
+            } else {
+              departments = ['Everything']; // Default
+            }
+
+            // Normalize departments to match enum values
+            departments = departments.map(dept => {
+              switch(dept.toLowerCase()) {
+                case 'front counter': return 'Front Counter';
+                case 'drive thru': return 'Drive Thru';
+                case 'kitchen': return 'Kitchen';
+                case 'everything': return 'Everything';
+                case 'foh': return 'Front Counter'; // Map FOH to Front Counter for compatibility
+                case 'boh': return 'Kitchen'; // Map BOH to Kitchen for compatibility
+                default: return dept;
+              }
+            });
+
+            // Normalize position to match enum values
+            let position = row.position || 'Team Member';
+            const positionMap = {
+              'director': 'Director',
+              'team member': 'Team Member',
+              'team-member': 'Team Member',
+              'trainer': 'Trainer',
+              'leader': 'Leader',
+              'team leader': 'Leader',
+              'team-leader': 'Leader',
+              'shift leader': 'Leader',
+              'shift-leader': 'Leader',
+              'manager': 'Leader'
+            };
+            position = positionMap[position.toLowerCase()] || position;
+
+            // Determine role based on position or use provided role
+            const role = row.role || (position === 'Director' ? 'admin' : 'user');
+
+            // Normalize shift
+            const shift = row.shift ? (row.shift.toLowerCase() === 'night' ? 'night' : 'day') : 'day';
+
             // Create new user
             const user = new User({
               name: row.name,
               email: row.email,
-              department: row.department,
-              position: row.position,
-              role: row.role || 'team-member',
+              departments: departments,
+              position: position,
+              role: role,
+              shift: shift,
               status: row.status || 'active',
               password,
               store: req.user.store._id // Associate with current user's store

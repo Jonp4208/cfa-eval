@@ -240,7 +240,7 @@ export default function Users() {
     formData.append('file', file);
 
     try {
-      await api.post('/api/users/bulk-upload', formData, {
+      await api.post('/api/users/bulk-import', formData, {
         headers: {
           'Content-Type': 'multipart/form-data',
         },
@@ -271,15 +271,17 @@ export default function Users() {
   const handleDownloadTemplate = () => {
     // CSV header and example rows with comments
     const csvContent = [
-      'name,email,department,position,role,store',
-      '# Department options: foh (Front of House), boh (Back of House), leadership',
-      '# Position options: team-member, trainer, team-leader, shift-leader, manager, director',
-      '# Role options: user, evaluator, admin',
-      '# Store format: Store #{store_number}',
+      'name,email,departments,position,role,shift,status',
+      '# Departments options (comma-separated list): Front Counter, Drive Thru, Kitchen, Everything',
+      '# Position options: Team Member, Trainer, Leader, Director',
+      '# Role options: user, admin',
+      '# Shift options: day, night',
+      '# Status options: active, inactive',
       '',
-      'John Doe,john@example.com,foh,team-member,user,Store #1234',
-      'Jane Smith,jane@example.com,boh,trainer,evaluator,Store #1234',
-      'Mike Johnson,mike@example.com,leadership,manager,admin,Store #1234'
+      'John Doe,john@example.com,"Front Counter,Drive Thru",Team Member,user,day,active',
+      'Jane Smith,jane@example.com,Kitchen,Trainer,user,day,active',
+      'Mike Johnson,mike@example.com,Everything,Director,admin,day,active',
+      'Sarah Williams,sarah@example.com,"Front Counter,Drive Thru",Leader,user,night,active'
     ].join('\n');
 
     // Create blob and download
