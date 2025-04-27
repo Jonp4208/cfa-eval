@@ -332,7 +332,7 @@ export default function LandingPage() {
                 <Button
                   size="lg"
                   variant="secondary"
-                  className="relative z-20 bg-black hover:bg-gray-900 text-white font-bold transition-all duration-300 hover:scale-105 hover:shadow-lg"
+                  className="relative z-20 bg-white hover:bg-gray-100 text-[#E51636] font-bold border-2 border-[#E51636] transition-all duration-300 hover:scale-105 hover:shadow-lg"
                   onClick={() => navigate('/login')}
                 >
                   Log In
@@ -884,7 +884,7 @@ export default function LandingPage() {
                 <Button
                   size="lg"
                   variant="outline"
-                  className="bg-[#DD0031]/90 border-white text-white hover:bg-[#DD0031] transition-all duration-300 h-14 text-lg"
+                  className="bg-[#E51636] border-white text-white hover:bg-[#E51636]/90 transition-all duration-300 h-14 text-lg"
                   onClick={() => navigate('/login')}
                 >
                   Log In
