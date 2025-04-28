@@ -6,6 +6,17 @@ import LeadershipPlan from '../models/LeadershipPlan.js'
 import LeadershipProgress from '../models/LeadershipProgress.js'
 import User from '../models/User.js'
 import logger from '../utils/logger.js'
+import { isManager, isDirector } from '../middleware/roles.js'
+import {
+  getLeadership360Evaluations,
+  getLeadership360Evaluation,
+  createLeadership360Evaluation,
+  addEvaluators,
+  submitEvaluationResponse,
+  markAsReviewed,
+  deleteLeadership360Evaluation,
+  getEvaluationSummary
+} from '../controllers/leadership360.js'
 
 const router = express.Router()
 
@@ -276,6 +287,16 @@ router.get('/analytics', auth, checkSubscription, async (req, res) => {
     res.status(500).json({ message: error.message })
   }
 })
+
+// 360 Leadership Evaluation Routes
+router.get('/360-evaluations', auth, getLeadership360Evaluations);
+router.get('/360-evaluations/:evaluationId', auth, getLeadership360Evaluation);
+router.post('/360-evaluations', auth, isManager, createLeadership360Evaluation);
+router.post('/360-evaluations/:evaluationId/evaluators', auth, isManager, addEvaluators);
+router.post('/360-evaluations/:evaluationId/submit', auth, submitEvaluationResponse);
+router.post('/360-evaluations/:evaluationId/review', auth, markAsReviewed);
+router.delete('/360-evaluations/:evaluationId', auth, deleteLeadership360Evaluation);
+router.get('/360-evaluations/:evaluationId/summary', auth, getEvaluationSummary);
 
 // Get subscription status
 router.get('/subscription-status', auth, async (req, res) => {

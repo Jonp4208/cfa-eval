@@ -12,7 +12,8 @@ import {
   AlertCircle,
   Shield,
   RefreshCw,
-  CheckCircle
+  CheckCircle,
+  UserCheck
 } from 'lucide-react'
 import { useAuth } from '@/contexts/AuthContext'
 import { useTranslation } from '@/contexts/TranslationContext'
@@ -121,6 +122,19 @@ export default function Leadership() {
               >
                 <CheckCircle className="w-4 h-4" />
                 My Plans
+              </Button>
+
+              <Button
+                variant={isActive('360-evaluations') ? 'default' : 'ghost'}
+                onClick={() => handleNavigate('360-evaluations')}
+                className={`flex items-center gap-2 px-4 py-2 whitespace-nowrap ${
+                  isActive('360-evaluations')
+                    ? 'bg-red-50 text-[#E51636] hover:bg-red-100'
+                    : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900'
+                }`}
+              >
+                <UserCheck className="w-4 h-4" />
+                360° Evaluations
               </Button>
 
               <Button

@@ -17,6 +17,7 @@ import trainingCategorySchema from './schemas/trainingCategorySchema.js';
 import trainingPlanSchema from './schemas/trainingPlanSchema.js';
 import storeSubscriptionSchema from './schemas/storeSubscriptionSchema.js';
 import shiftSetupSchema from './schemas/shiftSetupSchema.js';
+import leadership360Schema from './schemas/leadership360Schema.js';
 
 // Model registry to prevent duplicate compilation
 const models = {};
@@ -128,6 +129,10 @@ export const modelDefinitions = {
   ShiftSetup: {
     schema: shiftSetupSchema,
     collection: 'shiftsetups'
+  },
+  Leadership360: {
+    schema: leadership360Schema,
+    collection: 'leadership360evaluations'
   }
 };
 

@@ -52,6 +52,11 @@ import TrainingProgramDetails from '@/pages/Leadership/TrainingProgramDetails';
 import Assessments from '@/pages/Leadership/Assessments';
 import AssessmentDetails from '@/pages/Leadership/AssessmentDetails';
 import Subscription from '@/pages/Leadership/Subscription';
+import Evaluations360 from '@/pages/Leadership/Evaluations360';
+import New360Evaluation from '@/pages/Leadership/Evaluations360/New360Evaluation';
+import AddEvaluators from '@/pages/Leadership/Evaluations360/AddEvaluators';
+import View360Evaluation from '@/pages/Leadership/Evaluations360/View360Evaluation';
+import Evaluators from '@/pages/Leadership/Evaluations360/Evaluators';
 import Checklists from '@/pages/Kitchen/Checklists';
 import WasteTracker from '@/pages/Kitchen/WasteTracker';
 
@@ -226,6 +231,11 @@ export default function AppRoutes() {
         <Route path="training-programs/:id" element={<TrainingProgramDetails />} />
         <Route path="assessments" element={<Assessments />} />
         <Route path="assessments/:id" element={<AssessmentDetails />} />
+        <Route path="360-evaluations" element={<Evaluations360 />} />
+        <Route path="360-evaluations/new" element={<New360Evaluation />} />
+        <Route path="360-evaluations/:evaluationId" element={<View360Evaluation />} />
+        <Route path="360-evaluations/:evaluationId/evaluators" element={<Evaluators />} />
+        <Route path="360-evaluations/:evaluationId/evaluators/add" element={<AddEvaluators />} />
         <Route path="subscription" element={<Subscription />} />
         <Route path="*" element={<Navigate to="/leadership" replace />} />
       </Route>

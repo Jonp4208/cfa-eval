@@ -12,6 +12,7 @@ import disciplinarySchema from './schemas/disciplinarySchema.js';
 import gradingScaleSchema from './schemas/gradingScaleSchema.js';
 import goalSchema from './schemas/goalSchema.js';
 import trainingProgressSchema from './schemas/trainingProgressSchema.js';
+import leadership360Schema from './schemas/leadership360Schema.js';
 
 export function initializeModels() {
   // Register all models defined in modelDefinitions
@@ -21,4 +22,4 @@ export function initializeModels() {
 
   // Return all registered models
   return getRegisteredModels();
-} 
+}
