@@ -82,6 +82,22 @@
   }
 }
 
+/* Custom xs breakpoint for extra small screens */
+@media (min-width: 480px) {
+  .xs\:inline {
+    display: inline;
+  }
+  .xs\:hidden {
+    display: none;
+  }
+  .xs\:flex {
+    display: flex;
+  }
+  .xs\:block {
+    display: block;
+  }
+}
+
 /* Hide scrollbars by default */
 .custom-scrollbar {
   -ms-overflow-style: none;  /* IE and Edge */

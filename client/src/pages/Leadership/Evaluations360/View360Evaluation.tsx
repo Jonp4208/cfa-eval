@@ -386,71 +386,78 @@ export default function View360Evaluation() {
   }
 
   return (
-    <div className="space-y-6 px-4 md:px-6 pb-6">
-      <div className="flex items-center justify-between">
+    <div className="space-y-4 px-3 md:px-6 pb-6">
+      {/* Mobile-optimized header */}
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
         <div className="flex items-center">
           <Button
             variant="ghost"
             onClick={() => navigate('/leadership/360-evaluations')}
-            className="mr-4"
+            className="mr-2 p-2 h-auto"
+            size="sm"
           >
-            <ArrowLeft className="h-4 w-4 mr-2" />
-            Back
+            <ArrowLeft className="h-4 w-4" />
+            <span className="sr-only sm:not-sr-only sm:ml-2">Back</span>
           </Button>
-          <h2 className="text-2xl font-bold tracking-tight">360° Leadership Evaluation</h2>
+          <h2 className="text-xl sm:text-2xl font-bold tracking-tight">360° Leadership Evaluation</h2>
         </div>
-        <div className="flex gap-2">
+        <div className="flex gap-2 mt-1 sm:mt-0">
           {evaluation.status === 'pending_evaluators' && isInitiator && (
             <Button
               onClick={() => navigate(`/leadership/360-evaluations/${evaluationId}/evaluators`)}
-              className="bg-[#E51636] hover:bg-[#C41230] text-white"
+              className="bg-[#E51636] hover:bg-[#C41230] text-white text-sm h-9"
+              size="sm"
             >
-              <UserPlus className="h-4 w-4 mr-2" />
-              Add Evaluators
+              <UserPlus className="h-4 w-4 mr-1 sm:mr-2" />
+              <span className="hidden xs:inline">Add Evaluators</span>
+              <span className="xs:hidden">Add</span>
             </Button>
           )}
           {canDelete && (
             <Button
               variant="outline"
               onClick={() => setShowDeleteDialog(true)}
-              className="text-red-500 hover:text-red-700 hover:bg-red-50 border-red-200"
+              className="text-red-500 hover:text-red-700 hover:bg-red-50 border-red-200 text-sm h-9"
+              size="sm"
             >
-              <Trash2 className="h-4 w-4 mr-2" />
+              <Trash2 className="h-4 w-4 mr-1 sm:mr-2" />
               Delete
             </Button>
           )}
         </div>
       </div>
 
-      <Card>
-        <CardHeader>
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-3">
+      <Card className="overflow-hidden">
+        <CardHeader className="pb-3 sm:pb-6">
+          <div className="flex flex-col sm:flex-row sm:items-center gap-2">
+            <div className="flex items-center gap-2">
               {getStatusIcon(evaluation.status)}
-              <CardTitle>
+              <CardTitle className="text-lg sm:text-xl">
                 Evaluation for {evaluation.subject.name}
               </CardTitle>
+            </div>
+            <div className="ml-0 sm:ml-auto">
               {getStatusBadge(evaluation.status)}
             </div>
           </div>
-          <CardDescription>
+          <CardDescription className="mt-1">
             {evaluation.template.name}
           </CardDescription>
         </CardHeader>
-        <CardContent>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
+        <CardContent className="pt-0 px-4 sm:px-6">
+          <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 sm:gap-6 mb-4 sm:mb-6">
             <div>
-              <p className="text-sm text-muted-foreground">Initiated By</p>
-              <p className="font-medium">{evaluation.initiator.name}</p>
+              <p className="text-xs sm:text-sm text-muted-foreground">Initiated By</p>
+              <p className="font-medium text-sm sm:text-base truncate">{evaluation.initiator.name}</p>
             </div>
             <div>
-              <p className="text-sm text-muted-foreground">Due Date</p>
-              <p className="font-medium">
+              <p className="text-xs sm:text-sm text-muted-foreground">Due Date</p>
+              <p className="font-medium text-sm sm:text-base">
                 {format(new Date(evaluation.dueDate), 'MMM d, yyyy')}
               </p>
             </div>
-            <div>
-              <p className="text-sm text-muted-foreground">Completion</p>
+            <div className="col-span-2 sm:col-span-1 mt-1 sm:mt-0">
+              <p className="text-xs sm:text-sm text-muted-foreground">Completion</p>
               <div className="flex items-center gap-2">
                 <Progress value={getCompletionRate(evaluation)} className="h-2 flex-1" />
                 <span className="text-sm font-medium">
@@ -461,23 +468,26 @@ export default function View360Evaluation() {
           </div>
 
           <Tabs value={activeTab} onValueChange={setActiveTab}>
-            <TabsList className="mb-4">
-              <TabsTrigger value="overview">Overview</TabsTrigger>
+            <TabsList className="mb-4 w-full justify-start sm:justify-start overflow-x-auto">
+              <TabsTrigger value="overview" className="flex-1 sm:flex-none">Overview</TabsTrigger>
               {userEvaluation && (
-                <TabsTrigger value="provide-feedback">Provide Feedback</TabsTrigger>
+                <TabsTrigger value="provide-feedback" className="flex-1 sm:flex-none">
+                  <span className="hidden xs:inline">Provide Feedback</span>
+                  <span className="xs:hidden">Feedback</span>
+                </TabsTrigger>
               )}
               {['completed', 'reviewed'].includes(evaluation.status) && (
-                <TabsTrigger value="results">Results</TabsTrigger>
+                <TabsTrigger value="results" className="flex-1 sm:flex-none">Results</TabsTrigger>
               )}
             </TabsList>
 
             <TabsContent value="overview" className="space-y-6">
               <div className="border rounded-md">
-                <div className="p-4 bg-gray-50 border-b">
-                  <h4 className="font-medium">Evaluators ({evaluation.evaluations.length})</h4>
+                <div className="p-3 sm:p-4 bg-gray-50 border-b">
+                  <h4 className="font-medium text-sm sm:text-base">Evaluators ({evaluation.evaluations.length})</h4>
                 </div>
                 {evaluation.evaluations.length === 0 ? (
-                  <div className="p-4 text-center text-muted-foreground">
+                  <div className="p-3 sm:p-4 text-center text-muted-foreground text-sm">
                     No evaluators added yet
                   </div>
                 ) : (
@@ -488,18 +498,22 @@ export default function View360Evaluation() {
                         const showName = !evaluator.isComplete || isInitiator || user?.position === 'Director';
 
                         return (
-                          <div key={evaluator._id} className="p-4 flex justify-between items-center">
-                            <div className="flex items-center gap-2">
-                              <Users className="h-4 w-4 text-gray-500" />
-                              {showName ? (
-                                <span>{evaluator.evaluator?.name || 'Unknown'}</span>
-                              ) : (
-                                <span className="flex items-center">
-                                  <Shield className="h-3 w-3 mr-1 text-green-600" />
-                                  <span className="text-muted-foreground">Anonymous</span>
-                                </span>
-                              )}
-                              {getRelationshipBadge(evaluator.relationship)}
+                          <div key={evaluator._id} className="p-3 sm:p-4 flex flex-col sm:flex-row sm:justify-between sm:items-center gap-2">
+                            <div className="flex flex-wrap items-center gap-2">
+                              <div className="flex items-center">
+                                <Users className="h-4 w-4 text-gray-500 mr-1.5" />
+                                {showName ? (
+                                  <span className="text-sm sm:text-base">{evaluator.evaluator?.name || 'Unknown'}</span>
+                                ) : (
+                                  <span className="flex items-center">
+                                    <Shield className="h-3 w-3 mr-1 text-green-600" />
+                                    <span className="text-muted-foreground text-sm">Anonymous</span>
+                                  </span>
+                                )}
+                              </div>
+                              <div className="ml-0 sm:ml-1">
+                                {getRelationshipBadge(evaluator.relationship)}
+                              </div>
                             </div>
                             <div>
                               {evaluator.isComplete ? (
@@ -518,7 +532,7 @@ export default function View360Evaluation() {
                         );
                       })
                     ) : (
-                      <div className="p-4 text-center text-muted-foreground">
+                      <div className="p-3 sm:p-4 text-center text-muted-foreground text-sm">
                         No evaluators found
                       </div>
                     )}
