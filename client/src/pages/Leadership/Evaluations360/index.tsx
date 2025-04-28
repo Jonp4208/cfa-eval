@@ -15,7 +15,7 @@ import {
   ChevronRight,
   BarChart2
 } from 'lucide-react';
-import { TestButton } from './TestButton';
+
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
 import { format } from 'date-fns';
@@ -137,7 +137,6 @@ export default function Evaluations360() {
             >
               <Plus className="mr-2 h-4 w-4" /> New 360° Evaluation
             </Button>
-            <TestButton />
           </div>
         )}
       </div>
