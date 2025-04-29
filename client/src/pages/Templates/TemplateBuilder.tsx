@@ -4,8 +4,8 @@ import { useNavigate, useParams } from 'react-router-dom';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Plus, GripVertical, Trash2, Save, ArrowLeft } from 'lucide-react';
 import { useToast } from '@/components/ui/use-toast';
-import { 
-  DndContext, 
+import {
+  DndContext,
   closestCenter,
   KeyboardSensor,
   PointerSensor,
@@ -30,7 +30,7 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
 import { useQuery } from '@tanstack/react-query';
-import PageHeader from '@/components/PageHeader';
+// Removed PageHeader import
 
 
 interface Section {
@@ -109,7 +109,7 @@ export default function TemplateBuilder() {
 
   // Get default scale
   const defaultScale = gradingScales?.find((scale: GradingScale) => scale.isDefault);
-  
+
   const [formData, setFormData] = useState<TemplateFormData>({
     name: '',
     description: '',
@@ -181,7 +181,7 @@ export default function TemplateBuilder() {
         try {
           const response = await api.get(`/api/templates/${id}`);
           const template = response.data.template;
-          
+
           // Transform the data to match the form structure
           setFormData({
             name: template.name,
@@ -219,13 +219,13 @@ export default function TemplateBuilder() {
   }, [id, navigate, toast, defaultScale]);
 
   useEffect(() => {
-    console.log('Auth check effect running', { 
-      isLoading, 
-      user, 
+    console.log('Auth check effect running', {
+      isLoading,
+      user,
       userStore: user?.store,
       storeType: user?.store ? typeof user.store : 'undefined'
     });
-    
+
     if (!isLoading) {
       if (!user) {
         console.log('No user found, redirecting to login');
@@ -273,7 +273,7 @@ export default function TemplateBuilder() {
   const addSection = () => {
     const newSectionId = Date.now().toString();
     const newCriterionId = `${Date.now()}-1`;
-    
+
     setFormData(prev => ({
       ...prev,
       sections: [
@@ -501,7 +501,7 @@ export default function TemplateBuilder() {
           duration: 5000,
         });
       }
-      
+
       navigate('/templates');
     } catch (error: any) {
       console.error('Error saving template:', error);
@@ -511,12 +511,12 @@ export default function TemplateBuilder() {
 
   const handleDragEnd = (event: DragEndEvent) => {
     const { active, over } = event;
-    
+
     if (over && active.id !== over.id) {
       setFormData((prev) => {
         const oldIndex = prev.sections.findIndex((s) => s.id === active.id);
         const newIndex = prev.sections.findIndex((s) => s.id === over.id);
-        
+
         return {
           ...prev,
           sections: arrayMove(prev.sections, oldIndex, newIndex),
@@ -598,7 +598,7 @@ export default function TemplateBuilder() {
             <Trash2 className="h-4 w-4" />
           </Button>
         </div>
-        
+
         <div className="space-y-4">
           <div>
             <Label htmlFor={`criterion-${criterion.id}-name`}>Name</Label>
@@ -609,7 +609,7 @@ export default function TemplateBuilder() {
               className="mt-1"
             />
           </div>
-          
+
           <div>
             <Label htmlFor={`criterion-${criterion.id}-description`}>Description</Label>
             <Textarea
@@ -619,7 +619,7 @@ export default function TemplateBuilder() {
               className="mt-1"
             />
           </div>
-          
+
           <div>
             <Label htmlFor={`criterion-${criterion.id}-scale`}>Grading Scale</Label>
             <select
@@ -635,12 +635,12 @@ export default function TemplateBuilder() {
               ))}
             </select>
           </div>
-          
+
           <div className="flex items-center space-x-2">
             <Checkbox
               id={`criterion-${criterion.id}-required`}
               checked={criterion.required}
-              onCheckedChange={(checked) => 
+              onCheckedChange={(checked) =>
                 handleCriterionChange(sectionId, criterion.id, 'required', checked)
               }
             />
@@ -654,20 +654,26 @@ export default function TemplateBuilder() {
   return (
     <div className="min-h-screen bg-[#F4F4F4] p-4 md:p-6">
       <div className="max-w-7xl mx-auto space-y-6">
-        <PageHeader
-          title={isEditMode ? 'Edit Template' : 'Create Template'}
-          subtitle="Design evaluation templates for your team"
-          actions={
-            <Button 
-              variant="secondary"
-              className="bg-white/10 hover:bg-white/20 text-white border-0 h-12 px-6 flex-1 md:flex-none"
-              onClick={() => navigate('/templates')}
-            >
-              <ArrowLeft className="w-5 h-5 mr-2" />
-              Back to Templates
-            </Button>
-          }
-        />
+        {/* Header Section */}
+        <div className="bg-gradient-to-r from-[#E51636] to-[#DD0031] rounded-[20px] p-4 sm:p-8 text-white shadow-xl relative overflow-hidden">
+          <div className="absolute inset-0 bg-[url('/pattern.png')] opacity-10" />
+          <div className="relative">
+            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 sm:gap-6">
+              <div>
+                <h1 className="text-2xl sm:text-3xl md:text-4xl font-bold">{isEditMode ? 'Edit Template' : 'Create Template'}</h1>
+                <p className="text-white/80 mt-1 sm:mt-2 text-base sm:text-lg">Design evaluation templates for your team</p>
+              </div>
+              <Button
+                variant="secondary"
+                className="bg-white/10 hover:bg-white/20 text-white border-0 h-10 sm:h-12 px-4 sm:px-6 flex-none"
+                onClick={() => navigate('/templates')}
+              >
+                <ArrowLeft className="w-4 h-4 sm:w-5 sm:h-5 mr-2" />
+                Back
+              </Button>
+            </div>
+          </div>
+        </div>
 
         {/* Main Content */}
         <Card className="bg-white rounded-[20px] shadow-md">

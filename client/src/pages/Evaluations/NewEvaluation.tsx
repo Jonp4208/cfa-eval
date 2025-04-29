@@ -5,10 +5,10 @@ import { useNavigate } from 'react-router-dom';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { useToast } from '@/components/ui/use-toast';
-import { 
-  Users, 
-  FileText, 
-  Calendar, 
+import {
+  Users,
+  FileText,
+  Calendar,
   ClipboardList,
   ChevronRight,
   ChevronLeft,
@@ -121,9 +121,9 @@ export default function NewEvaluation() {
     // Create a Map for faster evaluation lookup
     const pendingEvalMap = new Map(
       evaluations
-        .filter((evaluation: any) => 
-          evaluation.status !== 'completed' && 
-          evaluation.employee && 
+        .filter((evaluation: any) =>
+          evaluation.status !== 'completed' &&
+          evaluation.employee &&
           evaluation.employee._id
         )
         .map((evaluation: any) => [evaluation.employee._id, evaluation])
@@ -166,7 +166,7 @@ export default function NewEvaluation() {
     const filtered = employees.filter((emp: Employee) => {
       // Exclude current user (manager) from the list
       if (emp._id === user?._id) return false;
-      
+
       // Check if current user is the employee's manager or is a director
       const isDirector = user?.position === 'Director';
       const reportsToCurrentUser = typeof emp.manager === 'string'
@@ -174,7 +174,7 @@ export default function NewEvaluation() {
         : emp.manager?._id === user?._id;
 
       // For directors, check the toggle setting
-      const shouldInclude = isDirector 
+      const shouldInclude = isDirector
         ? (showAllEmployees || reportsToCurrentUser)
         : reportsToCurrentUser;
 
@@ -208,7 +208,13 @@ export default function NewEvaluation() {
     queryKey: ['templates'],
     queryFn: async () => {
       const response = await api.get('/api/templates');
-      return response.data.templates;
+      // Filter out the Leadership 360 Evaluation template and any templates with the Leadership tag
+      const filteredTemplates = response.data.templates.filter(
+        (template: Template) =>
+          template.name !== 'Leadership 360 Evaluation' &&
+          !(template.tags && template.tags.includes('Leadership'))
+      );
+      return filteredTemplates;
     }
   });
 
@@ -236,7 +242,7 @@ export default function NewEvaluation() {
     const reportsToCurrentUser = typeof employee.manager === 'string'
       ? employee.manager === user?._id
       : employee.manager?._id === user?._id;
-    
+
     if (!employee.pendingEvaluation && (isDirector || reportsToCurrentUser)) {
       setSelectedEmployees(prev => {
         const isSelected = prev.find(emp => emp._id === employee._id);
@@ -299,7 +305,7 @@ export default function NewEvaluation() {
                 <h1 className="text-2xl sm:text-3xl md:text-4xl font-bold">Create Evaluation</h1>
                 <p className="text-white/80 mt-1 sm:mt-2 text-base sm:text-lg">Schedule performance evaluations</p>
               </div>
-              <Button 
+              <Button
                 variant="secondary"
                 className="bg-white/10 hover:bg-white/20 text-white border-0 h-10 sm:h-12 px-4 sm:px-6 flex-none"
                 onClick={() => navigate('/evaluations')}
@@ -319,8 +325,8 @@ export default function NewEvaluation() {
                 <div key={step} className="flex items-center flex-1">
                   <div className={`flex flex-col items-center ${index + 1 === currentStep ? 'text-[#E51636]' : 'text-[#27251F]/40'}`}>
                     <div className={`w-8 h-8 sm:w-10 sm:h-10 rounded-full flex items-center justify-center border-2 ${
-                      index + 1 === currentStep 
-                        ? 'border-[#E51636] bg-[#E51636]/10' 
+                      index + 1 === currentStep
+                        ? 'border-[#E51636] bg-[#E51636]/10'
                         : index + 1 < currentStep
                         ? 'border-[#E51636] bg-[#E51636]/10'
                         : 'border-gray-200'
@@ -408,8 +414,8 @@ export default function NewEvaluation() {
                         onClick={() => setSelectedDepartment(dept)}
                         size="sm"
                         className={`rounded-full px-4 whitespace-nowrap flex-shrink-0 h-9 sm:h-10 ${
-                          selectedDepartment === dept 
-                            ? 'bg-[#E51636] hover:bg-[#E51636]/90 text-white' 
+                          selectedDepartment === dept
+                            ? 'bg-[#E51636] hover:bg-[#E51636]/90 text-white'
                             : 'hover:bg-[#E51636]/10 hover:text-[#E51636]'
                         }`}
                       >
@@ -442,7 +448,7 @@ export default function NewEvaluation() {
                           .map(([department, departmentEmployees]) => {
                             const availableEmployees = departmentEmployees.filter(emp => !emp.pendingEvaluation);
                             if (availableEmployees.length === 0) return null;
-                            
+
                             return (
                               <div key={department} className="space-y-3">
                                 <div className="flex items-center justify-between">
@@ -523,7 +529,7 @@ export default function NewEvaluation() {
                           .map(([department, departmentEmployees]) => {
                             const pendingEmployees = departmentEmployees.filter(emp => emp.pendingEvaluation);
                             if (pendingEmployees.length === 0) return null;
-                            
+
                             return (
                               <div key={department} className="space-y-3">
                                 <h3 className="font-medium text-[#27251F]">{department}</h3>
@@ -580,8 +586,8 @@ export default function NewEvaluation() {
                         onClick={() => setSelectedTag('All')}
                         size="sm"
                         className={`rounded-full px-4 h-9 sm:h-10 ${
-                          selectedTag === 'All' 
-                            ? 'bg-[#E51636] hover:bg-[#E51636]/90 text-white' 
+                          selectedTag === 'All'
+                            ? 'bg-[#E51636] hover:bg-[#E51636]/90 text-white'
                             : 'hover:bg-[#E51636]/10 hover:text-[#E51636]'
                         }`}
                       >
@@ -594,8 +600,8 @@ export default function NewEvaluation() {
                           onClick={() => setSelectedTag(tag)}
                           size="sm"
                           className={`rounded-full px-4 h-9 sm:h-10 ${
-                            selectedTag === tag 
-                              ? 'bg-[#E51636] hover:bg-[#E51636]/90 text-white' 
+                            selectedTag === tag
+                              ? 'bg-[#E51636] hover:bg-[#E51636]/90 text-white'
                               : 'hover:bg-[#E51636]/10 hover:text-[#E51636]'
                           }`}
                         >
@@ -613,7 +619,7 @@ export default function NewEvaluation() {
                 ) : (
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
                     {(templates || [])
-                      .filter((template: Template) => 
+                      .filter((template: Template) =>
                         selectedTag === 'All' || (template.tags && template.tags.includes(selectedTag))
                       )
                       .map((template: Template) => (
@@ -621,8 +627,8 @@ export default function NewEvaluation() {
                           key={`template-${template._id || template.id}`}
                           onClick={() => setSelectedTemplate(template)}
                           className={`cursor-pointer transition-all rounded-[20px] hover:shadow-md touch-manipulation
-                            ${selectedTemplate?.id === (template.id || template._id) 
-                              ? 'ring-2 ring-[#E51636] bg-[#E51636]/10' 
+                            ${selectedTemplate?.id === (template.id || template._id)
+                              ? 'ring-2 ring-[#E51636] bg-[#E51636]/10'
                               : 'hover:border-[#E51636]/20'
                             }`}
                         >
@@ -630,16 +636,16 @@ export default function NewEvaluation() {
                             <div className="flex items-center justify-between mb-2">
                               <h3 className="font-medium text-[#27251F] text-sm sm:text-base">{template.name}</h3>
                               <FileText className={`w-4 h-4 sm:w-5 sm:h-5 ${
-                                selectedTemplate?.id === (template.id || template._id) 
-                                  ? 'text-[#E51636]' 
+                                selectedTemplate?.id === (template.id || template._id)
+                                  ? 'text-[#E51636]'
                                   : 'text-[#27251F]/40'
                               }`} />
                             </div>
                             <div className="flex flex-wrap gap-1 sm:gap-2 mb-2 sm:mb-3">
                               {(template.tags || []).map(tag => (
-                                <Badge 
-                                  key={tag} 
-                                  variant="secondary" 
+                                <Badge
+                                  key={tag}
+                                  variant="secondary"
                                   className="text-xs bg-[#27251F]/10 text-[#27251F]/60"
                                 >
                                   {tag}

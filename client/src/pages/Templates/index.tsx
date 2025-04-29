@@ -10,10 +10,10 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
-import { 
-  Plus, 
-  Search, 
-  FileText, 
+import {
+  Plus,
+  Search,
+  FileText,
   Clock,
   Edit,
   Trash2,
@@ -126,7 +126,7 @@ export default function Templates() {
   };
 
   const filteredTemplates = templates
-    ?.filter((template: Template) => 
+    ?.filter((template: Template) =>
       template.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
       template.description.toLowerCase().includes(searchQuery.toLowerCase())
     )
@@ -299,7 +299,7 @@ export default function Templates() {
                   </div>
                   <h3 className="text-xl font-semibold mb-2 text-[#27251F]">No templates found</h3>
                   <p className="text-[#27251F]/60 mb-6">Create your first evaluation template to get started.</p>
-                  <Link 
+                  <Link
                     to="/templates/new"
                     className="inline-flex items-center gap-2"
                   >
@@ -312,7 +312,11 @@ export default function Templates() {
               </Card>
             ) : (
               filteredTemplates?.map((template: Template) => (
-                <Card key={template.id} className="bg-white rounded-[20px] shadow-md hover:shadow-lg transition-shadow">
+                <Card
+                  key={template.id}
+                  className="bg-white rounded-[20px] shadow-md hover:shadow-lg transition-shadow cursor-pointer"
+                  onClick={() => navigate(`/templates/${template.id}/edit`)}
+                >
                   <CardContent className="p-6">
                     <div className="flex justify-between items-start mb-4">
                       <div>
@@ -326,7 +330,10 @@ export default function Templates() {
                               <Button
                                 variant="ghost"
                                 size="icon"
-                                onClick={() => handleCopy(template.id)}
+                                onClick={(e) => {
+                                  e.stopPropagation(); // Prevent card click
+                                  handleCopy(template.id);
+                                }}
                                 className="h-8 w-8"
                               >
                                 <Copy className="h-4 w-4" />
@@ -343,7 +350,10 @@ export default function Templates() {
                               <Button
                                 variant="ghost"
                                 size="icon"
-                                onClick={() => handleDelete(template)}
+                                onClick={(e) => {
+                                  e.stopPropagation(); // Prevent card click
+                                  handleDelete(template);
+                                }}
                                 className="h-8 w-8"
                               >
                                 <Trash2 className="h-4 w-4 text-red-500" />
@@ -389,6 +399,20 @@ export default function Templates() {
                         </div>
                         <Progress value={(template.criteriaCount / 20) * 100} className="h-1" />
                       </div>
+                    </div>
+                    <div className="mt-4 pt-4 border-t border-gray-100 flex justify-end">
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        className="text-[#E51636] border-[#E51636]/20 hover:bg-[#E51636]/10"
+                        onClick={(e) => {
+                          e.stopPropagation(); // Prevent card click
+                          navigate(`/templates/${template.id}/edit`);
+                        }}
+                      >
+                        <Edit className="h-4 w-4 mr-2" />
+                        View & Edit
+                      </Button>
                     </div>
                   </CardContent>
                 </Card>
