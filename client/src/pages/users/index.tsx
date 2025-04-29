@@ -14,7 +14,7 @@ import {
   SelectGroup,
   SelectLabel,
 } from "@/components/ui/select";
-import { User, Plus, Search, Upload, Download, Edit, Mail, Trash2, Shield, ArrowLeft } from 'lucide-react';
+import { User, Plus, Search, Upload, Download, Edit, Mail, Trash2, Shield, ArrowLeft, ChevronDown, ChevronRight } from 'lucide-react';
 import { useToast } from '@/components/ui/use-toast';
 import {
   AlertDialog,
@@ -34,6 +34,7 @@ import {
 } from "@/components/ui/tooltip";
 import api from '@/lib/axios';
 import AddUserDialog from './components/AddUserDialog';
+import ManagerTeamDialog from './components/ManagerTeamDialog';
 import { useAuth } from '@/contexts/AuthContext';
 import PageHeader from '@/components/PageHeader';
 import { cn } from '@/lib/utils';
@@ -72,7 +73,10 @@ export default function Users() {
   const [showAddDialog, setShowAddDialog] = useState(false);
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
   const [showEmailResetDialog, setShowEmailResetDialog] = useState(false);
+  const [showManagerTeamDialog, setShowManagerTeamDialog] = useState(false);
   const [selectedUser, setSelectedUser] = useState<UserType | null>(null);
+  const [selectedManager, setSelectedManager] = useState<UserType | null>(null);
+  const [isManagerSectionExpanded, setIsManagerSectionExpanded] = useState(false);
   const [currentPage, setCurrentPage] = useState(1);
   const usersPerPage = 10;
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -200,6 +204,19 @@ export default function Users() {
 
   console.log('Filtered users:', filteredUsers);
 
+  // Calculate the number of team members per manager
+  const managerTeamSizes = users?.reduce((acc, user) => {
+    if (user.manager?._id) {
+      acc[user.manager._id] = (acc[user.manager._id] || 0) + 1;
+    }
+    return acc;
+  }, {} as Record<string, number>) || {};
+
+  // Function to get team members for a specific manager
+  const getTeamMembers = (managerId: string) => {
+    return users?.filter(user => user.manager?._id === managerId) || [];
+  };
+
   // Sort users based on selected field
   const sortedUsers = [...(filteredUsers || [])].sort((a, b) => {
     if (sortBy === 'name') {
@@ -207,6 +224,17 @@ export default function Users() {
     }
     if (sortBy === 'department') {
       return (a.departments?.[0] || '').localeCompare(b.departments?.[0] || '');
+    }
+    if (sortBy === 'position') {
+      return (a.position || '').localeCompare(b.position || '');
+    }
+    if (sortBy === 'role') {
+      return (a.role || '').localeCompare(b.role || '');
+    }
+    if (sortBy === 'manager') {
+      const managerNameA = a.manager?.name || '';
+      const managerNameB = b.manager?.name || '';
+      return managerNameA.localeCompare(managerNameB);
     }
     return 0;
   });
@@ -364,7 +392,7 @@ export default function Users() {
         )}
 
         {/* Info Cards */}
-        <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-4 gap-2 sm:gap-3 md:gap-4">
+        <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-5 gap-2 sm:gap-3 md:gap-4">
           <Card className="bg-white rounded-[16px] sm:rounded-[20px] shadow-md hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1">
             <CardContent className="p-3 sm:p-4 md:p-6">
               <div className="flex items-center justify-between">
@@ -431,7 +459,97 @@ export default function Users() {
               </div>
             </CardContent>
           </Card>
+
+          <Card className="bg-white rounded-[16px] sm:rounded-[20px] shadow-md hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1">
+            <CardContent className="p-3 sm:p-4 md:p-6">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-xs sm:text-sm font-medium text-[#27251F]/60">Managers</p>
+                  <h3 className="text-xl sm:text-2xl md:text-3xl font-bold mt-1 sm:mt-2 text-[#27251F]">
+                    {users?.filter(user =>
+                      user.position === 'Director' ||
+                      user.position === 'Leader'
+                    ).length || 0}
+                  </h3>
+                </div>
+                <div className="h-10 w-10 sm:h-12 sm:w-12 md:h-14 md:w-14 bg-red-50 rounded-xl sm:rounded-2xl flex items-center justify-center">
+                  <Shield className="h-5 w-5 sm:h-6 sm:w-6 md:h-7 md:w-7 text-red-600" />
+                </div>
+              </div>
+            </CardContent>
+          </Card>
         </div>
+
+        {/* Managers Section */}
+        <Card className="bg-white rounded-[16px] sm:rounded-[20px] shadow-md">
+          <CardContent className="p-3 sm:p-4 md:p-6">
+            <div
+              className="flex items-center justify-between cursor-pointer hover:bg-gray-50 p-2 rounded-lg transition-colors duration-200"
+              onClick={() => setIsManagerSectionExpanded(!isManagerSectionExpanded)}
+            >
+              <h3 className="text-lg font-semibold text-[#27251F] flex items-center">
+                {isManagerSectionExpanded ?
+                  <ChevronDown className="h-5 w-5 mr-2 text-[#E51636]" /> :
+                  <ChevronRight className="h-5 w-5 mr-2 text-[#E51636]" />
+                }
+                Team Managers
+              </h3>
+              <div className="flex items-center">
+                <div className="text-sm text-gray-500 mr-2">
+                  {users?.filter(user =>
+                    (user.position === 'Director' || user.position === 'Leader')
+                  ).length || 0} managers
+                </div>
+                <span className="text-xs text-[#E51636]">
+                  {isManagerSectionExpanded ? 'Click to collapse' : 'Click to expand'}
+                </span>
+              </div>
+            </div>
+
+            <div className={`grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3 overflow-hidden transition-all duration-300 ease-in-out ${
+              isManagerSectionExpanded ? 'max-h-[1000px] mt-4 opacity-100' : 'max-h-0 opacity-0'
+            }`}>
+              {users?.filter(user =>
+                (user.position === 'Director' || user.position === 'Leader')
+              ).sort((a, b) => (managerTeamSizes[b._id] || 0) - (managerTeamSizes[a._id] || 0)).map(manager => (
+                <div
+                  key={manager._id}
+                  className={`flex items-center p-3 border border-gray-100 rounded-xl hover:bg-gray-50 transition-all duration-200 cursor-pointer ${
+                    managerTeamSizes[manager._id] ? '' : 'opacity-80'
+                  }`}
+                  onClick={(e) => {
+                    e.stopPropagation(); // Prevent triggering the parent's onClick
+                    setSelectedManager(manager);
+                    setShowManagerTeamDialog(true);
+                  }}
+                >
+                  <div className="h-10 w-10 rounded-full bg-[#E51636]/10 flex items-center justify-center mr-3">
+                    <User className="h-5 w-5 text-[#E51636]" />
+                  </div>
+                  <div>
+                    <div className="text-sm font-medium text-gray-900 hover:text-[#E51636] transition-colors">
+                      {manager.name}
+                    </div>
+                    <div className="flex items-center mt-1">
+                      {managerTeamSizes[manager._id] ? (
+                        <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
+                          {managerTeamSizes[manager._id]} team members
+                        </span>
+                      ) : (
+                        <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-gray-100 text-gray-500">
+                          No team members
+                        </span>
+                      )}
+                      <span className="ml-2 inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-gray-100 text-gray-800">
+                        {manager.position}
+                      </span>
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </CardContent>
+        </Card>
 
         {/* Filters Section */}
         <Card className="bg-white rounded-[16px] sm:rounded-[20px] shadow-md">
@@ -525,8 +643,34 @@ export default function Users() {
 
                     <div>
                       <div className="text-xs text-gray-500 mb-1">Reports to</div>
-                      <div className="text-sm font-medium text-gray-900">{user.manager?.name || 'N/A'}</div>
+                      <div className="text-sm font-medium text-gray-900">
+                        {user.manager ? (
+                          <button
+                            className="text-gray-900 hover:text-[#E51636] transition-colors font-medium"
+                            onClick={() => {
+                              const manager = users?.find(u => u._id === user.manager?._id);
+                              if (manager) {
+                                setSelectedManager(manager);
+                                setShowManagerTeamDialog(true);
+                              }
+                            }}
+                          >
+                            {user.manager.name}
+                          </button>
+                        ) : 'N/A'}
+                      </div>
                     </div>
+
+                    {user._id && managerTeamSizes[user._id] > 0 && (
+                      <div>
+                        <div className="text-xs text-gray-500 mb-1">Team Size</div>
+                        <div className="text-sm font-medium text-gray-900">
+                          <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
+                            {managerTeamSizes[user._id]} members
+                          </span>
+                        </div>
+                      </div>
+                    )}
 
                     <div>
                       <div className="text-xs text-gray-500 mb-1">Departments</div>
@@ -651,7 +795,27 @@ export default function Users() {
                         {user.role === 'admin' ? 'Admin' : 'User'}
                       </span>
                     </div>
-                    <div className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{user.manager?.name || 'N/A'}</div>
+                    <div className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                      {user.manager ? (
+                        <button
+                          className="text-gray-600 hover:text-[#E51636] transition-colors font-medium"
+                          onClick={() => {
+                            const manager = users?.find(u => u._id === user.manager?._id);
+                            if (manager) {
+                              setSelectedManager(manager);
+                              setShowManagerTeamDialog(true);
+                            }
+                          }}
+                        >
+                          {user.manager.name}
+                        </button>
+                      ) : 'N/A'}
+                      {user._id && managerTeamSizes[user._id] > 0 && (
+                        <span className="ml-2 inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
+                          Team: {managerTeamSizes[user._id]}
+                        </span>
+                      )}
+                    </div>
                     <div className="px-6 py-4 whitespace-nowrap text-sm font-medium">
                       <div className="flex items-center justify-end gap-2">
                         <TooltipProvider>
@@ -821,6 +985,19 @@ export default function Users() {
         }}
         user={selectedUser}
       />
+
+      {/* Manager Team Dialog */}
+      {selectedManager && (
+        <ManagerTeamDialog
+          open={showManagerTeamDialog}
+          onOpenChange={(open) => {
+            setShowManagerTeamDialog(open);
+            if (!open) setSelectedManager(null);
+          }}
+          manager={selectedManager}
+          teamMembers={getTeamMembers(selectedManager._id)}
+        />
+      )}
 
       {/* Delete Confirmation Dialog */}
       <AlertDialog open={showDeleteDialog} onOpenChange={setShowDeleteDialog}>
