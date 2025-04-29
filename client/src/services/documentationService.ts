@@ -141,6 +141,12 @@ const documentationService = {
     await api.delete(`/api/documentation/${id}`);
   },
 
+  // Delete document attachment
+  deleteDocumentAttachment: async (documentId: string, attachmentId: string): Promise<{ message: string }> => {
+    const response = await api.delete(`/api/documentation/${documentId}/document/${attachmentId}`);
+    return response.data;
+  },
+
   // Get all documentation and disciplinary records combined
   getAllCombinedRecords: async (): Promise<CombinedRecord[]> => {
     try {

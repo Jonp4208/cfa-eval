@@ -8,6 +8,7 @@ import {
   deleteDocument,
   addFollowUp,
   addDocumentAttachment,
+  deleteDocumentAttachment,
   getEmployeeDocuments,
   getAllDocumentRecords,
   acknowledgeDocument,
@@ -46,6 +47,7 @@ router.get('/combined', getAllCombinedRecords);
 router.post('/:id/acknowledge', acknowledgeDocument);
 router.post('/:id/follow-up', addFollowUp);
 router.post('/:id/document', addDocumentAttachment);
+router.delete('/:id/document/:attachmentId', deleteDocumentAttachment);
 router.post('/:id/send-email', sendDocumentEmail);
 router.post('/:id/notify-unacknowledged', sendUnacknowledgedNotification);
 router.post('/:id/follow-up/:followUpId/complete', completeFollowUp);

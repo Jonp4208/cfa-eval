@@ -6,6 +6,7 @@ import { handleAsync } from '../utils/errorHandler.js';
 import { ApiError } from '../utils/ApiError.js';
 import { sendEmail } from '../utils/email.js';
 import logger from '../utils/logger.js';
+import { deleteFileFromS3 } from '../config/s3.js';
 
 // Get all documentation and disciplinary records combined
 export const getAllCombinedRecords = handleAsync(async (req, res) => {
@@ -799,6 +800,65 @@ export const deleteDocument = handleAsync(async (req, res) => {
   }
 
   res.status(204).send();
+});
+
+// Delete a document attachment
+export const deleteDocumentAttachment = handleAsync(async (req, res) => {
+  const { id, attachmentId } = req.params;
+
+  // Find the document
+  const document = await Documentation.findById(id);
+  if (!document) {
+    return res.status(404).json({ message: 'Document not found' });
+  }
+
+  // Find the attachment
+  const attachment = document.documents.id(attachmentId);
+  if (!attachment) {
+    return res.status(404).json({ message: 'Attachment not found' });
+  }
+
+  // Extract the S3 key from the URL
+  // The key is the filename part after the last slash and before any query parameters
+  let key = null;
+  try {
+    const url = new URL(attachment.url);
+    const pathname = url.pathname;
+    // The key is typically the last part of the path
+    const matches = pathname.match(/\/([^\/]+)$/);
+    if (matches && matches[1]) {
+      key = decodeURIComponent(matches[1]);
+    } else {
+      // If we can't extract the key from the pathname, try to get it from the query parameters
+      // AWS S3 signed URLs often have the key in the X-Amz-SignedHeaders parameter
+      key = url.searchParams.get('X-Amz-SignedHeaders');
+    }
+  } catch (error) {
+    logger.error('Error parsing attachment URL:', error);
+    // If we can't parse the URL, try to extract the key from the raw URL string
+    // The key is typically after the bucket name in the URL
+    const urlParts = attachment.url.split('/');
+    key = urlParts[urlParts.length - 1].split('?')[0]; // Get the last part before any query params
+  }
+
+  // Try to delete the file from S3 if we have a key
+  if (key) {
+    try {
+      await deleteFileFromS3(key);
+      logger.info(`Successfully deleted file from S3: ${key}`);
+    } catch (error) {
+      logger.error(`Error deleting file from S3: ${key}`, error);
+      // Continue with removing the attachment from the document even if S3 deletion fails
+    }
+  } else {
+    logger.warn(`Could not extract S3 key from URL: ${attachment.url}`);
+  }
+
+  // Remove the attachment from the document
+  document.documents.pull(attachmentId);
+  await document.save();
+
+  res.json({ message: 'Document attachment deleted successfully' });
 });
 
 // Get all documents for a specific employee

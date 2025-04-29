@@ -2,6 +2,16 @@ import React, { useState, useEffect } from 'react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
+import {
   AlertTriangle,
   Clock,
   FileText,
@@ -19,7 +29,8 @@ import {
   FileCheck,
   FilePlus,
   Upload,
-  Bell
+  Bell,
+  Trash2
 } from 'lucide-react';
 import { useNavigate, useParams } from 'react-router-dom';
 import documentationService, { DocumentationRecord } from '@/services/documentationService';
@@ -40,6 +51,8 @@ export default function DocumentDetail() {
   const [showFollowUpDialog, setShowFollowUpDialog] = useState(false);
   const [showDocumentUploadDialog, setShowDocumentUploadDialog] = useState(false);
   const [selectedFollowUpId, setSelectedFollowUpId] = useState<string>();
+  const [showDeleteDialog, setShowDeleteDialog] = useState(false);
+  const [attachmentToDelete, setAttachmentToDelete] = useState<{ id: string, name: string } | null>(null);
 
   const isEmployee = user?._id === document?.employee?._id;
   const isManager = user?._id === document?.supervisor?._id || user?.role === 'admin';
@@ -112,6 +125,27 @@ export default function DocumentDetail() {
     } catch (error) {
       toast.error('Failed to send reminder');
       console.error('Error sending reminder:', error);
+    }
+  };
+
+  const handleDeleteAttachment = (attachmentId: string, attachmentName: string) => {
+    setAttachmentToDelete({ id: attachmentId, name: attachmentName });
+    setShowDeleteDialog(true);
+  };
+
+  const confirmDeleteAttachment = async () => {
+    if (!attachmentToDelete) return;
+
+    try {
+      await documentationService.deleteDocumentAttachment(id as string, attachmentToDelete.id);
+      toast.success('Document deleted successfully');
+      loadDocument(); // Reload the document to update the UI
+    } catch (error) {
+      toast.error('Failed to delete document');
+      console.error('Error deleting document:', error);
+    } finally {
+      setShowDeleteDialog(false);
+      setAttachmentToDelete(null);
     }
   };
 
@@ -528,14 +562,25 @@ export default function DocumentDetail() {
                             </p>
                           </div>
                         </div>
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          onClick={() => window.open(doc.url, '_blank')}
-                        >
-                          <Eye className="w-4 h-4 mr-1" />
-                          View
-                        </Button>
+                        <div className="flex gap-2">
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => window.open(doc.url, '_blank')}
+                          >
+                            <Eye className="w-4 h-4 mr-1" />
+                            View
+                          </Button>
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => handleDeleteAttachment(doc._id, doc.name)}
+                            className="text-red-500 hover:text-red-700 hover:bg-red-50"
+                          >
+                            <Trash2 className="w-4 h-4 mr-1" />
+                            Delete
+                          </Button>
+                        </div>
                       </div>
                     ))}
 
@@ -589,6 +634,26 @@ export default function DocumentDetail() {
           onClose={() => setShowDocumentUploadDialog(false)}
           onUpload={loadDocument}
         />
+
+        <AlertDialog open={showDeleteDialog} onOpenChange={setShowDeleteDialog}>
+          <AlertDialogContent>
+            <AlertDialogHeader>
+              <AlertDialogTitle>Delete Document</AlertDialogTitle>
+              <AlertDialogDescription>
+                Are you sure you want to delete "{attachmentToDelete?.name}"? This action cannot be undone.
+              </AlertDialogDescription>
+            </AlertDialogHeader>
+            <AlertDialogFooter>
+              <AlertDialogCancel>Cancel</AlertDialogCancel>
+              <AlertDialogAction
+                onClick={confirmDeleteAttachment}
+                className="bg-red-600 hover:bg-red-700 text-white"
+              >
+                Delete
+              </AlertDialogAction>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialog>
       </div>
     </div>
   );

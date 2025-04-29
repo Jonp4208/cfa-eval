@@ -1,6 +1,6 @@
 import { S3Client } from '@aws-sdk/client-s3';
 import { getSignedUrl } from '@aws-sdk/s3-request-presigner';
-import { PutObjectCommand, GetObjectCommand } from '@aws-sdk/client-s3';
+import { PutObjectCommand, GetObjectCommand, DeleteObjectCommand } from '@aws-sdk/client-s3';
 import dotenv from 'dotenv';
 import logger from '../utils/logger.js';
 
@@ -26,10 +26,10 @@ const testS3Config = async () => {
       Bucket: bucketName,
       Key: 'test-connection.txt'
     });
-    
+
     // Generate a signed URL (this will fail if credentials are invalid)
     await getSignedUrl(s3Client, command, { expiresIn: 60 });
-    
+
     logger.info('AWS S3 configuration is valid');
     return true;
   } catch (error) {
@@ -43,7 +43,7 @@ const uploadFileToS3 = async (fileBuffer, fileName, mimeType) => {
   try {
     // Create a unique file name to prevent overwriting
     const uniqueFileName = `${Date.now()}-${fileName}`;
-    
+
     // Set up the upload parameters
     const params = {
       Bucket: bucketName,
@@ -51,20 +51,20 @@ const uploadFileToS3 = async (fileBuffer, fileName, mimeType) => {
       Body: fileBuffer,
       ContentType: mimeType
     };
-    
+
     // Upload the file
     const command = new PutObjectCommand(params);
     await s3Client.send(command);
-    
+
     // Generate a signed URL for the uploaded file
     const getCommand = new GetObjectCommand({
       Bucket: bucketName,
       Key: uniqueFileName
     });
-    
+
     // Create a URL that expires in 1 week (604800 seconds)
     const url = await getSignedUrl(s3Client, getCommand, { expiresIn: 604800 });
-    
+
     return {
       url,
       key: uniqueFileName
@@ -75,4 +75,29 @@ const uploadFileToS3 = async (fileBuffer, fileName, mimeType) => {
   }
 };
 
-export { s3Client, uploadFileToS3, testS3Config };
+// Delete a file from S3
+const deleteFileFromS3 = async (key) => {
+  try {
+    if (!key) {
+      throw new Error('File key is required to delete from S3');
+    }
+
+    // Set up the delete parameters
+    const params = {
+      Bucket: bucketName,
+      Key: key
+    };
+
+    // Delete the file
+    const command = new DeleteObjectCommand(params);
+    await s3Client.send(command);
+
+    logger.info(`File deleted successfully from S3: ${key}`);
+    return true;
+  } catch (error) {
+    logger.error('Error deleting file from S3:', error);
+    throw error;
+  }
+};
+
+export { s3Client, uploadFileToS3, deleteFileFromS3, testS3Config };

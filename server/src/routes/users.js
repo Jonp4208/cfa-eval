@@ -13,7 +13,7 @@ import { updateUserMetrics, updateUser } from '../controllers/users.js';
 import Evaluation from '../models/Evaluation.js';
 import GradingScale from '../models/GradingScale.js';
 import { sendEmail } from '../utils/email.js';
-import { uploadFileToS3 } from '../config/s3.js';
+import { uploadFileToS3, deleteFileFromS3 } from '../config/s3.js';
 
 dotenv.config();
 
@@ -724,6 +724,27 @@ router.post('/upload', auth, upload.single('file'), async (req, res) => {
   } catch (error) {
     console.error('File upload error:', error);
     res.status(500).json({ message: 'Error uploading file', error: error.message });
+  }
+});
+
+// File delete endpoint
+router.delete('/files/:key', auth, async (req, res) => {
+  try {
+    const { key } = req.params;
+
+    if (!key) {
+      return res.status(400).json({ message: 'File key is required' });
+    }
+
+    console.log('Deleting file from S3:', key);
+
+    // Delete file from S3
+    await deleteFileFromS3(key);
+
+    res.json({ message: 'File deleted successfully' });
+  } catch (error) {
+    console.error('File deletion error:', error);
+    res.status(500).json({ message: 'Error deleting file', error: error.message });
   }
 });
 
