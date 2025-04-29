@@ -15,6 +15,13 @@ i18n
     fallbackLng: 'en',
     interpolation: {
       escapeValue: false
+    },
+    detection: {
+      // Disable automatic language detection since we're handling it in TranslationContext
+      order: [], 
+      // Alternatively, if you want to keep detection but prevent conflicts:
+      // order: ['localStorage', 'navigator'],
+      // caches: ['localStorage']
     }
   })
 

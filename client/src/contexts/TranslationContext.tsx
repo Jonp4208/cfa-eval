@@ -21,8 +21,20 @@ const TranslationContext = createContext<TranslationContextType | undefined>(und
 export const TranslationProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   // Initialize language from localStorage or default to 'en'
   const getInitialLanguage = (): Language => {
-    const savedLanguage = localStorage.getItem(LANGUAGE_STORAGE_KEY)
-    return (savedLanguage === 'en' || savedLanguage === 'es') ? savedLanguage as Language : 'en'
+    // First check localStorage
+    const savedLanguage = localStorage.getItem(LANGUAGE_STORAGE_KEY);
+    if (savedLanguage === 'en' || savedLanguage === 'es') {
+      return savedLanguage as Language;
+    }
+    
+    // Then check browser language
+    const browserLang = navigator.language.toLowerCase();
+    if (browserLang.startsWith('es')) {
+      return 'es';
+    }
+    
+    // Default to English
+    return 'en';
   }
 
   const [language, setLanguageState] = useState<Language>(getInitialLanguage())
