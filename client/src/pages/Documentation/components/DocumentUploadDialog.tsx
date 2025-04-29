@@ -64,8 +64,12 @@ export default function DocumentUploadDialog({ documentId, isOpen, onClose, onUp
       const formData = new FormData();
       formData.append('file', file);
 
-      // Upload the file
-      const uploadResponse = await api.post('/api/users/upload', formData);
+      // Upload the file with multipart/form-data content type
+      const uploadResponse = await api.post('/api/users/upload', formData, {
+        headers: {
+          'Content-Type': 'multipart/form-data'
+        }
+      });
       const fileData = uploadResponse.data;
 
       // Add the document to the documentation record

@@ -6,10 +6,14 @@ import dotenv from 'dotenv';
 import multer from 'multer';
 import { parse } from 'csv-parse';
 import { Readable } from 'stream';
+import fs from 'fs';
+import path from 'path';
+import { fileURLToPath } from 'url';
 import { updateUserMetrics, updateUser } from '../controllers/users.js';
 import Evaluation from '../models/Evaluation.js';
 import GradingScale from '../models/GradingScale.js';
 import { sendEmail } from '../utils/email.js';
+import { uploadFileToS3 } from '../config/s3.js';
 
 dotenv.config();
 
@@ -24,16 +28,9 @@ const transporter = nodemailer.createTransport({
   }
 });
 
-// Configure multer for file upload with storage
-const storage = multer.diskStorage({
-  destination: function (req, file, cb) {
-    cb(null, 'uploads/') // Make sure this directory exists
-  },
-  filename: function (req, file, cb) {
-    const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1E9)
-    cb(null, uniqueSuffix + '-' + file.originalname)
-  }
-})
+// Configure multer to use memory storage instead of disk storage
+// This will store the file in memory so we can upload it to AWS S3
+const storage = multer.memoryStorage()
 
 const upload = multer({
   storage: storage,
@@ -706,15 +703,27 @@ router.post('/upload', auth, upload.single('file'), async (req, res) => {
       return res.status(400).json({ message: 'No file uploaded' });
     }
 
+    console.log('File received, uploading to S3:', req.file.originalname);
+
+    // Upload file to S3
+    const result = await uploadFileToS3(
+      req.file.buffer,
+      req.file.originalname,
+      req.file.mimetype
+    );
+
+    console.log('File uploaded to S3:', result);
+
     // Return the file details
     res.json({
-      url: `/uploads/${req.file.filename}`,
+      url: result.url,
       fileName: req.file.originalname,
-      fileType: req.file.mimetype
+      fileType: req.file.mimetype,
+      key: result.key
     });
   } catch (error) {
     console.error('File upload error:', error);
-    res.status(500).json({ message: 'Error uploading file' });
+    res.status(500).json({ message: 'Error uploading file', error: error.message });
   }
 });
 

@@ -3,8 +3,10 @@ import cors from 'cors';
 import mongoose from 'mongoose';
 import dotenv from 'dotenv';
 import path from 'path';
+import fs from 'fs';
 import { fileURLToPath } from 'url';
 import logger from './utils/logger.js';
+import { testS3Config } from './config/s3.js';
 
 // Routes
 import authRoutes from './routes/auth.js';
@@ -49,6 +51,13 @@ dotenv.config();
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
+
+// Ensure uploads directory exists
+const uploadsDir = path.join(__dirname, '../uploads');
+if (!fs.existsSync(uploadsDir)) {
+  logger.info(`Creating uploads directory at ${uploadsDir}`);
+  fs.mkdirSync(uploadsDir, { recursive: true });
+}
 
 const app = express();
 

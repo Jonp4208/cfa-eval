@@ -5,6 +5,7 @@ import * as Sentry from "@sentry/node";
 import { initCronJobs } from './services/cronService.js';
 import { verifyEmailConfig } from './utils/email.js';
 import { connectDB } from './config/db.js';
+import { testS3Config } from './config/s3.js';
 import app from './app.js';
 import logger from './utils/logger.js';
 
@@ -23,6 +24,12 @@ const port = process.env.PORT || 5000;
 const emailConfigValid = await verifyEmailConfig();
 if (!emailConfigValid) {
   logger.warn('Email configuration is invalid. Email notifications will not work.');
+}
+
+// Verify S3 configuration on startup
+const s3ConfigValid = await testS3Config();
+if (!s3ConfigValid) {
+  logger.warn('AWS S3 configuration is invalid. File uploads will not work.');
 }
 
 // Connect to MongoDB

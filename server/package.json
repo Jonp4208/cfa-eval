@@ -15,9 +15,12 @@
     "cleanup-shifts": "node cleanup-shifts.js"
   },
   "dependencies": {
+    "@aws-sdk/client-s3": "^3.798.0",
+    "@aws-sdk/s3-request-presigner": "^3.798.0",
     "@sentry/node": "^7.120.3",
     "bcrypt": "^5.1.1",
     "bcryptjs": "^2.4.3",
+    "cloudinary": "^2.6.0",
     "cors": "^2.8.5",
     "csv-parse": "^5.6.0",
     "date-fns": "^4.1.0",
