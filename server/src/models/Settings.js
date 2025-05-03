@@ -79,7 +79,12 @@ const settingsSchema = new mongoose.Schema({
   storeNumber: String,
   storeAddress: String,
   storePhone: String,
-  storeEmail: String
+  storeEmail: String,
+  wasteItemPrices: {
+    type: Map,
+    of: Number,
+    default: {}
+  }
 }, {
   timestamps: true,
   toJSON: { virtuals: true },

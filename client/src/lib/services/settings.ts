@@ -117,5 +117,23 @@ export const settingsService = {
     } catch (error) {
       throw error;
     }
+  },
+
+  // Waste item prices
+  getWasteItemPrices: async (): Promise<Record<string, number>> => {
+    try {
+      const response = await api.get('/api/settings/waste-item-prices')
+      return response.data
+    } catch (error) {
+      throw error
+    }
+  },
+  updateWasteItemPrices: async (prices: Record<string, number>): Promise<Record<string, number>> => {
+    try {
+      const response = await api.patch('/api/settings/waste-item-prices', { prices })
+      return response.data
+    } catch (error) {
+      throw error
+    }
   }
 };

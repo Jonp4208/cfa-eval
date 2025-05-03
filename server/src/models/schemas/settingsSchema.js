@@ -100,6 +100,15 @@ const settingsSchema = new mongoose.Schema({
       type: Number,
       default: 3600 // 1 hour in seconds
     }
+  },
+  storeEmail: {
+    type: String
+  },
+  // Add wasteItemPrices for per-store item prices
+  wasteItemPrices: {
+    type: Map,
+    of: Number,
+    default: {}
   }
 }, {
   timestamps: true

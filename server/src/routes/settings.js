@@ -5,7 +5,9 @@ import {
   updateSettings,
   resetSettings,
   getStoreInfo,
-  updateStoreInfo
+  updateStoreInfo,
+  getWasteItemPrices,
+  updateWasteItemPrices
 } from '../controllers/settings.js';
 
 const router = express.Router();
@@ -25,5 +27,9 @@ router.post('/reset', resetSettings);
 // Store routes
 router.get('/store', getStoreInfo);
 router.patch('/store', updateStoreInfo);
+
+// Waste item prices routes
+router.get('/waste-item-prices', getWasteItemPrices);
+router.patch('/waste-item-prices', updateWasteItemPrices);
 
 export default router; 

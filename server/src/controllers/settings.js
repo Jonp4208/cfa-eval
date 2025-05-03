@@ -353,3 +353,56 @@ export const updateStoreInfo = async (req, res) => {
     res.status(500).json({ error: error.message });
   }
 };
+
+// Get waste item prices for the current store
+export const getWasteItemPrices = async (req, res) => {
+  try {
+    if (!req.user?.store) {
+      return res.status(400).json({ error: 'Store ID is required' })
+    }
+    const settings = await Settings.findOne({ store: req.user.store })
+    if (!settings) {
+      return res.status(404).json({ error: 'Settings not found for this store' })
+    }
+    // Convert Map to plain object
+    const prices = Object.fromEntries(settings.wasteItemPrices || [])
+    res.json(prices)
+  } catch (error) {
+    handleError(error, ErrorCategory.SETTINGS, {
+      storeId: req.user?.store,
+      function: 'getWasteItemPrices'
+    })
+    res.status(500).json({ error: error.message })
+  }
+}
+
+// Update waste item prices for the current store
+export const updateWasteItemPrices = async (req, res) => {
+  try {
+    if (!req.user?.store) {
+      return res.status(400).json({ error: 'Store ID is required' })
+    }
+    const isAdmin = req.user.role === 'admin'
+    if (!isAdmin) {
+      return res.status(403).json({ error: 'Only administrators can update item prices' })
+    }
+    const { prices } = req.body
+    if (!prices || typeof prices !== 'object') {
+      return res.status(400).json({ error: 'Invalid prices object' })
+    }
+    let settings = await Settings.findOne({ store: req.user.store })
+    if (!settings) {
+      settings = new Settings({ store: req.user.store })
+    }
+    // Set prices (overwrite all)
+    settings.wasteItemPrices = prices
+    await settings.save()
+    res.json(Object.fromEntries(settings.wasteItemPrices))
+  } catch (error) {
+    handleError(error, ErrorCategory.SETTINGS, {
+      storeId: req.user?.store,
+      function: 'updateWasteItemPrices'
+    })
+    res.status(500).json({ error: error.message })
+  }
+}
