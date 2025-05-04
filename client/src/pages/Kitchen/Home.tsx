@@ -475,7 +475,7 @@ export default function KitchenHome() {
     path: string
   }) => (
     <Card
-      className="bg-white rounded-[16px] shadow-sm hover:shadow-md transition-all duration-300 cursor-pointer overflow-hidden group border-0"
+      className="bg-white rounded-[16px] shadow-md hover:shadow-lg transition-all duration-300 cursor-pointer overflow-hidden group border border-gray-200"
       onClick={() => navigate(path)}
     >
       <div className="p-3 sm:p-5">
@@ -581,7 +581,7 @@ export default function KitchenHome() {
     }
 
     return (
-      <div className="flex flex-col rounded-xl shadow-sm border-0 p-3 sm:p-4 bg-white">
+      <div className="flex flex-col rounded-xl shadow-md border border-gray-200 p-3 sm:p-4 bg-white">
         <div className="flex items-center justify-between mb-1">
           <div className={`h-7 w-7 sm:h-8 sm:w-8 rounded-full ${getVariantClasses()} flex items-center justify-center`}>
             <Icon className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
@@ -617,7 +617,7 @@ export default function KitchenHome() {
   return (
     <div className="space-y-4 sm:space-y-5">
       {/* Smart Overview Section - Mobile optimized */}
-      <Card className="bg-gradient-to-br from-white to-gray-50 rounded-[16px] shadow-sm border-0 overflow-hidden">
+      <Card className="bg-gradient-to-br from-white to-gray-50 rounded-[16px] shadow-md border border-gray-200 overflow-hidden">
         <div className="p-4 sm:p-5">
           {/* Greeting and overview */}
           <div className="flex flex-col sm:flex-row sm:items-center justify-between mb-4 sm:mb-5">
