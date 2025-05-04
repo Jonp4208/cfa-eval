@@ -40,13 +40,15 @@ const Kitchen: React.FC = () => {
           subtitle={t('kitchen.subtitle')}
           icon={<ChefHat className="h-5 w-5" />}
           actions={
-            <button
-              onClick={() => navigate('/dashboard')}
-              className="flex-1 sm:flex-none bg-white hover:bg-white/90 text-[#E51636] flex items-center justify-center gap-2 py-2 px-3 sm:px-4 rounded-xl transition-all duration-300 text-sm font-medium shadow-md border border-gray-200 hover:shadow-lg"
-            >
-              <LayoutDashboard className="w-4 h-4" />
-              <span>{t('kitchen.backHome')}</span>
-            </button>
+            <div className="w-full sm:w-auto">
+              <button
+                onClick={() => navigate('/dashboard')}
+                className="w-full sm:w-auto bg-white hover:bg-white/90 text-[#E51636] flex items-center justify-center gap-2 py-2 px-3 sm:px-4 rounded-xl transition-all duration-300 text-sm font-medium shadow-sm border border-white/20"
+              >
+                <LayoutDashboard className="w-4 h-4" />
+                <span>{t('kitchen.backHome')}</span>
+              </button>
+            </div>
           }
         />
 

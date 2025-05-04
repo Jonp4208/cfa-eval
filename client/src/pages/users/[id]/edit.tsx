@@ -156,7 +156,7 @@ export default function EditUser() {
 
   if (isLoading) {
     return (
-      <div className="min-h-screen bg-[#F4F4F4] p-4 md:p-6">
+      <div className="min-h-screen p-4 md:p-6">
         <Card className="bg-white rounded-[20px] shadow-md">
           <CardContent className="p-6">
             Loading team member data...
@@ -167,7 +167,7 @@ export default function EditUser() {
   }
 
   return (
-    <div className="min-h-screen bg-[#F4F4F4] p-4 md:p-6">
+    <div className="min-h-screen p-4 md:p-6">
       <div className="max-w-7xl mx-auto space-y-6">
         {/* Header Section */}
         <div className="bg-gradient-to-r from-[#E51636] to-[#DD0031] rounded-[20px] p-8 text-white shadow-xl relative overflow-hidden">

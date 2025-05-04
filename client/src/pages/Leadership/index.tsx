@@ -51,7 +51,7 @@ export default function Leadership() {
   }
 
   return (
-    <div className="min-h-screen bg-[#F4F4F4] p-4 md:p-6">
+    <div className="min-h-screen p-4 md:p-6">
       <div className="max-w-7xl mx-auto space-y-4 sm:space-y-6">
         {/* Replace Hero Section with PageHeader */}
         <PageHeader
@@ -59,14 +59,15 @@ export default function Leadership() {
           subtitle={`CFA #${user?.store?.storeNumber}`}
           icon={<GraduationCap className="h-5 w-5" />}
           actions={
-            <Button
-              variant="ghost"
-              className="bg-white hover:bg-white/90 text-[#E51636] flex items-center justify-center gap-2 py-2 px-3 sm:px-4 rounded-xl transition-all duration-300 text-sm font-medium shadow-sm border border-white/20"
-              onClick={() => navigate('/dashboard')}
-            >
-              <LayoutDashboard className="w-4 h-4 mr-1" />
-              <span>Back Home</span>
-            </Button>
+            <div className="w-full sm:w-auto">
+              <button
+                onClick={() => navigate('/dashboard')}
+                className="w-full sm:w-auto bg-white hover:bg-white/90 text-[#E51636] flex items-center justify-center gap-2 py-2 px-3 sm:px-4 rounded-xl transition-all duration-300 text-sm font-medium shadow-sm border border-white/20"
+              >
+                <LayoutDashboard className="w-4 h-4" />
+                <span>Back Home</span>
+              </button>
+            </div>
           }
         />
 

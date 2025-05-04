@@ -290,6 +290,10 @@ export const updateWeeklySetup = async (req, res) => {
       return res.status(404).json({ message: 'Weekly setup not found' });
     }
 
+    // Initialize mergedUploadedSchedules at the beginning of the function
+    // to ensure it's available throughout the entire function
+    let mergedUploadedSchedules = existingSetup.uploadedSchedules || [];
+
     // Check if user has permission to edit this setup
     // Allow if: user is the creator OR user is a Leader/Director
     const isCreator = existingSetup.user.toString() === req.user.userId.toString();
@@ -315,32 +319,29 @@ export const updateWeeklySetup = async (req, res) => {
       }
     }
 
-    // Log the incoming weekSchedule data for debugging
+    // Log basic info without the full structure
     console.log('Updating weekly setup with ID:', id);
-    console.log('Existing weekSchedule structure:', JSON.stringify(existingSetup.weekSchedule, null, 2));
-    console.log('New weekSchedule structure:', JSON.stringify(weekSchedule, null, 2));
+    console.log('Updating setup:', existingSetup.name);
+
+    // Only log the structure size, not the content
+    if (weekSchedule) {
+      console.log('New weekSchedule days:', Object.keys(weekSchedule));
+      console.log('New weekSchedule size:', JSON.stringify(weekSchedule).length, 'bytes');
+    }
 
     // Check if the weekSchedule has the expected structure
     if (weekSchedule) {
       // Log the days in the weekSchedule
       console.log('Days in weekSchedule:', Object.keys(weekSchedule));
 
-      // Check each day for timeBlocks
+      // Check each day for timeBlocks - log only counts, not details
       Object.keys(weekSchedule).forEach(day => {
         if (weekSchedule[day] && weekSchedule[day].timeBlocks) {
-          console.log(`Day ${day} has ${weekSchedule[day].timeBlocks.length} time blocks`);
+          const timeBlockCount = weekSchedule[day].timeBlocks.length;
+          const positionCount = weekSchedule[day].timeBlocks.reduce((total, block) =>
+            total + (block.positions ? block.positions.length : 0), 0);
 
-          // Check each time block for positions
-          weekSchedule[day].timeBlocks.forEach((block, index) => {
-            console.log(`Time block ${index} (${block.start}-${block.end}) has ${block.positions ? block.positions.length : 0} positions`);
-
-            // Log position details
-            if (block.positions && block.positions.length > 0) {
-              block.positions.forEach(position => {
-                console.log(`Position: ${position.name}, Category: ${position.category}, Section: ${position.section}`);
-              });
-            }
-          });
+          console.log(`Day ${day}: ${timeBlockCount} time blocks, ${positionCount} total positions`);
         } else {
           console.log(`Day ${day} has no time blocks or is not properly structured`);
         }
@@ -352,10 +353,39 @@ export const updateWeeklySetup = async (req, res) => {
     // Create a deep copy of the existing setup's weekSchedule to ensure we don't lose any data
     let mergedWeekSchedule = JSON.parse(JSON.stringify(existingSetup.weekSchedule || {}));
 
+    // Check if this is an optimized payload (only contains one day's full data)
+    const isOptimizedPayload = weekSchedule && Object.keys(weekSchedule).some(day =>
+      weekSchedule[day].timeBlocks && weekSchedule[day].timeBlocks.length > 0 &&
+      Object.keys(weekSchedule).some(otherDay =>
+        otherDay !== day && (!weekSchedule[otherDay].timeBlocks || weekSchedule[otherDay].timeBlocks.length === 0)
+      )
+    );
+
+    console.log(`Detected ${isOptimizedPayload ? 'optimized' : 'full'} payload`);
+
+    // If optimized payload, log which days have data and which are empty
+    if (isOptimizedPayload && weekSchedule) {
+      const daysWithData = Object.keys(weekSchedule).filter(day =>
+        weekSchedule[day].timeBlocks && weekSchedule[day].timeBlocks.length > 0
+      );
+      const emptyDays = Object.keys(weekSchedule).filter(day =>
+        !weekSchedule[day].timeBlocks || weekSchedule[day].timeBlocks.length === 0
+      );
+
+      console.log(`Optimized payload contains data for: ${daysWithData.join(', ')}`);
+      console.log(`Skipping empty days: ${emptyDays.join(', ')}`);
+    }
+
     // If weekSchedule is provided in the request, merge it with the existing weekSchedule
     if (weekSchedule) {
       // For each day in the new weekSchedule
       Object.keys(weekSchedule).forEach(day => {
+        // Skip days with empty timeBlocks in optimized payload
+        if (isOptimizedPayload && (!weekSchedule[day].timeBlocks || weekSchedule[day].timeBlocks.length === 0)) {
+          // Don't log each skipped day individually
+          return;
+        }
+
         if (!mergedWeekSchedule[day]) {
           // If the day doesn't exist in the merged schedule, add it
           mergedWeekSchedule[day] = weekSchedule[day];
@@ -385,6 +415,10 @@ export const updateWeeklySetup = async (req, res) => {
 
               // For each position in the new time block
               if (newTimeBlock.positions) {
+                // Count positions to add and update
+                let positionsToAdd = 0;
+                let positionsToUpdate = 0;
+
                 newTimeBlock.positions.forEach(newPosition => {
                   // Find if this position already exists in the merged time block
                   const existingPositionIndex = mergedWeekSchedule[day].timeBlocks[existingTimeBlockIndex].positions.findIndex(
@@ -394,13 +428,37 @@ export const updateWeeklySetup = async (req, res) => {
                   if (existingPositionIndex === -1) {
                     // If the position doesn't exist, add it
                     mergedWeekSchedule[day].timeBlocks[existingTimeBlockIndex].positions.push(newPosition);
-                    console.log(`Added new position ${newPosition.name} to time block ${newTimeBlock.id} on ${day}`);
+                    positionsToAdd++;
                   } else {
                     // If the position exists, update it
                     mergedWeekSchedule[day].timeBlocks[existingTimeBlockIndex].positions[existingPositionIndex] = newPosition;
-                    console.log(`Updated position ${newPosition.name} in time block ${newTimeBlock.id} on ${day}`);
+                    positionsToUpdate++;
+
+                    // If this position has an employee assigned, update the employee data in uploadedSchedules
+                    if (newPosition.employeeId && newPosition.employeeName) {
+                      // Find the employee in the existing uploadedSchedules
+                      const employeeId = newPosition.employeeId;
+                      const employeeName = newPosition.employeeName;
+
+                      // We know mergedUploadedSchedules is initialized at the beginning of the function
+                      // Find the employee in the uploadedSchedules
+                      const employeeIndex = mergedUploadedSchedules.findIndex(emp => emp.id === employeeId);
+
+                      if (employeeIndex !== -1) {
+                        // Update the employee with position information
+                        mergedUploadedSchedules[employeeIndex].position = newPosition.name;
+                        mergedUploadedSchedules[employeeIndex].department = newPosition.category;
+                        mergedUploadedSchedules[employeeIndex].isScheduled = true;
+                        console.log(`Updated employee ${employeeName} with position ${newPosition.name}`);
+                      }
+                    }
                   }
                 });
+
+                // Log summary instead of individual positions
+                if (positionsToAdd > 0 || positionsToUpdate > 0) {
+                  console.log(`Time block ${newTimeBlock.id} on ${day}: Added ${positionsToAdd} positions, updated ${positionsToUpdate} positions`);
+                }
               }
             }
           });
@@ -408,7 +466,145 @@ export const updateWeeklySetup = async (req, res) => {
       });
     }
 
-    console.log('Final merged weekSchedule structure:', JSON.stringify(mergedWeekSchedule, null, 2));
+    // Log only the size of the merged structure, not the content
+    console.log('Final merged weekSchedule size:', JSON.stringify(mergedWeekSchedule).length, 'bytes');
+
+    // Handle optimized employee data
+
+    // First, update employee data based on position assignments in the weekSchedule
+    console.log('Updating employee data based on position assignments...');
+
+    // Create a map of existing employees by ID for quick lookup
+    const existingEmployeeMap = new Map();
+    mergedUploadedSchedules.forEach(emp => {
+      existingEmployeeMap.set(emp.id, emp);
+    });
+
+    // Scan through all positions in the weekSchedule to update employee data
+    Object.keys(mergedWeekSchedule).forEach(day => {
+      if (mergedWeekSchedule[day] && mergedWeekSchedule[day].timeBlocks) {
+        mergedWeekSchedule[day].timeBlocks.forEach(block => {
+          if (block.positions) {
+            block.positions.forEach(position => {
+              if (position.employeeId && position.employeeName) {
+                // Find the employee in the map
+                if (existingEmployeeMap.has(position.employeeId)) {
+                  const employee = existingEmployeeMap.get(position.employeeId);
+
+                  // Update the employee with position information
+                  employee.position = position.name;
+                  employee.department = position.category;
+                  employee.isScheduled = true;
+
+                  console.log(`Updated employee ${position.employeeName} with position ${position.name} from weekSchedule`);
+                }
+              }
+            });
+          }
+        });
+      }
+    });
+
+    // Update the mergedUploadedSchedules array with the updated employee data
+    mergedUploadedSchedules = Array.from(existingEmployeeMap.values());
+
+    if (uploadedSchedules) {
+      console.log(`Processing ${uploadedSchedules.length} employee records from request`);
+
+      // Log a sample of the incoming employee data
+      if (uploadedSchedules.length > 0) {
+        const sampleEmployee = uploadedSchedules[0];
+        console.log('Sample incoming employee:', {
+          id: sampleEmployee.id,
+          name: sampleEmployee.name,
+          fields: Object.keys(sampleEmployee),
+          timeBlock: sampleEmployee.timeBlock,
+          department: sampleEmployee.department,
+          position: sampleEmployee.position,
+          isScheduled: sampleEmployee.isScheduled
+        });
+      }
+
+      // Log a sample of the existing employee data
+      if (mergedUploadedSchedules.length > 0) {
+        const sampleExistingEmployee = mergedUploadedSchedules[0];
+        console.log('Sample existing employee:', {
+          id: sampleExistingEmployee.id,
+          name: sampleExistingEmployee.name,
+          fields: Object.keys(sampleExistingEmployee),
+          timeBlock: sampleExistingEmployee.timeBlock,
+          department: sampleExistingEmployee.department,
+          position: sampleExistingEmployee.position,
+          isScheduled: sampleExistingEmployee.isScheduled
+        });
+      }
+
+      // Check if this is an optimized employee payload
+      // We now consider all payloads as optimized to ensure we always merge data properly
+      const isOptimizedEmployeePayload = true;
+
+      console.log(`Detected ${isOptimizedEmployeePayload ? 'optimized' : 'full'} employee payload`);
+
+      // Log the count of employees before merging
+      console.log(`Before merging: ${mergedUploadedSchedules.length} existing employees`);
+
+      if (isOptimizedEmployeePayload) {
+        // For optimized payloads, we need to merge with existing data
+        // We already have the existingEmployeeMap from above
+        console.log(`Using existing employee map with ${existingEmployeeMap.size} employees`);
+
+        // Count how many employees we'll update vs. add
+        let updateCount = 0;
+        let addCount = 0;
+
+        // Update or add employees from the request
+        uploadedSchedules.forEach(newEmp => {
+          if (existingEmployeeMap.has(newEmp.id)) {
+            // Update existing employee with new data, but preserve fields that might not be in the new data
+            const existingEmp = existingEmployeeMap.get(newEmp.id);
+
+            // Log before update
+            console.log(`Updating employee ${newEmp.id} (${newEmp.name})`);
+            console.log('  Before update:', {
+              timeBlock: existingEmp.timeBlock,
+              department: existingEmp.department,
+              position: existingEmp.position,
+              isScheduled: existingEmp.isScheduled
+            });
+
+            // Merge the objects, prioritizing new data but keeping existing fields if they're not in the new data
+            // This ensures we don't lose any fields during updates
+            Object.keys(newEmp).forEach(key => {
+              // Only update if the new value is defined and not null
+              if (newEmp[key] !== undefined && newEmp[key] !== null) {
+                existingEmp[key] = newEmp[key];
+              }
+            });
+
+            // Log after update
+            console.log('  After update:', {
+              timeBlock: existingEmp.timeBlock,
+              department: existingEmp.department,
+              position: existingEmp.position,
+              isScheduled: existingEmp.isScheduled
+            });
+
+            updateCount++;
+          } else {
+            // Add new employee
+            console.log(`Adding new employee ${newEmp.id} (${newEmp.name})`);
+            mergedUploadedSchedules.push(newEmp);
+            addCount++;
+          }
+        });
+
+        console.log(`Merged employee data: ${updateCount} updated, ${addCount} added, ${mergedUploadedSchedules.length} total employees`);
+      } else {
+        // For full payloads, replace the entire uploadedSchedules array
+        console.log('Replacing entire uploadedSchedules array');
+        mergedUploadedSchedules = uploadedSchedules;
+      }
+    }
 
     const updatedSetup = await WeeklySetup.findByIdAndUpdate(
       id,
@@ -417,7 +613,7 @@ export const updateWeeklySetup = async (req, res) => {
         startDate: startDate || existingSetup.startDate,
         endDate: endDate || existingSetup.endDate,
         weekSchedule: mergedWeekSchedule,
-        uploadedSchedules: uploadedSchedules || existingSetup.uploadedSchedules,
+        uploadedSchedules: mergedUploadedSchedules,
         isShared: isShared !== undefined ? isShared : existingSetup.isShared,
         updatedAt: new Date()
       },
@@ -425,9 +621,7 @@ export const updateWeeklySetup = async (req, res) => {
     );
 
     console.log(`Updated weekly setup with ${uploadedSchedules?.length || existingSetup.uploadedSchedules?.length || 0} uploaded employees`);
-
-    // Log the updated setup structure to verify it was saved correctly
-    console.log('Updated weekSchedule structure:', JSON.stringify(updatedSetup.weekSchedule, null, 2));
+    console.log(`Updated weekSchedule has ${Object.keys(updatedSetup.weekSchedule).length} days`);
     console.log('Weekly setup updated successfully:', id);
     res.status(200).json(updatedSetup);
   } catch (error) {

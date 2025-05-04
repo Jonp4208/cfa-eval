@@ -60,16 +60,17 @@ export const AssignEmployeeDialog: React.FC<AssignEmployeeDialogProps> = ({
             Assign Employee
           </DialogTitle>
           <DialogDescription>
-            {selectedPosition ? (
-              <>
-                <div>Select an employee to assign to <span className="font-medium">{selectedPosition.name}</span></div>
-                <div className="flex items-center mt-2 bg-blue-50 p-2 rounded-md border border-blue-100">
-                  <Clock className="h-4 w-4 mr-2 text-blue-500" />
-                  <span className="text-sm">Time block: <span className="font-medium">{formatHourTo12Hour(selectedPosition.blockStart)} - {formatHourTo12Hour(selectedPosition.blockEnd)}</span></span>
-                </div>
-              </>
-            ) : 'Select an employee'}
+            {selectedPosition ? 'Select an employee to assign' : 'Select an employee'}
           </DialogDescription>
+          {selectedPosition && (
+            <div className="mt-2">
+              <div className="text-sm text-gray-700">Assign to: <span className="font-medium">{selectedPosition.name}</span></div>
+              <div className="flex items-center mt-2 bg-blue-50 p-2 rounded-md border border-blue-100">
+                <Clock className="h-4 w-4 mr-2 text-blue-500" />
+                <span className="text-sm">Time block: <span className="font-medium">{formatHourTo12Hour(selectedPosition.blockStart)} - {formatHourTo12Hour(selectedPosition.blockEnd)}</span></span>
+              </div>
+            </div>
+          )}
         </DialogHeader>
 
         <div className="py-4 max-h-[60vh] overflow-y-auto">

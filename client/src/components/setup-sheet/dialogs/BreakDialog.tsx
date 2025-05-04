@@ -59,7 +59,7 @@ export const BreakDialog: React.FC<BreakDialogProps> = ({
                   {hasHadBreak(selectedEmployee.id) ? (
                     <div className="flex items-center text-sm text-green-600">
                       <Check className="h-3 w-3 mr-1" />
-                      <p>Has already had a break today</p>
+                      <span>Has already had a break today</span>
                     </div>
                   ) : (
                     <p className="text-sm text-gray-500">No breaks taken today</p>

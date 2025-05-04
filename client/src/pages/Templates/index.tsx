@@ -189,7 +189,7 @@ export default function Templates() {
   };
 
   return (
-    <div className="min-h-screen bg-[#F4F4F4] p-3 md:p-6">
+    <div className="min-h-screen p-3 md:p-6">
       <div className="max-w-7xl mx-auto space-y-3 sm:space-y-6">
         {/* Use PageHeader instead of custom header */}
         <PageHeader

@@ -225,7 +225,7 @@ export default function DisciplinaryPage() {
   }
 
   return (
-    <div className="min-h-screen bg-[#F4F4F4] p-4 md:p-6">
+    <div className="min-h-screen p-4 md:p-6">
       <div className="max-w-7xl mx-auto space-y-6">
         <PageHeader
           title="Team Discipline"

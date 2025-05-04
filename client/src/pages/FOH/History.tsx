@@ -157,7 +157,7 @@ export default function HistoryPage() {
   }, [groupedCompletions, sortedDates]);
 
   return (
-    <div className="min-h-screen bg-[#F4F4F4] p-3 md:p-6">
+    <div className="min-h-screen p-3 md:p-6">
       <div className="max-w-7xl mx-auto space-y-4">
         {/* Enhanced header with gradient */}
         <div className="bg-gradient-to-br from-[#E51636] to-[#D01530] rounded-[20px] p-4 md:p-6 text-white shadow-md">
@@ -166,15 +166,14 @@ export default function HistoryPage() {
               <h1 className="text-2xl md:text-3xl font-bold tracking-tight">FOH Task History</h1>
               <p className="text-white/90 text-sm md:text-base">View completed tasks by date</p>
             </div>
-            <div className="flex flex-wrap gap-2">
-              <Button
-                variant="secondary"
-                className="bg-white/15 hover:bg-white/25 text-white"
+            <div className="w-full sm:w-auto">
+              <button
                 onClick={() => navigate('/foh')}
+                className="w-full sm:w-auto bg-white hover:bg-white/90 text-[#E51636] flex items-center justify-center gap-2 py-2 px-3 sm:px-4 rounded-xl transition-all duration-300 text-sm font-medium shadow-sm border border-white/20"
               >
-                <ArrowLeft className="w-4 h-4 mr-2" />
-                Back to Tasks
-              </Button>
+                <ArrowLeft className="w-4 h-4" />
+                <span>Back to Tasks</span>
+              </button>
             </div>
           </div>
         </div>

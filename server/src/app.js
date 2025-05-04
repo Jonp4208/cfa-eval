@@ -73,8 +73,8 @@ app.use(cors({
   exposedHeaders: ['Set-Cookie'],
 }));
 
-app.use(express.json({ limit: '50mb' }));
-app.use(express.urlencoded({ extended: true, limit: '50mb' }));
+app.use(express.json({ limit: '100mb' }));
+app.use(express.urlencoded({ extended: true, limit: '100mb' }));
 
 // Debug middleware for route matching - only log at debug level
 app.use((req, res, next) => {
@@ -89,6 +89,17 @@ app.use((req, res, next) => {
 app.use((err, req, res, next) => {
   if (err instanceof SyntaxError && err.status === 413) {
     logger.error('Request entity too large:', err);
+
+    // Check if this is a weekly setup update request
+    if (req.originalUrl.includes('/api/weekly-setups/')) {
+      logger.error('Large payload detected for weekly setup update. Please use the optimized payload format.');
+      return res.status(413).json({
+        error: 'Payload too large',
+        message: 'The weekly setup data you are trying to send is too large. The system has been updated to handle this more efficiently. Please refresh the page and try again.',
+        code: 'WEEKLY_SETUP_PAYLOAD_TOO_LARGE'
+      });
+    }
+
     return res.status(413).json({
       error: 'Payload too large',
       message: 'The data you are trying to send is too large. Please reduce the size of your request.',

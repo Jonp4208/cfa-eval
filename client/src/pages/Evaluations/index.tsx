@@ -352,7 +352,7 @@ export default function Evaluations() {
   }
 
   return (
-    <div className="min-h-screen bg-[#F4F4F4] p-3 md:p-6">
+    <div className="min-h-screen p-3 md:p-6">
       <div className="max-w-7xl mx-auto space-y-3 sm:space-y-6">
         {/* Enhanced premium header with subtle gradient */}
         <div className="bg-gradient-to-br from-[#E51636] to-[#D01530] rounded-[20px] p-3 md:p-6 text-white shadow-md">

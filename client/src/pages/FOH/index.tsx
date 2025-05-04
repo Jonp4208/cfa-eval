@@ -269,7 +269,7 @@ export default function FOHPage() {
   const closingCompleted = Array.isArray(tasks) ? tasks.filter(task => task.shiftType === 'closing' && task.isActive && task.completed).length : 0
 
   return (
-    <div className="min-h-screen bg-[#F4F4F4] p-3 md:p-6">
+    <div className="min-h-screen p-3 md:p-6">
       <div className="max-w-7xl mx-auto space-y-4">
         {/* Page Header */}
         <PageHeader
@@ -277,17 +277,17 @@ export default function FOHPage() {
           subtitle="Front of House Daily Checklist"
           icon={<ClipboardList className="h-5 w-5" />}
           actions={
-            <div className="flex flex-wrap gap-2">
+            <div className="flex flex-col sm:flex-row gap-2 w-full sm:w-auto">
               <button
                 onClick={() => navigate('/foh/history')}
-                className="flex-1 sm:flex-none bg-white hover:bg-white/90 text-[#E51636] flex items-center justify-center gap-2 py-2 px-3 sm:px-4 rounded-xl transition-all duration-300 text-sm font-medium shadow-sm border border-white/20"
+                className="w-full sm:w-auto bg-white hover:bg-white/90 text-[#E51636] flex items-center justify-center gap-2 py-2 px-3 sm:px-4 rounded-xl transition-all duration-300 text-sm font-medium shadow-sm border border-white/20"
               >
                 <History className="w-4 h-4" />
                 <span>History</span>
               </button>
               <button
                 onClick={() => setIsCreateDialogOpen(true)}
-                className="flex-1 sm:flex-none bg-white hover:bg-white/90 text-[#E51636] flex items-center justify-center gap-2 py-2 px-3 sm:px-4 rounded-xl transition-all duration-300 text-sm font-medium shadow-sm border border-white/20"
+                className="w-full sm:w-auto bg-white hover:bg-white/90 text-[#E51636] flex items-center justify-center gap-2 py-2 px-3 sm:px-4 rounded-xl transition-all duration-300 text-sm font-medium shadow-sm border border-white/20"
               >
                 <Plus className="w-4 h-4" />
                 <span>Add Task</span>

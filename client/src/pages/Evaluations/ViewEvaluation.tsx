@@ -718,7 +718,7 @@ export default function ViewEvaluation() {
                  (isManager && evaluation.status === 'in_review_session');
 
   return (
-    <div className="min-h-screen bg-[#F4F4F4] p-4 md:p-6">
+    <div className="min-h-screen p-4 md:p-6">
       <div className="max-w-7xl mx-auto space-y-6">
         {/* Header */}
         <div className="bg-gradient-to-r from-[#E51636] to-[#DD0031] rounded-[20px] p-8 text-white shadow-xl relative overflow-hidden">

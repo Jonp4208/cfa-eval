@@ -1,4 +1,3 @@
-
 import {
   ArrowLeft,
   Target
@@ -12,7 +11,7 @@ export default function TeamGoalsPage() {
   const { user } = useAuth()
 
   return (
-    <div className="min-h-screen bg-[#F4F4F4] p-4 md:p-6">
+    <div className="min-h-screen p-4 md:p-6">
       <div className="max-w-7xl mx-auto space-y-4 sm:space-y-6">
         {/* Store Goals Header - Kitchen Style */}
         <div className="bg-gradient-to-br from-[#E51636] to-[#D01530] rounded-[20px] p-4 md:p-6 text-white shadow-md">

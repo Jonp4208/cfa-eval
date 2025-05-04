@@ -158,7 +158,7 @@ export default function Users() {
 
   if (error) {
     return (
-      <div className="min-h-screen bg-[#F4F4F4] p-4 md:p-6">
+      <div className="min-h-screen p-4 md:p-6">
         <Card className="bg-white rounded-[20px] shadow-md">
           <CardContent className="p-6 text-center text-[#E51636]">
             Error loading users. Please try again later.
@@ -328,17 +328,17 @@ export default function Users() {
   const isAdmin = currentUser && (currentUser as any).role === 'admin';
 
   return (
-    <div className="min-h-screen bg-[#F8F8F8] p-2 sm:p-4 md:p-6">
+    <div className="min-h-screen p-4 md:p-6">
       <div className="max-w-7xl mx-auto space-y-3 sm:space-y-4 md:space-y-6">
         <PageHeader
           title="Team Management"
           subtitle={`${currentUser?.store?.name || 'Calhoun FSU'} #${currentUser?.store?.storeNumber}`}
           icon={<User className="h-5 w-5" />}
           actions={
-            <div className="flex items-center gap-2">
+            <div className="flex flex-col sm:flex-row gap-2 w-full sm:w-auto">
               <button
                 onClick={() => navigate('/')}
-                className="flex-1 sm:flex-none bg-white hover:bg-white/90 text-[#E51636] flex items-center justify-center gap-2 py-2 px-3 sm:px-4 rounded-xl transition-all duration-300 text-sm font-medium shadow-sm border border-white/20"
+                className="w-full sm:w-auto bg-white hover:bg-white/90 text-[#E51636] flex items-center justify-center gap-2 py-2 px-3 sm:px-4 rounded-xl transition-all duration-300 text-sm font-medium shadow-sm border border-white/20"
               >
                 <ArrowLeft className="w-4 h-4" />
                 <span>Back</span>
@@ -346,7 +346,7 @@ export default function Users() {
               {canManageUsers(currentUser) && (
                 <button
                   onClick={() => setShowAddDialog(true)}
-                  className="flex-1 sm:flex-none bg-white hover:bg-white/90 text-[#E51636] flex items-center justify-center gap-2 py-2 px-3 sm:px-4 rounded-xl transition-all duration-300 text-sm font-medium shadow-sm border border-white/20"
+                  className="w-full sm:w-auto bg-white hover:bg-white/90 text-[#E51636] flex items-center justify-center gap-2 py-2 px-3 sm:px-4 rounded-xl transition-all duration-300 text-sm font-medium shadow-sm border border-white/20"
                 >
                   <Plus className="w-4 h-4" />
                   <span>Add User</span>

@@ -426,7 +426,7 @@ export default function Layout({ children }: { children: React.ReactNode }) {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-white">
       {/* Mobile Header */}
       <div className="[&>*]:min-[938px]:hidden fixed-header-ios">
         {/* iOS Status Bar Spacer - only visible on iOS PWA */}
@@ -652,7 +652,7 @@ export default function Layout({ children }: { children: React.ReactNode }) {
                   <User2 className="w-4 h-4 text-gray-600" />
                 </div>
                 <div>
-                  <div className="font-medium text-sm">{user?.firstName} {user?.lastName}</div>
+                  <div className="font-medium text-sm">{user?.name}</div>
                 </div>
               </div>
               <button
