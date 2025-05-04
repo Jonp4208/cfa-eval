@@ -39,6 +39,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import AcknowledgmentDialog from '../components/AcknowledgmentDialog';
 import FollowUpDialog from '../components/FollowUpDialog';
 import DocumentUploadDialog from '../components/DocumentUploadDialog';
+import PageHeader from '@/components/PageHeader';
 
 export default function DocumentDetail() {
   const navigate = useNavigate();
@@ -206,25 +207,21 @@ export default function DocumentDetail() {
   return (
     <div className="min-h-screen bg-[#F4F4F4] p-4 md:p-6">
       <div className="max-w-5xl mx-auto space-y-6">
-        <div className="bg-gradient-to-br from-[#E51636] to-[#DD0031] rounded-[20px] p-6 md:p-8 text-white shadow-xl relative overflow-hidden mb-6">
-          <div className="absolute -top-24 -right-24 w-64 h-64 bg-white/10 rounded-full blur-3xl" />
-          <div className="absolute -bottom-32 -left-32 w-96 h-96 bg-black/10 rounded-full blur-3xl" />
-          <div className="relative">
-            <div className="flex items-center gap-4">
-              <Button
-                variant="ghost"
-                className="bg-white/10 text-white hover:bg-white/20"
-                onClick={() => navigate('/documentation')}
-              >
-                <ChevronLeft className="w-5 h-5" />
-              </Button>
-              <div>
-                <h1 className="text-2xl md:text-3xl font-bold">Document Details</h1>
-                <p className="text-white/80 mt-2">View and manage document information</p>
-              </div>
-            </div>
-          </div>
-        </div>
+        <PageHeader
+          title="Document Details"
+          subtitle="View and manage document information"
+          icon={<FileText className="h-5 w-5" />}
+          actions={
+            <Button
+              variant="ghost"
+              className="bg-white hover:bg-white/90 text-[#E51636] flex items-center justify-center gap-2 py-2 px-3 sm:px-4 rounded-xl transition-all duration-300 text-sm font-medium shadow-sm border border-white/20"
+              onClick={() => navigate('/documentation')}
+            >
+              <ChevronLeft className="w-4 h-4" />
+              <span>Back</span>
+            </Button>
+          }
+        />
 
         {loading ? (
           <div className="flex items-center justify-center p-12">

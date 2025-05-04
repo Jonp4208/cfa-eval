@@ -370,17 +370,17 @@ export default function Evaluations() {
               <div className="flex items-center gap-2">
                 <button
                   onClick={() => navigate('/templates')}
-                  className="flex-1 sm:flex-none bg-white/15 backdrop-blur-sm hover:bg-white/25 text-white flex items-center justify-center gap-2 py-2 px-3 sm:px-4 rounded-xl transition-all duration-300 text-sm"
+                  className="flex-1 sm:flex-none bg-white hover:bg-white/90 text-[#E51636] flex items-center justify-center gap-2 py-2 px-3 sm:px-4 rounded-xl transition-all duration-300 text-sm font-medium shadow-sm border border-white/20"
                 >
                   <FileText className="w-4 h-4" />
-                  <span className="font-medium">Templates</span>
+                  <span>Templates</span>
                 </button>
                 <button
                   onClick={() => navigate('/evaluations/new')}
-                  className="flex-1 sm:flex-none bg-white/15 backdrop-blur-sm hover:bg-white/25 text-white flex items-center justify-center gap-2 py-2 px-3 sm:px-4 rounded-xl transition-all duration-300 text-sm"
+                  className="flex-1 sm:flex-none bg-white hover:bg-white/90 text-[#E51636] flex items-center justify-center gap-2 py-2 px-3 sm:px-4 rounded-xl transition-all duration-300 text-sm font-medium shadow-sm border border-white/20"
                 >
                   <Plus className="w-4 h-4" />
-                  <span className="font-medium">New Review</span>
+                  <span>New Review</span>
                 </button>
               </div>
             </div>

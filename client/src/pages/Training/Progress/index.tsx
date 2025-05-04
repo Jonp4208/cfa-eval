@@ -21,6 +21,8 @@ import { useAuth } from '@/contexts/AuthContext'
 import api from '@/lib/axios'
 import { toast } from '@/components/ui/use-toast'
 import { useTranslation } from '@/contexts/TranslationContext'
+import PageHeader from '@/components/PageHeader'
+import { useNavigate } from 'react-router-dom'
 
 interface DashboardStats {
   needsTraining: number
@@ -45,6 +47,7 @@ interface TraineeProgress {
 export default function TrainingProgress() {
   const { user } = useAuth()
   const { t } = useTranslation()
+  const navigate = useNavigate()
   const [loading, setLoading] = useState(true)
   const [trainees, setTrainees] = useState<TraineeProgress[]>([])
   const [searchQuery, setSearchQuery] = useState('')
@@ -161,6 +164,22 @@ export default function TrainingProgress() {
 
   return (
     <div className="space-y-6">
+      {/* Add PageHeader at the beginning */}
+      <PageHeader
+        title="Progress Tracking"
+        subtitle="Track and monitor employee training progress"
+        icon={<BarChart2 className="h-5 w-5" />}
+        actions={
+          <Button
+            className="bg-white hover:bg-white/90 text-[#E51636] flex items-center justify-center gap-2 py-2 px-3 sm:px-4 rounded-xl transition-all duration-300 text-sm font-medium shadow-sm border border-white/20"
+            onClick={() => navigate('/training/new-hires')}
+          >
+            <UserPlus className="w-4 h-4" />
+            <span>New Hires</span>
+          </Button>
+        }
+      />
+
       {/* Dashboard Cards */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
         {/* Needs Training Card */}

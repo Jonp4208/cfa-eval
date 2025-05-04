@@ -36,6 +36,7 @@ import { Label } from '@/components/ui/label';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Textarea } from '@/components/ui/textarea';
+import PageHeader from '@/components/PageHeader';
 
 interface Evaluation {
   id?: string;
@@ -457,56 +458,51 @@ export default function UserProfile() {
 
   return (
     <div className="bg-[#F4F4F4] min-h-screen">
-      {/* Header */}
-      <div className="bg-gradient-to-r from-[#E51636] to-[#DD0031] p-8 rounded-[20px] shadow-xl relative overflow-hidden mx-6 mt-6">
-        <div className="absolute inset-0 bg-[url('/grid.svg')] bg-center opacity-10" />
-        <div className="relative flex flex-col gap-6">
-          <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
-            <div className="flex items-center gap-5">
-              <Avatar className="h-20 w-20 border-4 border-white/20 shadow-lg">
-                <AvatarImage src="" alt={profile.name} />
-                <AvatarFallback className="bg-white/20 text-white text-xl font-bold">
-                  {getUserInitials(profile.name)}
-                </AvatarFallback>
-              </Avatar>
-              <div>
-                <div className="flex items-center gap-3 mb-1">
-                  <h1 className="text-3xl md:text-4xl font-semibold text-white">{profile.name}</h1>
-                  <Badge className={`${profile.status === 'active' ? 'bg-green-500/20 text-green-100' : 'bg-gray-500/20 text-gray-100'} border-none`}>
-                    {profile.status}
-                  </Badge>
-                </div>
-                <div className="flex items-center gap-2 text-white/80 text-sm md:text-base">
-                  <Briefcase className="w-4 h-4" />
-                  <span>{profile.position}</span>
-                  <span className="mx-1">•</span>
-                  <Users className="w-4 h-4" />
-                  <span>{profile.departments.join(', ')}</span>
-                </div>
-              </div>
+      {/* Replace the custom header with PageHeader */}
+      <div className="px-6 pt-6">
+        <PageHeader
+          title={profile.name}
+          subtitle={
+            <div className="flex items-center gap-2 text-white/80 text-sm md:text-base">
+              <Briefcase className="w-4 h-4" />
+              <span>{profile.position}</span>
+              <span className="mx-1">•</span>
+              <Users className="w-4 h-4" />
+              <span>{profile.departments.join(', ')}</span>
+              <Badge className={`ml-2 ${profile.status === 'active' ? 'bg-green-500/20 text-green-100' : 'bg-gray-500/20 text-gray-100'} border-none`}>
+                {profile.status}
+              </Badge>
             </div>
+          }
+          icon={
+            <Avatar className="h-10 w-10 border-2 border-white/20">
+              <AvatarImage src="" alt={profile.name} />
+              <AvatarFallback className="bg-white/20 text-white text-base font-bold">
+                {getUserInitials(profile.name)}
+              </AvatarFallback>
+            </Avatar>
+          }
+          actions={
             <div className="flex items-center gap-4">
               {isAdmin && (
-                <Button
-                  variant="outline"
+                <button
                   onClick={() => navigate(`/users/${id}/edit`)}
-                  className="w-fit bg-white/10 border-white/20 text-white hover:bg-white/20 hover:text-white flex items-center gap-2"
+                  className="flex-1 sm:flex-none bg-white hover:bg-white/90 text-[#E51636] flex items-center justify-center gap-2 py-2 px-3 sm:px-4 rounded-xl transition-all duration-300 text-sm font-medium shadow-sm border border-white/20"
                 >
                   <Pencil className="w-4 h-4" />
-                  Edit Profile
-                </Button>
+                  <span>Edit Profile</span>
+                </button>
               )}
-              <Button
-                variant="outline"
+              <button
                 onClick={() => navigate(currentUser?._id === profile._id ? '/' : '/users')}
-                className="w-fit bg-white/10 border-white/20 text-white hover:bg-white/20 hover:text-white flex items-center gap-2"
+                className="flex-1 sm:flex-none bg-white hover:bg-white/90 text-[#E51636] flex items-center justify-center gap-2 py-2 px-3 sm:px-4 rounded-xl transition-all duration-300 text-sm font-medium shadow-sm border border-white/20"
               >
                 <ArrowLeft className="w-4 h-4" />
-                {currentUser?._id === profile._id ? 'Back to Dashboard' : 'Back to Users'}
-              </Button>
+                <span>{currentUser?._id === profile._id ? 'Back to Dashboard' : 'Back to Users'}</span>
+              </button>
             </div>
-          </div>
-        </div>
+          }
+        />
       </div>
 
       {/* Main Content */}

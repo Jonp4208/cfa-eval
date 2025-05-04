@@ -9,6 +9,7 @@ import { useQuery } from '@tanstack/react-query';
 import api from '@/lib/axios';
 import { ResponsiveContainer, LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend } from 'recharts';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import PageHeader from '@/components/PageHeader';
 
 // Page Header Component for Analytics Pages
 export const AnalyticsPageHeader = ({ title }: { title: string }) => {
@@ -143,28 +144,22 @@ const AnalyticsHub = () => {
   return (
     <div className="min-h-screen bg-[#F4F4F4] p-4 md:p-6">
       <div className="max-w-7xl mx-auto space-y-6">
-        {/* Header */}
-        <div className="bg-gradient-to-r from-[#E51636] to-[#DD0031] rounded-[20px] p-8 text-white shadow-xl relative overflow-hidden">
-          <div className="absolute inset-0 bg-[url('/pattern.png')] opacity-10" />
-          <div className="relative">
-            <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-6">
-              <div>
-                <h1 className="text-3xl md:text-4xl font-bold">Analytics</h1>
-                <p className="text-white/80 mt-2 text-lg">Team performance and development tracking</p>
-              </div>
-              <div className="flex flex-col sm:flex-row gap-4">
-                <Button
-                  variant="secondary"
-                  className="bg-white/10 hover:bg-white/20 text-white border-0 h-12 px-6"
-                  onClick={() => navigate('/')}
-                >
-                  <LayoutDashboard className="w-5 h-5 mr-2" />
-                  Back to Dashboard
-                </Button>
-              </div>
-            </div>
-          </div>
-        </div>
+        {/* Replace custom header with PageHeader */}
+        <PageHeader
+          title="Analytics"
+          subtitle="Team performance and development tracking"
+          icon={<BarChart4 className="h-5 w-5" />}
+          actions={
+            <Button
+              variant="ghost"
+              className="bg-white hover:bg-white/90 text-[#E51636] flex items-center justify-center gap-2 py-2 px-3 sm:px-4 rounded-xl transition-all duration-300 text-sm font-medium shadow-sm border border-white/20"
+              onClick={() => navigate('/')}
+            >
+              <LayoutDashboard className="w-4 h-4 mr-1" />
+              <span>Back to Dashboard</span>
+            </Button>
+          }
+        />
 
         {/* Tabs for different views */}
         <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">

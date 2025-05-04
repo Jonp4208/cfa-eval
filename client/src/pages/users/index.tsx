@@ -330,39 +330,31 @@ export default function Users() {
   return (
     <div className="min-h-screen bg-[#F8F8F8] p-2 sm:p-4 md:p-6">
       <div className="max-w-7xl mx-auto space-y-3 sm:space-y-4 md:space-y-6">
-        <div className="bg-gradient-to-br from-[#E51636] to-[#D01530] rounded-[20px] p-3 sm:p-4 md:p-6 text-white shadow-md">
-          <div className="flex flex-col gap-2 sm:gap-4">
-            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
-              <div className="flex items-center gap-3">
-                <div className="h-10 w-10 bg-white/15 backdrop-blur-sm rounded-xl flex items-center justify-center shadow-inner">
-                  <User className="h-5 w-5" />
-                </div>
-                <div>
-                  <h1 className="text-lg sm:text-xl md:text-2xl font-bold tracking-tight">Team Management</h1>
-                  <p className="text-white/90 text-xs sm:text-sm md:text-base mt-1">{currentUser?.store?.name || 'Calhoun FSU'} #{currentUser?.store?.storeNumber}</p>
-                </div>
-              </div>
-              <div className="flex items-center gap-2">
+        <PageHeader
+          title="Team Management"
+          subtitle={`${currentUser?.store?.name || 'Calhoun FSU'} #${currentUser?.store?.storeNumber}`}
+          icon={<User className="h-5 w-5" />}
+          actions={
+            <div className="flex items-center gap-2">
+              <button
+                onClick={() => navigate('/')}
+                className="flex-1 sm:flex-none bg-white hover:bg-white/90 text-[#E51636] flex items-center justify-center gap-2 py-2 px-3 sm:px-4 rounded-xl transition-all duration-300 text-sm font-medium shadow-sm border border-white/20"
+              >
+                <ArrowLeft className="w-4 h-4" />
+                <span>Back</span>
+              </button>
+              {canManageUsers(currentUser) && (
                 <button
-                  onClick={() => navigate('/')}
-                  className="flex-1 sm:flex-none bg-white/15 backdrop-blur-sm hover:bg-white/25 text-white flex items-center justify-center gap-2 py-2 px-3 sm:px-4 rounded-xl transition-all duration-300 text-sm"
+                  onClick={() => setShowAddDialog(true)}
+                  className="flex-1 sm:flex-none bg-white hover:bg-white/90 text-[#E51636] flex items-center justify-center gap-2 py-2 px-3 sm:px-4 rounded-xl transition-all duration-300 text-sm font-medium shadow-sm border border-white/20"
                 >
-                  <ArrowLeft className="w-4 h-4" />
-                  <span className="font-medium">Back</span>
+                  <Plus className="w-4 h-4" />
+                  <span>Add User</span>
                 </button>
-                {canManageUsers(currentUser) && (
-                  <button
-                    onClick={() => setShowAddDialog(true)}
-                    className="flex-1 sm:flex-none bg-white/15 backdrop-blur-sm hover:bg-white/25 text-white flex items-center justify-center gap-2 py-2 px-3 sm:px-4 rounded-xl transition-all duration-300 text-sm"
-                  >
-                    <Plus className="w-4 h-4" />
-                    <span className="font-medium">Add User</span>
-                  </button>
-                )}
-              </div>
+              )}
             </div>
-          </div>
-        </div>
+          }
+        />
 
         {/* Bulk Actions Section */}
         {canManageUsers(currentUser) && (

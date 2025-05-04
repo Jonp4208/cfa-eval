@@ -4,7 +4,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { Button } from '@/components/ui/button'
 import { Card } from '@/components/ui/card'
-import { History, Plus } from 'lucide-react'
+import { History, Plus, ClipboardList } from 'lucide-react'
 import { useAuth } from '@/contexts/AuthContext'
 import { TaskList } from './TaskList'
 import { CreateTaskDialog } from './CreateTaskDialog'
@@ -13,6 +13,7 @@ import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/comp
 import axios from 'axios'
 import api from '@/lib/axios'
 import { getTodayDateString, isNewDay } from '@/lib/utils/date-utils'
+import PageHeader from '@/components/PageHeader'
 
 type ShiftType = 'opening' | 'transition' | 'closing'
 
@@ -270,32 +271,30 @@ export default function FOHPage() {
   return (
     <div className="min-h-screen bg-[#F4F4F4] p-3 md:p-6">
       <div className="max-w-7xl mx-auto space-y-4">
-        {/* Enhanced header with gradient */}
-        <div className="bg-gradient-to-br from-[#E51636] to-[#D01530] rounded-[20px] p-4 md:p-6 text-white shadow-md">
-          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-            <div>
-              <h1 className="text-2xl md:text-3xl font-bold tracking-tight">FOH Tasks</h1>
-              <p className="text-white/90 text-sm md:text-base">Front of House Daily Checklist</p>
-            </div>
+        {/* Page Header */}
+        <PageHeader
+          title="FOH Tasks"
+          subtitle="Front of House Daily Checklist"
+          icon={<ClipboardList className="h-5 w-5" />}
+          actions={
             <div className="flex flex-wrap gap-2">
-              <Button
-                variant="secondary"
-                className="bg-white/15 hover:bg-white/25 text-white"
+              <button
                 onClick={() => navigate('/foh/history')}
+                className="flex-1 sm:flex-none bg-white hover:bg-white/90 text-[#E51636] flex items-center justify-center gap-2 py-2 px-3 sm:px-4 rounded-xl transition-all duration-300 text-sm font-medium shadow-sm border border-white/20"
               >
-                <History className="w-4 h-4 mr-2" />
-                History
-              </Button>
-              <Button
-                className="bg-white text-[#E51636] hover:bg-white/90"
+                <History className="w-4 h-4" />
+                <span>History</span>
+              </button>
+              <button
                 onClick={() => setIsCreateDialogOpen(true)}
+                className="flex-1 sm:flex-none bg-white hover:bg-white/90 text-[#E51636] flex items-center justify-center gap-2 py-2 px-3 sm:px-4 rounded-xl transition-all duration-300 text-sm font-medium shadow-sm border border-white/20"
               >
-                <Plus className="w-4 h-4 mr-2" />
-                Add Task
-              </Button>
+                <Plus className="w-4 h-4" />
+                <span>Add Task</span>
+              </button>
             </div>
-          </div>
-        </div>
+          }
+        />
 
         {/* Quick Stats */}
         <div className="grid grid-cols-2 md:grid-cols-4 gap-3">

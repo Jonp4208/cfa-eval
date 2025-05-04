@@ -257,47 +257,41 @@ export default function DocumentationPage() {
   return (
     <div className="min-h-screen bg-[#F4F4F4] p-4 md:p-6">
       <div className="max-w-7xl mx-auto space-y-6">
-        <div className="bg-gradient-to-br from-[#E51636] to-[#DD0031] rounded-[20px] p-6 md:p-8 text-white shadow-xl relative overflow-hidden">
-          <div className="absolute -top-24 -right-24 w-64 h-64 bg-white/10 rounded-full blur-3xl" />
-          <div className="absolute -bottom-32 -left-32 w-96 h-96 bg-black/10 rounded-full blur-3xl" />
-          <div className="relative">
-            <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-6">
-              <div>
-                {employeeFilter ? (
-                  <div className="flex items-center gap-3">
-                    <Button
-                      variant="ghost"
-                      className="bg-white/10 text-white hover:bg-white/20 -ml-2"
-                      onClick={() => navigate('/documentation')}
-                    >
-                      <ChevronLeft className="w-5 h-5" />
-                    </Button>
-                    <div>
-                      <h1 className="text-2xl md:text-3xl font-bold">
-                        {getFilteredDocuments()[0]?.employee.name || 'Employee'} Documents
-                      </h1>
-                      <p className="text-white/80 mt-2">View and manage documents for this team member</p>
-                    </div>
-                  </div>
-                ) : (
-                  <>
-                    <h1 className="text-2xl md:text-3xl font-bold">Team Documentation</h1>
-                    <p className="text-white/80 mt-2">Track and manage team member documentation, disciplinary actions, call outs, and doctor's notes</p>
-                  </>
-                )}
-              </div>
-              {(user?.position === 'Leader' || user?.position === 'Director') && (
+        {/* Replace the custom header with PageHeader */}
+        {employeeFilter ? (
+          <PageHeader
+            title={`${getFilteredDocuments()[0]?.employee.name || 'Employee'} Documents`}
+            subtitle="View and manage documents for this team member"
+            icon={<FileText className="h-5 w-5" />}
+            actions={
+              <Button
+                variant="ghost"
+                className="bg-white hover:bg-white/90 text-[#E51636] flex items-center justify-center gap-2 py-2 px-3 sm:px-4 rounded-xl transition-all duration-300 text-sm font-medium shadow-sm border border-white/20"
+                onClick={() => navigate('/documentation')}
+              >
+                <ChevronLeft className="w-4 h-4" />
+                <span>Back</span>
+              </Button>
+            }
+          />
+        ) : (
+          <PageHeader
+            title="Team Documentation"
+            subtitle="Track and manage team member documentation, disciplinary actions, call outs, and doctor's notes"
+            icon={<ClipboardList className="h-5 w-5" />}
+            actions={
+              (user?.position === 'Leader' || user?.position === 'Director') && (
                 <button
                   onClick={handleNewDocument}
-                  className="bg-white/10 hover:bg-white/20 text-white flex items-center justify-center gap-2 py-2.5 px-4 rounded-xl transition-all duration-300 hover:shadow-lg hover:shadow-black/10 backdrop-blur-sm"
+                  className="flex-1 sm:flex-none bg-white hover:bg-white/90 text-[#E51636] flex items-center justify-center gap-2 py-2 px-3 sm:px-4 rounded-xl transition-all duration-300 text-sm font-medium shadow-sm border border-white/20"
                 >
-                  <FilePlus className="w-5 h-5" />
-                  <span className="font-medium">New Document</span>
+                  <FilePlus className="w-4 h-4" />
+                  <span>New Document</span>
                 </button>
-              )}
-            </div>
-          </div>
-        </div>
+              )
+            }
+          />
+        )}
 
         {/* Stats Cards - Only show when not filtering by employee */}
         {!employeeFilter && (

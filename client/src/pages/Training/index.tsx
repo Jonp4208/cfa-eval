@@ -10,6 +10,7 @@ import {
   GraduationCap
 } from 'lucide-react'
 import { useAuth } from '@/contexts/AuthContext'
+import PageHeader from '@/components/PageHeader'
 
 export default function Training() {
   const navigate = useNavigate()
@@ -72,32 +73,22 @@ export default function Training() {
   return (
     <div className="min-h-screen bg-[#F8F8F8] p-4 md:p-6">
       <div className="max-w-7xl mx-auto space-y-4 sm:space-y-6">
-        {/* Header that matches the task management page */}
-        <div className="bg-gradient-to-br from-[#E51636] to-[#D01530] rounded-[20px] p-4 md:p-6 text-white shadow-md">
-          <div className="flex flex-col gap-2 sm:gap-4">
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-3">
-                <div className="h-10 w-10 bg-white/15 backdrop-blur-sm rounded-xl flex items-center justify-center shadow-inner">
-                  <GraduationCap className="h-5 w-5" />
-                </div>
-                <div>
-                  <h1 className="text-xl md:text-2xl font-bold tracking-tight">Training</h1>
-                  <p className="text-white/90 text-sm md:text-base mt-1">{user?.store?.name || 'Calhoun FSU'} #{user?.store?.storeNumber}</p>
-                </div>
-              </div>
-              <div className="flex items-center gap-2">
-                <Button
-                  variant="outline"
-                  onClick={() => navigate('/')}
-                  className="bg-white/15 backdrop-blur-sm hover:bg-white/25 text-white border-none transition-all duration-300 h-10"
-                >
-                  <ArrowLeft className="h-5 w-5 mr-2" />
-                  Back
-                </Button>
-              </div>
-            </div>
-          </div>
-        </div>
+        {/* Replace the custom header with PageHeader */}
+        <PageHeader
+          title="Training"
+          subtitle={`${user?.store?.name || 'Calhoun FSU'} #${user?.store?.storeNumber}`}
+          icon={<GraduationCap className="h-5 w-5" />}
+          actions={
+            <Button
+              variant="ghost"
+              className="bg-white hover:bg-white/90 text-[#E51636] flex items-center justify-center gap-2 py-2 px-3 sm:px-4 rounded-xl transition-all duration-300 text-sm font-medium shadow-sm border border-white/20"
+              onClick={() => navigate('/')}
+            >
+              <ArrowLeft className="w-4 h-4" />
+              <span>Back</span>
+            </Button>
+          }
+        />
 
         {/* Navigation - Only show tabs for managers */}
         {isManager ? (

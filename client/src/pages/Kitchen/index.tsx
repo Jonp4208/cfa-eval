@@ -14,6 +14,7 @@ import {
 import { format } from 'date-fns';
 import { useTranslation } from '@/contexts/TranslationContext';
 import { cn } from '@/lib/utils';
+import PageHeader from '@/components/PageHeader';
 
 const Kitchen: React.FC = () => {
   const navigate = useNavigate();
@@ -30,37 +31,24 @@ const Kitchen: React.FC = () => {
     navigate(`/kitchen/${path}`);
   };
 
-
-
   return (
     <div className="min-h-screen bg-[#F8F8F8] p-3 md:p-6 safe-area-top safe-area-bottom pb-6">
       <div className="max-w-7xl mx-auto space-y-3 sm:space-y-6">
-        {/* Enhanced premium header with subtle gradient - mobile optimized */}
-        <div className="bg-gradient-to-br from-[#E51636] to-[#D01530] rounded-[16px] md:rounded-[20px] p-3 sm:p-4 md:p-6 text-white shadow-md overflow-hidden">
-          <div className="flex flex-col gap-2 sm:gap-4">
-            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 sm:gap-4">
-              <div className="flex items-center gap-2 md:gap-3 mr-auto">
-                <div className="h-10 w-10 md:h-12 md:w-12 bg-white/15 backdrop-blur-sm rounded-xl flex items-center justify-center shadow-inner flex-shrink-0">
-                  <ChefHat className="h-5 w-5 md:h-6 md:w-6" />
-                </div>
-                <div className="min-w-0 w-full sm:max-w-none">
-                  <h1 className="text-2xl sm:text-3xl md:text-4xl font-bold tracking-tight">{t('kitchen.title')}</h1>
-                  <p className="text-white/90 text-sm md:text-base mt-1">{t('kitchen.subtitle')}</p>
-                </div>
-              </div>
-              <div className="flex items-center gap-1.5 md:gap-2 flex-shrink-0">
-                <Button
-                  variant="outline"
-                  onClick={() => navigate('/dashboard')}
-                  className="bg-white/15 backdrop-blur-sm hover:bg-white/25 text-white border-none transition-all duration-300 h-7 sm:h-8 px-2 sm:px-3 min-w-0"
-                  size="sm"
-                >
-                  <span className="text-xs md:text-sm font-medium whitespace-nowrap">{t('kitchen.backHome')}</span>
-                </Button>
-              </div>
-            </div>
-          </div>
-        </div>
+        {/* Use PageHeader component */}
+        <PageHeader
+          title={t('kitchen.title')}
+          subtitle={t('kitchen.subtitle')}
+          icon={<ChefHat className="h-5 w-5" />}
+          actions={
+            <button
+              onClick={() => navigate('/dashboard')}
+              className="flex-1 sm:flex-none bg-white hover:bg-white/90 text-[#E51636] flex items-center justify-center gap-2 py-2 px-3 sm:px-4 rounded-xl transition-all duration-300 text-sm font-medium shadow-sm border border-white/20"
+            >
+              <LayoutDashboard className="w-4 h-4" />
+              <span>{t('kitchen.backHome')}</span>
+            </button>
+          }
+        />
 
         {/* Navigation with subtle shadow and smooth transitions - visible on all screen sizes */}
         <div className="bg-white rounded-[16px] p-2 sm:p-3 shadow-sm border-0">
@@ -139,7 +127,6 @@ const Kitchen: React.FC = () => {
                   <Trash2 className="w-4 h-4 mr-2" />
                   {t('kitchen.wasteTracker')}
                 </Button>
-
               </div>
             </div>
           </div>

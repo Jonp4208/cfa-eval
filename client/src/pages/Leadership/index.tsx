@@ -19,6 +19,7 @@ import { useAuth } from '@/contexts/AuthContext'
 import { useTranslation } from '@/contexts/TranslationContext'
 import { useSubscription } from '@/contexts/SubscriptionContext'
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert'
+import PageHeader from '@/components/PageHeader'
 
 export default function Leadership() {
   const navigate = useNavigate()
@@ -52,34 +53,22 @@ export default function Leadership() {
   return (
     <div className="min-h-screen bg-[#F4F4F4] p-4 md:p-6">
       <div className="max-w-7xl mx-auto space-y-4 sm:space-y-6">
-        {/* Hero Section */}
-        <div className="bg-gradient-to-br from-[#E51636] to-[#DD0031] rounded-[20px] p-6 md:p-8 text-white shadow-xl relative overflow-hidden">
-          <div className="absolute inset-0 bg-[url('/pattern.png')] opacity-10" />
-          <div className="absolute -top-24 -right-24 w-64 h-64 bg-white/10 rounded-full blur-3xl" />
-          <div className="absolute -bottom-32 -left-32 w-96 h-96 bg-black/10 rounded-full blur-3xl" />
-          <div className="relative">
-            <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-6">
-              <div>
-                <h1 className="text-2xl md:text-3xl font-bold flex items-center gap-3">
-                  Leadership Development
-                  <span className="inline-flex items-center justify-center px-2 py-1 text-xs font-medium bg-white/10 backdrop-blur-sm rounded-full">
-                    CFA #{user?.store?.storeNumber}
-                  </span>
-                </h1>
-                <p className="text-white/80 mt-2">
-                  {new Date().toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}
-                </p>
-              </div>
-              <Button
-                variant="outline"
-                onClick={() => navigate('/dashboard')}
-                className="bg-white/15 backdrop-blur-sm hover:bg-white/25 text-white border-none transition-all duration-300 h-7 sm:h-8 px-2 sm:px-3 min-w-0"
-              >
-                <span className="text-xs md:text-sm font-medium whitespace-nowrap">Back Home</span>
-              </Button>
-            </div>
-          </div>
-        </div>
+        {/* Replace Hero Section with PageHeader */}
+        <PageHeader
+          title="Leadership Development"
+          subtitle={`CFA #${user?.store?.storeNumber}`}
+          icon={<GraduationCap className="h-5 w-5" />}
+          actions={
+            <Button
+              variant="ghost"
+              className="bg-white hover:bg-white/90 text-[#E51636] flex items-center justify-center gap-2 py-2 px-3 sm:px-4 rounded-xl transition-all duration-300 text-sm font-medium shadow-sm border border-white/20"
+              onClick={() => navigate('/dashboard')}
+            >
+              <LayoutDashboard className="w-4 h-4 mr-1" />
+              <span>Back Home</span>
+            </Button>
+          }
+        />
 
         {/* Navigation */}
         <div className="bg-white p-2 rounded-xl shadow-sm">

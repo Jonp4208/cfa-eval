@@ -16,6 +16,7 @@ import {
 import { useToast } from '@/components/ui/use-toast'
 import { format } from 'date-fns'
 import { useSetupSheetStore } from '@/stores/setupSheetStore'
+import PageHeader from '@/components/PageHeader'
 
 export function SetupSheetTemplates() {
   const navigate = useNavigate()
@@ -74,25 +75,21 @@ export function SetupSheetTemplates() {
 
   return (
     <div className="container mx-auto px-4 pb-20 sm:pb-4 space-y-6">
-      {/* Enhanced header with gradient */}
-      <div className="bg-gradient-to-br from-[#E51636] to-[#D01530] rounded-[20px] p-4 md:p-6 text-white shadow-md">
-        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-          <div>
-            <h1 className="text-2xl md:text-3xl font-bold tracking-tight">Setup Sheet Templates</h1>
-            <p className="text-white/90 text-sm md:text-base">Create and manage templates for your weekly setup sheets</p>
-          </div>
-          <div className="flex flex-wrap gap-2">
-            <Button
-              variant="secondary"
-              className="bg-white/15 hover:bg-white/25 text-white"
-              onClick={() => navigate('/setup-sheet-builder')}
-            >
-              <Plus className="w-4 h-4 mr-2" />
-              New Setup
-            </Button>
-          </div>
-        </div>
-      </div>
+      {/* Use PageHeader component */}
+      <PageHeader
+        title="Setup Sheet Templates"
+        subtitle="Create and manage templates for your weekly setup sheets"
+        icon={<LayoutDashboard className="h-5 w-5" />}
+        actions={
+          <button
+            onClick={() => navigate('/setup-sheet-builder')}
+            className="flex-1 sm:flex-none bg-white hover:bg-white/90 text-[#E51636] flex items-center justify-center gap-2 py-2 px-3 sm:px-4 rounded-xl transition-all duration-300 text-sm font-medium shadow-sm border border-white/20"
+          >
+            <Plus className="w-4 h-4" />
+            <span>New Setup</span>
+          </button>
+        }
+      />
 
       <div className="flex flex-wrap gap-4 mb-6">
         <Button
