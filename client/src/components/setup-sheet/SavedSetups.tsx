@@ -77,7 +77,7 @@ export function SavedSetups({ onSelectSetup }: { onSelectSetup: (setupId: string
       {isLoading ? (
         <div className="text-center py-8">Loading saved setups...</div>
       ) : filteredSetups.length === 0 ? (
-        <Card className="p-8 text-center">
+        <Card className="p-8 text-center bg-white">
           <div className="flex flex-col items-center justify-center py-12">
             <Calendar className="w-12 h-12 text-gray-300 mb-4" />
             <h3 className="text-xl font-medium mb-2">No Saved Setups Yet</h3>
