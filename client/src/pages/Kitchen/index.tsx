@@ -42,7 +42,7 @@ const Kitchen: React.FC = () => {
           actions={
             <button
               onClick={() => navigate('/dashboard')}
-              className="flex-1 sm:flex-none bg-white hover:bg-white/90 text-[#E51636] flex items-center justify-center gap-2 py-2 px-3 sm:px-4 rounded-xl transition-all duration-300 text-sm font-medium shadow-sm border border-white/20"
+              className="flex-1 sm:flex-none bg-white hover:bg-white/90 text-[#E51636] flex items-center justify-center gap-2 py-2 px-3 sm:px-4 rounded-xl transition-all duration-300 text-sm font-medium shadow-md border border-gray-200 hover:shadow-lg"
             >
               <LayoutDashboard className="w-4 h-4" />
               <span>{t('kitchen.backHome')}</span>
@@ -51,7 +51,7 @@ const Kitchen: React.FC = () => {
         />
 
         {/* Navigation with subtle shadow and smooth transitions - visible on all screen sizes */}
-        <div className="bg-white rounded-[16px] p-2 sm:p-3 shadow-sm border-0">
+        <div className="bg-white rounded-[16px] p-2 sm:p-3 shadow-md border border-gray-200 hover:shadow-lg transition-all duration-300">
           <div className="flex flex-col sm:flex-row sm:items-center justify-between">
             <div className="overflow-x-auto hide-scrollbar pb-2 sm:pb-0 w-full">
               <div className="inline-flex gap-2 min-w-fit">
