@@ -9,6 +9,7 @@ import { useAuth } from '@/contexts/AuthContext'
 import { TaskList } from './TaskList'
 import { CreateTaskDialog } from './CreateTaskDialog'
 import { useToast } from '@/components/ui/use-toast'
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip'
 import axios from 'axios'
 import api from '@/lib/axios'
 import { getTodayDateString, isNewDay } from '@/lib/utils/date-utils'
@@ -323,85 +324,162 @@ export default function FOHPage() {
           </Card>
 
           {/* Opening Tasks */}
-          <Card className="bg-white rounded-[16px] shadow-sm hover:shadow-md transition-all">
-            <div className="p-4">
-              <div className="flex items-start justify-between">
-                <div>
-                  <p className="text-[#27251F]/60 text-sm font-medium">Opening</p>
-                  <h3 className="text-xl font-bold mt-1 text-[#27251F]">
-                    {openingCompleted}/{openingTasks}
-                  </h3>
-                  <p className="text-xs text-[#27251F]/60 mt-1">
-                    {openingTasks > 0 ? Math.round((openingCompleted / openingTasks) * 100) : 0}% complete
-                  </p>
-                </div>
-                <div className="h-10 w-10 bg-blue-100 rounded-xl flex items-center justify-center">
-                  <svg className="h-5 w-5 text-blue-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
-                  </svg>
-                </div>
-              </div>
-            </div>
-          </Card>
+          <TooltipProvider>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Card 
+                  className={`bg-white rounded-[16px] shadow-sm hover:shadow-md transition-all cursor-pointer ${activeTab === 'opening' ? 'ring-2 ring-blue-500' : ''}`}
+                  onClick={() => setActiveTab('opening')}
+                >
+                  <div className="p-4">
+                    <div className="flex items-start justify-between">
+                      <div>
+                        <p className="text-[#27251F]/60 text-sm font-medium">Opening</p>
+                        <h3 className="text-xl font-bold mt-1 text-[#27251F]">
+                          {openingCompleted}/{openingTasks}
+                        </h3>
+                        <p className="text-xs text-[#27251F]/60 mt-1">
+                          {openingTasks > 0 ? Math.round((openingCompleted / openingTasks) * 100) : 0}% complete
+                        </p>
+                      </div>
+                      <div className={`h-10 w-10 rounded-xl flex items-center justify-center ${activeTab === 'opening' ? 'bg-blue-500 text-white' : 'bg-blue-100 text-blue-600'}`}>
+                        <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
+                        </svg>
+                      </div>
+                    </div>
+                  </div>
+                </Card>
+              </TooltipTrigger>
+              <TooltipContent>
+                <p>Click to view Opening tasks</p>
+              </TooltipContent>
+            </Tooltip>
+          </TooltipProvider>
 
           {/* Transition Tasks */}
-          <Card className="bg-white rounded-[16px] shadow-sm hover:shadow-md transition-all">
-            <div className="p-4">
-              <div className="flex items-start justify-between">
-                <div>
-                  <p className="text-[#27251F]/60 text-sm font-medium">Transition</p>
-                  <h3 className="text-xl font-bold mt-1 text-[#27251F]">
-                    {transitionCompleted}/{transitionTasks}
-                  </h3>
-                  <p className="text-xs text-[#27251F]/60 mt-1">
-                    {transitionTasks > 0 ? Math.round((transitionCompleted / transitionTasks) * 100) : 0}% complete
-                  </p>
-                </div>
-                <div className="h-10 w-10 bg-yellow-100 rounded-xl flex items-center justify-center">
-                  <svg className="h-5 w-5 text-yellow-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4" />
-                  </svg>
-                </div>
-              </div>
-            </div>
-          </Card>
+          <TooltipProvider>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Card 
+                  className={`bg-white rounded-[16px] shadow-sm hover:shadow-md transition-all cursor-pointer ${activeTab === 'transition' ? 'ring-2 ring-yellow-500' : ''}`}
+                  onClick={() => setActiveTab('transition')}
+                >
+                  <div className="p-4">
+                    <div className="flex items-start justify-between">
+                      <div>
+                        <p className="text-[#27251F]/60 text-sm font-medium">Transition</p>
+                        <h3 className="text-xl font-bold mt-1 text-[#27251F]">
+                          {transitionCompleted}/{transitionTasks}
+                        </h3>
+                        <p className="text-xs text-[#27251F]/60 mt-1">
+                          {transitionTasks > 0 ? Math.round((transitionCompleted / transitionTasks) * 100) : 0}% complete
+                        </p>
+                      </div>
+                      <div className={`h-10 w-10 rounded-xl flex items-center justify-center ${activeTab === 'transition' ? 'bg-yellow-500 text-white' : 'bg-yellow-100 text-yellow-600'}`}>
+                        <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4" />
+                        </svg>
+                      </div>
+                    </div>
+                  </div>
+                </Card>
+              </TooltipTrigger>
+              <TooltipContent>
+                <p>Click to view Transition tasks</p>
+              </TooltipContent>
+            </Tooltip>
+          </TooltipProvider>
 
           {/* Closing Tasks */}
-          <Card className="bg-white rounded-[16px] shadow-sm hover:shadow-md transition-all">
-            <div className="p-4">
-              <div className="flex items-start justify-between">
-                <div>
-                  <p className="text-[#27251F]/60 text-sm font-medium">Closing</p>
-                  <h3 className="text-xl font-bold mt-1 text-[#27251F]">
-                    {closingCompleted}/{closingTasks}
-                  </h3>
-                  <p className="text-xs text-[#27251F]/60 mt-1">
-                    {closingTasks > 0 ? Math.round((closingCompleted / closingTasks) * 100) : 0}% complete
-                  </p>
-                </div>
-                <div className="h-10 w-10 bg-purple-100 rounded-xl flex items-center justify-center">
-                  <svg className="h-5 w-5 text-purple-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2" />
-                    <circle cx="12" cy="7" r="4" />
-                  </svg>
-                </div>
-              </div>
-            </div>
-          </Card>
+          <TooltipProvider>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Card 
+                  className={`bg-white rounded-[16px] shadow-sm hover:shadow-md transition-all cursor-pointer ${activeTab === 'closing' ? 'ring-2 ring-purple-500' : ''}`}
+                  onClick={() => setActiveTab('closing')}
+                >
+                  <div className="p-4">
+                    <div className="flex items-start justify-between">
+                      <div>
+                        <p className="text-[#27251F]/60 text-sm font-medium">Closing</p>
+                        <h3 className="text-xl font-bold mt-1 text-[#27251F]">
+                          {closingCompleted}/{closingTasks}
+                        </h3>
+                        <p className="text-xs text-[#27251F]/60 mt-1">
+                          {closingTasks > 0 ? Math.round((closingCompleted / closingTasks) * 100) : 0}% complete
+                        </p>
+                      </div>
+                      <div className={`h-10 w-10 rounded-xl flex items-center justify-center ${activeTab === 'closing' ? 'bg-purple-500 text-white' : 'bg-purple-100 text-purple-600'}`}>
+                        <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2" />
+                          <circle cx="12" cy="7" r="4" />
+                        </svg>
+                      </div>
+                    </div>
+                  </div>
+                </Card>
+              </TooltipTrigger>
+              <TooltipContent>
+                <p>Click to view Closing tasks</p>
+              </TooltipContent>
+            </Tooltip>
+          </TooltipProvider>
         </div>
 
         {/* Task Tabs */}
         <Card className="bg-white rounded-[16px] shadow-sm overflow-hidden">
-        <div className="p-4 md:p-6">
+        <div className="p-3 md:p-6">
           <Tabs value={activeTab} onValueChange={(value) => setActiveTab(value as ShiftType)}>
-            <TabsList className="grid w-full grid-cols-3 bg-gray-100 p-1 rounded-xl">
+            {/* Mobile optimized tabs - visible only on small screens */}
+            <TabsList className="grid w-full grid-cols-3 bg-gray-100 p-0.5 rounded-xl md:hidden">
+              <TabsTrigger
+                value="opening"
+                className="rounded-lg data-[state=active]:bg-white data-[state=active]:text-[#E51636] data-[state=active]:shadow-sm px-1 py-1.5"
+              >
+                <div className="flex flex-col items-center">
+                  <div className="flex items-center">
+                    <div className="h-2.5 w-2.5 rounded-full bg-blue-500 mr-1"></div>
+                    <span className="text-xs">Opening</span>
+                  </div>
+                  <span className="text-xs bg-gray-200 px-1 py-0.5 rounded-full mt-1">{openingCompleted}/{openingTasks}</span>
+                </div>
+              </TabsTrigger>
+              <TabsTrigger
+                value="transition"
+                className="rounded-lg data-[state=active]:bg-white data-[state=active]:text-[#E51636] data-[state=active]:shadow-sm px-1 py-1.5"
+              >
+                <div className="flex flex-col items-center">
+                  <div className="flex items-center">
+                    <div className="h-2.5 w-2.5 rounded-full bg-yellow-500 mr-1"></div>
+                    <span className="text-xs">Transition</span>
+                  </div>
+                  <span className="text-xs bg-gray-200 px-1 py-0.5 rounded-full mt-1">{transitionCompleted}/{transitionTasks}</span>
+                </div>
+              </TabsTrigger>
+              <TabsTrigger
+                value="closing"
+                className="rounded-lg data-[state=active]:bg-white data-[state=active]:text-[#E51636] data-[state=active]:shadow-sm px-1 py-1.5"
+              >
+                <div className="flex flex-col items-center">
+                  <div className="flex items-center">
+                    <div className="h-2.5 w-2.5 rounded-full bg-purple-500 mr-1"></div>
+                    <span className="text-xs">Closing</span>
+                  </div>
+                  <span className="text-xs bg-gray-200 px-1 py-0.5 rounded-full mt-1">{closingCompleted}/{closingTasks}</span>
+                </div>
+              </TabsTrigger>
+            </TabsList>
+            
+            {/* Desktop tabs - hidden on mobile screens */}
+            <TabsList className="hidden md:grid w-full grid-cols-3 bg-gray-100 p-1 rounded-xl">
               <TabsTrigger
                 value="opening"
                 className="rounded-lg data-[state=active]:bg-white data-[state=active]:text-[#E51636] data-[state=active]:shadow-sm"
               >
                 <div className="flex items-center gap-2">
                   <div className="h-3 w-3 rounded-full bg-blue-500"></div>
-                  <span>Opening</span>
+                  <span className="text-sm">Opening</span>
                   <span className="ml-1 text-xs bg-gray-200 px-1.5 py-0.5 rounded-full">{openingCompleted}/{openingTasks}</span>
                 </div>
               </TabsTrigger>
@@ -411,7 +489,7 @@ export default function FOHPage() {
               >
                 <div className="flex items-center gap-2">
                   <div className="h-3 w-3 rounded-full bg-yellow-500"></div>
-                  <span>Transition</span>
+                  <span className="text-sm">Transition</span>
                   <span className="ml-1 text-xs bg-gray-200 px-1.5 py-0.5 rounded-full">{transitionCompleted}/{transitionTasks}</span>
                 </div>
               </TabsTrigger>
@@ -421,7 +499,7 @@ export default function FOHPage() {
               >
                 <div className="flex items-center gap-2">
                   <div className="h-3 w-3 rounded-full bg-purple-500"></div>
-                  <span>Closing</span>
+                  <span className="text-sm">Closing</span>
                   <span className="ml-1 text-xs bg-gray-200 px-1.5 py-0.5 rounded-full">{closingCompleted}/{closingTasks}</span>
                 </div>
               </TabsTrigger>
