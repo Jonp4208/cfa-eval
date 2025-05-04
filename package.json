@@ -1,6 +1,6 @@
 {
   "name": "cfa-eval-app",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "engines": {
     "node": "18.x",
     "npm": "9.x"
