@@ -98,7 +98,7 @@ interface DashboardStats {
 // Memoized card components for better performance
 const StatCard = React.memo<StatCardProps>(({ title, value, subtitle, icon: Icon, color, progress, onClick }) => (
   <Card
-    className="bg-white hover:shadow-md transition-all duration-300 cursor-pointer rounded-lg border-transparent"
+    className="bg-white shadow-sm hover:shadow-md transition-all duration-300 cursor-pointer rounded-lg border border-gray-100"
     onClick={onClick}
   >
     <CardContent className="p-4">
