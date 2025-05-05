@@ -355,29 +355,34 @@ export default function DocumentDetail() {
                   <div className="flex flex-wrap gap-2">
                     {isManager && (
                       <>
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          onClick={handleEdit}
-                        >
-                          <Edit className="w-4 h-4 mr-1" />
-                          Edit
-                        </Button>
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          onClick={handleSendEmail}
-                        >
-                          <MessageCircle className="w-4 h-4 mr-1" />
-                          Email
-                        </Button>
+                        <div className="grid grid-cols-2 gap-2 w-full">
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={handleEdit}
+                            className="border-[#E51636] text-[#E51636] hover:bg-[#FEE4E2] hover:text-[#E51636] flex items-center gap-1.5 justify-center w-full"
+                          >
+                            <Edit className="w-4 h-4" />
+                            Edit
+                          </Button>
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={handleSendEmail}
+                            className="border-[#E51636] text-[#E51636] hover:bg-[#FEE4E2] hover:text-[#E51636] flex items-center gap-1.5 justify-center w-full"
+                          >
+                            <MessageCircle className="w-4 h-4" />
+                            Email
+                          </Button>
+                        </div>
                         {document.status === 'Pending Acknowledgment' && (
                           <Button
                             variant="outline"
                             size="sm"
                             onClick={handleSendReminder}
+                            className="border-[#E51636] text-[#E51636] hover:bg-[#FEE4E2] hover:text-[#E51636] flex items-center gap-1.5 w-full"
                           >
-                            <Bell className="w-4 h-4 mr-1" />
+                            <Bell className="w-4 h-4" />
                             Remind
                           </Button>
                         )}
@@ -396,12 +401,12 @@ export default function DocumentDetail() {
                   </div>
                 </div>
 
-                <div className="flex border-b mb-6">
+                <div className="flex border-b mb-6 w-full">
                   <button
-                    className={`px-4 py-2 font-medium text-sm ${
+                    className={`flex-1 px-4 py-3 font-medium text-sm transition-colors ${
                       activeTab === 'details'
-                        ? 'text-[#E51636] border-b-2 border-[#E51636]'
-                        : 'text-gray-500 hover:text-gray-700'
+                        ? 'text-[#E51636] border-b-2 border-[#E51636] bg-[#FEE4E2]/30'
+                        : 'text-gray-500 hover:text-[#E51636] hover:bg-gray-50'
                     }`}
                     onClick={() => setActiveTab('details')}
                   >
@@ -410,20 +415,20 @@ export default function DocumentDetail() {
                   {isManager && (
                     <>
                       <button
-                        className={`px-4 py-2 font-medium text-sm ${
+                        className={`flex-1 px-4 py-3 font-medium text-sm transition-colors ${
                           activeTab === 'followUps'
-                            ? 'text-[#E51636] border-b-2 border-[#E51636]'
-                            : 'text-gray-500 hover:text-gray-700'
+                            ? 'text-[#E51636] border-b-2 border-[#E51636] bg-[#FEE4E2]/30'
+                            : 'text-gray-500 hover:text-[#E51636] hover:bg-gray-50'
                         }`}
                         onClick={() => setActiveTab('followUps')}
                       >
                         Follow-ups
                       </button>
                       <button
-                        className={`px-4 py-2 font-medium text-sm ${
+                        className={`flex-1 px-4 py-3 font-medium text-sm transition-colors ${
                           activeTab === 'documents'
-                            ? 'text-[#E51636] border-b-2 border-[#E51636]'
-                            : 'text-gray-500 hover:text-gray-700'
+                            ? 'text-[#E51636] border-b-2 border-[#E51636] bg-[#FEE4E2]/30'
+                            : 'text-gray-500 hover:text-[#E51636] hover:bg-gray-50'
                         }`}
                         onClick={() => setActiveTab('documents')}
                       >
@@ -594,7 +599,7 @@ export default function DocumentDetail() {
                   <div className="flex justify-between items-center mb-4">
                     <h2 className="text-lg font-semibold">Follow-ups</h2>
                     <Button
-                      className="bg-[#E51636] hover:bg-[#E51636]/90 text-white"
+                      className="bg-[#E51636] hover:bg-[#E51636]/90 text-white flex items-center gap-1.5 px-4"
                       onClick={handleScheduleFollowUp}
                     >
                       Schedule Follow-up
@@ -618,7 +623,9 @@ export default function DocumentDetail() {
                                   variant="outline"
                                   size="sm"
                                   onClick={() => handleCompleteFollowUp(followUp._id)}
+                                  className="border-green-600 text-green-600 hover:bg-green-50 hover:text-green-700 flex items-center gap-1.5"
                                 >
+                                  <CheckCircle className="w-4 h-4" />
                                   Complete
                                 </Button>
                               </>
@@ -651,10 +658,10 @@ export default function DocumentDetail() {
                   <div className="flex justify-between items-center mb-4">
                     <h2 className="text-lg font-semibold">Related Documents</h2>
                     <Button
-                      className="bg-[#E51636] hover:bg-[#E51636]/90 text-white"
+                      className="bg-[#E51636] hover:bg-[#E51636]/90 text-white flex items-center gap-1.5 px-4"
                       onClick={handleUploadDocument}
                     >
-                      <Upload className="w-4 h-4 mr-2" />
+                      <Upload className="w-4 h-4" />
                       Upload Document
                     </Button>
                   </div>
@@ -676,17 +683,18 @@ export default function DocumentDetail() {
                             variant="ghost"
                             size="sm"
                             onClick={() => window.open(doc.url, '_blank')}
+                            className="text-blue-600 hover:bg-blue-50 hover:text-blue-700 flex items-center gap-1.5"
                           >
-                            <Eye className="w-4 h-4 mr-1" />
+                            <Eye className="w-4 h-4" />
                             View
                           </Button>
                           <Button
                             variant="ghost"
                             size="sm"
                             onClick={() => handleDeleteAttachment(doc._id, doc.name)}
-                            className="text-red-500 hover:text-red-700 hover:bg-red-50"
+                            className="text-red-500 hover:bg-red-50 hover:text-red-700 flex items-center gap-1.5"
                           >
-                            <Trash2 className="w-4 h-4 mr-1" />
+                            <Trash2 className="w-4 h-4" />
                             Delete
                           </Button>
                         </div>
@@ -709,8 +717,9 @@ export default function DocumentDetail() {
               <p className="text-gray-500 mb-6">The document you're looking for doesn't exist or you don't have permission to view it.</p>
               <Button
                 onClick={() => navigate('/documentation')}
-                className="bg-[#E51636] hover:bg-[#E51636]/90 text-white"
+                className="bg-[#E51636] hover:bg-[#E51636]/90 text-white flex items-center gap-1.5"
               >
+                <ChevronLeft className="w-4 h-4" />
                 Back to Documents
               </Button>
             </CardContent>
