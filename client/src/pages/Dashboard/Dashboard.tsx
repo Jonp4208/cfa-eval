@@ -98,27 +98,25 @@ interface DashboardStats {
 // Memoized card components for better performance
 const StatCard = React.memo<StatCardProps>(({ title, value, subtitle, icon: Icon, color, progress, onClick }) => (
   <Card
-    className="bg-white hover:shadow-xl transition-all duration-300 cursor-pointer rounded-2xl"
+    className="bg-[#F4F4F4] hover:bg-white hover:shadow-md transition-all duration-300 cursor-pointer rounded-lg border-transparent"
     onClick={onClick}
   >
     <CardContent className="p-4">
-      <div className="flex flex-col">
-        <div className="flex items-center gap-3 mb-3">
-          <div className={`shrink-0 h-12 w-12 ${color} rounded-2xl flex items-center justify-center`}>
-            <Icon strokeWidth={1.5} size={24} />
-          </div>
-          <p className="text-base font-medium text-[#27251F]/60 flex-1">{title}</p>
+      <div className="flex items-center gap-3 mb-2">
+        <div className={`shrink-0 h-10 w-10 ${color} rounded-xl flex items-center justify-center`}>
+          <Icon strokeWidth={1.5} size={20} />
         </div>
-        <div className="space-y-1">
-          <h3 className="text-3xl font-bold text-[#27251F]">{value}</h3>
-          <p className="text-sm text-[#27251F]/60">{subtitle}</p>
-          {progress !== undefined && progress > 0 && (
-            <div className="mt-3">
-              <Progress value={progress} className="h-1.5" />
-            </div>
-          )}
+        <div className="flex-1">
+          <p className="text-sm font-medium text-[#27251F]">{title}</p>
+          <h3 className="text-xl font-bold text-[#27251F] mt-0.5">{value}</h3>
         </div>
       </div>
+      <p className="text-xs text-[#27251F]/60">{subtitle}</p>
+      {progress !== undefined && progress > 0 && (
+        <div className="mt-2">
+          <Progress value={progress} className="h-1.5" />
+        </div>
+      )}
     </CardContent>
   </Card>
 ));
