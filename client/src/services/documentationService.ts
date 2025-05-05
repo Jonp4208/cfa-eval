@@ -81,6 +81,13 @@ export interface CreateDocumentData {
   previousIncidents: boolean;
   documentationAttached: boolean;
   notifyEmployee: boolean;
+  documentAttachment?: {
+    name: string;
+    type: string;
+    category: string;
+    url: string;
+    key: string;
+  };
 }
 
 const documentationService = {
@@ -104,7 +111,40 @@ const documentationService = {
 
   // Create new document
   createDocument: async (data: CreateDocumentData): Promise<DocumentationRecord> => {
+    // First create the document
     const response = await api.post('/api/documentation', data);
+    const createdDocument = response.data;
+    
+    // If document attachment is provided, attach it to the document
+    if (data.documentAttachment) {
+      const attachmentData = {
+        name: data.documentAttachment.name,
+        type: data.documentAttachment.type,
+        category: data.documentAttachment.category,
+        url: data.documentAttachment.url
+      };
+      
+      // Attach the document
+      await api.post(`/api/documentation/${createdDocument._id}/document`, attachmentData);
+      
+      // Refresh the document data
+      const updatedResponse = await api.get(`/api/documentation/${createdDocument._id}`);
+      return updatedResponse.data;
+    }
+    
+    return createdDocument;
+  },
+
+  // Upload file and attach to a document
+  uploadDocumentFile: async (file: File): Promise<{url: string, key: string, name: string, type: string}> => {
+    const formData = new FormData();
+    formData.append('file', file);
+    
+    const response = await api.post('/api/users/upload', formData, {
+      headers: {
+        'Content-Type': 'multipart/form-data'
+      }
+    });
     return response.data;
   },
 

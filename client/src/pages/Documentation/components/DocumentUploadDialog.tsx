@@ -169,27 +169,55 @@ export default function DocumentUploadDialog({ documentId, isOpen, onClose, onUp
             <label className="block text-sm font-medium mb-2 text-[#27251F]/60">
               File
             </label>
-            <div className="flex items-center gap-2">
-              <input
-                type="file"
-                ref={fileInputRef}
-                onChange={handleFileChange}
-                className="hidden"
-                accept=".pdf,.doc,.docx,.jpg,.jpeg,.png"
-              />
-              <Button
-                type="button"
-                variant="outline"
-                onClick={() => fileInputRef.current?.click()}
-                className="w-full flex items-center justify-center"
-              >
-                <Upload className="w-4 h-4 mr-2" />
-                {file ? file.name : 'Select File'}
-              </Button>
-            </div>
-            <p className="text-xs text-gray-500 mt-1">
-              Supported formats: PDF, Word, Images
-            </p>
+            {file ? (
+              <div className="border rounded-md p-3 mb-2">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-2 overflow-hidden">
+                    <div className="bg-[#E51636]/10 p-2 rounded-md">
+                      <Upload className="w-4 h-4 text-[#E51636]" />
+                    </div>
+                    <div className="truncate">
+                      <p className="text-sm font-medium truncate">{file.name}</p>
+                      <p className="text-xs text-gray-500">
+                        {(file.size / 1024 / 1024).toFixed(2)} MB
+                      </p>
+                    </div>
+                  </div>
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => {
+                      setFile(null);
+                      if (fileInputRef.current) {
+                        fileInputRef.current.value = '';
+                      }
+                    }}
+                    className="text-gray-500 hover:text-gray-700 h-8 w-8 p-0"
+                  >
+                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="lucide lucide-x">
+                      <path d="M18 6 6 18"/>
+                      <path d="m6 6 12 12"/>
+                    </svg>
+                  </Button>
+                </div>
+              </div>
+            ) : (
+              <div className="border border-dashed rounded-md p-6 flex flex-col items-center justify-center cursor-pointer hover:bg-gray-50 transition-colors" onClick={() => fileInputRef.current?.click()}>
+                <Upload className="w-8 h-8 text-gray-400 mb-2" />
+                <p className="text-sm font-medium mb-1">Click to upload</p>
+                <p className="text-xs text-gray-500 text-center">
+                  PDF, Word documents, or images up to 5MB
+                </p>
+                <input
+                  type="file"
+                  ref={fileInputRef}
+                  onChange={handleFileChange}
+                  className="hidden"
+                  accept=".pdf,.doc,.docx,.jpg,.jpeg,.png"
+                />
+              </div>
+            )}
           </div>
         </div>
 

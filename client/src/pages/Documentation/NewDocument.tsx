@@ -1,4 +1,4 @@
-import { useState, FormEvent, useEffect } from 'react';
+import { useState, FormEvent, useEffect, useRef } from 'react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from '@/components/ui/select';
@@ -9,7 +9,10 @@ import {
   Loader2,
   FileCheck,
   FilePlus,
-  ChevronLeft
+  ChevronLeft,
+  Upload,
+  File,
+  Trash2
 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import documentationService, { CreateDocumentData } from '@/services/documentationService';
@@ -23,6 +26,9 @@ export default function NewDocument() {
   const { user } = useAuth();
   const [loading, setLoading] = useState(false);
   const [employees, setEmployees] = useState<User[]>([]);
+  const [uploadedFile, setUploadedFile] = useState<File | null>(null);
+  const [isUploading, setIsUploading] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
   const [formData, setFormData] = useState<CreateDocumentData>({
     employeeId: '',
     date: new Date().toISOString().split('T')[0],
@@ -72,6 +78,19 @@ export default function NewDocument() {
     setFormData(prev => ({ ...prev, [name]: checked }));
   };
 
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (e.target.files && e.target.files[0]) {
+      setUploadedFile(e.target.files[0]);
+    }
+  };
+
+  const clearFileSelection = () => {
+    setUploadedFile(null);
+    if (fileInputRef.current) {
+      fileInputRef.current.value = '';
+    }
+  };
+
   const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();
 
@@ -90,8 +109,31 @@ export default function NewDocument() {
       return;
     }
 
+    // Check if file is required when documentationAttached is true
+    if (formData.documentationAttached && !uploadedFile) {
+      toast.error('Please attach the document file');
+      return;
+    }
+
     try {
       setLoading(true);
+      
+      // If there's a file to upload, upload it first
+      if (uploadedFile) {
+        setIsUploading(true);
+        const fileData = await documentationService.uploadDocumentFile(uploadedFile);
+        setIsUploading(false);
+        
+        // Add the document attachment info to form data
+        formData.documentAttachment = {
+          name: uploadedFile.name,
+          type: uploadedFile.type,
+          category: formData.category,
+          url: fileData.url,
+          key: fileData.key
+        };
+      }
+      
       const result = await documentationService.createDocument(formData);
       toast.success('Document created successfully');
       navigate(`/documentation/${result._id}`);
@@ -344,24 +386,74 @@ export default function NewDocument() {
                 </div>
               </div>
 
+              {/* File Upload Section - Only show when documentationAttached is checked */}
+              {formData.documentationAttached && (
+                <div className="space-y-4 border border-gray-200 rounded-lg p-4">
+                  <div className="flex justify-between items-center">
+                    <h3 className="text-sm font-medium">Attach Document File</h3>
+                    {uploadedFile && (
+                      <Button 
+                        type="button" 
+                        variant="ghost" 
+                        size="sm" 
+                        onClick={clearFileSelection}
+                        className="text-red-600 hover:text-red-700 p-2 h-auto"
+                      >
+                        <Trash2 className="w-4 h-4" />
+                      </Button>
+                    )}
+                  </div>
+                  
+                  {uploadedFile ? (
+                    <div className="flex items-center p-3 bg-gray-50 rounded-md">
+                      <File className="w-5 h-5 mr-3 text-[#E51636]" />
+                      <div className="flex-grow">
+                        <p className="text-sm font-medium truncate">{uploadedFile.name}</p>
+                        <p className="text-xs text-gray-500">
+                          {(uploadedFile.size / 1024 / 1024).toFixed(2)} MB · {uploadedFile.type || 'Unknown type'}
+                        </p>
+                      </div>
+                    </div>
+                  ) : (
+                    <label htmlFor="documentFile" className="relative cursor-pointer w-full">
+                      <div className="flex flex-col items-center justify-center p-6 border-2 border-dashed border-gray-300 rounded-md bg-gray-50 hover:bg-gray-100 transition duration-150">
+                        <Upload className="w-8 h-8 text-gray-400 mb-2" />
+                        <p className="text-sm font-medium text-gray-700 mb-1">Click to upload a file</p>
+                        <p className="text-xs text-gray-500 text-center">
+                          PDF, Word documents, or images up to 5MB
+                        </p>
+                      </div>
+                      <input
+                        ref={fileInputRef}
+                        type="file"
+                        id="documentFile"
+                        className="sr-only"
+                        onChange={handleFileChange}
+                        accept=".pdf,.doc,.docx,.png,.jpg,.jpeg"
+                      />
+                    </label>
+                  )}
+                </div>
+              )}
+
               <div className="flex justify-end gap-4">
                 <Button
                   type="button"
                   variant="outline"
                   onClick={() => navigate('/documentation')}
-                  disabled={loading}
+                  disabled={loading || isUploading}
                 >
                   Cancel
                 </Button>
                 <Button
                   type="submit"
                   className="bg-[#E51636] hover:bg-[#E51636]/90 text-white"
-                  disabled={loading}
+                  disabled={loading || isUploading}
                 >
-                  {loading ? (
+                  {loading || isUploading ? (
                     <>
                       <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                      Creating...
+                      {isUploading ? 'Uploading...' : 'Creating...'}
                     </>
                   ) : (
                     <>

@@ -136,6 +136,9 @@ export default function DocumentationPage() {
       );
     }
 
+    // Sort by date (newest first)
+    filtered.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
+
     return filtered;
   };
 
@@ -180,9 +183,9 @@ export default function DocumentationPage() {
       }
     });
 
-    // Convert map to array and sort by employee name
+    // Convert map to array and sort by latest document date (newest first)
     return Array.from(employeeMap.values())
-      .sort((a, b) => a.employee.name.localeCompare(b.employee.name));
+      .sort((a, b) => new Date(b.latestDocument.date).getTime() - new Date(a.latestDocument.date).getTime());
   };
 
   const handleNewDocument = () => {
