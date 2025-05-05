@@ -317,13 +317,15 @@ export default function DocumentDetail() {
           subtitle="View and manage document information"
           icon={<FileText className="h-5 w-5" />}
           actions={
-            <Button
-              className="w-full bg-white hover:bg-white/90 text-[#E51636] flex items-center justify-center gap-2 py-2 px-4 rounded-xl transition-all duration-300 text-sm font-medium shadow-sm border border-white/20"
-              onClick={() => navigate('/documentation')}
-            >
-              <ChevronLeft className="w-4 h-4" />
-              <span>Back</span>
-            </Button>
+            <div className="flex flex-col md:flex-row gap-2 w-full">
+              <Button
+                className="w-full md:w-auto bg-white hover:bg-white/90 text-[#E51636] flex items-center justify-center gap-2 py-2 px-4 rounded-xl transition-all duration-300 text-sm font-medium shadow-sm border border-gray-200"
+                onClick={() => navigate('/documentation')}
+              >
+                <ChevronLeft className="w-4 h-4" />
+                <span>Back</span>
+              </Button>
+            </div>
           }
         />
 

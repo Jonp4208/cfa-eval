@@ -267,13 +267,15 @@ export default function DocumentationPage() {
             subtitle="View and manage documents for this team member"
             icon={<FileText className="h-5 w-5" />}
             actions={
-              <Button
-                className={headerButtonClass}
-                onClick={() => navigate('/documentation')}
-              >
-                <ChevronLeft className="w-4 h-4" />
-                <span>Back</span>
-              </Button>
+              <div className="flex flex-col md:flex-row gap-2 w-full">
+                <Button
+                  className={headerButtonClass}
+                  onClick={() => navigate('/documentation')}
+                >
+                  <ChevronLeft className="w-4 h-4" />
+                  <span>Back</span>
+                </Button>
+              </div>
             }
           />
         ) : (
@@ -283,13 +285,15 @@ export default function DocumentationPage() {
             icon={<ClipboardList className="h-5 w-5" />}
             actions={
               (user?.position === 'Leader' || user?.position === 'Director') && (
-                <Button
-                  onClick={handleNewDocument}
-                  className={headerButtonClass}
-                >
-                  <FilePlus className="w-4 h-4" />
-                  <span>New Document</span>
-                </Button>
+                <div className="flex flex-col md:flex-row gap-2 w-full">
+                  <Button
+                    onClick={handleNewDocument}
+                    className={headerButtonClass}
+                  >
+                    <FilePlus className="w-4 h-4" />
+                    <span>New Document</span>
+                  </Button>
+                </div>
               )
             }
           />
