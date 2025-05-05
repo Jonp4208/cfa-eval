@@ -30,6 +30,7 @@ import DepartmentComparison from '@/pages/Analytics/DepartmentComparison';
 import DocumentationPage from '@/pages/Documentation';
 import NewDocument from '@/pages/Documentation/NewDocument';
 import DocumentDetail from '@/pages/Documentation/[id]';
+import EditDocument from '@/pages/Documentation/[id]/edit';
 import TeamScores from '@/pages/Analytics/TeamScores';
 import Kitchen from '@/pages/Kitchen';
 import FoodSafety from '../pages/Kitchen/FoodSafety';
@@ -149,6 +150,7 @@ export default function AppRoutes() {
       <Route path="/register" element={<Register />} />
       <Route path="/forgot-password" element={<ForgotPassword />} />
       <Route path="/reset-password" element={<ResetPassword />} />
+      {/* ... rest of the public routes ... */}
 
       {/* Protected Routes */}
       <Route path="/dashboard" element={<PrivateRoute><Dashboard /></PrivateRoute>} />
@@ -204,6 +206,7 @@ export default function AppRoutes() {
       <Route path="/documentation" element={<PrivateRoute><DocumentationPage /></PrivateRoute>} />
       <Route path="/documentation/new" element={<PrivateRoute><NewDocument /></PrivateRoute>} />
       <Route path="/documentation/:id" element={<PrivateRoute><DocumentDetail /></PrivateRoute>} />
+      <Route path="/documentation/:id/edit" element={<PrivateRoute><EditDocument /></PrivateRoute>} />
       <Route path="/analytics" element={<PrivateRoute><AnalyticsHub /></PrivateRoute>}>
         <Route path="hearts-and-hands" element={<HeartsAndHands />} />
         <Route path="team-scores" element={<TeamScores />} />
