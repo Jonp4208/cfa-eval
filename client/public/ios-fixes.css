@@ -66,24 +66,36 @@ html, body {
   }
   
   /* Specific fix for bottom navigation in PWA mode */
+  /* More adaptive approach that adjusts based on device size */
   .ios-pwa .mobile-nav-button {
-    padding-top: 6px;
-    padding-bottom: 6px;
+    padding-top: min(6px, 1.5vh);
+    padding-bottom: min(6px, 1.5vh);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    height: auto;
   }
   
   .ios-pwa .mobile-nav-button span {
-    font-size: 10px;
-    margin-top: 0;
+    font-size: min(10px, 2.5vw);
+    line-height: 1.2;
+    margin-top: 2px;
   }
   
   .ios-pwa .mobile-nav-button svg {
-    width: 16px;
-    height: 16px;
+    width: min(16px, 4vw);
+    height: min(16px, 4vw);
   }
   
-  /* Adjust the spacer height to match the smaller navigation */
+  /* Adjust the spacer height to match smaller navigation */
   .ios-pwa .nav-spacer {
-    height: 60px;
+    height: max(50px, calc(env(safe-area-inset-bottom) + 45px));
+  }
+  
+  /* Adjust the entire navigation container */
+  .ios-pwa nav.fixed {
+    max-height: max(60px, calc(env(safe-area-inset-bottom) + 50px));
   }
 }
 
