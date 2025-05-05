@@ -30,4 +30,42 @@ const Progress = React.forwardRef<
 ))
 Progress.displayName = ProgressPrimitive.Root.displayName
 
-export { Progress }
+const SimpleProgress = React.forwardRef<
+  HTMLDivElement,
+  React.HTMLAttributes<HTMLDivElement> & {
+    value?: number
+    max?: number
+    color?: 'default' | 'red' | 'green' | 'blue' | 'yellow'
+  }
+>(({ className, value = 0, max = 100, color = 'default', ...props }, ref) => {
+  const percentage = Math.min(Math.max(0, (value / max) * 100), 100)
+  
+  return (
+    <div
+      ref={ref}
+      className={cn(
+        'h-2 w-full overflow-hidden rounded-full bg-gray-100',
+        className
+      )}
+      {...props}
+    >
+      <div
+        className={cn(
+          'h-full transition-all duration-300',
+          {
+            'bg-gradient-to-r from-blue-400 to-blue-500': color === 'default',
+            'bg-gradient-to-r from-red-400 to-red-500': color === 'red',
+            'bg-gradient-to-r from-green-400 to-green-500': color === 'green',
+            'bg-gradient-to-r from-blue-400 to-blue-500': color === 'blue',
+            'bg-gradient-to-r from-yellow-400 to-yellow-500': color === 'yellow',
+          }
+        )}
+        style={{ width: `${percentage}%` }}
+      />
+    </div>
+  )
+})
+
+SimpleProgress.displayName = 'SimpleProgress'
+
+export { Progress, SimpleProgress }

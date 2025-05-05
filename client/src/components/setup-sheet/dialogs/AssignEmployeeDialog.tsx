@@ -104,6 +104,7 @@ export const AssignEmployeeDialog: React.FC<AssignEmployeeDialogProps> = ({
                         tabIndex="-1"
                       />
                     </div>
+
                   </div>
                   <div className="space-y-2 mb-4">
                     {getAvailableEmployeesForTimeBlock(selectedPosition.blockStart, selectedPosition.blockEnd).map(employee => (
@@ -173,3 +174,4 @@ export const AssignEmployeeDialog: React.FC<AssignEmployeeDialogProps> = ({
 };
 
 export default AssignEmployeeDialog;
+

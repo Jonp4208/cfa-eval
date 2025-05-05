@@ -71,7 +71,7 @@ export default function Training() {
   ]
 
   return (
-    <div className="min-h-screen bg-[#F8F8F8] p-4 md:p-6">
+    <div className="min-h-screen p-4 md:p-6">
       <div className="max-w-7xl mx-auto space-y-4 sm:space-y-6">
         {/* Replace the custom header with PageHeader */}
         <PageHeader
@@ -92,14 +92,14 @@ export default function Training() {
 
         {/* Navigation - Only show tabs for managers */}
         {isManager ? (
-          <div className="bg-white rounded-xl shadow-sm p-3">
+          <div className="bg-white rounded-xl shadow-sm p-3 border border-gray-200">
             <div className="flex items-center gap-2 overflow-x-auto whitespace-nowrap">
               <Link
                 to="/training/progress"
-                className={`inline-flex items-center gap-1.5 px-4 py-2 rounded-[16px] transition-all text-sm ${
+                className={`inline-flex items-center gap-1.5 px-4 py-2 rounded-[16px] transition-all text-sm border ${
                   isActive('/progress')
-                    ? 'bg-[#E51636] text-white'
-                    : 'hover:bg-gray-50'
+                    ? 'bg-[#E51636] text-white border-[#E51636]'
+                    : 'hover:bg-gray-50 border-transparent'
                 }`}
               >
                 <BarChart2 className="h-4 w-4" />
@@ -108,10 +108,10 @@ export default function Training() {
 
               <Link
                 to="/training/plans"
-                className={`inline-flex items-center gap-1.5 px-4 py-2 rounded-[16px] transition-all text-sm ${
+                className={`inline-flex items-center gap-1.5 px-4 py-2 rounded-[16px] transition-all text-sm border ${
                   isActive('/plans')
-                    ? 'bg-[#E51636] text-white'
-                    : 'hover:bg-gray-50'
+                    ? 'bg-[#E51636] text-white border-[#E51636]'
+                    : 'hover:bg-gray-50 border-transparent'
                 }`}
               >
                 <ClipboardList className="h-4 w-4" />
@@ -120,10 +120,10 @@ export default function Training() {
 
               <Link
                 to="/training/new-hires"
-                className={`inline-flex items-center gap-1.5 px-4 py-2 rounded-[16px] transition-all text-sm ${
+                className={`inline-flex items-center gap-1.5 px-4 py-2 rounded-[16px] transition-all text-sm border ${
                   isActive('/new-hires')
-                    ? 'bg-[#E51636] text-white'
-                    : 'hover:bg-gray-50'
+                    ? 'bg-[#E51636] text-white border-[#E51636]'
+                    : 'hover:bg-gray-50 border-transparent'
                 }`}
               >
                 <Users className="h-4 w-4" />

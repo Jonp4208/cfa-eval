@@ -61,6 +61,7 @@ import Checklists from '@/pages/Kitchen/Checklists';
 import WasteTracker from '@/pages/Kitchen/WasteTracker';
 
 import Equipment from '@/pages/Kitchen/Equipment';
+import EquipmentDetail from '@/pages/Kitchen/Equipment/EquipmentDetail';
 
 import WasteAnalytics from '@/pages/Kitchen/WasteTracker/Analytics';
 import Training from '@/pages/Training';
@@ -172,6 +173,7 @@ export default function AppRoutes() {
         <Route path="waste-tracker" element={<WasteTracker />} />
         <Route path="waste-tracker/analytics" element={<WasteAnalytics />} />
         <Route path="equipment" element={<Equipment />} />
+        <Route path="equipment/:id" element={<EquipmentDetail />} />
         <Route path="food-safety" element={<FoodSafety />} />
         <Route path="food-safety/complete/:id" element={<CompleteChecklist />} />
         <Route path="food-safety/daily" element={<DailyChecklist />} />

@@ -509,14 +509,14 @@ export default function TrainingProgress() {
             </div>
 
             {/* Filter Tabs */}
-            <div className="bg-white rounded-full flex p-1 shadow-sm">
+            <div className="bg-white rounded-full flex p-1 shadow-sm border border-gray-200">
               <Button
                 variant="ghost"
                 onClick={() => setActiveTab('active')}
-                className={`rounded-full px-8 ${
+                className={`rounded-full px-8 border ${
                   activeTab === 'active'
-                    ? 'bg-[#FEE4E2] text-[#E51636] font-medium'
-                    : 'text-gray-600 hover:text-[#E51636] hover:bg-gray-50'
+                    ? 'bg-[#FEE4E2] text-[#E51636] font-medium border-[#E51636]'
+                    : 'text-gray-600 hover:text-[#E51636] hover:bg-gray-50 border-transparent'
                 }`}
               >
                 Active
@@ -524,29 +524,27 @@ export default function TrainingProgress() {
               <Button
                 variant="ghost"
                 onClick={() => setActiveTab('completed')}
-                className={`rounded-full px-8 ${
+                className={`rounded-full px-8 border ${
                   activeTab === 'completed'
-                    ? 'bg-[#FEE4E2] text-[#E51636] font-medium'
-                    : 'text-gray-600 hover:text-[#E51636] hover:bg-gray-50'
+                    ? 'bg-[#FEE4E2] text-[#E51636] font-medium border-[#E51636]'
+                    : 'text-gray-600 hover:text-[#E51636] hover:bg-gray-50 border-transparent'
                 }`}
               >
                 Completed
               </Button>
             </div>
-          </div>
-
-          {/* Assign Training Button Row */}
-          {(user?.position === 'Leader' || user?.position === 'Director') && (
-            <div className="flex justify-center">
+            
+            {/* Assign Training Button */}
+            {(user?.position === 'Leader' || user?.position === 'Director') && (
               <Button
                 onClick={() => setIsAssignDialogOpen(true)}
-                className="bg-[#E51636] text-white hover:bg-[#E51636]/90 rounded-full gap-2 whitespace-nowrap px-24"
+                className="bg-[#E51636] text-white hover:bg-[#E51636]/90 rounded-full gap-2 whitespace-nowrap px-6"
               >
                 <Plus className="h-4 w-4" />
                 Assign Training
               </Button>
-            </div>
-          )}
+            )}
+          </div>
         </div>
 
         {/* Table Card */}
