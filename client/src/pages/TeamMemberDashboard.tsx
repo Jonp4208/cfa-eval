@@ -183,29 +183,20 @@ export default function TeamMemberDashboard() {
   return (
     <div className="min-h-screen bg-[#F4F4F4] p-4 md:p-6">
       <div className="max-w-7xl mx-auto space-y-8">
-        {/* Hero Header with Gradient Background */}
-        <div className="bg-gradient-to-r from-[#E51636] to-[#DD0031] rounded-[20px] p-8 text-white shadow-xl relative overflow-hidden">
-          <div className="absolute inset-0 bg-[url('/pattern.png')] opacity-10" />
-          <div className="relative z-10">
-            <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-6">
-              <div>
-                <h1 className="text-3xl md:text-4xl font-bold">
-                  {t('dashboard.welcomeBack', 'Welcome back, {{name}}!', { name: dashboardData.name })}
-                </h1>
-                <p className="text-white/80 mt-2 text-lg">
-                  {`${dashboardData.position} • ${dashboardData.departments.join(', ')}`}
-                </p>
-              </div>
-              <Button
-                onClick={() => navigate(`/users/${user?._id}`)}
-                className="bg-white/20 hover:bg-white/30 text-white border-white/30 backdrop-blur-sm flex items-center justify-center gap-2 py-2.5 px-4 rounded-xl transition-all duration-300 w-full md:w-auto"
-              >
-                <User className="w-5 h-5" />
-                <span className="font-medium">{t('dashboard.viewFullProfile', 'View Full Profile')}</span>
-              </Button>
-            </div>
-          </div>
-        </div>
+        {/* Replace custom header with PageHeader */}
+        <PageHeader
+          title={t('dashboard.welcomeBack', 'Welcome back, {{name}}!', { name: dashboardData.name })}
+          subtitle={`${dashboardData.position} • ${dashboardData.departments.join(', ')}`}
+          actions={
+            <Button
+              onClick={() => navigate(`/users/${user?._id}`)}
+              className="w-full bg-white hover:bg-white/90 text-[#E51636] flex items-center justify-center gap-2 py-2 px-4 rounded-xl transition-all duration-300 text-sm font-medium shadow-sm border border-white/20"
+            >
+              <User className="w-5 h-5" />
+              <span className="font-medium">{t('dashboard.viewFullProfile', 'View Full Profile')}</span>
+            </Button>
+          }
+        />
 
         {/* Performance Overview Cards */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
