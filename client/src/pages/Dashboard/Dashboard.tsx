@@ -41,6 +41,11 @@ interface StatCardProps {
   progress?: number;
   onClick: () => void;
   className?: string;
+  alert?: {
+    count: number,
+    text: string,
+    color: string
+  };
 }
 
 interface Evaluation {
@@ -96,7 +101,7 @@ interface DashboardStats {
 }
 
 // Memoized card components for better performance
-const StatCard = React.memo<StatCardProps>(({ title, value, subtitle, icon: Icon, color, progress, onClick }) => (
+const StatCard = React.memo<StatCardProps>(({ title, value, subtitle, icon: Icon, color, progress, onClick, alert }) => (
   <Card
     className="bg-white shadow-sm hover:shadow-md transition-all duration-300 cursor-pointer rounded-lg border border-gray-100"
     onClick={onClick}
@@ -111,7 +116,16 @@ const StatCard = React.memo<StatCardProps>(({ title, value, subtitle, icon: Icon
           <h3 className="text-xl font-bold text-[#27251F] mt-0.5">{value}</h3>
         </div>
       </div>
-      <p className="text-xs text-[#27251F]/60">{subtitle}</p>
+      
+      {alert && alert.count > 0 ? (
+        <div className={`mt-1 mb-2 py-1 px-2 ${alert.color} rounded-md flex items-center justify-between`}>
+          <span className="text-xs font-medium">{alert.text}</span>
+          <span className="text-xs font-bold px-1.5 py-0.5 bg-white/30 rounded-full">{alert.count}</span>
+        </div>
+      ) : (
+        <p className="text-xs text-[#27251F]/60">{subtitle}</p>
+      )}
+      
       {progress !== undefined && progress > 0 && (
         <div className="mt-2">
           <Progress value={progress} className="h-1.5" />
@@ -314,9 +328,14 @@ export default function Dashboard() {
             value={`${kitchenStats.equipment.operational}/${kitchenStats.equipment.totalEquipment}`}
             subtitle={`${kitchenStats.equipment.needsMaintenance} need maintenance`}
             icon={Wrench}
-            color="bg-green-100 text-green-600"
+            color={kitchenStats.equipment.needsRepair > 0 ? "bg-red-100 text-red-600" : "bg-green-100 text-green-600"}
             progress={kitchenStats.equipment.totalEquipment > 0 ? (kitchenStats.equipment.operational / kitchenStats.equipment.totalEquipment) * 100 : 0}
             onClick={handleNavigate('/kitchen/equipment')}
+            alert={kitchenStats.equipment.needsRepair > 0 ? {
+              count: kitchenStats.equipment.needsRepair,
+              text: `${kitchenStats.equipment.needsRepair} ${kitchenStats.equipment.needsRepair === 1 ? 'item is' : 'items are'} broken`,
+              color: "bg-red-100 text-red-700"
+            } : undefined}
           />
           <StatCard
             title={t('dashboard.foodSafety', 'Food Safety')}
@@ -326,6 +345,11 @@ export default function Dashboard() {
             color="bg-red-100 text-red-600"
             progress={kitchenStats.foodSafety.totalTempChecks > 0 ? (kitchenStats.foodSafety.completedTempChecks / kitchenStats.foodSafety.totalTempChecks) * 100 : 0}
             onClick={handleNavigate('/kitchen/food-safety')}
+            alert={kitchenStats.foodSafety.overdueTasks > 0 ? {
+              count: kitchenStats.foodSafety.overdueTasks,
+              text: "Tasks overdue",
+              color: "bg-amber-100 text-amber-700"
+            } : undefined}
           />
           <StatCard
             title={t('dashboard.openIncidents')}
