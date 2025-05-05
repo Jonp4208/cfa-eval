@@ -70,20 +70,20 @@ export default function Leadership() {
         />
 
         {/* Navigation */}
-        <div className="bg-white p-2 rounded-xl shadow-sm">
-          <div className="overflow-x-auto hide-scrollbar">
-            <div className="flex items-center space-x-4 overflow-x-auto pb-4">
+        <div className="bg-white p-2 rounded-xl shadow-sm border border-gray-200">
+          <div className="overflow-x-auto hide-scrollbar flex items-center">
+            <div className="flex items-center space-x-4 overflow-x-auto">
               <Button
-                variant={isActive('dashboard') ? 'default' : 'ghost'}
-                onClick={() => handleNavigate('dashboard')}
+                variant={isActive('my-plans') ? 'default' : 'ghost'}
+                onClick={() => handleNavigate('my-plans')}
                 className={`flex items-center gap-2 px-4 py-2 whitespace-nowrap ${
-                  isActive('dashboard')
+                  isActive('my-plans')
                     ? 'bg-red-50 text-[#E51636] hover:bg-red-100'
                     : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900'
                 }`}
               >
-                <LayoutDashboard className="w-4 h-4" />
-                Dashboard
+                <CheckCircle className="w-4 h-4" />
+                My Plans
               </Button>
 
               <Button
@@ -97,19 +97,6 @@ export default function Leadership() {
               >
                 <Target className="w-4 h-4" />
                 Development Plans
-              </Button>
-
-              <Button
-                variant={isActive('my-plans') ? 'default' : 'ghost'}
-                onClick={() => handleNavigate('my-plans')}
-                className={`flex items-center gap-2 px-4 py-2 whitespace-nowrap ${
-                  isActive('my-plans')
-                    ? 'bg-red-50 text-[#E51636] hover:bg-red-100'
-                    : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900'
-                }`}
-              >
-                <CheckCircle className="w-4 h-4" />
-                My Plans
               </Button>
 
               <Button

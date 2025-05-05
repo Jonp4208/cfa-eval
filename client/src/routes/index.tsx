@@ -226,7 +226,8 @@ export default function AppRoutes() {
       <Route path="/future" element={<PrivateRoute><FuturePage /></PrivateRoute>} />
 
       <Route path="/leadership" element={<PrivateRoute><Leadership /></PrivateRoute>}>
-        <Route index element={<LeadershipDashboard />} />
+        <Route index element={<Navigate to="/leadership/my-plans" replace />} />
+        <Route path="dashboard" element={<LeadershipDashboard />} />
         <Route path="goals" element={<Goals />} />
         <Route path="goals/:id" element={<GoalDetails />} />
         <Route path="developmental-plan" element={<DevelopmentalPlan />} />
@@ -242,7 +243,7 @@ export default function AppRoutes() {
         <Route path="360-evaluations/:evaluationId/evaluators" element={<Evaluators />} />
         <Route path="360-evaluations/:evaluationId/evaluators/add" element={<AddEvaluators />} />
         <Route path="subscription" element={<Subscription />} />
-        <Route path="*" element={<Navigate to="/leadership" replace />} />
+        <Route path="*" element={<Navigate to="/leadership/my-plans" replace />} />
       </Route>
 
       <Route path="/foh" element={<PrivateRoute><FOH /></PrivateRoute>} />
