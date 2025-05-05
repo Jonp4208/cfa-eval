@@ -565,6 +565,31 @@ router.patch('/equipment/:id/status', auth, async (req, res) => {
     }
 
     await equipment.save()
+
+    // Notify directors if equipment is marked as broken (status changed to repair)
+    if (status === 'repair' && equipment.status === 'repair') {
+      // Only attempt to notify if status is 'repair'
+      try {
+        // Import notification service
+        const { NotificationService } = await import('../services/notificationService.js')
+        
+        // Get the latest issue details
+        const latestIssue = Array.isArray(issues) && issues.length > 0 
+          ? issues[issues.length - 1] 
+          : 'Equipment marked as broken'
+          
+        // Send notifications to directors
+        await NotificationService.notifyEquipmentBroken(
+          equipment, 
+          req.user, 
+          latestIssue
+        )
+      } catch (notificationError) {
+        console.error('Failed to send equipment broken notification:', notificationError)
+        // Continue execution even if notification fails
+      }
+    }
+
     res.json({
       id: equipment.id,
       status: equipment.status,
@@ -585,17 +610,18 @@ router.get('/equipment/:id/history', auth, async (req, res) => {
     const equipment = await Equipment.findOne({
       store: req.user.store._id,
       id: req.params.id
-    }).populate('maintenanceHistory.performedBy', 'name')
+    }).populate('maintenanceHistory.performedBy', 'name');
 
     if (!equipment) {
-      return res.status(404).json({ message: 'Equipment not found' })
+      return res.status(404).json({ message: 'Equipment not found' });
     }
 
-    res.json(equipment.maintenanceHistory)
+    res.json(equipment.maintenanceHistory);
   } catch (error) {
-    res.status(500).json({ message: error.message })
+    console.error('Error retrieving equipment history:', error);
+    res.status(500).json({ message: 'Server error', error: error.message });
   }
-})
+});
 
 // Add maintenance note
 router.post('/equipment/:id/history', auth, async (req, res) => {
@@ -603,11 +629,14 @@ router.post('/equipment/:id/history', auth, async (req, res) => {
     const equipment = await Equipment.findOne({
       store: req.user.store._id,
       id: req.params.id
-    })
+    });
 
     if (!equipment) {
-      return res.status(404).json({ message: 'Equipment not found' })
+      return res.status(404).json({ message: 'Equipment not found' });
     }
+
+    // Ensure we have a valid type
+    const recordType = req.body.type === 'note' ? 'note' : 'maintenance';
 
     // Add new note to maintenance history
     equipment.maintenanceHistory.push({
@@ -615,15 +644,19 @@ router.post('/equipment/:id/history', auth, async (req, res) => {
       performedBy: req.user._id,
       notes: req.body.notes,
       previousStatus: equipment.status,
-      newStatus: equipment.status // Status remains the same for standalone notes
-    })
+      newStatus: equipment.status, // Status remains the same for standalone notes
+      type: recordType
+    });
 
-    await equipment.save()
-    res.status(201).json({ message: 'Maintenance note added successfully' })
+    await equipment.save();
+    
+    // Return the updated maintenance history
+    res.json(equipment.maintenanceHistory);
   } catch (error) {
-    res.status(400).json({ message: error.message })
+    console.error('Error adding maintenance note:', error);
+    res.status(500).json({ message: 'Server error', error: error.message });
   }
-})
+});
 
 // Update maintenance record
 router.patch('/equipment/:id/history/:date', auth, async (req, res) => {

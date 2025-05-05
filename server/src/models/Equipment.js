@@ -122,7 +122,12 @@ const equipmentSchema = new mongoose.Schema({
     },
     notes: String,
     previousStatus: String,
-    newStatus: String
+    newStatus: String,
+    type: {
+      type: String,
+      enum: ['maintenance', 'note'],
+      default: 'maintenance'
+    }
   }],
   cleaningSchedules: [cleaningScheduleSchema]
 }, {

@@ -34,12 +34,13 @@ import {
   Pencil,
   Brush,
   CalendarClock,
-  Calendar
+  Calendar,
+  MessageSquare
 } from 'lucide-react'
 import { useSnackbar } from 'notistack'
 import { kitchenService, EquipmentStatus, EquipmentConfig, EquipmentItem, MaintenanceRecord, CleaningSchedule } from '@/services/kitchenService'
 import { cn } from "@/lib/utils"
-import { format, formatDistanceStrict } from 'date-fns'
+import { format, formatDistanceStrict, formatDistanceToNow } from 'date-fns'
 
 // Import cleaning schedule components
 import CleaningScheduleDialog from './components/CleaningScheduleDialog'
@@ -120,6 +121,9 @@ export default function Equipment() {
   const [repairNotes, setRepairNotes] = useState('')
   const [repairCost, setRepairCost] = useState('')
   const [repairPerson, setRepairPerson] = useState('')
+  const [updateDialog, setUpdateDialog] = useState(false)
+  const [updateNotes, setUpdateNotes] = useState('')
+  const [updateStatus, setUpdateStatus] = useState('in_progress')
 
   // Cleaning schedule state
   const [cleaningScheduleDialog, setCleaningScheduleDialog] = useState(false)
@@ -127,10 +131,49 @@ export default function Equipment() {
   const [completeCleaningDialog, setCompleteCleaningDialog] = useState(false)
   const [cleaningHistoryDialog, setCleaningHistoryDialog] = useState(false)
 
+  // Add state for equipment updates (near the top of the component)
+  const [equipmentUpdates, setEquipmentUpdates] = useState<Record<string, MaintenanceRecord[]>>({});
+
+  // Add a function to load equipment updates
+  const loadEquipmentUpdates = async (equipmentId: string) => {
+    try {
+      const history = await kitchenService.getEquipmentHistory(equipmentId);
+      
+      // Filter for only update records
+      const updateRecords = history.filter(record => 
+        record.type === 'note' || 
+        (record.notes && (
+          record.notes.startsWith('[UPDATE]') || 
+          record.notes.startsWith('[PARTS ORDERED]') || 
+          record.notes.startsWith('[REPAIR SCHEDULED]') || 
+          record.notes.startsWith('[IN PROGRESS]') ||
+          record.notes.startsWith('[WAITING APPROVAL]')
+        ))
+      );
+      
+      setEquipmentUpdates(prev => ({
+        ...prev,
+        [equipmentId]: updateRecords
+      }));
+    } catch (error) {
+      console.error('Error loading equipment updates:', error);
+    }
+  };
+
   useEffect(() => {
     loadEquipmentData()
     loadEquipmentConfig()
   }, [])
+
+  // Add another useEffect to load updates when equipmentStatuses changes
+  useEffect(() => {
+    // Load updates for broken equipment
+    Object.entries(equipmentStatuses).forEach(([id, status]) => {
+      if (status.status === 'repair') {
+        loadEquipmentUpdates(id);
+      }
+    });
+  }, [equipmentStatuses]);
 
   const loadEquipmentData = async () => {
     try {
@@ -286,7 +329,7 @@ export default function Equipment() {
       setNewIssue('')
       setSeverity('medium') // Reset severity to default
       setSelectedEquipment(null)
-      enqueueSnackbar('Equipment marked as broken', { variant: 'success' })
+      enqueueSnackbar('Equipment marked as broken. Directors have been notified.', { variant: 'info' })
     } catch (error) {
       console.error('Error marking equipment as broken:', error)
       enqueueSnackbar('Failed to mark equipment as broken', { variant: 'error' })
@@ -456,15 +499,15 @@ export default function Equipment() {
 
   const loadMaintenanceHistory = async (equipmentId: string) => {
     try {
-      const history = await kitchenService.getEquipmentHistory(equipmentId)
-      setMaintenanceHistory(history)
-      setSelectedEquipment(equipmentId)
-      setMaintenanceHistoryDialog(true)
+      setSelectedEquipment(equipmentId); // Store ID before fetching history
+      const history = await kitchenService.getEquipmentHistory(equipmentId);
+      setMaintenanceHistory(history);
+      setMaintenanceHistoryDialog(true);
     } catch (error) {
-      console.error('Error loading maintenance history:', error)
-      enqueueSnackbar('Failed to load maintenance history', { variant: 'error' })
+      console.error('Error loading maintenance history:', error);
+      enqueueSnackbar('Failed to load maintenance history', { variant: 'error' });
     }
-  }
+  };
 
   const handleDeleteClick = (record: MaintenanceRecord) => {
     setRecordToDelete(record)
@@ -614,6 +657,70 @@ export default function Equipment() {
   // Get equipment counts once to avoid multiple calculations
   const { total, operational, needsAttention } = getTotalEquipmentCount();
 
+  const handleAddUpdateNote = async () => {
+    if (!selectedEquipment || !updateNotes.trim()) {
+      enqueueSnackbar(!selectedEquipment ? 'No equipment selected' : 'Please enter update notes', { 
+        variant: 'error' 
+      });
+      return;
+    }
+
+    try {
+      // Format update notes with status prefix
+      let statusPrefix = '';
+      switch (updateStatus) {
+        case 'ordered_parts':
+          statusPrefix = '[PARTS ORDERED] ';
+          break;
+        case 'scheduled_repair':
+          statusPrefix = '[REPAIR SCHEDULED] ';
+          break;
+        case 'in_progress':
+          statusPrefix = '[IN PROGRESS] ';
+          break;
+        case 'waiting_approval':
+          statusPrefix = '[WAITING APPROVAL] ';
+          break;
+        default:
+          statusPrefix = '[UPDATE] ';
+      }
+
+      const formattedNote = `${statusPrefix}${updateNotes}`;
+
+      // Show feedback to user
+      enqueueSnackbar('Sending update...', { variant: 'info' });
+      
+      // Close dialog immediately to prevent multiple submissions
+      setUpdateDialog(false); 
+
+      // Add update note with explicit type field
+      await kitchenService.addMaintenanceNote(selectedEquipment, {
+        notes: formattedNote,
+        type: 'note' // Explicitly pass 'note' type
+      });
+
+      // Reset state
+      setUpdateNotes('');
+      setUpdateStatus('in_progress');
+
+      // Force refresh maintenance history if dialog is open
+      if (maintenanceHistoryDialog) {
+        const history = await kitchenService.getEquipmentHistory(selectedEquipment);
+        setMaintenanceHistory(history);
+      }
+
+      // Also refresh the equipment updates to show new update on the card
+      loadEquipmentUpdates(selectedEquipment);
+
+      enqueueSnackbar('Update added successfully', { variant: 'success' });
+    } catch (error) {
+      console.error('Error adding update:', error);
+      enqueueSnackbar(`Failed to add update: ${(error as any).message || 'Unknown error'}`, { 
+        variant: 'error' 
+      });
+    }
+  };
+
   return (
     <div className="space-y-4 px-4 md:px-6 pb-6">
       {/* Stats Overview */}
@@ -708,12 +815,12 @@ export default function Equipment() {
                 return (
                   <div
                     key={equipment.id}
-                    className="bg-white border border-gray-200 shadow-sm hover:shadow-md rounded-xl p-5 space-y-5 touch-manipulation transition-all relative overflow-hidden"
+                    className={`${status.status === 'repair' ? 'bg-red-50 border border-red-200 shadow-sm hover:shadow-md' : 'bg-white border border-gray-200 shadow-sm hover:shadow-md'} rounded-xl p-5 space-y-5 touch-manipulation transition-all relative overflow-hidden`}
                   >
                     {/* Equipment header with name and status */}
                     <div className="flex items-start justify-between">
                       <div className="flex flex-col gap-3">
-                        <h3 className="text-xl font-bold text-gray-800">
+                        <h3 className={`text-xl font-bold ${status.status === 'repair' ? 'text-red-700' : 'text-gray-800'}`}>
                           {equipment.name}
                         </h3>
                         <Badge
@@ -722,7 +829,7 @@ export default function Equipment() {
                             'w-fit h-8 px-4 text-sm font-medium capitalize flex items-center whitespace-nowrap rounded-full shadow-sm',
                             status.status === 'operational'
                               ? 'bg-green-50 text-green-600 border-green-200 ring-1 ring-green-100'
-                              : 'bg-red-50 text-red-600 border-red-200 ring-1 ring-red-100',
+                              : 'bg-red-100 text-red-600 border-red-200 ring-1 ring-red-100',
                             status.status !== 'operational' ? 'animate-pulse' : ''
                           )}
                         >
@@ -737,7 +844,10 @@ export default function Equipment() {
                       <Button
                         variant="outline"
                         size="icon"
-                        className="h-10 w-10 rounded-full sm:hidden text-gray-600 hover:text-gray-800 hover:bg-gray-50 border border-gray-200 shadow-sm absolute top-4 right-4"
+                        className={`h-10 w-10 rounded-full sm:hidden hover:bg-gray-50 border shadow-sm absolute top-4 right-4 
+                          ${status.status === 'repair' 
+                            ? 'text-red-600 hover:text-red-800 hover:bg-red-50 border-red-200' 
+                            : 'text-gray-600 hover:text-gray-800 hover:bg-gray-50 border-gray-200'}`}
                         onClick={() => {
                           setSelectedEquipment(equipment.id)
                           loadMaintenanceHistory(equipment.id)
@@ -750,18 +860,93 @@ export default function Equipment() {
 
                     {/* Issues section */}
                     {status.issues?.length > 0 && (
-                      <div className="text-sm text-red-600 bg-red-50 rounded-lg p-4 border border-red-100 shadow-sm ring-1 ring-red-50">
+                      <div className={`text-sm ${status.status === 'repair' ? 'text-red-700 bg-red-100' : 'text-red-600 bg-red-50'} rounded-lg p-4 border ${status.status === 'repair' ? 'border-red-300' : 'border-red-100'} shadow-sm ${status.status === 'repair' ? 'ring-1 ring-red-200' : 'ring-1 ring-red-50'}`}>
                         <div className="flex items-center gap-2 mb-3">
-                          <div className="bg-red-100 h-8 w-8 rounded-full flex items-center justify-center flex-shrink-0">
-                            <AlertCircle className="h-5 w-5" />
+                          <div className={`${status.status === 'repair' ? 'bg-red-200' : 'bg-red-100'} h-8 w-8 rounded-full flex items-center justify-center flex-shrink-0`}>
+                            <AlertCircle className={`h-5 w-5 ${status.status === 'repair' ? 'text-red-700' : 'text-red-600'}`} />
                           </div>
                           <strong className="font-semibold text-base">Issues ({status.issues.length})</strong>
                         </div>
                         <ul className="list-disc list-outside space-y-2 ml-5">
                           {status.issues.map((issue, index) => (
-                            <li key={index} className="text-red-700 leading-relaxed">{issue}</li>
+                            <li key={index} className={`${status.status === 'repair' ? 'text-red-800' : 'text-red-700'} leading-relaxed font-medium`}>{issue}</li>
                           ))}
                         </ul>
+                      </div>
+                    )}
+
+                    {/* Recent Updates (only for broken equipment) */}
+                    {status.status === 'repair' && equipmentUpdates[equipment.id]?.length > 0 && (
+                      <div className="text-sm bg-white rounded-lg p-4 border border-gray-200 shadow-sm mt-4">
+                        <div className="flex items-center gap-2 mb-3">
+                          <div className="bg-gray-100 h-8 w-8 rounded-full flex items-center justify-center flex-shrink-0">
+                            <Clock className="h-5 w-5 text-gray-700" />
+                          </div>
+                          <strong className="font-semibold text-base text-gray-800">Recent Updates</strong>
+                        </div>
+                        
+                        <div className="space-y-3">
+                          {equipmentUpdates[equipment.id]
+                            .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())
+                            .slice(0, 2) // Show only the 2 most recent updates
+                            .map((record, index) => {
+                              // Extract status type from note
+                              let statusType = 'Update';
+                              let badgeClass = 'bg-blue-100 text-blue-700';
+                              
+                              if (record.notes?.startsWith('[PARTS ORDERED]')) {
+                                statusType = 'Parts Ordered';
+                                badgeClass = 'bg-purple-100 text-purple-700';
+                              } else if (record.notes?.startsWith('[REPAIR SCHEDULED]')) {
+                                statusType = 'Repair Scheduled';
+                                badgeClass = 'bg-amber-100 text-amber-700';
+                              } else if (record.notes?.startsWith('[IN PROGRESS]')) {
+                                statusType = 'In Progress';
+                                badgeClass = 'bg-blue-100 text-blue-700';
+                              } else if (record.notes?.startsWith('[WAITING APPROVAL]')) {
+                                statusType = 'Waiting Approval';
+                                badgeClass = 'bg-orange-100 text-orange-700';
+                              }
+                              
+                              // Clean up notes to remove status prefix
+                              const cleanNotes = record.notes
+                                ?.replace(/^\[.*?\]\s*/i, '')
+                                .trim();
+                              
+                              return (
+                                <div key={index} className="p-3 rounded-md bg-gray-50 border border-gray-200 shadow-sm">
+                                  <div className="flex items-center justify-between mb-2">
+                                    <Badge className={`px-3 py-1 rounded-full text-xs font-medium ${badgeClass}`}>
+                                      {statusType}
+                                    </Badge>
+                                    <span className="text-xs text-gray-500">
+                                      {format(new Date(record.date), 'MMM d, h:mm a')}
+                                    </span>
+                                  </div>
+                                  <p className="text-sm text-gray-800 whitespace-pre-wrap font-medium">
+                                    {cleanNotes || "No details provided"}
+                                  </p>
+                                  {record.performedBy && (
+                                    <p className="text-xs text-gray-500 mt-2">
+                                      By: {record.performedBy.name}
+                                    </p>
+                                  )}
+                                </div>
+                              );
+                            })
+                          }
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            className="w-full mt-2 text-gray-600 hover:text-gray-800 hover:bg-gray-50 border border-gray-300 font-medium"
+                            onClick={() => {
+                              setSelectedEquipment(equipment.id);
+                              loadMaintenanceHistory(equipment.id);
+                            }}
+                          >
+                            View All Updates
+                          </Button>
+                        </div>
                       </div>
                     )}
 
@@ -868,15 +1053,19 @@ export default function Equipment() {
                       <div className="hidden sm:block mb-4">
                         <Button
                           variant="outline"
-                          className="h-12 px-4 text-sm sm:text-base font-medium flex items-center justify-center gap-2 sm:gap-2.5 touch-manipulation border border-gray-200 rounded-lg shadow-sm hover:bg-gray-50 transition-all w-full hover:scale-[1.01]"
+                          className={`h-12 px-4 text-sm sm:text-base font-medium flex items-center justify-center gap-2 sm:gap-2.5 touch-manipulation border rounded-lg shadow-sm hover:bg-gray-50 transition-all w-full hover:scale-[1.01] ${
+                            status.status === 'repair' 
+                              ? 'border-red-200 text-red-700 hover:bg-red-50'
+                              : 'border-gray-200 text-gray-700 hover:bg-gray-50'
+                          }`}
                           onClick={() => {
                             setSelectedEquipment(equipment.id)
                             loadMaintenanceHistory(equipment.id)
                             setMaintenanceHistoryDialog(true)
                           }}
                         >
-                          <div className="bg-gray-100 h-6 w-6 sm:h-7 sm:w-7 rounded-full flex items-center justify-center">
-                            <History className="h-3.5 w-3.5 sm:h-4 sm:w-4 text-gray-700" />
+                          <div className={`${status.status === 'repair' ? 'bg-red-100' : 'bg-gray-100'} h-6 w-6 sm:h-7 sm:w-7 rounded-full flex items-center justify-center`}>
+                            <History className={`h-3.5 w-3.5 sm:h-4 sm:w-4 ${status.status === 'repair' ? 'text-red-700' : 'text-gray-700'}`} />
                           </div>
                           <span>View History</span>
                         </Button>
@@ -886,14 +1075,18 @@ export default function Equipment() {
                       <div className="grid grid-cols-2 gap-4">
                         <Button
                           variant="outline"
-                          className="h-14 sm:h-12 px-2 sm:px-4 text-xs sm:text-base font-medium flex items-center justify-center gap-1 sm:gap-2.5 touch-manipulation bg-blue-50 text-blue-600 border-blue-200 rounded-lg shadow-sm hover:bg-blue-100 transition-all w-full hover:scale-[1.01]"
+                          className={`h-14 sm:h-12 px-2 sm:px-4 text-xs sm:text-base font-medium flex items-center justify-center gap-1 sm:gap-2.5 touch-manipulation rounded-lg shadow-sm transition-all w-full hover:scale-[1.01] ${
+                            status.status === 'repair'
+                              ? 'bg-red-50 text-red-600 border-red-200 hover:bg-red-100'
+                              : 'bg-blue-50 text-blue-600 border-blue-200 hover:bg-blue-100'
+                          }`}
                           onClick={() => {
                             setSelectedEquipment(equipment.id)
                             setSelectedCleaningSchedule(null)
                             setCleaningScheduleDialog(true)
                           }}
                         >
-                          <div className="bg-blue-100 h-5 w-5 sm:h-7 sm:w-7 rounded-full flex items-center justify-center">
+                          <div className={`${status.status === 'repair' ? 'bg-red-100' : 'bg-blue-100'} h-5 w-5 sm:h-7 sm:w-7 rounded-full flex items-center justify-center`}>
                             <Brush className="h-3 w-3 sm:h-4 sm:w-4" />
                           </div>
                           <span>Add Cleaning</span>
@@ -990,7 +1183,7 @@ export default function Equipment() {
               <DialogTitle className="text-xl font-semibold text-red-600">Mark Equipment as Broken</DialogTitle>
             </div>
             <p className="text-sm text-gray-500 mt-1">
-              Report equipment that is not functioning properly. This will mark it as broken and notify the team.
+              Report equipment that is not functioning properly. This will mark it as broken and automatically notify all directors.
             </p>
           </DialogHeader>
 
@@ -1022,21 +1215,24 @@ export default function Equipment() {
               </div>
             </div>
 
-            {/* Detailed description */}
+            {/* Issue description */}
             <div className="space-y-2">
-              <Label className="font-medium">Detailed Description</Label>
+              <Label className="font-medium">Issue Description</Label>
               <Textarea
                 placeholder="Describe the issue in detail..."
                 value={newIssue}
                 onChange={(e) => setNewIssue(e.target.value)}
                 className="min-h-[100px] resize-none border-gray-200 rounded-xl"
               />
+              <p className="text-xs text-gray-500">
+                Please provide as much detail as possible to help with troubleshooting.
+              </p>
             </div>
 
-            {/* Severity level */}
+            {/* Severity */}
             <div className="space-y-2">
-              <Label className="font-medium">Severity Level</Label>
-              <div className="flex items-center gap-3">
+              <Label className="font-medium">Issue Severity</Label>
+              <div className="space-y-2">
                 <div className="flex items-center gap-1.5">
                   <input
                     type="radio"
@@ -1046,7 +1242,7 @@ export default function Equipment() {
                     checked={severity === 'low'}
                     onChange={() => setSeverity('low')}
                   />
-                  <Label htmlFor="severity-low" className="text-sm font-normal cursor-pointer">Low (Can Wait)</Label>
+                  <Label htmlFor="severity-low" className="text-sm font-normal cursor-pointer">Low (Minor Issue)</Label>
                 </div>
                 <div className="flex items-center gap-1.5">
                   <input
@@ -1057,7 +1253,7 @@ export default function Equipment() {
                     checked={severity === 'medium'}
                     onChange={() => setSeverity('medium')}
                   />
-                  <Label htmlFor="severity-medium" className="text-sm font-normal cursor-pointer">Medium</Label>
+                  <Label htmlFor="severity-medium" className="text-sm font-normal cursor-pointer">Medium (Affects Operation)</Label>
                 </div>
                 <div className="flex items-center gap-1.5">
                   <input
@@ -1069,6 +1265,16 @@ export default function Equipment() {
                     onChange={() => setSeverity('high')}
                   />
                   <Label htmlFor="severity-high" className="text-sm font-normal cursor-pointer">High (Urgent)</Label>
+                </div>
+              </div>
+            </div>
+            
+            <div className="bg-amber-50 border border-amber-200 rounded-lg p-3 text-sm text-amber-700">
+              <div className="flex items-start gap-2">
+                <AlertCircle className="h-5 w-5 flex-shrink-0 mt-0.5" />
+                <div>
+                  <p className="font-medium">Important Note</p>
+                  <p className="mt-1">When you mark equipment as broken, all directors will be automatically notified via email and in-app notification with the details you provide here.</p>
                 </div>
               </div>
             </div>
@@ -1287,7 +1493,7 @@ export default function Equipment() {
                     groups[dateKey].push(record);
                     return groups;
                   }, {});
-
+                  
                   // Convert the grouped records object to an array of incidents
                   return Object.entries(groupedRecords).map(([dateKey, records]) => {
                     // Sort records by date (newest first in each group)
@@ -1304,6 +1510,27 @@ export default function Equipment() {
                     const repairRecord = sortedRecords.find(r =>
                       r.previousStatus !== 'operational' && r.newStatus === 'operational'
                     );
+                    
+                    // Find any update notes - look for type='note' and specific prefixes
+                    const updateRecords = sortedRecords.filter(r => {
+                      // First check if it has type='note'
+                      if (r.type === 'note') {
+                        return true;
+                      }
+                      
+                      // If not typed, check if the notes start with our prefixes
+                      if (r.notes && (
+                        r.notes.startsWith('[UPDATE]') || 
+                        r.notes.startsWith('[PARTS ORDERED]') || 
+                        r.notes.startsWith('[REPAIR SCHEDULED]') || 
+                        r.notes.startsWith('[IN PROGRESS]') ||
+                        r.notes.startsWith('[WAITING APPROVAL]')
+                      )) {
+                        return true;
+                      }
+                      
+                      return false;
+                    });
 
                     // If we have both records, we can create a complete incident card
                     // Otherwise, just show the individual record
@@ -1342,6 +1569,9 @@ export default function Equipment() {
 
                     // Determine if this is a resolved incident
                     const isResolved = !!repairRecord;
+
+                    // Get the actual equipment ID from original click - stored in selectedEquipment
+                    const actualEquipmentId = selectedEquipment;
 
                     return (
                       <div
@@ -1413,6 +1643,64 @@ export default function Equipment() {
                               </div>
                             </div>
                           )}
+                          
+                          {/* Update records */}
+                          {updateRecords.map((record, index) => {
+                            // Extract status type from note
+                            let statusType = 'Update';
+                            let badgeClass = 'bg-blue-100 text-blue-700';
+                            let iconClass = 'bg-blue-500';
+                            
+                            if (record.notes.startsWith('[PARTS ORDERED]')) {
+                              statusType = 'Parts Ordered';
+                              badgeClass = 'bg-purple-100 text-purple-700';
+                              iconClass = 'bg-purple-500';
+                            } else if (record.notes.startsWith('[REPAIR SCHEDULED]')) {
+                              statusType = 'Repair Scheduled';
+                              badgeClass = 'bg-amber-100 text-amber-700';
+                              iconClass = 'bg-amber-500';
+                            } else if (record.notes.startsWith('[IN PROGRESS]')) {
+                              statusType = 'In Progress';
+                              badgeClass = 'bg-blue-100 text-blue-700';
+                              iconClass = 'bg-blue-500';
+                            } else if (record.notes.startsWith('[WAITING APPROVAL]')) {
+                              statusType = 'Waiting Approval';
+                              badgeClass = 'bg-orange-100 text-orange-700';
+                              iconClass = 'bg-orange-500';
+                            }
+                            
+                            // Clean up notes to remove status prefix
+                            const cleanNotes = record.notes
+                              .replace(/^\[.*?\]\s*/i, '')
+                              .trim();
+                              
+                            return (
+                              <div className="relative" key={index}>
+                                <div className={`absolute -left-[21px] top-0 w-4 h-4 rounded-full ${iconClass} border-2 border-white`}></div>
+                                <div className="flex flex-col">
+                                  <div className="flex items-center gap-2">
+                                    <p className="text-sm font-medium text-gray-900">
+                                      {statusType}
+                                    </p>
+                                    <Badge variant="secondary" className={`px-2 py-0.5 rounded-full text-xs ${badgeClass}`}>
+                                      {statusType}
+                                    </Badge>
+                                    <span className="text-xs font-normal text-gray-500">
+                                      {format(new Date(record.date), 'MMM d, h:mm a')}
+                                    </span>
+                                  </div>
+                                  {cleanNotes && (
+                                    <p className="text-sm text-gray-600 mt-1 bg-white/80 p-2 rounded-lg">
+                                      {cleanNotes}
+                                    </p>
+                                  )}
+                                  <p className="text-xs text-gray-500 mt-1">
+                                    Updated by: {record.performedBy.name}
+                                  </p>
+                                </div>
+                              </div>
+                            );
+                          })}
 
                           {/* Repair completed */}
                           {repairRecord && (
@@ -1457,12 +1745,25 @@ export default function Equipment() {
 
                         {/* Action buttons */}
                         <div className="mt-4 flex justify-end gap-2">
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => {
+                              // No need to set the equipment ID here, it's already in state
+                              setUpdateDialog(true);
+                            }}
+                            className="h-8 text-xs bg-blue-50 text-blue-600 border-blue-200"
+                          >
+                            <Plus className="h-3.5 w-3.5 mr-1" />
+                            Add Update
+                          </Button>
+                          
                           {!isResolved && (
                             <Button
                               variant="outline"
                               size="sm"
                               onClick={() => {
-                                setSelectedEquipment(latestRecord.id)
+                                // Don't change the selected equipment ID here
                                 setResolveDialog(true)
                               }}
                               className="h-8 text-xs bg-green-50 text-green-600 border-green-200"
@@ -1629,6 +1930,95 @@ export default function Equipment() {
           schedule={selectedCleaningSchedule}
         />
       )}
+
+      {/* Add Update Dialog */}
+      <Dialog open={updateDialog} onOpenChange={(open) => {
+        if (!open) {
+          setUpdateNotes('')
+          setUpdateStatus('in_progress')
+        }
+        setUpdateDialog(open)
+      }}>
+        <DialogContent className="sm:max-w-[500px] p-3 sm:p-6 max-h-[90vh] overflow-auto">
+          <DialogHeader>
+            <div className="flex items-center gap-2 text-blue-600 mb-1">
+              <Clock className="h-6 w-6" />
+              <DialogTitle className="text-xl font-semibold text-blue-600">Add Repair Update</DialogTitle>
+            </div>
+            <p className="text-sm text-gray-500 mt-1">
+              Add progress updates for ongoing repairs to keep the team informed.
+            </p>
+          </DialogHeader>
+
+          <div className="space-y-5 py-4">
+            {/* Status selection */}
+            <div className="space-y-2">
+              <Label className="font-medium">Update Status</Label>
+              <Select
+                value={updateStatus}
+                onValueChange={setUpdateStatus}
+              >
+                <SelectTrigger className="h-10 border-gray-200 rounded-xl">
+                  <SelectValue placeholder="Select status" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="ordered_parts">Parts Ordered</SelectItem>
+                  <SelectItem value="scheduled_repair">Repair Scheduled</SelectItem>
+                  <SelectItem value="in_progress">In Progress</SelectItem>
+                  <SelectItem value="waiting_approval">Waiting for Approval</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+
+            {/* Update details */}
+            <div className="space-y-2">
+              <Label className="font-medium">Update Details</Label>
+              <Textarea
+                placeholder="Provide details about the update or progress..."
+                value={updateNotes}
+                onChange={(e) => setUpdateNotes(e.target.value)}
+                className="min-h-[100px] resize-none border-gray-200 rounded-xl"
+              />
+              <p className="text-xs text-gray-500">
+                Include relevant information such as ETA for parts, scheduled repair date, technician name, etc.
+              </p>
+            </div>
+
+            {!selectedEquipment && (
+              <div className="bg-red-50 border border-red-200 rounded-lg p-3 text-sm text-red-700">
+                <div className="flex items-start gap-2">
+                  <AlertCircle className="h-5 w-5 flex-shrink-0 mt-0.5" />
+                  <div>
+                    <p className="font-medium">No equipment selected</p>
+                    <p className="mt-1">Please close this dialog and try again.</p>
+                  </div>
+                </div>
+              </div>
+            )}
+          </div>
+
+          <DialogFooter>
+            <Button
+              variant="outline"
+              onClick={() => setUpdateDialog(false)}
+              className="border border-gray-200 hover:border-gray-300 hover:bg-gray-50 transition-colors"
+            >
+              Cancel
+            </Button>
+            <Button
+              onClick={(e) => {
+                e.preventDefault();
+                handleAddUpdateNote();
+              }}
+              className="bg-blue-600 hover:bg-blue-700 text-white transition-colors"
+              disabled={!selectedEquipment || !updateNotes.trim()}
+            >
+              <Plus className="h-4 w-4 mr-2" />
+              Add Update
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   )
 

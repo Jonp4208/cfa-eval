@@ -277,8 +277,9 @@ export const kitchenService = {
   },
 
   // Add a standalone maintenance note
-  addMaintenanceNote: async (equipmentId: string, data: { notes: string, type?: 'maintenance' | 'note' }): Promise<void> => {
-    await api.post(`/api/kitchen/equipment/${equipmentId}/history`, data)
+  addMaintenanceNote: async (equipmentId: string, data: { notes: string, type?: 'maintenance' | 'note' }): Promise<any> => {
+    const response = await api.post(`/api/kitchen/equipment/${equipmentId}/history`, data);
+    return response.data;
   },
 
   // Update a maintenance record

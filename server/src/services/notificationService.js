@@ -3,6 +3,7 @@ import User from '../models/User.js';
 import TrainingProgress from '../models/TrainingProgress.js';
 import Notification from '../models/Notification.js';
 import { sendEmail } from '../utils/email.js';
+import mongoose from 'mongoose';
 
 // Email templates
 const emailTemplates = {
@@ -93,6 +94,26 @@ const emailTemplates = {
       </ul>
       <p>View detailed progress in the training portal.</p>
       <p>Best regards,<br>Training Team</p>
+    `,
+  }),
+
+  equipmentBroken: (equipment, updatedBy, store, issueDetails) => ({
+    subject: `ALERT: Equipment Marked as Broken - ${equipment.name}`,
+    html: `
+      <h2>Equipment Marked as Broken</h2>
+      <p>An equipment item has been marked as broken:</p>
+      <ul>
+        <li><strong>Equipment:</strong> ${equipment.name}</li>
+        <li><strong>Category:</strong> ${equipment.category}</li>
+        <li><strong>Store:</strong> ${store.name}</li>
+        <li><strong>Reported by:</strong> ${updatedBy.name}</li>
+        <li><strong>Reported on:</strong> ${new Date().toLocaleString()}</li>
+      </ul>
+      <p><strong>Issue Details:</strong></p>
+      <p>${issueDetails || 'No details provided'}</p>
+      <p>Please review this issue as soon as possible.</p>
+      <p>You can view more details and track the status in the system:</p>
+      <p><a href="https://cfa-eval-app.vercel.app/kitchen/equipment" style="display: inline-block; background-color: #E51636; color: white; padding: 12px 24px; text-decoration: none; border-radius: 8px; font-weight: 500;">View Equipment Status</a></p>
     `,
   }),
 };
@@ -245,6 +266,67 @@ export class NotificationService {
     } catch (error) {
       console.error('Error sending weekly progress report:', error);
       throw error;
+    }
+  }
+
+  static async notifyEquipmentBroken(equipment, updatedBy, issueDetails) {
+    try {
+      // Find all directors for the store
+      const directors = await User.find({
+        store: equipment.store,
+        position: 'Director',
+        status: 'active'
+      });
+
+      if (!directors || directors.length === 0) {
+        console.log(`No active directors found for store ID: ${equipment.store}`);
+        return;
+      }
+
+      // Get store details
+      const Store = mongoose.model('Store');
+      const store = await Store.findById(equipment.store);
+
+      if (!store) {
+        console.error(`Store not found with ID: ${equipment.store}`);
+        return;
+      }
+
+      const template = emailTemplates.equipmentBroken(equipment, updatedBy, store, issueDetails);
+
+      // Send email notification to each director
+      for (const director of directors) {
+        // Send email
+        await sendEmail({
+          to: director.email,
+          subject: template.subject,
+          html: template.html
+        });
+
+        // Create in-app notification
+        const notification = new Notification({
+          userId: director._id,
+          storeId: equipment.store,
+          type: 'SYSTEM',
+          status: 'UNREAD',
+          title: `Equipment Broken: ${equipment.name}`,
+          message: `${equipment.name} has been marked as broken by ${updatedBy.name}. Please review.`,
+          metadata: {
+            equipmentId: equipment.id,
+            category: equipment.category,
+            reportedBy: updatedBy._id,
+            issueDetails: issueDetails
+          },
+          priority: 'high'
+        });
+
+        await notification.save();
+      }
+
+      return true;
+    } catch (error) {
+      console.error('Error in notifyEquipmentBroken:', error);
+      return false;
     }
   }
 } 
