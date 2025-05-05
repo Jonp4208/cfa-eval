@@ -2378,16 +2378,18 @@ export function DailyView({ setup, onBack }: DailyViewProps) {
   // Handle removing an employee from a position
   const handleRemoveAssignment = (position: Position) => {
     try {
-      // Remove assignment from position
+      // Store employee name for the toast message
+      let removedEmployeeName = position.employeeName || 'Employee'
+      let employeeId = position.employeeId
+      
+      // Show a toast message to indicate the operation is in progress
+      toast({
+        title: 'Removing assignment...',
+        description: `Removing ${removedEmployeeName} from ${position.name}`
+      })
 
       // Create a deep copy of the setup to modify
       const newSetup = JSON.parse(JSON.stringify(modifiedSetup))
-
-      // Store the original position data in case we need to revert
-      const originalPosition = JSON.parse(JSON.stringify(position))
-
-      // Store employee name for the toast message
-      let removedEmployeeName = ''
 
       // Find the position in the setup and update it
       const daySchedule = newSetup.weekSchedule[activeDay]
@@ -2395,96 +2397,97 @@ export function DailyView({ setup, onBack }: DailyViewProps) {
         daySchedule.timeBlocks.forEach((block: TimeBlock) => {
           block.positions.forEach((pos: Position) => {
             if (pos.id === position.id) {
-              // Update position information
-              removedEmployeeName = pos.employeeName || 'Employee'
-
-              // Store the employee ID before removing it
-              const employeeId = pos.employeeId
-
               // Remove the employee from the position
               pos.employeeId = undefined
               pos.employeeName = undefined
-
-              // Also update the employee in scheduledEmployees if we have an employee ID
-              if (employeeId) {
-                const employeeIndex = scheduledEmployees.findIndex(e => e.id === employeeId);
-                if (employeeIndex !== -1) {
-                  // Create a copy of the employee
-                  const updatedEmployee = { ...scheduledEmployees[employeeIndex] };
-
-                  // Update the employee to remove position information
-                  (updatedEmployee as any).position = undefined;
-                  (updatedEmployee as any).department = undefined;
-                  (updatedEmployee as any).isScheduled = false;
-
-                  // Update the scheduledEmployees array
-                  const newScheduledEmployees = [...scheduledEmployees];
-                  newScheduledEmployees[employeeIndex] = updatedEmployee;
-
-                  // Update the state
-                  setScheduledEmployees(newScheduledEmployees);
-
-                  console.log(`Removed position from employee ${removedEmployeeName} in scheduledEmployees`);
-                }
-              }
             }
           })
         })
       }
 
-      // Immediately update the UI for a responsive feel
+      // Immediately update the UI
       setModifiedSetup(newSetup)
 
-      // Recalculate unassigned employees after removing assignment
-      calculateUnassignedEmployees(scheduledEmployees)
-
-      // Show a toast message immediately
-      toast({
-        title: 'Assignment Removed',
-        description: `${removedEmployeeName} removed from ${position.name}`
-      })
+      // Update the employee in scheduledEmployees if we have an employee ID
+      if (employeeId) {
+        const updatedEmployees = scheduledEmployees.map(emp => {
+          if (emp.id === employeeId) {
+            // Remove position information from employee
+            return {
+              ...emp,
+              position: undefined,
+              department: undefined,
+              isScheduled: false
+            }
+          }
+          return emp
+        })
+        
+        // Update the state
+        setScheduledEmployees(updatedEmployees)
+        
+        // Recalculate unassigned employees to show the employee as available again
+        calculateUnassignedEmployees(updatedEmployees)
+      }
 
       // Force a re-render to update the UI
       setActiveHour(activeHour)
 
-      // Save changes in the background
-      saveChangesAutomatically('remove', removedEmployeeName, position.name).catch(() => {
-        // Error saving removal
+      // Get the token from localStorage
+      const token = localStorage.getItem('token')
+      if (!token) {
+        throw new Error('No authentication token found')
+      }
 
-        // Revert the UI changes if the save fails
-        const revertedSetup = JSON.parse(JSON.stringify(modifiedSetup))
-        const revertDaySchedule = revertedSetup.weekSchedule[activeDay]
-        if (revertDaySchedule && revertDaySchedule.timeBlocks) {
-          revertDaySchedule.timeBlocks.forEach((block: TimeBlock) => {
-            block.positions.forEach((pos: Position) => {
-              if (pos.id === originalPosition.id) {
-                pos.employeeId = originalPosition.employeeId
-                pos.employeeName = originalPosition.employeeName
-              }
-            })
-          })
+      // Create a minimal payload focusing only on the relevant change
+      const payload = {
+        name: newSetup.name,
+        startDate: newSetup.startDate,
+        endDate: newSetup.endDate,
+        weekSchedule: newSetup.weekSchedule,
+        uploadedSchedules: newSetup.uploadedSchedules || scheduledEmployees
+      }
+
+      // Save changes to the server
+      fetch(`/api/weekly-setups/${setup._id}`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
+        body: JSON.stringify(payload),
+      })
+      .then(response => {
+        if (!response.ok) {
+          throw new Error('Failed to save changes')
         }
-
-        // Update the UI with the reverted changes
-        setModifiedSetup(revertedSetup)
-
-        // Show error toast
+        return response.json()
+      })
+      .then(() => {
+        // Show success message
         toast({
-          title: 'Error Saving',
-          description: 'Failed to save removal. Changes have been reverted.',
+          title: 'Assignment Removed',
+          description: `${removedEmployeeName} removed from ${position.name}`,
+          variant: 'default'
+        })
+      })
+      .catch(error => {
+        // If there's an error, show error message
+        toast({
+          title: 'Error Removing Assignment',
+          description: 'Failed to save changes. Please try again.',
           variant: 'destructive'
         })
-
-        // Force a re-render to update the UI with reverted changes
-        setActiveHour(activeHour)
+        console.error('Error removing assignment:', error)
       })
     } catch (error) {
-      // Error removing assignment
+      // Handle any other errors
       toast({
         title: 'Error',
         description: 'Failed to remove assignment. Please try again.',
         variant: 'destructive'
       })
+      console.error('Error in handleRemoveAssignment:', error)
     }
   }
 
@@ -3049,7 +3052,6 @@ export function DailyView({ setup, onBack }: DailyViewProps) {
 
     return newWeekSchedule;
   };
-
   // Get time blocks for the current day
   getTimeBlocks()
   getCurrentTimeBlocks()
@@ -3924,3 +3926,4 @@ export function DailyView({ setup, onBack }: DailyViewProps) {
     </div>
   )
 }
+
