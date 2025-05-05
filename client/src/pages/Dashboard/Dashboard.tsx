@@ -1,6 +1,6 @@
 // client/src/pages/Dashboard.tsx
 import React, { useMemo, useCallback, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { useQueryClient } from '@tanstack/react-query';
@@ -213,8 +213,12 @@ const PerformanceChart = React.memo<PerformanceChartProps>(({ data }) => {
 export default function Dashboard() {
   const { user } = useAuth();
   const navigate = useNavigate();
+  const location = useLocation();
   const { showNotification } = useNotification();
   const { t } = useTranslation();
+
+  // Check for mobile app - we want to ensure consistent buttons on all platforms
+  const isMobileApp = location.search.includes('mobile=true') || window.navigator.userAgent.includes('CFA-Eval-App');
 
   // Use our custom hooks for all dashboard data and calculations
   const {
@@ -274,23 +278,24 @@ export default function Dashboard() {
           title={t('dashboard.welcomeBack', `Welcome back, ${user?.name}!`, { name: user?.name })}
           subtitle={new Date().toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}
           actions={
-            <div className="w-full sm:w-auto flex flex-col sm:flex-row gap-2">
-              <button
+            <div className="w-full flex flex-col gap-2">
+              <Button
                 onClick={handleNavigate('/evaluations/new')}
-                className="w-full sm:w-auto bg-white hover:bg-white/90 text-[#E51636] flex items-center justify-center gap-2 py-2 px-3 sm:px-4 rounded-xl transition-all duration-300 text-sm font-medium shadow-sm border border-white/20"
+                className="w-full bg-white hover:bg-white/90 text-[#E51636] flex items-center justify-center gap-2 py-2 px-4 rounded-xl transition-all duration-300 text-sm font-medium shadow-sm border border-white/20"
               >
                 <ClipboardList className="w-4 h-4" />
                 <span>{t('evaluations.create')}</span>
-              </button>
-              <button
+              </Button>
+              <Button
                 onClick={handleNavigate('/disciplinary/new')}
-                className="w-full sm:w-auto bg-white hover:bg-white/90 text-[#E51636] flex items-center justify-center gap-2 py-2 px-3 sm:px-4 rounded-xl transition-all duration-300 text-sm font-medium shadow-sm border border-white/20"
+                className="w-full bg-white hover:bg-white/90 text-[#E51636] flex items-center justify-center gap-2 py-2 px-4 rounded-xl transition-all duration-300 text-sm font-medium shadow-sm border border-white/20"
               >
                 <AlertCircle className="w-4 h-4" />
                 <span>{t('dashboard.newIncident')}</span>
-              </button>
+              </Button>
             </div>
           }
+          showBackButton={false}
         />
 
         {/* Quick Stats Grid */}
