@@ -142,6 +142,10 @@ const documentationSchema = new mongoose.Schema({
     ref: 'User',
     required: true
   },
+  notifyEmployee: {
+    type: Boolean,
+    default: true
+  },
   followUps: [followUpSchema],
   documents: [documentSchema],
   createdBy: {

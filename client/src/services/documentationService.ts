@@ -32,6 +32,7 @@ export interface DocumentationRecord {
   };
   previousIncidents: boolean;
   documentationAttached: boolean;
+  notifyEmployee: boolean;
   supervisor: {
     _id: string;
     name: string;
@@ -79,6 +80,7 @@ export interface CreateDocumentData {
   followUpActions?: string;
   previousIncidents: boolean;
   documentationAttached: boolean;
+  notifyEmployee: boolean;
 }
 
 const documentationService = {

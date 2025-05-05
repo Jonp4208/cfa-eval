@@ -156,13 +156,20 @@ router.get('/:id', auth, async (req, res) => {
       .populate('manager', 'name _id');
 
     // Users can only access their own data unless they are a leader/director
-    if (user._id.toString() !== req.user._id.toString() &&
-        !['director', 'leader'].some(pos => req.user.position?.toLowerCase().includes(pos))) {
+    const isManagerOrLeader = ['director', 'leader'].some(pos => req.user.position?.toLowerCase().includes(pos));
+    const isViewingOwnProfile = user._id.toString() === req.user._id.toString();
+    
+    if (!isViewingOwnProfile && !isManagerOrLeader) {
       return res.status(403).json({ message: 'Not authorized to view this user' });
     }
 
     if (!user) {
       return res.status(404).json({ message: 'User not found' });
+    }
+    
+    // If employee is viewing their own profile, filter out documentation with notifyEmployee=false
+    if (isViewingOwnProfile && !isManagerOrLeader && user.documentation) {
+      user.documentation = user.documentation.filter(doc => doc.notifyEmployee !== false);
     }
 
     res.json(user);
@@ -752,7 +759,7 @@ router.delete('/files/:key', auth, async (req, res) => {
 router.post('/:id/documents', auth, async (req, res) => {
   try {
     const userId = req.params.id;
-    const { title, type, description, fileUrl, fileName, fileType } = req.body;
+    const { title, type, description, fileUrl, fileName, fileType, notifyEmployee = true } = req.body;
 
     // Validate required fields
     if (!title || !type || !description) {
@@ -771,6 +778,7 @@ router.post('/:id/documents', auth, async (req, res) => {
       description,
       date: new Date(),
       createdBy: req.user.name, // From auth middleware
+      notifyEmployee, // Store whether the document should be visible to the employee
       ...(fileUrl && { fileUrl, fileName, fileType })
     };
 

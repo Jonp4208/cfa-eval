@@ -20,6 +20,8 @@ export const getAllCombinedRecords = handleAsync(async (req, res) => {
   // If user has restricted access, only show their own records
   if (hasRestrictedAccess) {
     query.employee = _id;
+    // Also filter out documents where notifyEmployee is false for Team Members
+    query.notifyEmployee = true;
   }
 
   console.log('Documentation getAllCombinedRecords - User details:', {
@@ -84,6 +86,8 @@ export const getAllDocuments = handleAsync(async (req, res) => {
   // If user has restricted access, only show their own documents
   if (hasRestrictedAccess) {
     query.employee = _id;
+    // Also filter out documents where notifyEmployee is false
+    query.notifyEmployee = true;
   }
 
   // Only log minimal information at debug level
@@ -119,9 +123,17 @@ export const getDocumentById = handleAsync(async (req, res) => {
   // Check if user has restricted access (Team Member or Trainer)
   const hasRestrictedAccess = ['Team Member', 'Trainer'].includes(position);
 
-  // If user has restricted access, verify they own the document
-  if (hasRestrictedAccess && document.employee._id.toString() !== _id.toString()) {
-    return res.status(403).json({ message: 'Not authorized to view this document' });
+  // If user has restricted access, verify they own the document and it's marked for notification
+  if (hasRestrictedAccess) {
+    // First check if they own the document
+    if (document.employee._id.toString() !== _id.toString()) {
+      return res.status(403).json({ message: 'Not authorized to view this document' });
+    }
+    
+    // Then check if the document is marked to notify the employee
+    if (document.notifyEmployee === false) {
+      return res.status(403).json({ message: 'Not authorized to view this document' });
+    }
   }
 
   res.json(document);
@@ -141,7 +153,8 @@ export const createDocument = handleAsync(async (req, res) => {
     followUpDate,
     followUpActions,
     previousIncidents,
-    documentationAttached
+    documentationAttached,
+    notifyEmployee = true // Default to true if not provided
   } = req.body;
 
   // Get employee's supervisor
@@ -169,6 +182,7 @@ export const createDocument = handleAsync(async (req, res) => {
     followUpActions,
     previousIncidents,
     documentationAttached,
+    notifyEmployee, // Save the notifyEmployee value to the document
     supervisor: employee.supervisor || req.user._id,
     createdBy: req.user._id,
     store: req.user.store,
@@ -181,20 +195,22 @@ export const createDocument = handleAsync(async (req, res) => {
     { path: 'createdBy', select: 'name' }
   ]);
 
-  // Create notification for the employee
-  await Notification.create({
-    user: employee._id,
-    store: req.user.store._id,
-    type: 'documentation',
-    priority: category === 'Disciplinary' ? 'high' : 'medium',
-    title: `New ${category} Documentation`,
-    message: `A new ${type.toLowerCase()} documentation has been created.`,
-    relatedId: document._id,
-    relatedModel: 'Documentation'
-  });
+  // Create notification for the employee only if notifyEmployee is true
+  if (notifyEmployee) {
+    await Notification.create({
+      user: employee._id,
+      store: req.user.store._id,
+      type: 'documentation',
+      priority: category === 'Disciplinary' ? 'high' : 'medium',
+      title: `New ${category} Documentation`,
+      message: `A new ${type.toLowerCase()} documentation has been created.`,
+      relatedId: document._id,
+      relatedModel: 'Documentation'
+    });
+  }
 
   // Send email to employee for any documentation
-  if (document.employee.email) {
+  if (document.employee.email && notifyEmployee) {
     try {
       // Different email templates based on category
       if (category === 'Disciplinary') {
@@ -700,16 +716,18 @@ export const addFollowUp = handleAsync(async (req, res) => {
 
   await document.save();
 
-  // Create notification for employee
-  await Notification.create({
-    user: document.employee,
-    store: req.user.store,
-    type: 'documentation',
-    title: 'Follow-up Added to Document',
-    message: `A follow-up has been added to your ${document.type.toLowerCase()} document.`,
-    relatedId: document._id,
-    relatedModel: 'Documentation'
-  });
+  // Create notification for employee only if notifyEmployee is true
+  if (document.notifyEmployee) {
+    await Notification.create({
+      user: document.employee,
+      store: req.user.store,
+      type: 'documentation',
+      title: 'Follow-up Added to Document',
+      message: `A follow-up has been added to your ${document.type.toLowerCase()} document.`,
+      relatedId: document._id,
+      relatedModel: 'Documentation'
+    });
+  }
 
   await document.populate([
     { path: 'employee', select: 'name position department' },
@@ -747,16 +765,18 @@ export const completeFollowUp = handleAsync(async (req, res) => {
 
   await document.save();
 
-  // Create notification for employee
-  await Notification.create({
-    user: document.employee,
-    store: req.user.store,
-    type: 'documentation',
-    title: 'Follow-up Completed',
-    message: `The follow-up for your ${document.type.toLowerCase()} document has been completed.`,
-    relatedId: document._id,
-    relatedModel: 'Documentation'
-  });
+  // Create notification for employee only if notifyEmployee is true
+  if (document.notifyEmployee) {
+    await Notification.create({
+      user: document.employee,
+      store: req.user.store,
+      type: 'documentation',
+      title: 'Follow-up Completed',
+      message: `The follow-up for your ${document.type.toLowerCase()} document has been completed.`,
+      relatedId: document._id,
+      relatedModel: 'Documentation'
+    });
+  }
 
   await document.populate([
     { path: 'employee', select: 'name position department' },
@@ -875,13 +895,22 @@ export const getEmployeeDocuments = handleAsync(async (req, res) => {
   }
 
   console.log('Getting documents for employee:', employeeId);
-  const documents = await Documentation.find({ employee: employeeId })
+  
+  // Base query
+  let query = { employee: employeeId };
+  
+  // If the employee is viewing their own documents, filter out documents where notifyEmployee is false
+  if (employeeId === _id.toString()) {
+    query.notifyEmployee = true;
+  }
+  
+  const documents = await Documentation.find(query)
     .populate('employee', 'name position department')
     .populate('supervisor', 'name')
     .populate('createdBy', 'name')
     .sort('-createdAt');
 
-  console.log('Found documents:', documents);
+  console.log('Found documents:', documents.length);
   res.json(documents);
 });
 
@@ -1019,6 +1048,13 @@ export const sendUnacknowledgedNotification = handleAsync(async (req, res) => {
 
   if (!document) {
     throw new ApiError(404, 'Document not found or already acknowledged');
+  }
+
+  // Don't notify the employee if notifyEmployee is false
+  if (!document.notifyEmployee) {
+    return res.json({
+      message: 'Document is not set to notify employee. No notification sent.'
+    });
   }
 
   // Create notification for the employee

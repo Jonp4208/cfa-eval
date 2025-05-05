@@ -181,6 +181,10 @@ const userSchema = new mongoose.Schema({
       type: String,
       required: true
     },
+    notifyEmployee: {
+      type: Boolean,
+      default: true
+    },
     fileUrl: String,
     fileName: String,
     fileType: String
