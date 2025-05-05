@@ -82,7 +82,7 @@ export function MobileNav() {
                 )}
                 style={{ touchAction: 'manipulation' }} // Ensure touch events work properly
               >
-                <Icon className="w-5 h-5" />
+                <Icon className="w-6 h-6" />
                 <span className="text-xs font-medium truncate w-full text-center">{item.label}</span>
               </button>
             );

@@ -84,8 +84,8 @@ html, body {
   }
   
   .ios-pwa .mobile-nav-button svg {
-    width: min(16px, 4vw);
-    height: min(16px, 4vw);
+    width: min(22px, 5.5vw);
+    height: min(22px, 5.5vw);
   }
   
   /* Adjust the spacer height to match smaller navigation */
@@ -123,5 +123,24 @@ html, body {
   /* Ensure fixed elements stay fixed */
   .fixed {
     position: fixed !important;
+  }
+}
+
+/* iPhone-specific fixes for bottom nav */
+@supports (-webkit-touch-callout: none) {
+  /* Target iOS devices specifically */
+  .mobile-nav-button svg {
+    width: 24px !important;
+    height: 24px !important;
+  }
+  
+  .mobile-nav-button {
+    padding-top: 8px;
+    padding-bottom: 8px;
+  }
+  
+  .mobile-nav-button span {
+    font-size: 11px;
+    margin-top: 4px;
   }
 }
