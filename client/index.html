@@ -26,6 +26,75 @@
       (function() {
         var iOS = /iPad|iPhone|iPod/.test(navigator.userAgent) && !window.MSStream;
         var isPWA = window.navigator.standalone === true;
+        
+        // Device detection 
+        function getDeviceModel() {
+          var userAgent = navigator.userAgent;
+          var deviceInfo = {
+            isIPhoneX: false,
+            isIPhoneXR: false,
+            isIPhone12: false,
+            isIPhone14: false,
+            isIPhone15: false,
+            isIPhone16: false,
+            isNotchedDevice: false
+          };
+          
+          // Check for devices with notches (iPhone X and above)
+          if (/iPhone/.test(userAgent)) {
+            // iPhone X, XS, 11 Pro (375×812)
+            if (window.screen.height === 812 && window.screen.width === 375) {
+              deviceInfo.isIPhoneX = true;
+              deviceInfo.isNotchedDevice = true;
+            }
+            // iPhone XR, XS Max, 11, 11 Pro Max (414×896)
+            else if (window.screen.height === 896 && window.screen.width === 414) {
+              deviceInfo.isIPhoneXR = true;
+              deviceInfo.isNotchedDevice = true;
+            }
+            // iPhone 12, 12 Pro, 13, 13 Pro (390×844)
+            else if (window.screen.height === 844 && window.screen.width === 390) {
+              deviceInfo.isIPhone12 = true;
+              deviceInfo.isNotchedDevice = true;
+            }
+            // iPhone 12 Pro Max, 13 Pro Max (428×926)
+            else if (window.screen.height === 926 && window.screen.width === 428) {
+              deviceInfo.isIPhone12 = true;
+              deviceInfo.isNotchedDevice = true;
+            }
+            // iPhone 14 Pro (393x852)
+            else if (window.screen.height === 852 && window.screen.width === 393) {
+              deviceInfo.isIPhone14 = true;
+              deviceInfo.isNotchedDevice = true;
+            }
+            // iPhone 14 Pro Max (430x932)
+            else if (window.screen.height === 932 && window.screen.width === 430) {
+              deviceInfo.isIPhone14 = true;
+              deviceInfo.isNotchedDevice = true;
+            }
+            // iPhone 15/16 Pro (393x852)
+            else if (window.screen.height === 852 && window.screen.width === 393) {
+              deviceInfo.isIPhone15 = true;
+              deviceInfo.isNotchedDevice = true;
+            }
+            // iPhone 15/16 Pro Max (430x932)
+            else if (window.screen.height === 932 && window.screen.width === 430) {
+              deviceInfo.isIPhone15 = true;
+              deviceInfo.isNotchedDevice = true;
+            }
+            // iPhone 16 Pro Max (932x430) same as 15 Pro Max
+            else if (window.screen.height === 932 && window.screen.width === 430) {
+              deviceInfo.isIPhone16 = true;
+              deviceInfo.isNotchedDevice = true;
+            }
+            // Catch-all for unknown future iPhone models with notches/dynamic island
+            else if (window.screen.height > 800) {
+              deviceInfo.isNotchedDevice = true;
+            }
+          }
+          
+          return deviceInfo;
+        }
 
         if (iOS) {
           var link = document.createElement('link');
@@ -33,6 +102,31 @@
           link.href = '/ios-fixes.css';
           document.head.appendChild(link);
           document.documentElement.classList.add('ios-device');
+          
+          var deviceModel = getDeviceModel();
+          
+          // Add specific classes based on device model
+          if (deviceModel.isIPhoneX) {
+            document.documentElement.classList.add('iphone-x');
+          } 
+          if (deviceModel.isIPhoneXR) {
+            document.documentElement.classList.add('iphone-xr');
+          }
+          if (deviceModel.isIPhone12) {
+            document.documentElement.classList.add('iphone-12');
+          }
+          if (deviceModel.isIPhone14) {
+            document.documentElement.classList.add('iphone-14');
+          }
+          if (deviceModel.isIPhone15) {
+            document.documentElement.classList.add('iphone-15');
+          }
+          if (deviceModel.isIPhone16) {
+            document.documentElement.classList.add('iphone-16');
+          }
+          if (deviceModel.isNotchedDevice) {
+            document.documentElement.classList.add('notched-device');
+          }
 
           if (isPWA) {
             document.documentElement.classList.add('ios-pwa');

@@ -59,8 +59,8 @@ export function MobileNav() {
   ];
 
   return (
-    <nav className="min-[938px]:hidden fixed bottom-0 left-0 right-0 bg-white border-t z-[9999] shadow-[0_-1px_3px_rgba(0,0,0,0.1)] fixed" style={{ touchAction: 'manipulation', position: 'fixed', bottom: 0 }}>
-      <div className="flex items-center justify-between px-2 pb-1 safe-area-bottom">
+    <nav className="min-[938px]:hidden fixed bottom-0 left-0 right-0 bg-white border-t z-[9999] shadow-[0_-1px_3px_rgba(0,0,0,0.1)] mobile-nav" style={{ touchAction: 'manipulation', position: 'fixed', bottom: 0 }}>
+      <div className="flex items-center justify-between px-2 safe-area-bottom">
         {/* Bottom navigation items */}
         {navItems
           .filter(item => item.show)
