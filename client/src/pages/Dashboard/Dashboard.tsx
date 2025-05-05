@@ -241,6 +241,8 @@ export default function Dashboard() {
     upcomingEvaluations,
     recentIncidents,
     totalDocumentationRecords,
+    totalDocumentationsThisMonth,
+    totalDocumentationsThisWeek,
     performanceMetrics,
     trainingMetrics,
     fohTaskMetrics,
@@ -352,13 +354,13 @@ export default function Dashboard() {
             } : undefined}
           />
           <StatCard
-            title={t('dashboard.openIncidents')}
-            value={typedStats?.openDisciplinaryIncidents || 0}
-            subtitle={`${typedStats?.resolvedDisciplinaryThisMonth || 0} resolved this month`}
-            icon={AlertCircle}
+            title={t('dashboard.documentationsThisMonth', 'Documentations')}
+            value={totalDocumentationsThisMonth}
+            subtitle={`${totalDocumentationsThisWeek} this week`}
+            icon={FileText}
             color="bg-orange-100 text-orange-600"
-            progress={typedStats?.resolvedDisciplinaryThisMonth ? (typedStats.resolvedDisciplinaryThisMonth / (typedStats.resolvedDisciplinaryThisMonth + (typedStats?.openDisciplinaryIncidents || 0))) * 100 : 0}
-            onClick={handleNavigate('/disciplinary')}
+            progress={totalDocumentationRecords > 0 ? (totalDocumentationsThisMonth / totalDocumentationRecords) * 100 : 0}
+            onClick={handleNavigate('/documentation/combined')}
           />
         </div>
 

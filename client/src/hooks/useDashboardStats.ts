@@ -220,6 +220,8 @@ export function useDashboardStats() {
 
   // Track the total number of records
   const [totalDocumentationRecords, setTotalDocumentationRecords] = useState(0);
+  const [totalDocumentationsThisMonth, setTotalDocumentationsThisMonth] = useState(0);
+  const [totalDocumentationsThisWeek, setTotalDocumentationsThisWeek] = useState(0);
 
   const recentIncidents = useMemo(() => {
     // Use the fetched documentation data if available
@@ -228,9 +230,31 @@ export function useDashboardStats() {
       const thirtyDaysAgo = new Date();
       thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
 
+      // Get first day of current month
+      const firstDayOfMonth = new Date();
+      firstDayOfMonth.setDate(1);
+      firstDayOfMonth.setHours(0, 0, 0, 0);
+
+      // Get first day of current week (Sunday)
+      const firstDayOfWeek = new Date();
+      firstDayOfWeek.setDate(firstDayOfWeek.getDate() - firstDayOfWeek.getDay());
+      firstDayOfWeek.setHours(0, 0, 0, 0);
+
       const recentDocs = allDocumentation.filter(doc => {
         const docDate = new Date(doc.date || doc.createdAt);
         return docDate >= thirtyDaysAgo;
+      });
+
+      // Count documents from this month
+      const thisMonthDocs = allDocumentation.filter(doc => {
+        const docDate = new Date(doc.date || doc.createdAt);
+        return docDate >= firstDayOfMonth;
+      });
+      
+      // Count documents from this week
+      const thisWeekDocs = allDocumentation.filter(doc => {
+        const docDate = new Date(doc.date || doc.createdAt);
+        return docDate >= firstDayOfWeek;
       });
 
       // Sort by date (newest first)
@@ -240,8 +264,10 @@ export function useDashboardStats() {
         return dateB.getTime() - dateA.getTime();
       });
 
-      // Update the total count
+      // Update the total counts
       setTotalDocumentationRecords(sortedDocs.length);
+      setTotalDocumentationsThisMonth(thisMonthDocs.length);
+      setTotalDocumentationsThisWeek(thisWeekDocs.length);
 
       // Return only the specified number of records
       return sortedDocs.slice(0, MAX_DOCUMENTATION_RECORDS);
@@ -249,11 +275,15 @@ export function useDashboardStats() {
     // Fall back to disciplinary data if documentation is not available
     if (!stats?.disciplinary?.recent) {
       setTotalDocumentationRecords(0);
+      setTotalDocumentationsThisMonth(0);
+      setTotalDocumentationsThisWeek(0);
       return [];
     }
 
     // Update the total count
     setTotalDocumentationRecords(stats.disciplinary.recent.length);
+    setTotalDocumentationsThisMonth(stats.disciplinary.recent.length);
+    setTotalDocumentationsThisWeek(0);
 
     return stats.disciplinary.recent.slice(0, MAX_DOCUMENTATION_RECORDS);
   }, [allDocumentation, stats?.disciplinary?.recent]);
@@ -350,6 +380,8 @@ export function useDashboardStats() {
     upcomingEvaluations,
     recentIncidents,
     totalDocumentationRecords,
+    totalDocumentationsThisMonth,
+    totalDocumentationsThisWeek,
     performanceMetrics,
     trainingMetrics,
     fohTaskMetrics,
