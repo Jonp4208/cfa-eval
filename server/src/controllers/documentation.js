@@ -109,34 +109,83 @@ export const getAllDocuments = handleAsync(async (req, res) => {
 // Get a single document by ID
 export const getDocumentById = handleAsync(async (req, res) => {
   const { position, _id } = req.user;
+  const documentId = req.params.id;
 
-  const document = await Documentation.findById(req.params.id)
-    .populate('employee', 'name position department startDate')
-    .populate('supervisor', 'name')
-    .populate('createdBy', 'name')
-    .populate('followUps.by', 'name');
+  try {
+    // Use more robust population with error handling
+    const document = await Documentation.findById(documentId)
+      .populate('employee', 'name position department startDate')
+      .populate('supervisor', 'name')
+      .populate('createdBy', 'name')
+      .populate('followUps.by', 'name')
+      .populate('documents.uploadedBy', 'name');
 
-  if (!document) {
-    return res.status(404).json({ message: 'Document not found' });
-  }
+    // If document not found, return 404
+    if (!document) {
+      console.log(`Document not found: ${documentId}`);
+      return res.status(404).json({ 
+        message: 'Document not found',
+        success: false
+      });
+    }
 
-  // Check if user has restricted access (Team Member or Trainer)
-  const hasRestrictedAccess = ['Team Member', 'Trainer'].includes(position);
+    // Log population success
+    console.log(`Document found and populated: ${documentId}`, {
+      hasEmployee: !!document.employee,
+      hasSupervisor: !!document.supervisor,
+      hasCreatedBy: !!document.createdBy,
+      followUpsCount: document.followUps?.length,
+      documentsCount: document.documents?.length
+    });
 
-  // If user has restricted access, verify they own the document and it's marked for notification
-  if (hasRestrictedAccess) {
-    // First check if they own the document
-    if (document.employee._id.toString() !== _id.toString()) {
-      return res.status(403).json({ message: 'Not authorized to view this document' });
+    // Check if user has restricted access (Team Member or Trainer)
+    const hasRestrictedAccess = ['Team Member', 'Trainer'].includes(position);
+    const isLeadership = ['Leader', 'Director'].includes(position);
+
+    // If user has restricted access, verify they own the document and it's marked for notification
+    if (hasRestrictedAccess) {
+      // First check if they own the document
+      if (!document.employee || document.employee._id.toString() !== _id.toString()) {
+        console.log(`Access denied: User ${_id} tried to access document for employee ${document.employee?._id}`);
+        return res.status(403).json({ message: 'Not authorized to view this document' });
+      }
+      
+      // Then check if the document is marked to notify the employee
+      if (document.notifyEmployee === false) {
+        console.log(`Access denied: Document ${documentId} has notifyEmployee=false`);
+        return res.status(403).json({ message: 'Not authorized to view this document' });
+      }
+    }
+
+    // If we're dealing with references that failed to populate, add debug data
+    const debugData = {};
+    
+    if (!document.employee || !document.employee.name) {
+      debugData.employee = { _id: document.employee, message: 'Failed to populate employee' };
     }
     
-    // Then check if the document is marked to notify the employee
-    if (document.notifyEmployee === false) {
-      return res.status(403).json({ message: 'Not authorized to view this document' });
+    if (!document.supervisor || !document.supervisor.name) {
+      debugData.supervisor = { _id: document.supervisor, message: 'Failed to populate supervisor' };
     }
-  }
+    
+    if (!document.createdBy || !document.createdBy.name) {
+      debugData.createdBy = { _id: document.createdBy, message: 'Failed to populate createdBy' };
+    }
+    
+    if (Object.keys(debugData).length > 0) {
+      console.log('Population issues detected:', debugData);
+    }
 
-  res.json(document);
+    // Return the document
+    res.json(document);
+  } catch (error) {
+    console.error(`Error fetching document ${documentId}:`, error);
+    res.status(500).json({ 
+      message: 'Error fetching document', 
+      error: error.message,
+      success: false 
+    });
+  }
 });
 
 // Create a new document
@@ -883,35 +932,76 @@ export const deleteDocumentAttachment = handleAsync(async (req, res) => {
 
 // Get all documents for a specific employee
 export const getEmployeeDocuments = handleAsync(async (req, res) => {
-  const { position, _id } = req.user;
+  const { position, _id, role } = req.user;
   const employeeId = req.params.employeeId;
 
-  // Check if user has restricted access (Team Member or Trainer)
-  const hasRestrictedAccess = ['Team Member', 'Trainer'].includes(position);
+  try {
+    // Check if user has restricted access (Team Member or Trainer)
+    const hasRestrictedAccess = ['Team Member', 'Trainer'].includes(position);
+    
+    // Check if user is a manager, leader or admin (should see all documents)
+    const isManager = ['Director', 'Leader', 'Manager'].includes(position) || role === 'admin';
 
-  // If user has restricted access, they can only view their own documents
-  if (hasRestrictedAccess && employeeId !== _id.toString()) {
-    return res.status(403).json({ message: 'Not authorized to view these documents' });
+    console.log(`Access check: ${position} (${role}) user ${_id} requesting docs for employee ${employeeId}`);
+    console.log(`Is manager: ${isManager}, Has restricted access: ${hasRestrictedAccess}`);
+
+    // If user has restricted access, they can only view their own documents
+    if (hasRestrictedAccess && employeeId !== _id.toString()) {
+      console.log(`Access denied: Restricted user ${_id} tried to access docs for ${employeeId}`);
+      return res.status(403).json({ message: 'Not authorized to view these documents' });
+    }
+
+    // Build the query
+    let query = { employee: employeeId };
+    
+    // Only filter out documents where notifyEmployee is false when:
+    // 1. A regular user is viewing their own documents
+    // 2. And they're not a manager/leader
+    if (!isManager) {
+      console.log('Adding notifyEmployee filter for non-manager user');
+      query.notifyEmployee = true;
+    } else {
+      console.log('Manager/Leader access - showing all documents including private ones');
+    }
+    
+    console.log('Final query:', JSON.stringify(query));
+    
+    const documents = await Documentation.find(query)
+      .populate('employee', 'name position department')
+      .populate('supervisor', 'name')
+      .populate('createdBy', 'name')
+      .populate('followUps.by', 'name')
+      .populate('documents.uploadedBy', 'name')
+      .sort('-createdAt');
+
+    console.log(`Found ${documents.length} documents for employee ${employeeId}`);
+    
+    // Do some validation to ensure we have the expected data
+    const validatedDocuments = documents.map(doc => {
+      // Create normalized references for any failed populations
+      if (!doc.employee || !doc.employee.name) {
+        doc.employee = { _id: doc.employee || employeeId, name: `Employee ${employeeId}`, position: 'Unknown', department: 'Unknown' };
+      }
+      
+      if (!doc.supervisor || !doc.supervisor.name) {
+        doc.supervisor = { _id: doc.supervisor, name: 'Unknown Supervisor' };
+      }
+      
+      if (!doc.createdBy || !doc.createdBy.name) {
+        doc.createdBy = { _id: doc.createdBy, name: 'Unknown Creator' };
+      }
+      
+      return doc;
+    });
+
+    res.json(validatedDocuments);
+  } catch (error) {
+    console.error(`Error fetching documents for employee ${employeeId}:`, error);
+    res.status(500).json({ 
+      message: 'Error fetching employee documents', 
+      error: error.message 
+    });
   }
-
-  console.log('Getting documents for employee:', employeeId);
-  
-  // Base query
-  let query = { employee: employeeId };
-  
-  // If the employee is viewing their own documents, filter out documents where notifyEmployee is false
-  if (employeeId === _id.toString()) {
-    query.notifyEmployee = true;
-  }
-  
-  const documents = await Documentation.find(query)
-    .populate('employee', 'name position department')
-    .populate('supervisor', 'name')
-    .populate('createdBy', 'name')
-    .sort('-createdAt');
-
-  console.log('Found documents:', documents.length);
-  res.json(documents);
 });
 
 // Get all documents

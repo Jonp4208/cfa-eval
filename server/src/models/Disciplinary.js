@@ -114,6 +114,10 @@ const disciplinarySchema = new mongoose.Schema({
     type: Boolean,
     default: false
   },
+  notifyEmployee: {
+    type: Boolean,
+    default: true
+  },
   supervisor: {
     type: mongoose.Schema.Types.ObjectId,
     ref: 'User',

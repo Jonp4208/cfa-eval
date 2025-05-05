@@ -14,6 +14,7 @@ import Evaluation from '../models/Evaluation.js';
 import GradingScale from '../models/GradingScale.js';
 import { sendEmail } from '../utils/email.js';
 import { uploadFileToS3, deleteFileFromS3 } from '../config/s3.js';
+import mongoose from 'mongoose';
 
 dotenv.config();
 
@@ -159,19 +160,61 @@ router.get('/:id', auth, async (req, res) => {
       return res.status(404).json({ message: 'User not found' });
     }
 
-    // Users can only access their own data unless they are a leader/director
-    const isManagerOrLeader = ['director', 'leader'].some(pos => req.user.position?.toLowerCase().includes(pos));
+    // Check if user is a manager/leader/director or admin
+    const isManagerOrLeader = ['Director', 'Leader', 'Manager'].includes(req.user.position) || req.user.role === 'admin';
     const isViewingOwnProfile = user._id.toString() === req.user._id.toString();
-    
+
     if (!isViewingOwnProfile && !isManagerOrLeader) {
       return res.status(403).json({ message: 'Not authorized to view this user' });
     }
-    
-    // Only filter documentation if this is a team member viewing their own profile
-    // Managers/Leaders should see all documentation regardless of who they're viewing
-    if (user.documentation && isViewingOwnProfile && !isManagerOrLeader) {
-      user.documentation = user.documentation.filter(doc => doc.notifyEmployee !== false);
+
+    // Fetch documentation from the Documentation collection for this user
+    const Documentation = mongoose.model('Documentation');
+    let documentationQuery = { employee: req.params.id };
+
+    // Only filter documentation for non-managers
+    if (!isManagerOrLeader) {
+      documentationQuery.notifyEmployee = true;
     }
+
+    // Fetch documentation records
+    const documentationRecords = await Documentation.find(documentationQuery)
+      .sort('-createdAt')
+      .populate('supervisor', 'name')
+      .populate('createdBy', 'name');
+
+    console.log(`Found ${documentationRecords.length} documentation records for user ${req.params.id}`);
+
+    // Transform documentation records to match the format expected by the frontend
+    const transformedDocs = documentationRecords.map(doc => ({
+      id: doc._id.toString(), // Explicitly convert ObjectId to string
+      _id: doc._id, // Keep the original _id for consistency
+      title: doc.type, // Use type as title
+      type: doc.category === 'Disciplinary' ? 'disciplinary' : 'other',
+      date: doc.date,
+      description: doc.description,
+      createdBy: doc.createdBy?.name || 'Unknown',
+      notifyEmployee: doc.notifyEmployee
+    }));
+
+    // Also ensure user's own documentation has proper id field
+    const userDocumentation = user.documentation.map(doc => {
+      // Create a plain object from the document
+      const docObj = doc.toObject ? doc.toObject() : { ...doc };
+
+      // Ensure id is set as a string
+      if (!docObj.id && docObj._id) {
+        docObj.id = docObj._id.toString();
+      }
+
+      return docObj;
+    });
+
+    // Combine both documentation sources
+    const combinedDocs = [...userDocumentation, ...transformedDocs];
+
+    // Add the documentation records to the user object
+    user.documentation = combinedDocs;
 
     res.json(user);
   } catch (error) {
@@ -787,11 +830,25 @@ router.post('/:id/documents', auth, async (req, res) => {
     if (!user.documentation) {
       user.documentation = [];
     }
+
+    // Add the document to the array
     user.documentation.push(newDocument);
 
+    // Save the user to get the generated _id for the document
     await user.save();
 
-    res.json(newDocument);
+    // Get the newly added document with its generated _id
+    const addedDocument = user.documentation[user.documentation.length - 1];
+
+    // Make sure the id is available as a string property
+    const responseDocument = {
+      ...addedDocument.toObject(),
+      id: addedDocument._id.toString()
+    };
+
+    console.log('Added document with ID:', responseDocument.id);
+
+    res.json(responseDocument);
   } catch (error) {
     console.error('Error adding document:', error);
     res.status(500).json({ message: 'Error adding document' });

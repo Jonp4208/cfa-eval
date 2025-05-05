@@ -72,17 +72,103 @@ export default function DocumentDetail() {
 
   const loadDocument = async () => {
     try {
+      setLoading(true);
       const data = await documentationService.getDocumentById(id as string);
-      console.log('Loaded document data:', {
-        id: data._id,
-        status: data.status,
-        employee: data.employee,
-        supervisor: data.supervisor
-      });
-      setDocument(data);
+      
+      // Check that we received valid data
+      if (!data || typeof data !== 'object') {
+        console.error('Invalid document data received:', data);
+        toast.error('Failed to load document: Invalid data');
+        setDocument(null);
+        return;
+      }
+      
+      // Log the raw data
+      console.log('RAW API RESPONSE:', JSON.stringify(data, null, 2));
+      
+      // Check if key properties are ObjectIds instead of populated objects
+      const isObjectId = (val) => val && typeof val === 'string' && /^[0-9a-fA-F]{24}$/.test(val);
+      
+      // Normalize references that might be ObjectIds instead of populated objects
+      let normalizedData = { ...data };
+      
+      // Handle employee field
+      if (isObjectId(normalizedData.employee) || (normalizedData.employee && !normalizedData.employee.name)) {
+        const employeeId = typeof normalizedData.employee === 'string' 
+          ? normalizedData.employee 
+          : normalizedData.employee?._id || normalizedData.employee;
+        normalizedData.employee = { 
+          _id: employeeId, 
+          name: `Employee ID: ${employeeId}`, 
+          position: 'Unknown',
+          department: 'Unknown'
+        };
+      }
+      
+      // Handle supervisor field
+      if (isObjectId(normalizedData.supervisor) || (normalizedData.supervisor && !normalizedData.supervisor.name)) {
+        const supervisorId = typeof normalizedData.supervisor === 'string' 
+          ? normalizedData.supervisor 
+          : normalizedData.supervisor?._id || normalizedData.supervisor;
+        normalizedData.supervisor = { 
+          _id: supervisorId, 
+          name: `Supervisor ID: ${supervisorId}`
+        };
+      }
+      
+      // Handle createdBy field
+      if (isObjectId(normalizedData.createdBy) || (normalizedData.createdBy && !normalizedData.createdBy.name)) {
+        const createdById = typeof normalizedData.createdBy === 'string' 
+          ? normalizedData.createdBy 
+          : normalizedData.createdBy?._id || normalizedData.createdBy;
+        normalizedData.createdBy = { 
+          _id: createdById, 
+          name: `Created by ID: ${createdById}`
+        };
+      }
+      
+      // Handle followUps array
+      if (Array.isArray(normalizedData.followUps)) {
+        normalizedData.followUps = normalizedData.followUps.map(followUp => {
+          if (isObjectId(followUp.by) || (followUp.by && !followUp.by.name)) {
+            const byId = typeof followUp.by === 'string' 
+              ? followUp.by 
+              : followUp.by?._id || followUp.by;
+            return {
+              ...followUp,
+              by: { _id: byId, name: `User ID: ${byId}` }
+            };
+          }
+          return followUp;
+        });
+      } else {
+        normalizedData.followUps = [];
+      }
+      
+      // Handle documents array
+      if (Array.isArray(normalizedData.documents)) {
+        normalizedData.documents = normalizedData.documents.map(doc => {
+          if (isObjectId(doc.uploadedBy) || (doc.uploadedBy && !doc.uploadedBy.name)) {
+            const uploadedById = typeof doc.uploadedBy === 'string' 
+              ? doc.uploadedBy 
+              : doc.uploadedBy?._id || doc.uploadedBy;
+            return {
+              ...doc,
+              uploadedBy: { _id: uploadedById, name: `User ID: ${uploadedById}` }
+            };
+          }
+          return doc;
+        });
+      } else {
+        normalizedData.documents = [];
+      }
+      
+      console.log('NORMALIZED DATA:', normalizedData);
+      setDocument(normalizedData);
     } catch (error) {
-      toast.error('Failed to load document');
       console.error('Error loading document:', error);
+      toast.error('Failed to load document');
+      setDocument(null);
     } finally {
       setLoading(false);
     }
@@ -204,6 +290,25 @@ export default function DocumentDetail() {
     }
   };
 
+  const getSafe = (obj: any, path: string, defaultValue: any = 'Unknown') => {
+    try {
+      const parts = path.split('.');
+      let current = obj;
+      
+      for (const part of parts) {
+        if (current === undefined || current === null) {
+          return defaultValue;
+        }
+        current = current[part];
+      }
+      
+      return current === undefined || current === null ? defaultValue : current;
+    } catch (e) {
+      console.error(`Error accessing path ${path}:`, e);
+      return defaultValue;
+    }
+  };
+
   return (
     <div className="min-h-screen p-4 md:p-6">
       <div className="max-w-5xl mx-auto space-y-6">
@@ -238,7 +343,7 @@ export default function DocumentDetail() {
                     </div>
                     <div>
                       <div className="flex items-center gap-2">
-                        <h2 className="text-xl font-bold">{document.employee.name}</h2>
+                        <h2 className="text-xl font-bold">{getSafe(document, 'employee.name', 'Unknown Employee')}</h2>
                         {getStatusBadge(document.status)}
                       </div>
                       <p className="text-gray-500">
@@ -364,6 +469,22 @@ export default function DocumentDetail() {
                             <span className="font-medium">Yes</span>
                           </div>
                         )}
+                        <div className="flex justify-between">
+                          <span className="text-gray-500">Created By:</span>
+                          <span className="font-medium">{getSafe(document, 'createdBy.name')}</span>
+                        </div>
+                        {document.witnesses && (
+                          <div className="flex justify-between">
+                            <span className="text-gray-500">Witnesses:</span>
+                            <span className="font-medium">{document.witnesses}</span>
+                          </div>
+                        )}
+                        <div className="flex justify-between">
+                          <span className="text-gray-500">Employee Notified:</span>
+                          <span className="font-medium">
+                            {document.notifyEmployee ? 'Yes' : 'No'}
+                          </span>
+                        </div>
                       </div>
                     </div>
 
@@ -372,30 +493,20 @@ export default function DocumentDetail() {
                       <div className="space-y-3">
                         <div className="flex justify-between">
                           <span className="text-gray-500">Employee:</span>
-                          <span className="font-medium">{document.employee.name}</span>
+                          <span className="font-medium">{getSafe(document, 'employee.name')}</span>
                         </div>
                         <div className="flex justify-between">
                           <span className="text-gray-500">Position:</span>
-                          <span className="font-medium">{document.employee.position}</span>
+                          <span className="font-medium">{getSafe(document, 'employee.position')}</span>
                         </div>
                         <div className="flex justify-between">
                           <span className="text-gray-500">Department:</span>
-                          <span className="font-medium">{document.employee.department}</span>
+                          <span className="font-medium">{getSafe(document, 'employee.department')}</span>
                         </div>
                         <div className="flex justify-between">
                           <span className="text-gray-500">Supervisor:</span>
-                          <span className="font-medium">{document.supervisor.name}</span>
+                          <span className="font-medium">{getSafe(document, 'supervisor.name')}</span>
                         </div>
-                        <div className="flex justify-between">
-                          <span className="text-gray-500">Created By:</span>
-                          <span className="font-medium">{document.createdBy.name}</span>
-                        </div>
-                        {document.witnesses && (
-                          <div className="flex justify-between">
-                            <span className="text-gray-500">Witnesses:</span>
-                            <span className="font-medium">{document.witnesses}</span>
-                          </div>
-                        )}
                       </div>
                     </div>
                   </div>
@@ -518,7 +629,7 @@ export default function DocumentDetail() {
                         <div className="flex items-center gap-2 text-sm text-gray-500 mb-2">
                           <User className="w-4 h-4" />
                           <div>
-                            By {followUp.by.name}
+                            By {getSafe(followUp, 'by.name')}
                           </div>
                         </div>
                         <p className="text-gray-600">{followUp.note}</p>
@@ -554,7 +665,7 @@ export default function DocumentDetail() {
                           <div>
                             <p className="font-medium">{doc.name} <span className={`text-xs ml-2 px-2 py-0.5 rounded-full ${doc.category === 'Disciplinary' ? 'bg-red-100 text-red-800' : 'bg-green-100 text-green-800'}`}>{doc.type}</span></p>
                             <p className="text-sm text-gray-500">
-                              Added by {doc.uploadedBy.name} on{' '}
+                              Added by {getSafe(doc, 'uploadedBy.name')} on{' '}
                               {new Date(doc.createdAt).toLocaleDateString()}
                             </p>
                           </div>

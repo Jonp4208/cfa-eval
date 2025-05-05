@@ -392,7 +392,8 @@ export default function UserProfile() {
       };
 
       // Add the document
-      await api.post(`/api/users/${id}/documents`, documentData);
+      const response = await api.post(`/api/users/${id}/documents`, documentData);
+      console.log('Document added response:', response.data);
 
       // Refetch user data to update the UI
       await refetch();
@@ -815,7 +816,21 @@ export default function UserProfile() {
                                   <Card
                                     key={index}
                                     className="bg-white rounded-xl shadow-sm border border-gray-100 hover:shadow-md hover:border-[#E51636]/30 transition-all duration-200 cursor-pointer relative group"
-                                    onClick={() => navigate(`/training/progress/${plan._id}`)}
+                                    onClick={(e) => {
+                                      e.preventDefault();
+                                      if (!plan._id) {
+                                        console.error('Training plan ID is missing or invalid:', plan);
+                                        toast({
+                                          title: 'Error',
+                                          description: 'This training plan cannot be viewed. ID is missing.',
+                                          variant: 'destructive'
+                                        });
+                                        return;
+                                      }
+
+                                      console.log('Navigating to training plan with ID:', plan._id);
+                                      navigate(`/training/progress/${plan._id}`);
+                                    }}
                                   >
                                     <CardContent className="p-6">
                                       <div className="absolute top-3 right-3 opacity-0 group-hover:opacity-100 transition-opacity duration-200">
@@ -898,7 +913,21 @@ export default function UserProfile() {
                                 <Card
                                   key={index}
                                   className="bg-white rounded-xl shadow-sm border border-gray-100 hover:shadow-md hover:border-green-300 transition-all duration-200 cursor-pointer relative group"
-                                  onClick={() => navigate(`/training/progress/${plan._id}`)}
+                                  onClick={(e) => {
+                                    e.preventDefault();
+                                    if (!plan._id) {
+                                      console.error('Training plan ID is missing or invalid:', plan);
+                                      toast({
+                                        title: 'Error',
+                                        description: 'This training plan cannot be viewed. ID is missing.',
+                                        variant: 'destructive'
+                                      });
+                                      return;
+                                    }
+
+                                    console.log('Navigating to training plan with ID:', plan._id);
+                                    navigate(`/training/progress/${plan._id}`);
+                                  }}
                                 >
                                   <CardContent className="p-4">
                                     <div className="absolute top-3 right-3 opacity-0 group-hover:opacity-100 transition-opacity duration-200">
@@ -1277,7 +1306,46 @@ export default function UserProfile() {
                 <CardContent className="p-6">
                   <div className="space-y-4">
                     {profile.documentation?.map((doc: Document, index: number) => (
-                      <Card key={doc.id || index} className="bg-white rounded-xl shadow-sm border border-gray-100 hover:shadow-md transition-all duration-200">
+                      <Card
+                        key={doc.id || index}
+                        className="bg-white rounded-xl shadow-sm border border-gray-100 hover:shadow-md transition-all duration-200 cursor-pointer hover:border-[#E51636]/30"
+                        onClick={(e) => {
+                          // Get the document ID, either from id or _id property
+                          const documentId = doc.id || (doc._id ? doc._id.toString() : null);
+
+                          // If no document ID is available, show an error
+                          if (!documentId) {
+                            console.error('Document ID is missing:', doc);
+                            toast({
+                              title: 'Error',
+                              description: 'This document cannot be viewed. ID is missing.',
+                              variant: 'destructive'
+                            });
+                            e.preventDefault();
+                            e.stopPropagation();
+                            return;
+                          }
+
+                          console.log('Document details:', {
+                            id: doc.id,
+                            _id: doc._id,
+                            documentId,
+                            type: typeof documentId
+                          });
+
+                          // Add check to ensure documentId is a valid string
+                          if (typeof documentId === 'string' && documentId.length > 0) {
+                            navigate(`/documentation/${documentId}`);
+                          } else {
+                            console.error('Invalid document ID:', documentId);
+                            toast({
+                              title: 'Error',
+                              description: 'This document cannot be viewed. Invalid ID format.',
+                              variant: 'destructive'
+                            });
+                          }
+                        }}
+                      >
                         <CardContent className="p-4">
                           <div className="flex items-start gap-3">
                             <div className="h-10 w-10 rounded-xl bg-[#E51636]/10 flex items-center justify-center mt-1">
@@ -1306,17 +1374,31 @@ export default function UserProfile() {
                               <div className="bg-gray-50 p-3 rounded-lg mb-3">
                                 <p className="text-sm text-[#27251F]/80">{doc.description}</p>
                               </div>
-                              {doc.fileUrl && (
-                                <Button
-                                  variant="outline"
-                                  size="sm"
-                                  className="text-[#E51636] hover:text-[#E51636]/90 hover:bg-[#E51636]/10 border-[#E51636]/20"
-                                  onClick={() => window.open(doc.fileUrl, '_blank')}
-                                >
-                                  <FileText className="w-4 h-4 mr-2" />
-                                  View {doc.fileName || 'Document'}
-                                </Button>
-                              )}
+                              <div className="flex flex-wrap gap-2">
+                                {doc.fileUrl && (
+                                  <Button
+                                    variant="outline"
+                                    size="sm"
+                                    className="text-[#E51636] hover:text-[#E51636]/90 hover:bg-[#E51636]/10 border-[#E51636]/20"
+                                    onClick={(e) => {
+                                      e.stopPropagation(); // Prevent card click
+                                      if (doc.fileUrl) {
+                                        window.open(doc.fileUrl, '_blank');
+                                      } else {
+                                        console.error('Document file URL is missing:', doc);
+                                        toast({
+                                          title: 'Error',
+                                          description: 'This document file cannot be viewed. URL is missing.',
+                                          variant: 'destructive'
+                                        });
+                                      }
+                                    }}
+                                  >
+                                    <FileText className="w-4 h-4 mr-2" />
+                                    View {doc.fileName || 'Document'}
+                                  </Button>
+                                )}
+                              </div>
                             </div>
                           </div>
                         </CardContent>

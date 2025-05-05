@@ -31,7 +31,8 @@ export default function NewIncidentForm() {
     followUpActions: '',
     fallOffDate: '',
     previousIncidents: false,
-    documentationAttached: false
+    documentationAttached: false,
+    notifyEmployee: true
   });
 
   useEffect(() => {
@@ -309,6 +310,19 @@ export default function NewIncidentForm() {
                       value={formData.fallOffDate || ''}
                       onChange={(e) => setFormData({...formData, fallOffDate: e.target.value})}
                     />
+                  </div>
+
+                  <div className="flex items-center gap-2">
+                    <input
+                      type="checkbox"
+                      id="notifyEmployee"
+                      checked={formData.notifyEmployee}
+                      onChange={(e) => setFormData({...formData, notifyEmployee: e.target.checked})}
+                      className="rounded-sm border-gray-200 text-[#E51636] focus:ring-[#E51636]"
+                    />
+                    <label htmlFor="notifyEmployee" className="text-sm text-[#27251F]/60">
+                      Notify employee about this incident
+                    </label>
                   </div>
 
                   <div className="flex items-center gap-2">

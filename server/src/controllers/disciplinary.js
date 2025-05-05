@@ -89,7 +89,8 @@ export const createIncident = handleAsync(async (req, res) => {
     followUpDate,
     followUpActions,
     previousIncidents,
-    documentationAttached
+    documentationAttached,
+    notifyEmployee = true // Default to true if not provided
   } = req.body;
 
   // Get employee's supervisor
@@ -110,6 +111,7 @@ export const createIncident = handleAsync(async (req, res) => {
     followUpActions,
     previousIncidents,
     documentationAttached,
+    notifyEmployee, // Add the notifyEmployee flag
     supervisor: employee.supervisor || req.user._id,
     createdBy: req.user._id,
     store: req.user.store,
@@ -122,74 +124,76 @@ export const createIncident = handleAsync(async (req, res) => {
     { path: 'createdBy', select: 'name' }
   ]);
 
-  // Create notification for the employee
-  await Notification.create({
-    user: employee._id,
-    store: req.user.store._id,
-    type: 'disciplinary',
-    priority: 'high',
-    title: 'New Disciplinary Incident',
-    message: `A ${severity.toLowerCase()} disciplinary incident has been created regarding ${type.toLowerCase()}.`,
-    relatedId: incident._id,
-    relatedModel: 'Disciplinary'
-  });
+  // Create notification for the employee only if notifyEmployee is true
+  if (notifyEmployee) {
+    await Notification.create({
+      user: employee._id,
+      store: req.user.store._id,
+      type: 'disciplinary',
+      priority: 'high',
+      title: 'New Disciplinary Incident',
+      message: `A ${severity.toLowerCase()} disciplinary incident has been created regarding ${type.toLowerCase()}.`,
+      relatedId: incident._id,
+      relatedModel: 'Disciplinary'
+    });
 
-  // Send email to employee
-  if (incident.employee.email) {
-    try {
-      await sendEmail({
-        to: incident.employee.email,
-        subject: 'New Disciplinary Incident Created',
-        html: `
-          <div style="font-family: Arial, sans-serif; max-width: 800px; margin: 0 auto; padding: 20px;">
-            <div style="background-color: #E4002B; padding: 20px; border-radius: 8px; margin-bottom: 30px;">
-              <h1 style="color: white; margin: 0;">New Disciplinary Incident</h1>
-            </div>
-
-            <div style="background-color: #f8f8f8; padding: 20px; border-radius: 8px; margin-bottom: 30px;">
-              <h2 style="color: #333; margin-top: 0;">Incident Details</h2>
-              <p><strong>Date:</strong> ${new Date(date).toLocaleDateString()}</p>
-              <p><strong>Type:</strong> ${type}</p>
-              <p><strong>Severity:</strong> ${severity}</p>
-              <p><strong>Created By:</strong> ${incident.createdBy.name}</p>
-              <p><strong>Supervisor:</strong> ${incident.supervisor.name}</p>
-            </div>
-
-            <div style="margin-bottom: 30px;">
-              <h2 style="color: #333;">Description</h2>
-              <div style="background-color: #fff; padding: 20px; border: 1px solid #ddd; border-radius: 8px;">
-                <p style="margin: 0;">${description}</p>
+    // Send email to employee if notifyEmployee is true
+    if (incident.employee.email) {
+      try {
+        await sendEmail({
+          to: incident.employee.email,
+          subject: 'New Disciplinary Incident Created',
+          html: `
+            <div style="font-family: Arial, sans-serif; max-width: 800px; margin: 0 auto; padding: 20px;">
+              <div style="background-color: #E4002B; padding: 20px; border-radius: 8px; margin-bottom: 30px;">
+                <h1 style="color: white; margin: 0;">New Disciplinary Incident</h1>
               </div>
-            </div>
 
-            <div style="margin-bottom: 30px;">
-              <h2 style="color: #333;">Action Taken</h2>
-              <div style="background-color: #fff; padding: 20px; border: 1px solid #ddd; border-radius: 8px;">
-                <p style="margin: 0;">${actionTaken}</p>
+              <div style="background-color: #f8f8f8; padding: 20px; border-radius: 8px; margin-bottom: 30px;">
+                <h2 style="color: #333; margin-top: 0;">Incident Details</h2>
+                <p><strong>Date:</strong> ${new Date(date).toLocaleDateString()}</p>
+                <p><strong>Type:</strong> ${type}</p>
+                <p><strong>Severity:</strong> ${severity}</p>
+                <p><strong>Created By:</strong> ${incident.createdBy.name}</p>
+                <p><strong>Supervisor:</strong> ${incident.supervisor.name}</p>
               </div>
-            </div>
 
-            ${followUpDate ? `
               <div style="margin-bottom: 30px;">
-                <h2 style="color: #333;">Follow-up Information</h2>
+                <h2 style="color: #333;">Description</h2>
                 <div style="background-color: #fff; padding: 20px; border: 1px solid #ddd; border-radius: 8px;">
-                  <p><strong>Follow-up Date:</strong> ${new Date(followUpDate).toLocaleDateString()}</p>
-                  ${followUpActions ? `<p><strong>Follow-up Actions:</strong> ${followUpActions}</p>` : ''}
+                  <p style="margin: 0;">${description}</p>
                 </div>
               </div>
-            ` : ''}
 
-            <p style="margin-top: 30px;">
-              Please log in to the LD Growth platform to acknowledge this incident and provide any comments.
-            </p>
-            <p>Best regards,<br>LD Growth Team</p>
-          </div>
-        `
-      });
-      console.log('Disciplinary incident email sent to employee:', incident.employee.email);
-    } catch (emailError) {
-      console.error('Failed to send disciplinary incident email:', emailError);
-      // Don't throw the error, just log it - we don't want to fail the incident creation
+              <div style="margin-bottom: 30px;">
+                <h2 style="color: #333;">Action Taken</h2>
+                <div style="background-color: #fff; padding: 20px; border: 1px solid #ddd; border-radius: 8px;">
+                  <p style="margin: 0;">${actionTaken}</p>
+                </div>
+              </div>
+
+              ${followUpDate ? `
+                <div style="margin-bottom: 30px;">
+                  <h2 style="color: #333;">Follow-up Information</h2>
+                  <div style="background-color: #fff; padding: 20px; border: 1px solid #ddd; border-radius: 8px;">
+                    <p><strong>Follow-up Date:</strong> ${new Date(followUpDate).toLocaleDateString()}</p>
+                    ${followUpActions ? `<p><strong>Follow-up Actions:</strong> ${followUpActions}</p>` : ''}
+                  </div>
+                </div>
+              ` : ''}
+
+              <p style="margin-top: 30px;">
+                Please log in to the LD Growth platform to acknowledge this incident and provide any comments.
+              </p>
+              <p>Best regards,<br>LD Growth Team</p>
+            </div>
+          `
+        });
+        console.log('Disciplinary incident email sent to employee:', incident.employee.email);
+      } catch (emailError) {
+        console.error('Failed to send disciplinary incident email:', emailError);
+        // Don't throw the error, just log it - we don't want to fail the incident creation
+      }
     }
   }
 
@@ -474,20 +478,32 @@ export const getEmployeeIncidents = handleAsync(async (req, res) => {
 
   // Check if user has restricted access (Team Member or Trainer)
   const hasRestrictedAccess = ['Team Member', 'Trainer'].includes(position);
+  
+  // Check if user is leadership (can see all documents)
+  const isLeadership = ['Leader', 'Director'].includes(position);
 
   // If user has restricted access, they can only view their own incidents
   if (hasRestrictedAccess && employeeId !== _id.toString()) {
     return res.status(403).json({ message: 'Not authorized to view these incidents' });
   }
 
-  console.log('Getting incidents for employee:', employeeId);
-  const incidents = await Disciplinary.find({ employee: employeeId })
+  // Build the query
+  let query = { employee: employeeId };
+  
+  // If viewing your own record and you're not leadership, or if you're not leadership viewing someone else's record,
+  // filter out incidents marked as not to be shown to employees
+  if (!isLeadership && (employeeId === _id.toString() || !isLeadership)) {
+    query.notifyEmployee = { $ne: false };
+  }
+
+  console.log('Getting incidents for employee:', employeeId, 'Query:', JSON.stringify(query));
+  const incidents = await Disciplinary.find(query)
     .populate('employee', 'name position department')
     .populate('supervisor', 'name')
     .populate('createdBy', 'name')
     .sort('-createdAt');
 
-  console.log('Found incidents:', incidents);
+  console.log('Found incidents:', incidents.length);
   res.json(incidents);
 });
 

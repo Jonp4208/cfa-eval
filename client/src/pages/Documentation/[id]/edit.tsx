@@ -1,7 +1,7 @@
-import { useState, FormEvent, useEffect } from 'react';
-import { Card, CardContent } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
-import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from '@/components/ui/select';
+import { useState, FormEvent, useEffect } from 'react'
+import { Card, CardContent } from '@/components/ui/card'
+import { Button } from '@/components/ui/button'
+import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from '@/components/ui/select'
 import {
   AlertTriangle,
   Check,
@@ -9,25 +9,29 @@ import {
   Loader2,
   FileCheck,
   FilePlus,
-  ChevronLeft
-} from 'lucide-react';
-import { useNavigate } from 'react-router-dom';
-import documentationService, { CreateDocumentData } from '@/services/documentationService';
-import userService, { User } from '@/services/userService';
-import { toast } from 'sonner';
-import { useAuth } from '@/hooks/useAuth';
-import PageHeader from '@/components/PageHeader';
+  ChevronLeft,
+  Save
+} from 'lucide-react'
+import { useNavigate, useParams } from 'react-router-dom'
+import documentationService, { DocumentationRecord } from '@/services/documentationService'
+import userService, { User } from '@/services/userService'
+import { toast } from 'sonner'
+import { useAuth } from '@/hooks/useAuth'
+import PageHeader from '@/components/PageHeader'
 
-export default function NewDocument() {
-  const navigate = useNavigate();
-  const { user } = useAuth();
-  const [loading, setLoading] = useState(false);
-  const [employees, setEmployees] = useState<User[]>([]);
-  const [formData, setFormData] = useState<CreateDocumentData>({
+export default function EditDocument() {
+  const navigate = useNavigate()
+  const { id } = useParams()
+  const { user } = useAuth()
+  const [loading, setLoading] = useState(false)
+  const [loadingDocument, setLoadingDocument] = useState(true)
+  const [employees, setEmployees] = useState<User[]>([])
+  const [formData, setFormData] = useState({
     employeeId: '',
     date: new Date().toISOString().split('T')[0],
     type: '',
     category: 'Administrative',
+    severity: '',
     description: '',
     witnesses: '',
     actionTaken: '',
@@ -36,72 +40,112 @@ export default function NewDocument() {
     previousIncidents: false,
     documentationAttached: false,
     notifyEmployee: true
-  });
-  const [showSeverity, setShowSeverity] = useState(false);
+  })
+  const [showSeverity, setShowSeverity] = useState(false)
+  const [originalDocument, setOriginalDocument] = useState<DocumentationRecord | null>(null)
 
   useEffect(() => {
-    loadEmployees();
-  }, []);
+    if (id) {
+      loadDocument()
+      loadEmployees()
+    }
+  }, [id])
 
   useEffect(() => {
     // Show severity field only for disciplinary category
-    setShowSeverity(formData.category === 'Disciplinary');
-  }, [formData.category]);
+    setShowSeverity(formData.category === 'Disciplinary')
+  }, [formData.category])
+
+  const loadDocument = async () => {
+    try {
+      setLoadingDocument(true)
+      const data = await documentationService.getDocumentById(id!)
+      setOriginalDocument(data)
+      
+      // Format the date string to YYYY-MM-DD for the date input
+      const formattedDate = new Date(data.date).toISOString().split('T')[0]
+      const formattedFollowUpDate = data.followUpDate 
+        ? new Date(data.followUpDate).toISOString().split('T')[0] 
+        : ''
+
+      setFormData({
+        employeeId: data.employee._id,
+        date: formattedDate,
+        type: data.type,
+        category: data.category,
+        severity: data.severity || '',
+        description: data.description,
+        witnesses: data.witnesses || '',
+        actionTaken: data.actionTaken || '',
+        followUpDate: formattedFollowUpDate,
+        followUpActions: data.followUpActions || '',
+        previousIncidents: data.previousIncidents,
+        documentationAttached: data.documentationAttached,
+        notifyEmployee: data.notifyEmployee !== undefined ? data.notifyEmployee : true // Default to true if not defined
+      })
+    } catch (error) {
+      toast.error('Failed to load document')
+      console.error('Error loading document:', error)
+      navigate('/documentation')
+    } finally {
+      setLoadingDocument(false)
+    }
+  }
 
   const loadEmployees = async () => {
     try {
-      const data = await userService.getAllUsers();
-      setEmployees(data);
+      const data = await userService.getAllUsers()
+      setEmployees(data)
     } catch (error) {
-      toast.error('Failed to load employees');
-      console.error('Error loading employees:', error);
+      toast.error('Failed to load employees')
+      console.error('Error loading employees:', error)
     }
-  };
+  }
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
-    const { name, value } = e.target;
-    setFormData(prev => ({ ...prev, [name]: value }));
-  };
+    const { name, value } = e.target
+    setFormData(prev => ({ ...prev, [name]: value }))
+  }
 
   const handleSelectChange = (name: string, value: string) => {
-    setFormData(prev => ({ ...prev, [name]: value }));
-  };
+    setFormData(prev => ({ ...prev, [name]: value }))
+  }
 
   const handleCheckboxChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const { name, checked } = e.target;
-    setFormData(prev => ({ ...prev, [name]: checked }));
-  };
+    const { name, checked } = e.target
+    setFormData(prev => ({ ...prev, [name]: checked }))
+  }
 
   const handleSubmit = async (e: FormEvent) => {
-    e.preventDefault();
+    e.preventDefault()
 
     if (!formData.employeeId) {
-      toast.error('Please select an employee');
-      return;
+      toast.error('Please select an employee')
+      return
     }
 
     if (!formData.type) {
-      toast.error('Please select a document type');
-      return;
+      toast.error('Please select a document type')
+      return
     }
 
     if (formData.category === 'Disciplinary' && !formData.severity) {
-      toast.error('Please select a severity level');
-      return;
+      toast.error('Please select a severity level')
+      return
     }
 
     try {
-      setLoading(true);
-      const result = await documentationService.createDocument(formData);
-      toast.success('Document created successfully');
-      navigate(`/documentation/${result._id}`);
+      setLoading(true)
+      await documentationService.updateDocument(id!, formData)
+      toast.success('Document updated successfully')
+      navigate(`/documentation/${id}`)
     } catch (error) {
-      toast.error('Failed to create document');
-      console.error('Error creating document:', error);
+      toast.error('Failed to update document')
+      console.error('Error updating document:', error)
     } finally {
-      setLoading(false);
+      setLoading(false)
     }
-  };
+  }
 
   const getDocumentTypeOptions = () => {
     // No common options anymore - each category has its own specific options
@@ -118,23 +162,31 @@ export default function NewDocument() {
         { value: 'Doctor Note', label: 'Doctor Note' },
         { value: 'Other', label: 'Other' }
       ]
-    };
+    }
 
-    return categorySpecificOptions[formData.category as keyof typeof categorySpecificOptions] || [];
-  };
+    return categorySpecificOptions[formData.category as keyof typeof categorySpecificOptions] || []
+  }
+
+  if (loadingDocument) {
+    return (
+      <div className="min-h-screen p-4 md:p-6 flex items-center justify-center">
+        <Loader2 className="h-12 w-12 animate-spin text-[#E51636]" />
+      </div>
+    )
+  }
 
   return (
     <div className="min-h-screen p-4 md:p-6">
       <div className="max-w-3xl mx-auto space-y-6">
         <PageHeader
-          title="New Document"
-          subtitle="Create a new document for a team member"
-          icon={<FilePlus className="h-5 w-5" />}
+          title="Edit Document"
+          subtitle="Update this document information"
+          icon={<FileCheck className="h-5 w-5" />}
           actions={
             <Button
               variant="ghost"
               className="bg-white hover:bg-white/90 text-[#E51636] flex items-center justify-center gap-2 py-2 px-3 sm:px-4 rounded-xl transition-all duration-300 text-sm font-medium shadow-sm border border-white/20"
-              onClick={() => navigate('/documentation')}
+              onClick={() => navigate(`/documentation/${id}`)}
             >
               <ChevronLeft className="w-4 h-4" />
               <span>Back</span>
@@ -348,7 +400,7 @@ export default function NewDocument() {
                 <Button
                   type="button"
                   variant="outline"
-                  onClick={() => navigate('/documentation')}
+                  onClick={() => navigate(`/documentation/${id}`)}
                   disabled={loading}
                 >
                   Cancel
@@ -361,12 +413,12 @@ export default function NewDocument() {
                   {loading ? (
                     <>
                       <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                      Creating...
+                      Saving...
                     </>
                   ) : (
                     <>
-                      <FilePlus className="w-4 h-4 mr-2" />
-                      Create Document
+                      <Save className="w-4 h-4 mr-2" />
+                      Save Changes
                     </>
                   )}
                 </Button>
@@ -376,5 +428,5 @@ export default function NewDocument() {
         </Card>
       </div>
     </div>
-  );
-}
+  )
+} 

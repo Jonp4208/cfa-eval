@@ -72,6 +72,7 @@ export interface CreateIncidentData {
   fallOffDate?: string;
   previousIncidents: boolean;
   documentationAttached: boolean;
+  notifyEmployee?: boolean;
 }
 
 const disciplinaryService = {

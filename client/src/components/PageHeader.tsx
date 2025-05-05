@@ -55,16 +55,16 @@ const PageHeader: React.FC<PageHeaderProps> = ({
                 {title}
               </h1>
               {subtitle && (
-                <p className={cn(
+                <div className={cn(
                   'text-white/90 text-sm md:text-base',
                   subtitleClassName
                 )}>
                   {subtitle}
-                </p>
+                </div>
               )}
             </div>
           </div>
-          
+
           {showBackButton && (
             <Button
               className="bg-white hover:bg-white/90 text-[#E51636] flex items-center justify-center gap-2 py-2 px-3 sm:px-4 rounded-xl transition-all duration-300 text-sm font-medium shadow-sm border border-white/20"
@@ -73,7 +73,7 @@ const PageHeader: React.FC<PageHeaderProps> = ({
               {t('common.back')}
             </Button>
           )}
-          
+
           {actions && (
             <div className={cn(
               'flex items-center gap-2',
