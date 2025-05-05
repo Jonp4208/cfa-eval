@@ -3060,7 +3060,7 @@ export function DailyView({ setup, onBack }: DailyViewProps) {
   const hourTimeBlocks = activeHour ? getTimeBlocksByHour(activeHour) : []
 
   return (
-    <div className="flex flex-col h-[calc(100vh-80px)] overflow-hidden">
+    <div className="flex flex-col h-full">
       {/* Streamlined header with controls */}
       <div className="sticky top-0 z-10 bg-white border-b pb-3 pt-2 shadow-sm">
         <div className="flex flex-col sm:flex-row gap-2 px-2">
@@ -3094,9 +3094,10 @@ export function DailyView({ setup, onBack }: DailyViewProps) {
         </div>
       </div>
 
-      {/* Day and hour selection dropdowns */}
-      <div className="bg-white border rounded-lg shadow-sm overflow-hidden flex-1 flex flex-col">
-        <div className="border-b bg-gray-50 p-3">
+      {/* Main content container with grid layout */}
+      <div className="flex-1 grid grid-rows-[auto_1fr] bg-white border rounded-lg shadow-sm overflow-hidden">
+        {/* Selection controls - sticky at the top */}
+        <div className="sticky top-0 z-5 border-b bg-gray-50 p-3">
           <div className="flex flex-col sm:flex-row gap-3 items-end">
             <div className="w-full sm:w-1/2">
               <label className="text-sm font-medium text-gray-700 mb-1 block">Select Day</label>
@@ -3139,12 +3140,6 @@ export function DailyView({ setup, onBack }: DailyViewProps) {
                       const hasScheduledBlocks = getTimeBlocksByHour(hour).length > 0
                       const positionCount = getTimeBlocksByHour(hour).reduce((acc: number, block: any) => acc + block.positions.length, 0)
 
-                      // Format the hour for display with AM/PM - commented out unused variables
-                      // const displayHour = parseInt(hour)
-                      // const formattedHour = formatHourTo12Hour(displayHour)
-                      // const currentTimeStr = `${now.getHours().toString().padStart(2, '0')}:${now.getMinutes().toString().padStart(2, '0')}`
-                      // const formattedCurrentTime = formatHourTo12Hour(`${now.getHours()}:${now.getMinutes()}`)
-
                       // Check if this hour is the selected hour
                       const isSelectedHour = hour === activeHour
 
@@ -3185,11 +3180,12 @@ export function DailyView({ setup, onBack }: DailyViewProps) {
           </div>
         </div>
 
-        <div className="flex-1 overflow-y-auto p-4">
-
-            {/* Area tabs - redesigned with better visual hierarchy */}
+        {/* Scrollable content area */}
+        <div className="overflow-y-auto">
+          <div className="p-4">
+            {/* Area tabs - sticky at the top of the scrollable area */}
             {allHours.length > 0 && activeHour && (
-              <div className="mb-6">
+              <div className="mb-6 sticky top-0 z-4 pt-1 bg-white">
                 <div className="flex bg-white border rounded-lg overflow-hidden shadow-sm">
                   <button
                     className={`flex-1 flex items-center justify-center gap-2 px-4 py-3 font-medium text-sm transition-all border-b-2
@@ -3222,15 +3218,9 @@ export function DailyView({ setup, onBack }: DailyViewProps) {
               </div>
             )}
 
-            {/* We've removed the duplicate "Current time blocks" section and kept only the hour-based view */}
-
-            {/* Position display - enhanced with better visual hierarchy */}
+            {/* Position display cards - main scrollable content */}
             {activeHour && allHours.length > 0 && (
               <div className="mb-6 space-y-2">
-                <h3 className="text-md font-semibold flex items-center">
-                  {/* Removed duplicate time display */}
-                </h3>
-
                 {hourTimeBlocks.length === 0 ? (
                   <Card className="p-4 text-center text-gray-500">
                     <p className="text-sm">No positions scheduled for {formatHourTo12Hour(activeHour)} - {formatHourTo12Hour(parseInt(activeHour) + 1)}</p>
@@ -3464,6 +3454,7 @@ export function DailyView({ setup, onBack }: DailyViewProps) {
                 )}
               </div>
             )}
+          </div>
         </div>
       </div>
 
