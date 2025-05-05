@@ -35,54 +35,56 @@ const PageHeader: React.FC<PageHeaderProps> = ({
 
   return (
     <div className={cn(
-      'bg-gradient-to-br from-[#E51636] to-[#D01530] rounded-[20px] p-3 md:p-6 text-white shadow-md',
+      'bg-gradient-to-br from-[#E51636] to-[#D01530] rounded-[20px] p-4 md:p-6 text-white shadow-md',
       className
     )}>
       <div className={cn(
-        'flex flex-col gap-2 sm:gap-4',
+        'flex flex-col gap-4',
         containerClassName
       )}>
-        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
-          <div className="flex items-center gap-3">
-            <div className="h-10 w-10 bg-white/15 backdrop-blur-sm rounded-xl flex items-center justify-center shadow-inner">
-              {icon}
-            </div>
-            <div>
-              <h1 className={cn(
-                'text-lg md:text-2xl font-bold tracking-tight',
-                titleClassName
-              )}>
-                {title}
-              </h1>
-              {subtitle && (
-                <div className={cn(
-                  'text-white/90 text-sm md:text-base',
-                  subtitleClassName
-                )}>
-                  {subtitle}
-                </div>
-              )}
-            </div>
+        <div className="flex items-center gap-3">
+          <div className="h-10 w-10 bg-white/15 backdrop-blur-sm rounded-xl flex items-center justify-center shadow-inner">
+            {icon}
           </div>
-
-          {showBackButton && (
-            <Button
-              className="bg-white hover:bg-white/90 text-[#E51636] flex items-center justify-center gap-2 py-2 px-3 sm:px-4 rounded-xl transition-all duration-300 text-sm font-medium shadow-sm border border-white/20"
-              onClick={() => navigate(-1)}
-            >
-              {t('common.back')}
-            </Button>
-          )}
-
-          {actions && (
-            <div className={cn(
-              'flex items-center gap-2',
-              actionsClassName
+          <div>
+            <h1 className={cn(
+              'text-xl md:text-2xl font-bold tracking-tight',
+              titleClassName
             )}>
-              {actions}
-            </div>
-          )}
+              {title}
+            </h1>
+            {subtitle && (
+              <div className={cn(
+                'text-white/90 text-sm md:text-base',
+                subtitleClassName
+              )}>
+                {subtitle}
+              </div>
+            )}
+          </div>
         </div>
+
+        {(showBackButton || actions) && (
+          <div className="w-full flex flex-col gap-2">
+            {showBackButton && (
+              <Button
+                className="w-full bg-white hover:bg-white/90 text-[#E51636] flex items-center justify-center gap-2 py-2 px-4 rounded-xl transition-all duration-300 text-sm font-medium shadow-sm border border-white/20"
+                onClick={() => navigate(-1)}
+              >
+                {t('common.back')}
+              </Button>
+            )}
+            
+            {actions && (
+              <div className={cn(
+                'w-full',
+                actionsClassName
+              )}>
+                {actions}
+              </div>
+            )}
+          </div>
+        )}
       </div>
     </div>
   );

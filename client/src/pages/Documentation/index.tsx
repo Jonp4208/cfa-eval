@@ -265,8 +265,7 @@ export default function DocumentationPage() {
             icon={<FileText className="h-5 w-5" />}
             actions={
               <Button
-                variant="ghost"
-                className="bg-white hover:bg-white/90 text-[#E51636] flex items-center justify-center gap-2 py-2 px-3 sm:px-4 rounded-xl transition-all duration-300 text-sm font-medium shadow-sm border border-white/20"
+                className="w-full bg-white hover:bg-white/90 text-[#E51636] flex items-center justify-center gap-2 py-2 px-4 rounded-xl transition-all duration-300 text-sm font-medium shadow-sm border border-white/20"
                 onClick={() => navigate('/documentation')}
               >
                 <ChevronLeft className="w-4 h-4" />
@@ -281,13 +280,13 @@ export default function DocumentationPage() {
             icon={<ClipboardList className="h-5 w-5" />}
             actions={
               (user?.position === 'Leader' || user?.position === 'Director') && (
-                <button
+                <Button
                   onClick={handleNewDocument}
-                  className="flex-1 sm:flex-none bg-white hover:bg-white/90 text-[#E51636] flex items-center justify-center gap-2 py-2 px-3 sm:px-4 rounded-xl transition-all duration-300 text-sm font-medium shadow-sm border border-white/20"
+                  className="w-full bg-white hover:bg-white/90 text-[#E51636] flex items-center justify-center gap-2 py-2 px-4 rounded-xl transition-all duration-300 text-sm font-medium shadow-sm border border-white/20"
                 >
                   <FilePlus className="w-4 h-4" />
                   <span>New Document</span>
-                </button>
+                </Button>
               )
             }
           />
