@@ -333,42 +333,6 @@ export default function Dashboard() {
           />
         </div>
 
-        {/* Mobile-only Quick Actions - Displayed before charts on small screens */}
-        <div className="lg:hidden mb-6">
-          <Card className="bg-white rounded-[20px] hover:shadow-xl transition-all duration-300">
-            <CardHeader className="flex flex-row items-center justify-between p-6 pb-2">
-              <div>
-                <CardTitle className="text-xl font-bold text-[#27251F]">{t('dashboard.quickActions')}</CardTitle>
-                <p className="text-[#27251F]/60 mt-1 text-sm">Frequently used actions</p>
-              </div>
-            </CardHeader>
-            <CardContent className="p-6 pt-0">
-              <div className="grid grid-cols-2 gap-3">
-                {[
-                  { icon: Clock, label: t('dashboard.scheduleEvaluation'), path: '/evaluations/new', color: 'from-[#E51636] to-[#DD0031]' },
-                  { icon: Users, label: t('dashboard.viewTeam'), path: '/users', color: 'from-[#4F46E5] to-[#4338CA]' },
-                  { icon: AlertCircle, label: t('dashboard.newIncident'), path: '/disciplinary/new', color: 'from-[#F97316] to-[#EA580C]' },
-                ].map((action, index) => {
-                  const Icon = action.icon;
-                  return (
-                    <button
-                      key={index}
-                      onClick={handleNavigate(action.path)}
-                      className="flex flex-col items-center justify-center p-4 rounded-xl bg-white border border-gray-100 hover:border-gray-200 transition-all duration-300 hover:shadow-md group/action active:scale-[0.98]"
-                    >
-                      <div className={`h-12 w-12 rounded-lg bg-gradient-to-br ${action.color} text-white flex items-center justify-center transition-transform duration-300 group-hover/action:scale-110 mb-3 shadow-sm relative overflow-hidden`}>
-                        <div className="absolute inset-0 bg-black/10 rounded-lg"></div>
-                        <Icon className="h-5 w-5" />
-                      </div>
-                      <span className="font-medium text-sm text-center text-[#27251F] transition-colors duration-300 group-hover/action:text-[#E51636]">{action.label}</span>
-                    </button>
-                  );
-                })}
-              </div>
-            </CardContent>
-          </Card>
-        </div>
-
         {/* Charts and Lists Grid */}
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
           {/* Performance Chart */}
