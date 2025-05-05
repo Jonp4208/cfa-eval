@@ -1,7 +1,7 @@
 // Service Worker for LD Growth PWA
 
 // Change this version number whenever you want to force an update
-const CACHE_VERSION = '1.0.85';
+const CACHE_VERSION = '1.0.87';
 const CACHE_NAME = `ld-growth-cache-${CACHE_VERSION}`;
 const urlsToCache = [
   '/',
@@ -86,6 +86,74 @@ self.addEventListener('activate', event => {
     }).then(() => {
       // Take control of all clients immediately
       return self.clients.claim();
+    })
+  );
+});
+
+// Listen for push events (notifications from the server)
+self.addEventListener('push', event => {
+  console.log('[Service Worker] Push received');
+  
+  let notificationData = {};
+  if (event.data) {
+    try {
+      notificationData = event.data.json();
+    } catch (e) {
+      // If the data isn't JSON, just use the text
+      notificationData = {
+        title: 'New Notification',
+        body: event.data.text(),
+        icon: '/icons/icon-192x192.png'
+      };
+    }
+  } else {
+    notificationData = {
+      title: 'New Notification',
+      body: 'You have a new notification',
+      icon: '/icons/icon-192x192.png'
+    };
+  }
+
+  const options = {
+    body: notificationData.body || 'You have a new notification',
+    icon: notificationData.icon || '/icons/icon-192x192.png',
+    badge: '/icons/notification-badge.png',
+    data: notificationData.data || {},
+    actions: notificationData.actions || [],
+    vibrate: [100, 50, 100],
+    tag: notificationData.tag || 'default-notification',
+    requireInteraction: true
+  };
+
+  event.waitUntil(
+    self.registration.showNotification(notificationData.title || 'New Notification', options)
+  );
+});
+
+// Handle notification clicks
+self.addEventListener('notificationclick', event => {
+  console.log('[Service Worker] Notification click received:', event);
+
+  event.notification.close();
+
+  const urlToOpen = event.notification.data?.url || '/';
+
+  event.waitUntil(
+    clients.matchAll({
+      type: 'window',
+      includeUncontrolled: true
+    })
+    .then(clientList => {
+      // If we have a client already open, focus it
+      for (const client of clientList) {
+        if (client.url === urlToOpen && 'focus' in client) {
+          return client.focus();
+        }
+      }
+      // Otherwise open a new window
+      if (clients.openWindow) {
+        return clients.openWindow(urlToOpen);
+      }
     })
   );
 });

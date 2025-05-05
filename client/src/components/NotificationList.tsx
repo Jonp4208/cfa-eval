@@ -19,7 +19,12 @@ interface Notification {
     evaluationId?: string;
     evaluationType?: string;
     scheduledDate?: string;
+    documentId?: string;
+    goalId?: string;
+    trainingPlanId?: string;
   };
+  relatedId?: string;
+  relatedModel?: string;
   employee?: {
     name: string;
     position: string;
@@ -61,9 +66,68 @@ export function NotificationList({ onDismiss, isMobile = false, compact = false 
 
   const handleNotificationClick = async (notification: Notification) => {
     try {
-      // If it's an evaluation notification, navigate to the evaluation
+      let navigated = false;
+      
+      // Always close the dropdown menu when clicking a notification
+      onDismiss();
+      
+      // Navigate based on notification type
       if (notification.type === 'EVALUATION' && notification.metadata?.evaluationId) {
         navigate(`/evaluations/${notification.metadata.evaluationId}`);
+        navigated = true;
+      } else if (notification.type.toUpperCase() === 'DOCUMENTATION' || 
+                notification.type.toUpperCase() === 'ADMINISTRATIVE' ||
+                notification.title.includes('Administrative Documentation')) {
+        // For documentation notifications
+        if (notification.metadata?.documentId) {
+          navigate(`/documentation/${notification.metadata.documentId}`);
+          navigated = true;
+        } else if (notification.relatedId && notification.relatedModel === 'Documentation') {
+          navigate(`/documentation/${notification.relatedId}`);
+          navigated = true;
+        } else {
+          // If no specific document ID, navigate to documentation list
+          navigate('/documentation');
+          navigated = true;
+        }
+      } else if (notification.type.toUpperCase() === 'DISCIPLINARY') {
+        // For disciplinary notifications
+        if (notification.metadata?.documentId) {
+          navigate(`/disciplinary/${notification.metadata.documentId}`);
+          navigated = true;
+        } else if (notification.relatedId && notification.relatedModel === 'Documentation') {
+          navigate(`/disciplinary/${notification.relatedId}`);
+          navigated = true;
+        } else {
+          navigate('/disciplinary');
+          navigated = true;
+        }
+      } else if (notification.type.toUpperCase() === 'GOAL') {
+        // For goal notifications
+        if (notification.metadata?.goalId) {
+          navigate(`/goals/${notification.metadata.goalId}`);
+          navigated = true;
+        } else {
+          navigate('/goals');
+          navigated = true;
+        }
+      } else if (notification.type.toUpperCase() === 'TRAINING' || notification.type.includes('TRAINING')) {
+        // For training notifications
+        if (notification.metadata?.trainingPlanId) {
+          navigate(`/training/plans/${notification.metadata.trainingPlanId}`);
+          navigated = true;
+        } else {
+          navigate('/training');
+          navigated = true;
+        }
+      } else {
+        // Handle other notification types or fallback to a default page
+        console.log('Unknown notification type:', notification.type);
+        // Default to documentation list for the one in the screenshot
+        if (notification.title.includes('Administrative Documentation')) {
+          navigate('/documentation');
+          navigated = true;
+        }
       }
 
       // Mark as read
@@ -71,10 +135,10 @@ export function NotificationList({ onDismiss, isMobile = false, compact = false 
 
       // Remove from list
       setNotifications(prev => prev.filter(n => n._id !== notification._id));
-
-      // Close dropdown if mobile
-      if (isMobile) {
-        onDismiss();
+      
+      // If we didn't navigate, at least indicate something is happening
+      if (!navigated) {
+        showNotification('info', t('notifications.processed'), t('notifications.notificationProcessed'));
       }
     } catch (error) {
       console.error('Error handling notification click:', error);

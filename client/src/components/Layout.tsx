@@ -52,6 +52,7 @@ import {
 import { MobileNav } from './MobileNav';
 import { useNotification } from '@/contexts/NotificationContext';
 import { NotificationList } from './NotificationList';
+import { requestNotificationPermission } from '@/utils/notificationPermission';
 
 interface MenuItem {
   icon: LucideIcon;
@@ -424,6 +425,37 @@ export default function Layout({ children }: { children: React.ReactNode }) {
       showNotification('error', t('common.error'), errorMessage);
     }
   };
+
+  // Add effect to request notification permission
+  useEffect(() => {
+    const askForNotificationPermission = async () => {
+      try {
+        // Check if notification permission was already asked
+        const notificationPermissionAsked = localStorage.getItem('notificationPermissionAsked');
+        
+        // Only ask once per session if not already granted
+        if (Notification.permission !== 'granted' && !notificationPermissionAsked) {
+          const granted = await requestNotificationPermission();
+          localStorage.setItem('notificationPermissionAsked', 'true');
+          
+          if (granted) {
+            showNotification(
+              'success', 
+              t('notifications.permissionGranted', 'Notifications Enabled'),
+              t('notifications.willReceiveNotifications', 'You will now receive notifications about important updates')
+            );
+          }
+        }
+      } catch (error) {
+        console.error('Error requesting notification permission:', error);
+      }
+    };
+
+    // Only ask for permission if user is logged in
+    if (user?.store?._id) {
+      askForNotificationPermission();
+    }
+  }, [user?.store?._id, showNotification, t]);
 
   return (
     <div className="min-h-screen bg-white">
