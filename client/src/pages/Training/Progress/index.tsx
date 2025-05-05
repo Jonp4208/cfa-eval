@@ -76,12 +76,10 @@ export default function TrainingProgress() {
 
       // Process trainees data
       const traineesData = traineesResponse.data as TraineeProgress[]
-      console.log('Trainees data:', traineesData)
       
       const needsTraining = traineesData.filter((trainee: TraineeProgress) => 
         trainee.status === 'not_started'
       ).length
-      console.log('Needs training:', needsTraining)
 
       // Calculate completion rate
       const completedTrainees = traineesData.filter((trainee: TraineeProgress) => 
@@ -91,7 +89,6 @@ export default function TrainingProgress() {
       const completionRate = totalTrainees > 0 
         ? Math.round((completedTrainees / totalTrainees) * 100)
         : 0
-      console.log('Completion stats:', { completedTrainees, totalTrainees, completionRate })
 
       // Update stats
       const newStats = {
@@ -100,7 +97,6 @@ export default function TrainingProgress() {
         newHires: newHiresResponse.data.length,
         activePlans: plansResponse.data.length
       }
-      console.log('Setting stats:', newStats)
       setStats(newStats)
 
       // Transform and set trainees data

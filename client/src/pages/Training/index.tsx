@@ -38,7 +38,6 @@ export default function Training() {
       if (!isProgressDetailPage &&
           (location.pathname.includes('/progress') ||
            location.pathname.includes('/new-hires'))) {
-        console.log('Team member trying to access restricted page, redirecting to plans');
         navigate('/training/plans');
       }
     }

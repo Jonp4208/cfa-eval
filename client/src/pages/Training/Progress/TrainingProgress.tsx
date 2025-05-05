@@ -176,8 +176,6 @@ export default function TrainingProgress() {
         // The server calculates and caps progress at 100%
         const progress = trainee.currentPlan?.progress || 0
 
-        console.log(`Progress for ${trainee.name}: ${progress}% (from API)`)
-
         return {
           _id: trainee.currentPlan?._id || trainee._id,
           name: trainee.name || 'Unknown Name',
@@ -209,7 +207,6 @@ export default function TrainingProgress() {
 
   const fetchEmployees = async () => {
     try {
-      console.log('Fetching employees...');
       const response = await api.get('/api/users');
 
       const employeeData = Array.isArray(response.data.users) ? response.data.users : [];
@@ -224,7 +221,6 @@ export default function TrainingProgress() {
           department: user.departments?.[0] || ''
         }));
 
-      console.log(`Transformed ${activeEmployees.length} active employees`);
       setEmployees(activeEmployees);
     } catch (error) {
       console.error('Failed to fetch employees:', error);
@@ -254,7 +250,6 @@ export default function TrainingProgress() {
   const fetchNewHires = async () => {
     try {
       const response = await api.get('/api/training/employees/new-hires')
-      console.log('New hires response:', response.data)
       setNewHires(response.data)
     } catch (error) {
       console.error('Failed to fetch new hires:', error)
@@ -271,12 +266,9 @@ export default function TrainingProgress() {
       return
     }
 
-    console.log('Assigning training with data:', assignData)
-
     try {
       setIsAssigning(true)
       const response = await api.post('/api/training/plans/assign', assignData)
-      console.log('Assignment response:', response.data)
 
       toast({
         title: 'Success',

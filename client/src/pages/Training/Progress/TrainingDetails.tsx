@@ -128,10 +128,19 @@ export default function TrainingDetails() {
   const fetchTrainingDetails = async () => {
     try {
       setLoading(true)
-      console.log('Fetching training details for ID:', id)
-      const response = await api.get(`/api/training/progress/${id}`)
-      console.log('Training details response:', response.data)
-      setTrainingDetails(response.data)
+      const response = await api.get(`/api/training/trainee-progress/${id}`)
+      
+      setTrainingDetails({
+        ...response.data,
+        trainee: response.data.trainee || { 
+          name: 'Unknown Trainee', 
+          position: 'Unknown Position'
+        },
+        trainingPlan: response.data.trainingPlan || { 
+          name: 'Unknown Plan',
+          days: []
+        }
+      })
     } catch (error) {
       console.error('Failed to fetch training details:', error)
       toast({

@@ -117,36 +117,26 @@ export default function TrainingPlanList() {
 
       // For team members, also fetch their assigned training plans
       if (!isManager) {
-        const assignedResponse = await api.get('/api/training/progress')
-
-        console.log('Assigned training plans response:', assignedResponse.data)
-
-        // Extract training plans from progress data
-        const assignedPlansData = assignedResponse.data
-          .filter((progress: any) => progress.trainingPlan)
-          .map((progress: any) => {
-            console.log('Processing progress item:', {
-              progressId: progress._id,
-              planId: progress.trainingPlan._id,
-              planName: progress.trainingPlan.name,
-              status: progress.status
-            })
-
-            return {
-              _id: progress.trainingPlan._id,
-              name: progress.trainingPlan.name,
-              department: progress.trainingPlan.department || '',
-              position: progress.trainingPlan.position || '',
-              type: progress.trainingPlan.type || '',
-              days: progress.trainingPlan.days || [],
-              progressId: progress._id, // Store the progress ID for navigation
-              status: progress.status,
-              startDate: progress.startDate,
-              completedAt: progress.completedAt
-            }
-          })
-
-        console.log('Transformed assigned plans:', assignedPlansData)
+        const assignedResponse = await api.get('/api/training/user/assigned')
+        
+        // Transform the data to include both plans and progress
+        const assignedPlansData = assignedResponse.data.map((progressItem: any) => {
+          // Process this trainee progress item
+          
+          return {
+            _id: progressItem.trainingPlan?._id || '',
+            name: progressItem.trainingPlan?.name || 'Unknown Plan',
+            description: progressItem.trainingPlan?.description || '',
+            type: progressItem.trainingPlan?.type || 'Standard',
+            department: progressItem.trainingPlan?.department || '',
+            position: progressItem.trainingPlan?.position || '',
+            progress: progressItem.progress || 0,
+            status: progressItem.status || 'not_started',
+            startDate: progressItem.startDate || '',
+            progressId: progressItem._id // Store the progress ID for navigation
+          }
+        })
+        
         setAssignedPlans(assignedPlansData)
       }
     } catch (error) {
@@ -375,12 +365,9 @@ export default function TrainingPlanList() {
                       onClick={() => {
                         // For team members, navigate to progress details
                         // For managers, navigate to plan details
-                        console.log('Clicked plan:', plan)
                         if (!isManager && plan.progressId) {
-                          console.log(`Navigating to progress details: /training/progress/${plan.progressId}`)
                           navigate(`/training/progress/${plan.progressId}`)
                         } else {
-                          console.log(`Navigating to plan details: /training/plans/${plan._id}`)
                           handleViewDetails(plan._id)
                         }
                       }}
