@@ -64,6 +64,27 @@ html, body {
   .safe-area-bottom {
     padding-bottom: env(safe-area-inset-bottom);
   }
+  
+  /* Specific fix for bottom navigation in PWA mode */
+  .ios-pwa .mobile-nav-button {
+    padding-top: 6px;
+    padding-bottom: 6px;
+  }
+  
+  .ios-pwa .mobile-nav-button span {
+    font-size: 10px;
+    margin-top: 0;
+  }
+  
+  .ios-pwa .mobile-nav-button svg {
+    width: 16px;
+    height: 16px;
+  }
+  
+  /* Adjust the spacer height to match the smaller navigation */
+  .ios-pwa .nav-spacer {
+    height: 60px;
+  }
 }
 
 /* Fix for iOS notch */
