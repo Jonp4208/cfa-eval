@@ -155,6 +155,10 @@ router.get('/:id', auth, async (req, res) => {
       .populate('store', '_id storeNumber name location')
       .populate('manager', 'name _id');
 
+    if (!user) {
+      return res.status(404).json({ message: 'User not found' });
+    }
+
     // Users can only access their own data unless they are a leader/director
     const isManagerOrLeader = ['director', 'leader'].some(pos => req.user.position?.toLowerCase().includes(pos));
     const isViewingOwnProfile = user._id.toString() === req.user._id.toString();
@@ -162,13 +166,10 @@ router.get('/:id', auth, async (req, res) => {
     if (!isViewingOwnProfile && !isManagerOrLeader) {
       return res.status(403).json({ message: 'Not authorized to view this user' });
     }
-
-    if (!user) {
-      return res.status(404).json({ message: 'User not found' });
-    }
     
-    // If employee is viewing their own profile, filter out documentation with notifyEmployee=false
-    if (isViewingOwnProfile && !isManagerOrLeader && user.documentation) {
+    // Only filter documentation if this is a team member viewing their own profile
+    // Managers/Leaders should see all documentation regardless of who they're viewing
+    if (user.documentation && isViewingOwnProfile && !isManagerOrLeader) {
       user.documentation = user.documentation.filter(doc => doc.notifyEmployee !== false);
     }
 
