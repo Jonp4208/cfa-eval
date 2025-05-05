@@ -121,24 +121,39 @@ export default function NewDocument() {
       // If there's a file to upload, upload it first
       if (uploadedFile) {
         setIsUploading(true);
-        const fileData = await documentationService.uploadDocumentFile(uploadedFile);
-        setIsUploading(false);
+        console.log('Starting file upload, size:', uploadedFile.size, 'type:', uploadedFile.type);
         
-        // Add the document attachment info to form data
-        formData.documentAttachment = {
-          name: uploadedFile.name,
-          type: uploadedFile.type,
-          category: formData.category,
-          url: fileData.url,
-          key: fileData.key
-        };
+        try {
+          const fileData = await documentationService.uploadDocumentFile(uploadedFile);
+          console.log('File upload completed successfully:', fileData);
+          
+          // Add the document attachment info to form data
+          formData.documentAttachment = {
+            name: uploadedFile.name,
+            type: uploadedFile.type,
+            category: formData.category,
+            url: fileData.url,
+            key: fileData.key
+          };
+        } catch (uploadError: any) {
+          console.error('File upload error details:', uploadError);
+          const errorMessage = uploadError.response?.data?.message || 'File upload failed';
+          toast.error(errorMessage);
+          setLoading(false);
+          setIsUploading(false);
+          return;
+        } finally {
+          setIsUploading(false);
+        }
       }
       
+      console.log('Creating document with data:', formData);
       const result = await documentationService.createDocument(formData);
       toast.success('Document created successfully');
       navigate(`/documentation/${result._id}`);
-    } catch (error) {
-      toast.error('Failed to create document');
+    } catch (error: any) {
+      const errorMessage = error.response?.data?.message || 'Failed to create document';
+      toast.error(errorMessage);
       console.error('Error creating document:', error);
     } finally {
       setLoading(false);

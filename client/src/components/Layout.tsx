@@ -819,7 +819,9 @@ export default function Layout({ children }: { children: React.ReactNode }) {
       </div>
 
       {/* This div ensures no other elements overlap with the mobile navigation */}
-      <div className="min-[938px]:hidden h-[80px] nav-spacer"></div>
+      <div className="min-[938px]:hidden h-[80px] nav-spacer" style={{
+        height: window?.screen?.height === 844 && window?.screen?.width === 390 && /iPhone/.test(navigator.userAgent) ? "66px" : undefined
+      }}></div>
     </div>
   );
 }

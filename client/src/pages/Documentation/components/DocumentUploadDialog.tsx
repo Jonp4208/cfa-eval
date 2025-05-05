@@ -59,6 +59,7 @@ export default function DocumentUploadDialog({ documentId, isOpen, onClose, onUp
 
     try {
       setLoading(true);
+      console.log(`Starting file upload: ${file.name}, size: ${file.size}, type: ${file.type}`);
 
       // Create a FormData object to upload the file
       const formData = new FormData();
@@ -68,9 +69,14 @@ export default function DocumentUploadDialog({ documentId, isOpen, onClose, onUp
       const uploadResponse = await api.post('/api/users/upload', formData, {
         headers: {
           'Content-Type': 'multipart/form-data'
+        },
+        timeout: 30000, // 30 second timeout
+        onUploadProgress: (progressEvent) => {
+          console.log('Upload progress:', Math.round((progressEvent.loaded * 100) / (progressEvent.total || 1)), '%');
         }
       });
       const fileData = uploadResponse.data;
+      console.log('File upload successful:', fileData);
 
       // Add the document to the documentation record
       await documentationService.addDocumentAttachment(documentId, {
@@ -91,9 +97,17 @@ export default function DocumentUploadDialog({ documentId, isOpen, onClose, onUp
       if (fileInputRef.current) {
         fileInputRef.current.value = '';
       }
-    } catch (error) {
-      toast.error('Failed to upload document');
+    } catch (error: any) {
       console.error('Error uploading document:', error);
+      let errorMessage = 'Failed to upload document';
+      
+      if (error.code === 'ECONNABORTED') {
+        errorMessage = 'Upload timed out. Please try with a smaller file or check your connection.';
+      } else if (error.response?.data?.message) {
+        errorMessage = error.response.data.message;
+      }
+      
+      toast.error(errorMessage);
     } finally {
       setLoading(false);
     }

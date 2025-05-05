@@ -172,6 +172,23 @@
     cursor: pointer;
   }
 
+  /* iPhone 13 specific fixes */
+  @media screen and (width: 390px) and (height: 844px) {
+    .mobile-nav {
+      height: auto !important;
+      padding-bottom: 0.5rem !important;
+    }
+
+    .nav-spacer {
+      height: 66px !important;
+    }
+  }
+
+  /* Ensure nav-spacer has correct height for proper content spacing */
+  .nav-spacer {
+    height: calc(80px + env(safe-area-inset-bottom, 0px));
+  }
+
   /* Thin scrollbar for mobile menus */
   .thin-scrollbar {
     scrollbar-width: thin;

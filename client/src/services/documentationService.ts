@@ -140,12 +140,25 @@ const documentationService = {
     const formData = new FormData();
     formData.append('file', file);
     
-    const response = await api.post('/api/users/upload', formData, {
-      headers: {
-        'Content-Type': 'multipart/form-data'
+    try {
+      // Set a timeout of 30 seconds for the upload
+      const response = await api.post('/api/users/upload', formData, {
+        headers: {
+          'Content-Type': 'multipart/form-data'
+        },
+        timeout: 30000, // 30 second timeout
+        onUploadProgress: (progressEvent) => {
+          console.log('Upload progress:', Math.round((progressEvent.loaded * 100) / (progressEvent.total || 1)), '%');
+        }
+      });
+      return response.data;
+    } catch (error: any) {
+      console.error('File upload failed:', error.message);
+      if (error.code === 'ECONNABORTED') {
+        throw new Error('File upload timed out. Please try with a smaller file or check your connection.');
       }
-    });
-    return response.data;
+      throw error;
+    }
   },
 
   // Update document

@@ -58,9 +58,33 @@ export function MobileNav() {
     }
   ];
 
+  // Function to detect iPhone 13
+  const isIPhone13 = () => {
+    if (typeof window === 'undefined') return false;
+    
+    // iPhone 13 has 390x844 logical resolution
+    const { width, height } = window.screen;
+    const isIPhone13Dimensions = 
+      (width === 390 && height === 844) || 
+      (height === 390 && width === 844);
+    
+    return isIPhone13Dimensions && /iPhone/.test(navigator.userAgent);
+  };
+
   return (
-    <nav className="min-[938px]:hidden fixed bottom-0 left-0 right-0 bg-white border-t z-[9999] shadow-[0_-1px_3px_rgba(0,0,0,0.1)] mobile-nav" style={{ touchAction: 'manipulation', position: 'fixed', bottom: 0 }}>
-      <div className="flex items-center justify-between px-2 safe-area-bottom">
+    <nav 
+      className="min-[938px]:hidden fixed bottom-0 left-0 right-0 bg-white border-t z-[9999] shadow-[0_-1px_3px_rgba(0,0,0,0.1)] mobile-nav" 
+      style={{ 
+        touchAction: 'manipulation', 
+        position: 'fixed', 
+        bottom: 0,
+        paddingBottom: isIPhone13() ? '0.5rem' : undefined 
+      }}
+    >
+      <div className={cn(
+        "flex items-center justify-between px-2",
+        isIPhone13() ? "pb-0" : "safe-area-bottom"
+      )}>
         {/* Bottom navigation items */}
         {navItems
           .filter(item => item.show)
@@ -76,11 +100,11 @@ export function MobileNav() {
                 onClick={() => navigate(item.href)}
                 className={cn(
                   "flex flex-col items-center gap-0.5 py-2 px-1 flex-1 touch-manipulation mobile-nav-button",
-                  "transition-colors duration-200 relative", // Added relative positioning
-                  "active:opacity-70", // Added active state for better touch feedback
+                  "transition-colors duration-200 relative", 
+                  "active:opacity-70",
                   isActive ? "text-red-600" : "text-gray-500 hover:text-gray-900"
                 )}
-                style={{ touchAction: 'manipulation' }} // Ensure touch events work properly
+                style={{ touchAction: 'manipulation' }}
               >
                 <Icon className="w-6 h-6" />
                 <span className="text-xs font-medium truncate w-full text-center">{item.label}</span>
