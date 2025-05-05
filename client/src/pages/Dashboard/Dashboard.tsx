@@ -276,17 +276,17 @@ export default function Dashboard() {
           title={t('dashboard.welcomeBack', `Welcome back, ${user?.name}!`, { name: user?.name })}
           subtitle={new Date().toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}
           actions={
-            <div className="hidden sm:flex flex-col sm:flex-row gap-3">
+            <div className="w-full sm:w-auto flex flex-col sm:flex-row gap-2">
               <button
                 onClick={handleNavigate('/evaluations/new')}
-                className="bg-white hover:bg-white/90 text-[#E51636] flex items-center justify-center gap-2 py-2 px-3 sm:px-4 rounded-xl transition-all duration-300 text-sm font-medium shadow-sm border border-white/20"
+                className="w-full sm:w-auto bg-white hover:bg-white/90 text-[#E51636] flex items-center justify-center gap-2 py-2 px-3 sm:px-4 rounded-xl transition-all duration-300 text-sm font-medium shadow-sm border border-white/20"
               >
                 <ClipboardList className="w-4 h-4" />
                 <span>{t('evaluations.create')}</span>
               </button>
               <button
                 onClick={handleNavigate('/disciplinary/new')}
-                className="bg-white hover:bg-white/90 text-[#E51636] flex items-center justify-center gap-2 py-2 px-3 sm:px-4 rounded-xl transition-all duration-300 text-sm font-medium shadow-sm border border-white/20"
+                className="w-full sm:w-auto bg-white hover:bg-white/90 text-[#E51636] flex items-center justify-center gap-2 py-2 px-3 sm:px-4 rounded-xl transition-all duration-300 text-sm font-medium shadow-sm border border-white/20"
               >
                 <AlertCircle className="w-4 h-4" />
                 <span>{t('dashboard.newIncident')}</span>
