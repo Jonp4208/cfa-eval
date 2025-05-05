@@ -28,7 +28,7 @@ import TeamMemberDashboard from '../TeamMemberDashboard';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
 import { Progress } from '@/components/ui/progress';
 import { useNotification } from '@/contexts/NotificationContext';
-import PageHeader from '@/components/PageHeader';
+import PageHeader, { headerButtonClass } from '@/components/PageHeader';
 import { useDashboardStats } from '@/hooks/useDashboardStats';
 import { useKitchenDashboardStats } from '@/hooks/useKitchenDashboardStats';
 
@@ -278,17 +278,17 @@ export default function Dashboard() {
           title={t('dashboard.welcomeBack', `Welcome back, ${user?.name}!`, { name: user?.name })}
           subtitle={new Date().toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}
           actions={
-            <div className="w-full flex flex-col gap-2">
+            <div className="flex flex-col md:flex-row gap-2">
               <Button
                 onClick={handleNavigate('/evaluations/new')}
-                className="w-full bg-white hover:bg-white/90 text-[#E51636] flex items-center justify-center gap-2 py-2 px-4 rounded-xl transition-all duration-300 text-sm font-medium shadow-sm border border-white/20"
+                className={headerButtonClass}
               >
                 <ClipboardList className="w-4 h-4" />
                 <span>{t('evaluations.create')}</span>
               </Button>
               <Button
                 onClick={handleNavigate('/disciplinary/new')}
-                className="w-full bg-white hover:bg-white/90 text-[#E51636] flex items-center justify-center gap-2 py-2 px-4 rounded-xl transition-all duration-300 text-sm font-medium shadow-sm border border-white/20"
+                className={headerButtonClass}
               >
                 <AlertCircle className="w-4 h-4" />
                 <span>{t('dashboard.newIncident')}</span>

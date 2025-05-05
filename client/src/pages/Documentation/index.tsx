@@ -25,7 +25,7 @@ import documentationService, { DocumentationRecord, CombinedRecord } from '@/ser
 import { toast } from 'sonner';
 import { Input } from '@/components/ui/input';
 import { useAuth } from '@/contexts/AuthContext';
-import PageHeader from '@/components/PageHeader';
+import PageHeader, { headerButtonClass } from '@/components/PageHeader';
 
 export default function DocumentationPage() {
   const navigate = useNavigate();
@@ -268,7 +268,7 @@ export default function DocumentationPage() {
             icon={<FileText className="h-5 w-5" />}
             actions={
               <Button
-                className="w-full bg-white hover:bg-white/90 text-[#E51636] flex items-center justify-center gap-2 py-2 px-4 rounded-xl transition-all duration-300 text-sm font-medium shadow-sm border border-white/20"
+                className={headerButtonClass}
                 onClick={() => navigate('/documentation')}
               >
                 <ChevronLeft className="w-4 h-4" />
@@ -285,7 +285,7 @@ export default function DocumentationPage() {
               (user?.position === 'Leader' || user?.position === 'Director') && (
                 <Button
                   onClick={handleNewDocument}
-                  className="w-full bg-white hover:bg-white/90 text-[#E51636] flex items-center justify-center gap-2 py-2 px-4 rounded-xl transition-all duration-300 text-sm font-medium shadow-sm border border-white/20"
+                  className={headerButtonClass}
                 >
                   <FilePlus className="w-4 h-4" />
                   <span>New Document</span>

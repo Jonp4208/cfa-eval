@@ -13,7 +13,7 @@ import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/comp
 import axios from 'axios'
 import api from '@/lib/axios'
 import { getTodayDateString, isNewDay } from '@/lib/utils/date-utils'
-import PageHeader from '@/components/PageHeader'
+import PageHeader, { headerButtonClass } from '@/components/PageHeader'
 
 type ShiftType = 'opening' | 'transition' | 'closing'
 
@@ -277,21 +277,21 @@ export default function FOHPage() {
           subtitle="Front of House Daily Checklist"
           icon={<ClipboardList className="h-5 w-5" />}
           actions={
-            <div className="flex flex-col sm:flex-row gap-2 w-full sm:w-auto">
-              <button
+            <div className="flex flex-col md:flex-row gap-2">
+              <Button
                 onClick={() => navigate('/foh/history')}
-                className="w-full sm:w-auto bg-white hover:bg-white/90 text-[#E51636] flex items-center justify-center gap-2 py-2 px-3 sm:px-4 rounded-xl transition-all duration-300 text-sm font-medium shadow-sm border border-white/20"
+                className={headerButtonClass}
               >
                 <History className="w-4 h-4" />
                 <span>History</span>
-              </button>
-              <button
+              </Button>
+              <Button
                 onClick={() => setIsCreateDialogOpen(true)}
-                className="w-full sm:w-auto bg-white hover:bg-white/90 text-[#E51636] flex items-center justify-center gap-2 py-2 px-3 sm:px-4 rounded-xl transition-all duration-300 text-sm font-medium shadow-sm border border-white/20"
+                className={headerButtonClass}
               >
                 <Plus className="w-4 h-4" />
                 <span>Add Task</span>
-              </button>
+              </Button>
             </div>
           }
         />

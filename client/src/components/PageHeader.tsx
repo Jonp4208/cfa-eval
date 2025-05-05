@@ -5,6 +5,9 @@ import { cn } from '@/lib/utils';
 import { useTranslation } from '@/contexts/TranslationContext';
 import { ClipboardCheck } from 'lucide-react';
 
+// Standard button class for PageHeader action buttons
+export const headerButtonClass = "w-full md:w-auto bg-white hover:bg-white/90 text-[#E51636] flex items-center justify-center gap-2 py-2 px-4 rounded-xl transition-all duration-300 text-sm font-medium shadow-sm border border-white/20";
+
 interface PageHeaderProps {
   title: string;
   subtitle?: string;
@@ -39,7 +42,7 @@ const PageHeader: React.FC<PageHeaderProps> = ({
       className
     )}>
       <div className={cn(
-        'flex flex-col gap-4',
+        'flex flex-col md:flex-row md:items-center md:justify-between gap-4',
         containerClassName
       )}>
         <div className="flex items-center gap-3">
@@ -65,10 +68,10 @@ const PageHeader: React.FC<PageHeaderProps> = ({
         </div>
 
         {(showBackButton || actions) && (
-          <div className="w-full flex flex-col gap-2">
+          <div className="w-full md:w-auto flex flex-col md:flex-row gap-2">
             {showBackButton && (
               <Button
-                className="w-full bg-white hover:bg-white/90 text-[#E51636] flex items-center justify-center gap-2 py-2 px-4 rounded-xl transition-all duration-300 text-sm font-medium shadow-sm border border-white/20"
+                className={headerButtonClass}
                 onClick={() => navigate(-1)}
               >
                 {t('common.back')}
@@ -77,7 +80,7 @@ const PageHeader: React.FC<PageHeaderProps> = ({
             
             {actions && (
               <div className={cn(
-                'w-full',
+                'w-full md:w-auto',
                 actionsClassName
               )}>
                 {actions}
