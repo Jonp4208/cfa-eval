@@ -175,10 +175,10 @@ const AnalyticsHub = () => {
 
           <TabsContent value="overview" className="mt-0">
             {/* Quick Stats */}
-            <div className="grid grid-cols-2 lg:grid-cols-4 gap-6">
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
               {isLoading ? (
                 <>
-                  {[1, 2, 3, 4].map((i) => (
+                  {[1, 2, 3].map((i) => (
                     <Card key={i} className="bg-white rounded-[20px] shadow-md hover:shadow-xl transition-all duration-300">
                       <CardContent className="p-6">
                         <div className="h-16 bg-[#F4F4F4] rounded-xl animate-pulse"></div>
@@ -215,24 +215,6 @@ const AnalyticsHub = () => {
                         </div>
                         <div className="h-14 w-14 bg-[#E51636]/10 rounded-2xl flex items-center justify-center">
                           <Medal className="h-7 w-7 text-[#E51636]" />
-                        </div>
-                      </div>
-                    </CardContent>
-                  </Card>
-
-                  <Card
-                    className="bg-white rounded-[20px] shadow-md hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1 cursor-pointer"
-                    onClick={() => navigate('hearts-and-hands')}
-                  >
-                    <CardContent className="p-6">
-                      <div className="flex items-start justify-between">
-                        <div>
-                          <p className="text-[#27251F]/60 font-medium">Development Goals</p>
-                          <h3 className="text-3xl font-bold mt-2 text-[#27251F]">{quickStats.developmentGoals}%</h3>
-                          <p className="text-xs text-green-600 mt-1">On track</p>
-                        </div>
-                        <div className="h-14 w-14 bg-[#E51636]/10 rounded-2xl flex items-center justify-center">
-                          <Heart className="h-7 w-7 text-[#E51636]" />
                         </div>
                       </div>
                     </CardContent>

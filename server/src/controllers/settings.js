@@ -60,6 +60,11 @@ export const getSettings = async (req, res) => {
       );
     }
 
+    // Log warnings but don't treat them as errors
+    if (validation.warnings && validation.warnings.length > 0) {
+      console.log('Settings validation warnings:', validation.warnings);
+    }
+
     res.json(validation.settings);
   } catch (error) {
     handleError(error, ErrorCategory.SETTINGS, {

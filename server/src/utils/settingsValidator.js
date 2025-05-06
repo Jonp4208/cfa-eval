@@ -20,6 +20,9 @@ export const validateAndRepairSettings = async (storeId) => {
     let settings = await Settings.findOne({ store: storeId });
     let wasRepaired = false;
     const repairs = [];
+    let template = null;
+    let director = null;
+    let warnings = [];
 
     // Create settings if they don't exist
     if (!settings) {
@@ -76,30 +79,31 @@ export const validateAndRepairSettings = async (storeId) => {
       await settings.save();
     }
 
-    // Validate template
-    const template = await Template.findOne({
+    // Validate template - NON-BLOCKING
+    template = await Template.findOne({
       store: storeId,
       isActive: true
     }).sort({ createdAt: -1 });
 
     if (!template) {
-      throw new Error('No active template found for store');
+      warnings.push('No active template found for store. Some features may be limited.');
     }
 
-    // Validate director access
-    const director = await User.findOne({
+    // Validate director access - NON-BLOCKING
+    director = await User.findOne({
       store: storeId,
       position: 'Director'
     });
 
     if (!director) {
-      throw new Error('No director found for store');
+      warnings.push('No director found for store. Some features may be limited.');
     }
 
     return {
       isValid: true,
       wasRepaired,
       repairs,
+      warnings,
       settings,
       template,
       director

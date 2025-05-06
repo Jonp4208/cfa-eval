@@ -30,8 +30,8 @@ const transporter = nodemailer.createTransport({
 });
 
 // Configure multer to use memory storage instead of disk storage
-// This will store the file in memory so we can upload it to AWS S3
-const storage = multer.memoryStorage()
+// This will store the file in memory so we can directly process it
+const storage = multer.memoryStorage();
 
 const upload = multer({
   storage: storage,
@@ -39,14 +39,24 @@ const upload = multer({
     fileSize: 1024 * 1024 * 5, // 5MB limit
   },
   fileFilter: function (req, file, cb) {
-    // Accept images, pdfs, and doc files
+    // Accept images, pdfs, and doc files for regular uploads
     if (file.mimetype.startsWith('image/') ||
         file.mimetype === 'application/pdf' ||
         file.mimetype === 'application/msword' ||
         file.mimetype === 'application/vnd.openxmlformats-officedocument.wordprocessingml.document') {
-      cb(null, true)
-    } else {
-      cb(new Error('Invalid file type'))
+      cb(null, true);
+    } 
+    // For CSV files - Add specific handling for bulk imports
+    else if (
+      file.mimetype === 'text/csv' || 
+      file.originalname.endsWith('.csv') ||
+      file.mimetype === 'application/vnd.ms-excel' ||
+      file.mimetype === 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
+    ) {
+      cb(null, true);
+    }
+    else {
+      cb(new Error('Invalid file type'));
     }
   }
 });
@@ -360,24 +370,84 @@ router.delete('/:id', auth, async (req, res) => {
 
 // Bulk import users from CSV
 router.post('/bulk-import', auth, upload.single('file'), async (req, res) => {
+  console.log('Received bulk import request');
+  
   if (!req.file) {
     return res.status(400).json({ error: 'No file uploaded' });
   }
 
+  console.log(`Processing file of type: ${req.file.mimetype}, size: ${req.file.size} bytes`);
+  
   try {
+    // Ensure we have a buffer to work with
+    if (!req.file.buffer) {
+      console.error('Missing file buffer');
+      return res.status(400).json({ error: 'Invalid file upload - missing data' });
+    }
+    
+    // Check if store ID is available
+    if (!req.user?.store?._id) {
+      console.error('Missing store ID in user object');
+      return res.status(400).json({ error: 'Store ID is required' });
+    }
+
+    // Get file content
+    let fileContent = req.file.buffer.toString();
+    
+    // Check if the file has headers by looking for the "name" header
+    const hasHeaders = fileContent.toLowerCase().startsWith('name,email');
+    
+    // If no headers, add them
+    if (!hasHeaders) {
+      console.log('CSV file has no headers, adding them...');
+      fileContent = 'name,email,departments,position,role,status\n' + fileContent;
+    }
+    
+    // Log the file content sample
+    console.log('File content sample:', fileContent.substring(0, 200) + '...');
+
     const results = [];
     const parser = parse({
       columns: true,
-      skip_empty_lines: true
+      skip_empty_lines: true,
+      relaxColumnCount: true, // Be more lenient with CSV formatting
+      trim: true, // Trim whitespace from values
     });
 
-    // Create a readable stream from the buffer
-    const stream = Readable.from(req.file.buffer.toString());
-
     // Process the CSV data
+    let streamFinished = false;
+    let streamError = null;
+    
+    // Create a readable stream from the buffer with headers
+    const stream = Readable.from(fileContent);
+    
+    // Process the CSV data with error handling
     stream.pipe(parser)
-      .on('data', (data) => results.push(data))
+      .on('data', (data) => {
+        console.log('Parsed row:', data);
+        results.push(data);
+      })
+      .on('error', (error) => {
+        console.error('CSV parsing error:', error);
+        streamError = error;
+      })
       .on('end', async () => {
+        streamFinished = true;
+        
+        // If there was an error during parsing, return that error
+        if (streamError) {
+          return res.status(400).json({ 
+            error: 'Failed to parse CSV file', 
+            details: streamError.message 
+          });
+        }
+        
+        console.log(`Successfully parsed ${results.length} rows from CSV`);
+        
+        if (results.length === 0) {
+          return res.status(400).json({ error: 'CSV file contains no data' });
+        }
+        
         let imported = 0;
         const errors = [];
 
@@ -385,6 +455,13 @@ router.post('/bulk-import', auth, upload.single('file'), async (req, res) => {
           try {
             // Skip comment lines
             if (row.name && row.name.startsWith('#')) {
+              console.log('Skipping comment line:', row.name);
+              continue;
+            }
+            
+            // Basic validation
+            if (!row.name || !row.email) {
+              errors.push(`Missing required fields (name or email) in row: ${JSON.stringify(row)}`);
               continue;
             }
 
@@ -445,8 +522,8 @@ router.post('/bulk-import', auth, upload.single('file'), async (req, res) => {
             // Normalize shift
             const shift = row.shift ? (row.shift.toLowerCase() === 'night' ? 'night' : 'day') : 'day';
 
-            // Create new user
-            const user = new User({
+            // Create user data with validated fields
+            const userData = {
               name: row.name,
               email: row.email,
               departments: departments,
@@ -456,9 +533,14 @@ router.post('/bulk-import', auth, upload.single('file'), async (req, res) => {
               status: row.status || 'active',
               password,
               store: req.user.store._id // Associate with current user's store
-            });
-
+            };
+            
+            console.log(`Creating user: ${userData.name} (${userData.email})`);
+            
+            // Create new user
+            const user = new User(userData);
             await user.save();
+            console.log(`User created: ${user._id}`);
 
             // Send welcome email
             try {
@@ -474,7 +556,7 @@ router.post('/bulk-import', auth, upload.single('file'), async (req, res) => {
                     <div style="background-color: #f8f8f8; padding: 20px; border-radius: 8px; margin-bottom: 30px;">
                       <p>Hello ${row.name},</p>
 
-                      <p>Welcome to LD-Growth. Your new home for Chick-fil-A ${req.user.store.name} development training and tasks. This is a beta web app created by Jonathon. If you have any issues or questions please reach out to me.</p>
+                      <p>Welcome to LD-Growth. Your new home for Chick-fil-A ${req.user.store.name || 'store'} development training and tasks. This is a beta web app created by Jonathon. If you have any issues or questions please reach out to me.</p>
 
                       <div style="background-color: #fff; padding: 15px; border-radius: 4px; margin: 20px 0;">
                         <p style="margin: 5px 0;"><strong>Access the site here:</strong> <a href="https://www.ld-growth.com" style="color: #E4002B;">www.ld-growth.com</a></p>
@@ -502,7 +584,7 @@ router.post('/bulk-import', auth, upload.single('file'), async (req, res) => {
             imported++;
           } catch (error) {
             console.error('Error importing user:', error);
-            errors.push(`Failed to import user ${row.email}: ${error.message}`);
+            errors.push(`Failed to import user ${row.email || 'unknown'}: ${error.message}`);
           }
         }
 
@@ -512,9 +594,21 @@ router.post('/bulk-import', auth, upload.single('file'), async (req, res) => {
           message: `Successfully imported ${imported} users${errors.length > 0 ? ` with ${errors.length} errors` : ''}`
         });
       });
+      
+    // Add a safety timeout in case the stream never completes
+    setTimeout(() => {
+      if (!streamFinished) {
+        console.error('CSV processing timeout');
+        return res.status(500).json({ error: 'CSV processing timeout' });
+      }
+    }, 30000); // 30 second timeout
+    
   } catch (error) {
     console.error('Error processing CSV:', error);
-    res.status(500).json({ error: 'Failed to process CSV file' });
+    res.status(500).json({ 
+      error: 'Failed to process CSV file',
+      details: error.message
+    });
   }
 });
 

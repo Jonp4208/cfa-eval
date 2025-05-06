@@ -181,8 +181,16 @@ export interface LatestTemperatures {
 export const kitchenService = {
   // Get all food safety checklists
   getAllChecklists: async (): Promise<FoodSafetyChecklist[]> => {
-    const response = await api.get('/api/kitchen/food-safety/checklists');
-    return response.data;
+    try {
+      const response = await api.get('/api/kitchen/food-safety/checklists');
+      return response.data;
+    } catch (error: any) {
+      if (error.response && error.response.status === 404) {
+        console.log('Food safety checklists not found for store, returning empty array');
+        return []; // Return empty array instead of throwing an error
+      }
+      throw error; // Re-throw other errors
+    }
   },
 
   // Get a specific checklist
@@ -262,8 +270,16 @@ export const kitchenService = {
 
   // Existing equipment methods
   getEquipmentStatuses: async (): Promise<Record<string, EquipmentStatus>> => {
-    const response = await api.get('/api/kitchen/equipment/statuses');
-    return response.data;
+    try {
+      const response = await api.get('/api/kitchen/equipment/statuses');
+      return response.data;
+    } catch (error: any) {
+      if (error.response && error.response.status === 404) {
+        console.log('Equipment statuses not found for store, returning empty object');
+        return {}; // Return empty object instead of throwing an error
+      }
+      throw error; // Re-throw other errors
+    }
   },
 
   updateEquipmentStatus: async (id: string, status: EquipmentStatus): Promise<void> => {
@@ -384,39 +400,55 @@ export const kitchenService = {
   },
 
   getShiftChecklistItemsWithCompletions: async (type: string): Promise<ShiftChecklistItem[]> => {
-    // Get the checklist items
-    const itemsResponse = await api.get(`/api/kitchen/checklists/shift/${type}`);
-    const items = itemsResponse.data;
-
-    // Get today's completions
-    const today = new Date();
-    today.setHours(0, 0, 0, 0);
-    const todayStr = today.toISOString();
-
-    const completionsResponse = await api.get(`/api/kitchen/checklists/shift/${type}/completions`, {
-      params: { startDate: todayStr }
-    });
-    const completions = completionsResponse.data;
-
-    // If we have completions for today, mark the items as completed
-    if (completions && completions.length > 0) {
-      // Get the latest completion
-      const latestCompletion = completions[0];
-
-      // Mark items as completed based on the latest completion
-      return items.map(item => {
-        const completedItem = latestCompletion.items.find(i => i.id === item.id);
-        return {
-          ...item,
-          isCompleted: completedItem ? completedItem.isCompleted : false,
-          completedBy: completedItem && completedItem.isCompleted ? latestCompletion.completedBy : undefined,
-          completedAt: completedItem && completedItem.isCompleted ? latestCompletion.completedAt : undefined
-        };
-      });
+    try {
+      // Get the checklist items
+      const itemsResponse = await api.get(`/api/kitchen/checklists/shift/${type}`);
+      const items = itemsResponse.data;
+  
+      // Get today's completions
+      const today = new Date();
+      today.setHours(0, 0, 0, 0);
+      const todayStr = today.toISOString();
+  
+      try {
+        const completionsResponse = await api.get(`/api/kitchen/checklists/shift/${type}/completions`, {
+          params: { startDate: todayStr }
+        });
+        const completions = completionsResponse.data;
+  
+        // If we have completions for today, mark the items as completed
+        if (completions && completions.length > 0) {
+          // Get the latest completion
+          const latestCompletion = completions[0];
+  
+          // Mark items as completed based on the latest completion
+          return items.map(item => {
+            const completedItem = latestCompletion.items.find(i => i.id === item.id);
+            return {
+              ...item,
+              isCompleted: completedItem ? completedItem.isCompleted : false,
+              completedBy: completedItem && completedItem.isCompleted ? latestCompletion.completedBy : undefined,
+              completedAt: completedItem && completedItem.isCompleted ? latestCompletion.completedAt : undefined
+            };
+          });
+        }
+      } catch (completionError: any) {
+        if (completionError.response && completionError.response.status === 404) {
+          console.log(`No completions found for ${type} checklist, continuing with default items`);
+        } else {
+          throw completionError;
+        }
+      }
+  
+      // If no completions found, return items as is
+      return items;
+    } catch (error: any) {
+      if (error.response && error.response.status === 404) {
+        console.log(`${type} checklist not found for store, returning empty array`);
+        return []; // Return empty array instead of throwing an error
+      }
+      throw error; // Re-throw other errors
     }
-
-    // If no completions found, return items as is
-    return items;
   },
 
   updateShiftChecklistItems: async (type: string, items: ShiftChecklistItem[]): Promise<ShiftChecklistItem[]> => {
@@ -467,8 +499,16 @@ export const kitchenService = {
 
   // Daily Checklist Methods
   getDailyChecklistItems: async (): Promise<Record<string, DailyChecklistItemWithCompletions[]>> => {
-    const response = await api.get('/api/kitchen/food-safety/daily-checklist');
-    return response.data;
+    try {
+      const response = await api.get('/api/kitchen/food-safety/daily-checklist');
+      return response.data;
+    } catch (error: any) {
+      if (error.response && error.response.status === 404) {
+        console.log('Daily checklist not found for store, returning empty object');
+        return {}; // Return empty object instead of throwing an error
+      }
+      throw error; // Re-throw other errors
+    }
   },
 
   completeDailyChecklistItem: async (

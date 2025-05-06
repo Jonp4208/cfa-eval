@@ -52,15 +52,45 @@ export function useKitchenDashboardStats() {
     queryKey: ['kitchenDashboardStats'],
     queryFn: async () => {
       try {
-        // Fetch all the data we need for kitchen metrics
-        const [foodSafetyChecklists, equipmentStatuses, openingChecklist, transitionChecklist, closingChecklist, dailyChecklistItems] = await Promise.all([
-          kitchenService.getAllChecklists(),
-          kitchenService.getEquipmentStatuses(),
-          kitchenService.getShiftChecklistItemsWithCompletions('opening'),
-          kitchenService.getShiftChecklistItemsWithCompletions('transition'),
-          kitchenService.getShiftChecklistItemsWithCompletions('closing'),
-          kitchenService.getDailyChecklistItems()
-        ]);
+        // Fetch all the data we need for kitchen metrics, with individual try-catch for each call
+        const fetchSafelyWithDefault = async (fn: () => Promise<any>, defaultValue: any) => {
+          try {
+            return await fn();
+          } catch (error) {
+            console.log('Error fetching kitchen data:', error);
+            return defaultValue;
+          }
+        };
+
+        const foodSafetyChecklists = await fetchSafelyWithDefault(
+          kitchenService.getAllChecklists, 
+          []
+        );
+        
+        const equipmentStatuses = await fetchSafelyWithDefault(
+          kitchenService.getEquipmentStatuses, 
+          {}
+        );
+        
+        const openingChecklist = await fetchSafelyWithDefault(
+          () => kitchenService.getShiftChecklistItemsWithCompletions('opening'), 
+          []
+        );
+        
+        const transitionChecklist = await fetchSafelyWithDefault(
+          () => kitchenService.getShiftChecklistItemsWithCompletions('transition'), 
+          []
+        );
+        
+        const closingChecklist = await fetchSafelyWithDefault(
+          () => kitchenService.getShiftChecklistItemsWithCompletions('closing'), 
+          []
+        );
+        
+        const dailyChecklistItems = await fetchSafelyWithDefault(
+          kitchenService.getDailyChecklistItems, 
+          {}
+        );
 
         // Process food safety metrics
         let pendingChecklists = 0;
