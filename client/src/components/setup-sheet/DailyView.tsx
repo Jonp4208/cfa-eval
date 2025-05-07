@@ -295,19 +295,30 @@ export function DailyView({ setup, onBack }: DailyViewProps) {
     }
   }, [setup])
 
+  // Helper function to get today's date in YYYY-MM-DD format
+  const getTodayDateString = () => {
+    const today = new Date();
+    return today.toISOString().split('T')[0]; // Returns YYYY-MM-DD
+  }
+
   // Load break information from uploaded schedules
   const loadBreakInformation = (employees: any[]) => {
     // Logging is disabled for now
     // // Console statement removed
 
     const breaks: EmployeeBreak[] = [];
+    const todayDateString = getTodayDateString();
 
     employees.forEach(employee => {
       // Check if employee has break information
       if (employee.breaks && employee.breaks.length > 0) {
         // Add each break to the breaks array
         employee.breaks.forEach((breakInfo: any) => {
-          if (breakInfo.status === 'active' || breakInfo.status === 'completed') {
+          // Check if the break was taken today
+          const breakDate = breakInfo.breakDate || (breakInfo.startTime ? new Date(breakInfo.startTime).toISOString().split('T')[0] : null);
+          const isTodayBreak = breakDate === todayDateString;
+
+          if (breakInfo.status === 'active' || (breakInfo.status === 'completed' && isTodayBreak)) {
             breaks.push({
               employeeId: employee.id,
               employeeName: employee.name,
@@ -315,23 +326,29 @@ export function DailyView({ setup, onBack }: DailyViewProps) {
               endTime: breakInfo.endTime,
               duration: breakInfo.duration,
               status: breakInfo.status as BreakStatus,
-              hadBreak: true
+              hadBreak: isTodayBreak // Only set hadBreak to true if the break was today
             });
           }
         });
       }
 
-      // If employee has hadBreak flag but no breaks, add a completed break
+      // If employee has hadBreak flag but no breaks, check if it's for today
       if (employee.hadBreak && (!employee.breaks || employee.breaks.length === 0)) {
-        breaks.push({
-          employeeId: employee.id,
-          employeeName: employee.name,
-          startTime: new Date().toISOString(), // Use current time as fallback
-          endTime: new Date().toISOString(),
-          duration: 30, // Default duration
-          status: 'completed',
-          hadBreak: true
-        });
+        // Since we don't know when this hadBreak flag was set, we'll assume it's not for today
+        // unless there's a breakDate that matches today
+        const hasBreakToday = employee.breakDate === todayDateString;
+
+        if (hasBreakToday) {
+          breaks.push({
+            employeeId: employee.id,
+            employeeName: employee.name,
+            startTime: new Date().toISOString(), // Use current time as fallback
+            endTime: new Date().toISOString(),
+            duration: 30, // Default duration
+            status: 'completed',
+            hadBreak: true
+          });
+        }
       }
     });
 
@@ -1067,6 +1084,7 @@ export function DailyView({ setup, onBack }: DailyViewProps) {
   // Start a break for an employee
   const startBreak = async (employeeId: string, employeeName: string, duration: number) => {
     const now = new Date()
+    const todayDateString = getTodayDateString()
 
     // Check if employee already had a break today
     const hadBreakBefore = employeeBreaks.some(brk =>
@@ -1090,18 +1108,20 @@ export function DailyView({ setup, onBack }: DailyViewProps) {
         // Create a new breaks array or use the existing one
         const breaks = emp.breaks || []
 
-        // Add the new break
+        // Add the new break with today's date
         breaks.push({
           startTime: now.toISOString(),
           duration,
-          status: 'active'
+          status: 'active',
+          breakDate: todayDateString // Add today's date to the break
         })
 
         // Return the updated employee
         return {
           ...emp,
           breaks,
-          hadBreak: true
+          hadBreak: true,
+          breakDate: todayDateString // Add today's date to the employee
         }
       }
       return emp
@@ -1133,7 +1153,7 @@ export function DailyView({ setup, onBack }: DailyViewProps) {
   // End a break for an employee
   const endBreak = async (employeeId: string) => {
     const now = new Date()
-    const formattedEndTime = `${now.getHours()}:${now.getMinutes().toString().padStart(2, '0')}`
+    const todayDateString = getTodayDateString()
 
     // Find the employee in the breaks array before updating state
     const employee = employeeBreaks.find(b => b.employeeId === employeeId && b.status === 'active')
@@ -1160,7 +1180,8 @@ export function DailyView({ setup, onBack }: DailyViewProps) {
             return {
               ...brk,
               endTime: now.toISOString(),
-              status: 'completed'
+              status: 'completed',
+              breakDate: brk.breakDate || todayDateString // Preserve existing breakDate or set today's date
             }
           }
           return brk
@@ -1170,7 +1191,8 @@ export function DailyView({ setup, onBack }: DailyViewProps) {
         return {
           ...emp,
           breaks: updatedBreaks,
-          hadBreak: true
+          hadBreak: true,
+          breakDate: emp.breakDate || todayDateString // Preserve existing breakDate or set today's date
         }
       }
       return emp
@@ -1206,9 +1228,30 @@ export function DailyView({ setup, onBack }: DailyViewProps) {
 
   // Check if an employee has had a break today
   const hasHadBreak = (employeeId: string): boolean => {
-    return employeeBreaks.some(b =>
+    const todayDateString = getTodayDateString()
+
+    // First check the employeeBreaks array
+    const hadBreakToday = employeeBreaks.some(b =>
       b.employeeId === employeeId && b.hadBreak
     )
+
+    if (hadBreakToday) return true
+
+    // If not found in employeeBreaks, check the scheduledEmployees array
+    const employee = scheduledEmployees.find(emp => emp.id === employeeId)
+    if (employee && employee.breakDate === todayDateString && employee.hadBreak) {
+      return true
+    }
+
+    // Check if the employee has any breaks with today's date
+    if (employee && employee.breaks && employee.breaks.length > 0) {
+      return employee.breaks.some(brk =>
+        brk.breakDate === todayDateString &&
+        (brk.status === 'completed' || brk.status === 'active')
+      )
+    }
+
+    return false
   }
 
   // Get remaining break time in minutes
@@ -1296,11 +1339,14 @@ export function DailyView({ setup, onBack }: DailyViewProps) {
   const handleStartBreak = async () => {
     if (selectedEmployee) {
       try {
+        const now = new Date()
+        const todayDateString = getTodayDateString()
+
         // Create a new break object
         const newBreak: EmployeeBreak = {
           employeeId: selectedEmployee.id,
           employeeName: selectedEmployee.name,
-          startTime: new Date().toISOString(),
+          startTime: now.toISOString(),
           duration: parseInt(breakDuration),
           status: 'active',
           hadBreak: true
@@ -1317,13 +1363,15 @@ export function DailyView({ setup, onBack }: DailyViewProps) {
             updatedBreaks.push({
               startTime: newBreak.startTime,
               duration: newBreak.duration,
-              status: newBreak.status
+              status: newBreak.status,
+              breakDate: todayDateString // Add today's date to the break
             })
 
             return {
               ...emp,
               hadBreak: true,
-              breaks: updatedBreaks
+              breaks: updatedBreaks,
+              breakDate: todayDateString // Add today's date to the employee
             }
           }
           return emp
@@ -2381,7 +2429,7 @@ export function DailyView({ setup, onBack }: DailyViewProps) {
       // Store employee name for the toast message
       let removedEmployeeName = position.employeeName || 'Employee'
       let employeeId = position.employeeId
-      
+
       // Show a toast message to indicate the operation is in progress
       toast({
         title: 'Removing assignment...',
@@ -2422,10 +2470,10 @@ export function DailyView({ setup, onBack }: DailyViewProps) {
           }
           return emp
         })
-        
+
         // Update the state
         setScheduledEmployees(updatedEmployees)
-        
+
         // Recalculate unassigned employees to show the employee as available again
         calculateUnassignedEmployees(updatedEmployees)
       }
@@ -2605,6 +2653,28 @@ export function DailyView({ setup, onBack }: DailyViewProps) {
         // Make sure essential fields are included
         if (!employeeCopy.id) employeeCopy.id = employee.id;
         if (!employeeCopy.name) employeeCopy.name = employee.name;
+
+        // Ensure break data is properly included with date
+        if (employeeCopy.hadBreak) {
+          // Make sure breakDate is included if hadBreak is true
+          if (!employeeCopy.breakDate) {
+            employeeCopy.breakDate = getTodayDateString();
+            console.log(`Added breakDate ${employeeCopy.breakDate} to employee ${employeeCopy.name}`);
+          }
+
+          // Make sure breaks array has breakDate for each break
+          if (employeeCopy.breaks && Array.isArray(employeeCopy.breaks)) {
+            employeeCopy.breaks = employeeCopy.breaks.map((breakItem: any) => {
+              if (!breakItem.breakDate) {
+                return {
+                  ...breakItem,
+                  breakDate: getTodayDateString()
+                };
+              }
+              return breakItem;
+            });
+          }
+        }
 
         // If this is the employee we're trying to assign, make sure position info is included
         if (employeeName && employeeCopy.name === employeeName && actionType === 'assign') {
@@ -3049,6 +3119,31 @@ export function DailyView({ setup, onBack }: DailyViewProps) {
         }
       });
     });
+
+    // Also preserve employee break data in uploadedSchedules
+    if (newWeekSchedule.uploadedSchedules && Array.isArray(newWeekSchedule.uploadedSchedules)) {
+      newWeekSchedule.uploadedSchedules = newWeekSchedule.uploadedSchedules.map((employee: any) => {
+        // If the employee has hadBreak flag but no breakDate, add today's date
+        if (employee.hadBreak && !employee.breakDate) {
+          employee.breakDate = getTodayDateString();
+        }
+
+        // Make sure all breaks in the breaks array have a breakDate
+        if (employee.breaks && Array.isArray(employee.breaks)) {
+          employee.breaks = employee.breaks.map((breakItem: any) => {
+            if (!breakItem.breakDate) {
+              return {
+                ...breakItem,
+                breakDate: getTodayDateString()
+              };
+            }
+            return breakItem;
+          });
+        }
+
+        return employee;
+      });
+    }
 
     return newWeekSchedule;
   };

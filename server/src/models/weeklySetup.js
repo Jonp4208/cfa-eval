@@ -66,6 +66,10 @@ const breakSchema = new mongoose.Schema({
     type: String,
     enum: ['none', 'active', 'completed'],
     default: 'none'
+  },
+  breakDate: {
+    type: String,
+    default: null
   }
 }, { _id: false }); // Disable _id generation for subdocuments to reduce size
 
@@ -88,6 +92,10 @@ const employeeScheduleSchema = new mongoose.Schema({
   hadBreak: {
     type: Boolean,
     default: false
+  },
+  breakDate: {
+    type: String,
+    default: null
   }
 }, { _id: false }); // Disable _id generation for subdocuments to reduce size
 

@@ -6,6 +6,7 @@ export interface Break {
   endTime?: string;
   duration: number;
   status: BreakStatus;
+  breakDate?: string; // Date when the break was taken (YYYY-MM-DD format)
 }
 
 export interface Employee {
@@ -20,6 +21,7 @@ export interface Employee {
   day?: string;
   breaks?: Break[];
   hadBreak?: boolean;
+  breakDate?: string; // Date when the employee had a break (YYYY-MM-DD format)
 }
 
 export interface Position {
