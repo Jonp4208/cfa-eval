@@ -753,7 +753,7 @@ export default function NewEvaluation() {
           </CardContent>
         </Card>
 
-        {/* Navigation Buttons */}
+        {/* Navigation Buttons - Always visible */}
         <div className="flex justify-between mt-4 sm:mt-6">
           <Button
             variant="outline"
@@ -772,6 +772,24 @@ export default function NewEvaluation() {
             {currentStep !== steps.length && <ChevronRight className="w-4 h-4 sm:w-5 sm:h-5 ml-2" />}
           </Button>
         </div>
+
+        {/* Floating Next Button for Mobile - Only shows when employees are selected */}
+        {currentStep === 1 && selectedEmployees.length > 0 && (
+          <div className="fixed bottom-[70px] right-4 z-[1000] md:hidden">
+            <Button
+              onClick={handleNext}
+              disabled={isNextDisabled()}
+              className="bg-[#E51636] hover:bg-[#E51636]/90 text-white h-12 px-5 rounded-full shadow-lg"
+            >
+              <ChevronRight className="w-5 h-5" />
+            </Button>
+          </div>
+        )}
+
+        {/* Add padding at the bottom when the button is fixed */}
+        {currentStep === 1 && selectedEmployees.length > 0 && (
+          <div className="h-20 md:hidden"></div>
+        )}
       </div>
     </div>
   );
