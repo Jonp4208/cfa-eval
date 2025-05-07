@@ -15,8 +15,10 @@ import {
   Check,
   Search,
   CheckCircle,
-  ArrowLeft
+  ArrowLeft,
+  ClipboardCheck
 } from 'lucide-react';
+import PageHeader, { headerButtonClass } from '@/components/PageHeader';
 import api from '../../lib/axios';
 import { useAuth } from '../../contexts/AuthContext';
 import evaluationService from '../../lib/services/evaluations';
@@ -39,6 +41,7 @@ interface Employee {
   };
   email?: string;
   lastEvaluation?: string;
+  nextEvaluationDate?: string;
   pendingEvaluation?: {
     status: string;
     scheduledDate: string;
@@ -118,7 +121,7 @@ export default function NewEvaluation() {
   const employees = React.useMemo(() => {
     if (!users.length) return [];
 
-    // Create a Map for faster evaluation lookup
+    // Create a Map for faster evaluation lookup (pending evaluations)
     const pendingEvalMap = new Map(
       evaluations
         .filter((evaluation: any) =>
@@ -126,26 +129,55 @@ export default function NewEvaluation() {
           evaluation.employee &&
           evaluation.employee._id
         )
-        .map((evaluation: any) => [evaluation.employee._id, evaluation])
+        .map((evaluation: any) => [
+          typeof evaluation.employee === 'string' ? evaluation.employee : evaluation.employee._id,
+          evaluation
+        ])
     );
+
+    // Create a Map for completed evaluations
+    const completedEvalsMap = new Map();
+
+    // Process all completed evaluations
+    evaluations
+      .filter((evaluation: any) =>
+        evaluation.status === 'completed' &&
+        evaluation.completedDate &&
+        evaluation.employee
+      )
+      .forEach((evaluation: any) => {
+        const employeeId = typeof evaluation.employee === 'string' ? evaluation.employee : evaluation.employee._id;
+
+        // If we don't have this employee yet, or this evaluation is more recent
+        if (!completedEvalsMap.has(employeeId) ||
+            new Date(evaluation.completedDate) > new Date(completedEvalsMap.get(employeeId).completedDate)) {
+          completedEvalsMap.set(employeeId, evaluation);
+        }
+      });
 
     // Map users with O(n) complexity
     return users
       .filter((user: any) => user && user._id)
-      .map((user: any) => ({
-        _id: user._id,
-        name: user.name || 'Unknown',
-        position: user.position || 'Employee',
-        department: user.department || 'Uncategorized',
-        imageUrl: user.imageUrl,
-        email: user.email,
-        lastEvaluation: user.lastEvaluation,
-        manager: user.manager || null,
-        pendingEvaluation: pendingEvalMap.has(user._id) ? {
-          status: pendingEvalMap.get(user._id).status,
-          scheduledDate: pendingEvalMap.get(user._id).scheduledDate
-        } : undefined
-      }));
+      .map((user: any) => {
+        // Get the most recent completed evaluation for this user
+        const lastCompletedEval = completedEvalsMap.get(user._id);
+
+        return {
+          _id: user._id,
+          name: user.name || 'Unknown',
+          position: user.position || 'Employee',
+          department: user.department || 'Uncategorized',
+          imageUrl: user.imageUrl,
+          email: user.email,
+          lastEvaluation: lastCompletedEval ? lastCompletedEval.completedDate : null,
+          nextEvaluationDate: user.schedulingPreferences?.nextEvaluationDate || null,
+          manager: user.manager || null,
+          pendingEvaluation: pendingEvalMap.has(user._id) ? {
+            status: pendingEvalMap.get(user._id).status,
+            scheduledDate: pendingEvalMap.get(user._id).scheduledDate
+          } : undefined
+        };
+      });
   }, [users, evaluations]);
 
   // Get selected count by department
@@ -297,44 +329,51 @@ export default function NewEvaluation() {
     <div className="min-h-screen p-4 md:p-6">
       <div className="max-w-7xl mx-auto space-y-4 sm:space-y-6">
         {/* Header Section */}
-        <div className="bg-gradient-to-r from-[#E51636] to-[#DD0031] rounded-[20px] p-4 sm:p-8 text-white shadow-xl relative overflow-hidden">
-          <div className="absolute inset-0 bg-[url('/pattern.png')] opacity-10" />
-          <div className="relative">
-            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 sm:gap-6">
-              <div>
-                <h1 className="text-2xl sm:text-3xl md:text-4xl font-bold">Create Evaluation</h1>
-                <p className="text-white/80 mt-1 sm:mt-2 text-base sm:text-lg">Schedule performance evaluations</p>
-              </div>
-              <Button
-                variant="secondary"
-                className="bg-white/10 hover:bg-white/20 text-white border-0 h-10 sm:h-12 px-4 sm:px-6 flex-none"
-                onClick={() => navigate('/evaluations')}
-              >
-                <ArrowLeft className="w-4 h-4 sm:w-5 sm:h-5 mr-2" />
-                Back
-              </Button>
-            </div>
-          </div>
-        </div>
+        <PageHeader
+          title="Create Evaluation"
+          subtitle="Schedule performance evaluations"
+          icon={<ClipboardCheck className="h-5 w-5" />}
+          actions={
+            <Button
+              className={headerButtonClass}
+              onClick={() => navigate('/evaluations')}
+            >
+              <ArrowLeft className="w-4 h-4" />
+              Back
+            </Button>
+          }
+        />
 
         {/* Progress Steps */}
         <Card className="bg-white rounded-[20px] shadow-md">
           <CardContent className="p-4 sm:p-6">
-            <div className="flex justify-between items-center">
+            <div className="grid grid-cols-3 gap-0 relative">
+              {/* First connecting line */}
+              <div className="absolute top-4 sm:top-5 left-[calc(16.67%+16px)] sm:left-[calc(16.67%+20px)] right-[calc(50%+16px)] sm:right-[calc(50%+20px)] h-[2px] bg-gray-200 z-0">
+                <div className={`h-full bg-[#E51636] transition-all ${currentStep > 1 ? 'w-full' : 'w-0'}`} />
+              </div>
+
+              {/* Second connecting line */}
+              <div className="absolute top-4 sm:top-5 left-[calc(50%+16px)] sm:left-[calc(50%+20px)] right-[calc(16.67%+16px)] sm:right-[calc(16.67%+20px)] h-[2px] bg-gray-200 z-0">
+                <div className={`h-full bg-[#E51636] transition-all ${currentStep > 2 ? 'w-full' : 'w-0'}`} />
+              </div>
+
               {steps.map((step, index) => (
-                <div key={step} className="flex items-center flex-1">
+                <div key={step} className="flex flex-col items-center relative z-10">
                   <div className={`flex flex-col items-center ${index + 1 === currentStep ? 'text-[#E51636]' : 'text-[#27251F]/40'}`}>
-                    <div className={`w-8 h-8 sm:w-10 sm:h-10 rounded-full flex items-center justify-center border-2 ${
-                      index + 1 === currentStep
-                        ? 'border-[#E51636] bg-[#E51636]/10'
-                        : index + 1 < currentStep
-                        ? 'border-[#E51636] bg-[#E51636]/10'
-                        : 'border-gray-200'
-                    }`}>
+                    <div
+                      className={`w-8 h-8 sm:w-10 sm:h-10 rounded-full border-2 flex items-center justify-center ${
+                        index + 1 === currentStep
+                          ? 'border-[#E51636] bg-[#E51636]/10'
+                          : index + 1 < currentStep
+                          ? 'border-[#E51636] bg-[#E51636]/10'
+                          : 'border-gray-200'
+                      }`}
+                    >
                       {index + 1 < currentStep ? (
                         <CheckCircle className="w-5 h-5 sm:w-6 sm:h-6 text-[#E51636]" />
                       ) : (
-                        <span className={index + 1 === currentStep ? 'text-[#E51636] font-semibold text-sm sm:text-base' : 'text-[#27251F]/40 text-sm sm:text-base'}>
+                        <span className={`${index + 1 === currentStep ? 'text-[#E51636] font-semibold' : 'text-[#27251F]/40'} text-sm sm:text-base`}>
                           {index + 1}
                         </span>
                       )}
@@ -344,13 +383,7 @@ export default function NewEvaluation() {
                       {step.split(' ')[0]}
                     </span>
                   </div>
-                  {index < steps.length - 1 && (
-                    <div className="w-full mx-2 sm:mx-4 h-[2px] bg-gray-200">
-                      <div className={`h-full bg-[#E51636] transition-all ${
-                        index + 1 < currentStep ? 'w-full' : 'w-0'
-                      }`} />
-                    </div>
-                  )}
+
                 </div>
               ))}
             </div>
@@ -363,46 +396,44 @@ export default function NewEvaluation() {
             {currentStep === 1 && (
               <>
                 {/* Filters */}
-                <Card className="bg-white rounded-[20px] shadow-md">
-                  <CardContent className="p-4 sm:p-6">
-                    <div className="grid grid-cols-1 gap-3 sm:gap-4">
-                      <div className="relative">
-                        <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-[#27251F]/40 w-5 h-5" />
-                        <input
-                          type="text"
-                          placeholder="Search employees..."
-                          value={searchQuery}
-                          onChange={(e) => setSearchQuery(e.target.value)}
-                          className="w-full h-11 sm:h-12 pl-10 pr-4 rounded-xl border border-gray-200 focus:outline-none focus:ring-2 focus:ring-[#E51636] focus:border-transparent text-base"
-                        />
-                      </div>
-                      <Select value={selectedDepartment} onValueChange={setSelectedDepartment}>
-                        <SelectTrigger className="h-11 sm:h-12 rounded-xl border-gray-200 hover:border-gray-300">
-                          <SelectValue placeholder="All Departments" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          {DEPARTMENTS.map((dept) => (
-                            <SelectItem key={dept} value={dept}>
-                              {dept === 'all' ? 'All Departments' : dept}
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
+                <div className="mb-6">
+                  <div className="grid grid-cols-1 gap-3 sm:gap-4">
+                    <div className="relative">
+                      <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-[#27251F]/40 w-5 h-5" />
+                      <input
+                        type="text"
+                        placeholder="Search employees..."
+                        value={searchQuery}
+                        onChange={(e) => setSearchQuery(e.target.value)}
+                        className="w-full h-11 sm:h-12 pl-10 pr-4 rounded-xl border border-gray-200 focus:outline-none focus:ring-2 focus:ring-[#E51636] focus:border-transparent text-base"
+                      />
                     </div>
-                    {user?.position === 'Director' && (
-                      <div className="flex items-center space-x-2 mt-4 pt-4 border-t">
-                        <Switch
-                          id="show-all"
-                          checked={showAllEmployees}
-                          onCheckedChange={setShowAllEmployees}
-                        />
-                        <Label htmlFor="show-all" className="text-sm text-gray-600">
-                          {showAllEmployees ? 'All Employees' : 'My Team Only'}
-                        </Label>
-                      </div>
-                    )}
-                  </CardContent>
-                </Card>
+                    <Select value={selectedDepartment} onValueChange={setSelectedDepartment}>
+                      <SelectTrigger className="h-11 sm:h-12 rounded-xl border-gray-200 hover:border-gray-300">
+                        <SelectValue placeholder="All Departments" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {DEPARTMENTS.map((dept) => (
+                          <SelectItem key={dept} value={dept}>
+                            {dept === 'all' ? 'All Departments' : dept}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  {user?.position === 'Director' && (
+                    <div className="flex items-center space-x-2 mt-4 pt-4 border-t">
+                      <Switch
+                        id="show-all"
+                        checked={showAllEmployees}
+                        onCheckedChange={setShowAllEmployees}
+                      />
+                      <Label htmlFor="show-all" className="text-sm text-gray-600">
+                        {showAllEmployees ? 'All Employees' : 'My Team Only'}
+                      </Label>
+                    </div>
+                  )}
+                </div>
 
                 {/* Quick Department Filters */}
                 <div className="mt-6 -mx-4 px-4">
@@ -505,6 +536,24 @@ export default function NewEvaluation() {
                                           <div className="min-w-0 flex-1">
                                             <p className="font-medium text-[#27251F] truncate text-sm sm:text-base">{employee.name}</p>
                                             <p className="text-xs sm:text-sm text-[#27251F]/60 truncate">{employee.position}</p>
+                                            <div className="space-y-1">
+                                              <p className="text-xs text-[#27251F]/50">
+                                                <span className="inline-flex items-center">
+                                                  <Calendar className="w-3 h-3 mr-1" />
+                                                  {employee.lastEvaluation
+                                                    ? `Last eval: ${new Date(employee.lastEvaluation).toLocaleDateString()}`
+                                                    : "No previous evaluations"}
+                                                </span>
+                                              </p>
+                                              {employee.nextEvaluationDate && (
+                                                <p className="text-xs text-[#27251F]/50">
+                                                  <span className="inline-flex items-center">
+                                                    <Calendar className="w-3 h-3 mr-1 text-[#E51636]" />
+                                                    Next eval: {new Date(employee.nextEvaluationDate).toLocaleDateString()}
+                                                  </span>
+                                                </p>
+                                              )}
+                                            </div>
                                           </div>
                                           {selectedEmployees.find(emp => emp._id === employee._id) && (
                                             <CheckCircle className="w-5 h-5 text-[#E51636] flex-shrink-0" />
@@ -555,6 +604,14 @@ export default function NewEvaluation() {
                                           <div className="min-w-0 flex-1">
                                             <p className="font-medium text-[#27251F] truncate text-sm sm:text-base">{employee.name}</p>
                                             <p className="text-xs sm:text-sm text-[#27251F]/60 truncate">{employee.position}</p>
+                                            <p className="text-xs text-[#27251F]/50 mt-1">
+                                              <span className="inline-flex items-center">
+                                                <Calendar className="w-3 h-3 mr-1" />
+                                                {employee.lastEvaluation
+                                                  ? `Last eval: ${new Date(employee.lastEvaluation).toLocaleDateString()}`
+                                                  : "No previous evaluations"}
+                                              </span>
+                                            </p>
                                           </div>
                                           <Badge variant="outline" className="bg-yellow-50 text-yellow-600 border-yellow-200 flex-shrink-0 text-xs">
                                             Pending
