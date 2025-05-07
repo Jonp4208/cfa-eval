@@ -40,6 +40,7 @@ import setupSheetRouter from './routes/setupSheetRoutes.js';
 import { setupSheetTemplatesRouter } from './routes/setupSheetTemplates.js';
 import weeklySetupsRouter from './routes/weeklySetups.js';
 import leadsRouter from './routes/leads.js';
+import breaksRouter from './routes/breaks.js';
 
 // Services
 import { initCronJobs } from './services/cronService.js';
@@ -154,6 +155,7 @@ apiRouter.use('/setup-sheet', setupSheetRouter);
 apiRouter.use('/setup-sheet-templates', setupSheetTemplatesRouter);
 apiRouter.use('/weekly-setups', weeklySetupsRouter);
 apiRouter.use('/leads', leadsRouter);
+apiRouter.use('/breaks', breaksRouter);
 
 // Test Email Configuration
 apiRouter.post('/test-email', async (req, res) => {

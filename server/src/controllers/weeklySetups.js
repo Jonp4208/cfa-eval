@@ -118,13 +118,17 @@ export const createWeeklySetup = async (req, res) => {
     // Ensure uploadedSchedules is an array and sanitize it
     let sanitizedUploadedSchedules = [];
     if (Array.isArray(uploadedSchedules)) {
-      // Only keep essential fields and ensure they're valid
+      // Keep essential fields and ensure they're valid, including break information
       sanitizedUploadedSchedules = uploadedSchedules.map(emp => ({
         id: String(emp.id || ''),
         name: String(emp.name || ''),
         timeBlock: String(emp.timeBlock || ''),
         area: String(emp.area || ''),
-        day: String(emp.day || '')
+        day: String(emp.day || ''),
+        // Include break information
+        breaks: emp.breaks || [],
+        hadBreak: emp.hadBreak || false,
+        breakDate: emp.breakDate || null
       }));
     }
 
@@ -511,32 +515,37 @@ export const updateWeeklySetup = async (req, res) => {
     if (uploadedSchedules) {
       console.log(`Processing ${uploadedSchedules.length} employee records from request`);
 
-      // Log a sample of the incoming employee data
+      // Only log break-related information for debugging
       if (uploadedSchedules.length > 0) {
-        const sampleEmployee = uploadedSchedules[0];
-        console.log('Sample incoming employee:', {
-          id: sampleEmployee.id,
-          name: sampleEmployee.name,
-          fields: Object.keys(sampleEmployee),
-          timeBlock: sampleEmployee.timeBlock,
-          department: sampleEmployee.department,
-          position: sampleEmployee.position,
-          isScheduled: sampleEmployee.isScheduled
-        });
+        // Count employees with break information
+        const employeesWithBreaks = uploadedSchedules.filter(emp =>
+          emp.hadBreak || (emp.breaks && emp.breaks.length > 0)
+        ).length;
+
+        if (employeesWithBreaks > 0) {
+          console.log(`Found ${employeesWithBreaks} employees with break information in the request`);
+
+          // Log a sample employee with break info for debugging
+          const breakEmployee = uploadedSchedules.find(emp =>
+            emp.hadBreak || (emp.breaks && emp.breaks.length > 0)
+          );
+
+          if (breakEmployee) {
+            console.log(`Break info for ${breakEmployee.name}: hadBreak=${breakEmployee.hadBreak}, breakDate=${breakEmployee.breakDate}, breaks=${breakEmployee.breaks?.length || 0}`);
+          }
+        }
       }
 
-      // Log a sample of the existing employee data
+      // Only log existing break information if present
       if (mergedUploadedSchedules.length > 0) {
-        const sampleExistingEmployee = mergedUploadedSchedules[0];
-        console.log('Sample existing employee:', {
-          id: sampleExistingEmployee.id,
-          name: sampleExistingEmployee.name,
-          fields: Object.keys(sampleExistingEmployee),
-          timeBlock: sampleExistingEmployee.timeBlock,
-          department: sampleExistingEmployee.department,
-          position: sampleExistingEmployee.position,
-          isScheduled: sampleExistingEmployee.isScheduled
-        });
+        // Count existing employees with break information
+        const existingWithBreaks = mergedUploadedSchedules.filter(emp =>
+          emp.hadBreak || (emp.breaks && emp.breaks.length > 0)
+        ).length;
+
+        if (existingWithBreaks > 0) {
+          console.log(`Found ${existingWithBreaks} existing employees with break information`);
+        }
       }
 
       // Check if this is an optimized employee payload
@@ -563,15 +572,6 @@ export const updateWeeklySetup = async (req, res) => {
             // Update existing employee with new data, but preserve fields that might not be in the new data
             const existingEmp = existingEmployeeMap.get(newEmp.id);
 
-            // Log before update
-            console.log(`Updating employee ${newEmp.id} (${newEmp.name})`);
-            console.log('  Before update:', {
-              timeBlock: existingEmp.timeBlock,
-              department: existingEmp.department,
-              position: existingEmp.position,
-              isScheduled: existingEmp.isScheduled
-            });
-
             // Merge the objects, prioritizing new data but keeping existing fields if they're not in the new data
             // This ensures we don't lose any fields during updates
             Object.keys(newEmp).forEach(key => {
@@ -581,18 +581,14 @@ export const updateWeeklySetup = async (req, res) => {
               }
             });
 
-            // Log after update
-            console.log('  After update:', {
-              timeBlock: existingEmp.timeBlock,
-              department: existingEmp.department,
-              position: existingEmp.position,
-              isScheduled: existingEmp.isScheduled
-            });
+            // Only log if break information is being updated
+            if (newEmp.hadBreak || (newEmp.breaks && newEmp.breaks.length > 0)) {
+              console.log(`Updated break info for ${newEmp.name}: hadBreak=${existingEmp.hadBreak}, breaks=${existingEmp.breaks?.length || 0}`);
+            }
 
             updateCount++;
           } else {
             // Add new employee
-            console.log(`Adding new employee ${newEmp.id} (${newEmp.name})`);
             mergedUploadedSchedules.push(newEmp);
             addCount++;
           }

@@ -10,6 +10,7 @@ import { formatHourTo12Hour } from '@/lib/utils/date-utils'
 import { useNavigate } from 'react-router-dom'
 import { useToast } from '@/components/ui/use-toast'
 import { Progress } from '@/components/ui/progress'
+import breakService from '@/services/breakService'
 import {
   Dialog,
   DialogContent,
@@ -1083,138 +1084,157 @@ export function DailyView({ setup, onBack }: DailyViewProps) {
 
   // Start a break for an employee
   const startBreak = async (employeeId: string, employeeName: string, duration: number) => {
-    const now = new Date()
-    const todayDateString = getTodayDateString()
+    try {
+      const now = new Date()
+      const todayDateString = getTodayDateString()
 
-    // Check if employee already had a break today
-    const hadBreakBefore = employeeBreaks.some(brk =>
-      brk.employeeId === employeeId && brk.hadBreak
-    )
-
-    const newBreak: EmployeeBreak = {
-      employeeId,
-      employeeName,
-      startTime: now.toISOString(),
-      duration,
-      status: 'active',
-      hadBreak: true // Mark that this employee is having a break
-    }
-
-    setEmployeeBreaks(prev => [...prev, newBreak])
-
-    // Update the employee in scheduledEmployees
-    const updatedEmployees = scheduledEmployees.map((emp: any) => {
-      if (emp.id === employeeId) {
-        // Create a new breaks array or use the existing one
-        const breaks = emp.breaks || []
-
-        // Add the new break with today's date
-        breaks.push({
-          startTime: now.toISOString(),
-          duration,
-          status: 'active',
-          breakDate: todayDateString // Add today's date to the break
-        })
-
-        // Return the updated employee
-        return {
-          ...emp,
-          breaks,
-          hadBreak: true,
-          breakDate: todayDateString // Add today's date to the employee
-        }
+      // Call the break service to update the break status in the database
+      if (setup._id) {
+        await breakService.startBreak(setup._id, employeeId, duration);
       }
-      return emp
-    })
 
-    // Update the state
-    setScheduledEmployees(updatedEmployees)
+      // Create a new break object for local state
+      const newBreak: EmployeeBreak = {
+        employeeId,
+        employeeName,
+        startTime: now.toISOString(),
+        duration,
+        status: 'active',
+        hadBreak: true // Mark that this employee is having a break
+      }
 
-    // Save the changes to the server
-    await saveChangesAutomatically('assign')
+      // Update local state
+      setEmployeeBreaks(prev => [...prev, newBreak])
 
-    toast({
-      title: 'Break Started',
-      description: `${employeeName} is now on a ${duration} minute break`
-    })
+      // Update the employee in scheduledEmployees
+      const updatedEmployees = scheduledEmployees.map((emp: any) => {
+        if (emp.id === employeeId) {
+          // Create a new breaks array or use the existing one
+          const breaks = emp.breaks || []
 
-    // Set a timeout to notify when the break should end
-    setTimeout(() => {
-      toast({
-        title: 'Break Ending',
-        description: `${employeeName}'s ${duration} minute break is ending now`
+          // Add the new break with today's date
+          breaks.push({
+            startTime: now.toISOString(),
+            duration,
+            status: 'active',
+            breakDate: todayDateString // Add today's date to the break
+          })
+
+          // Return the updated employee
+          return {
+            ...emp,
+            breaks,
+            hadBreak: true,
+            breakDate: todayDateString // Add today's date to the employee
+          }
+        }
+        return emp
       })
 
-      // Automatically end the break when the duration is reached
-      endBreak(employeeId)
-    }, duration * 60 * 1000)
+      // Update the state
+      setScheduledEmployees(updatedEmployees)
+
+      toast({
+        title: 'Break Started',
+        description: `${employeeName} is now on a ${duration} minute break`
+      })
+
+      // Set a timeout to notify when the break should end
+      setTimeout(() => {
+        toast({
+          title: 'Break Ending',
+          description: `${employeeName}'s ${duration} minute break is ending now`
+        })
+
+        // Automatically end the break when the duration is reached
+        endBreak(employeeId)
+      }, duration * 60 * 1000)
+    } catch (error) {
+      console.error('Error starting break:', error);
+      toast({
+        title: 'Error',
+        description: 'Failed to start break. Please try again.',
+        variant: 'destructive'
+      });
+    }
   }
 
   // End a break for an employee
   const endBreak = async (employeeId: string) => {
-    const now = new Date()
-    const todayDateString = getTodayDateString()
+    try {
+      const now = new Date()
+      const todayDateString = getTodayDateString()
 
-    // Find the employee in the breaks array before updating state
-    const employee = employeeBreaks.find(b => b.employeeId === employeeId && b.status === 'active')
+      // Find the employee in the breaks array before updating state
+      const employee = employeeBreaks.find(b => b.employeeId === employeeId && b.status === 'active')
 
-    // Skip if no active break is found
-    if (!employee) return
+      // Skip if no active break is found
+      if (!employee) return
 
-    // Update the employeeBreaks state
-    setEmployeeBreaks(prev => prev.map(brk =>
-      brk.employeeId === employeeId && brk.status === 'active'
-        ? { ...brk, endTime: now.toISOString(), status: 'completed' }
-        : brk
-    ))
-
-    // Update the employee in scheduledEmployees
-    const updatedEmployees = scheduledEmployees.map((emp: any) => {
-      if (emp.id === employeeId) {
-        // Create a new breaks array or use the existing one
-        const breaks = emp.breaks || []
-
-        // Find the active break and update it
-        const updatedBreaks = breaks.map((brk: any) => {
-          if (brk.status === 'active') {
-            return {
-              ...brk,
-              endTime: now.toISOString(),
-              status: 'completed',
-              breakDate: brk.breakDate || todayDateString // Preserve existing breakDate or set today's date
-            }
-          }
-          return brk
-        })
-
-        // Return the updated employee
-        return {
-          ...emp,
-          breaks: updatedBreaks,
-          hadBreak: true,
-          breakDate: emp.breakDate || todayDateString // Preserve existing breakDate or set today's date
-        }
+      // Call the break service to update the break status in the database
+      if (setup._id) {
+        await breakService.endBreak(setup._id, employeeId);
       }
-      return emp
-    })
 
-    // Update the state
-    setScheduledEmployees(updatedEmployees)
+      // Update the employeeBreaks state
+      setEmployeeBreaks(prev => prev.map(brk =>
+        brk.employeeId === employeeId && brk.status === 'active'
+          ? { ...brk, endTime: now.toISOString(), status: 'completed' }
+          : brk
+      ))
 
-    // Save the changes to the server
-    await saveChangesAutomatically('assign')
+      // Update the employee in scheduledEmployees
+      const updatedEmployees = scheduledEmployees.map((emp: any) => {
+        if (emp.id === employeeId) {
+          // Create a new breaks array or use the existing one
+          const breaks = emp.breaks || []
 
-    // Format the time for display (12-hour format)
-    const hours = now.getHours()
-    const minutes = now.getMinutes().toString().padStart(2, '0')
-    const ampm = hours >= 12 ? 'PM' : 'AM'
-    const displayHours = hours % 12 || 12
-    const formattedTime = `${displayHours}:${minutes} ${ampm}`
+          // Find the active break and update it
+          const updatedBreaks = breaks.map((brk: any) => {
+            if (brk.status === 'active') {
+              return {
+                ...brk,
+                endTime: now.toISOString(),
+                status: 'completed',
+                breakDate: brk.breakDate || todayDateString // Preserve existing breakDate or set today's date
+              }
+            }
+            return brk
+          })
 
-    toast({
-      title: 'Break Ended',
-      description: `${employee.employeeName}'s break ended at ${formattedTime}`
-    })
+          // Return the updated employee
+          return {
+            ...emp,
+            breaks: updatedBreaks,
+            hadBreak: true,
+            breakDate: emp.breakDate || todayDateString // Preserve existing breakDate or set today's date
+          }
+        }
+        return emp
+      })
+
+      // Update the state
+      setScheduledEmployees(updatedEmployees)
+
+      // Format the time for display (12-hour format)
+      const hours = now.getHours()
+      const minutes = now.getMinutes().toString().padStart(2, '0')
+      const ampm = hours >= 12 ? 'PM' : 'AM'
+      const displayHours = hours % 12 || 12
+      const formattedTime = `${displayHours}:${minutes} ${ampm}`
+
+      toast({
+        title: 'Break Ended',
+        description: `${employee.employeeName}'s break ended at ${formattedTime}`
+      })
+    } catch (error) {
+      console.error('Error ending break:', error);
+      toast({
+        title: 'Error',
+        description: 'Failed to end break. Please try again.',
+        variant: 'destructive'
+      });
+    }
   }
 
   // Get break status for an employee
@@ -1341,13 +1361,19 @@ export function DailyView({ setup, onBack }: DailyViewProps) {
       try {
         const now = new Date()
         const todayDateString = getTodayDateString()
+        const duration = parseInt(breakDuration)
+
+        // Call the break service to update the break status in the database
+        if (setup._id) {
+          await breakService.startBreak(setup._id, selectedEmployee.id, duration);
+        }
 
         // Create a new break object
         const newBreak: EmployeeBreak = {
           employeeId: selectedEmployee.id,
           employeeName: selectedEmployee.name,
           startTime: now.toISOString(),
-          duration: parseInt(breakDuration),
+          duration: duration,
           status: 'active',
           hadBreak: true
         }
@@ -1383,9 +1409,6 @@ export function DailyView({ setup, onBack }: DailyViewProps) {
         // Close the dialog
         setShowBreakDialog(false)
 
-        // Save the changes to the server automatically
-        await saveChangesAutomatically('assign', selectedEmployee.name, `${breakDuration} minute break`)
-
         // Set a timeout to notify when the break should end and automatically end it
         setTimeout(() => {
           toast({
@@ -1395,7 +1418,7 @@ export function DailyView({ setup, onBack }: DailyViewProps) {
 
           // Automatically end the break when the duration is reached
           endBreak(selectedEmployee.id)
-        }, parseInt(breakDuration) * 60 * 1000)
+        }, duration * 60 * 1000)
       } catch (error) {
         console.error('Error starting break:', error)
         toast({
