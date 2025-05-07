@@ -3725,12 +3725,22 @@ export function DailyView({ setup, onBack }: DailyViewProps) {
         }
       }} key={`employee-list-${scheduledEmployees.length}-${JSON.stringify(unassignedEmployees)}`}>
         <DialogContent className="sm:max-w-[600px]">
-          <DialogHeader>
-            <DialogTitle className="flex items-center gap-2">
-              <User className="h-5 w-5 text-blue-600" />
-              Employees for {format(getDateForDay(activeDay), 'EEEE, MMMM d')} {activeHour && `${formatHourTo12Hour(activeHour)}-${formatHourTo12Hour(parseInt(activeHour) + 1)}`} ({getEmployeesForCurrentHour()})
+          <DialogHeader className="text-center">
+            <DialogTitle className="flex flex-col items-center justify-center">
+              <User className="h-6 w-6 text-blue-600 mb-2" />
+              <div className="flex flex-col items-center">
+                <span className="text-lg">{format(getDateForDay(activeDay), 'EEEE, MMMM d')}</span>
+                <div className="flex items-center justify-center gap-2 mt-1">
+                  <span className="text-sm font-normal text-gray-600">
+                    {activeHour && `${formatHourTo12Hour(activeHour)}-${formatHourTo12Hour(parseInt(activeHour) + 1)}`}
+                  </span>
+                  <Badge variant="outline" className="ml-1 bg-blue-50 text-blue-600 border-blue-100">
+                    {getEmployeesForCurrentHour()} employees
+                  </Badge>
+                </div>
+              </div>
             </DialogTitle>
-            <DialogDescription>
+            <DialogDescription className="text-center mt-2">
               Manage employee breaks and view assignments
             </DialogDescription>
           </DialogHeader>
@@ -3745,28 +3755,28 @@ export function DailyView({ setup, onBack }: DailyViewProps) {
             ) : (
               <>
                 {/* Area Tabs */}
-                <div className="mb-4 border-b">
-                  <div className="flex space-x-1">
+                <div className="mb-4">
+                  <div className="grid grid-cols-3 w-full">
                     <button
                       onClick={() => setEmployeeAreaTab('all')}
-                      className={`px-4 py-2 text-sm font-medium rounded-t-lg ${employeeAreaTab === 'all'
-                        ? 'bg-white border-x border-t text-blue-600 border-gray-200'
+                      className={`py-3 text-sm font-medium ${employeeAreaTab === 'all'
+                        ? 'bg-gray-100 text-blue-600 border-b-2 border-blue-600'
                         : 'bg-gray-50 text-gray-600 hover:bg-gray-100'}`}
                     >
                       All Employees
                     </button>
                     <button
                       onClick={() => setEmployeeAreaTab('FOH')}
-                      className={`px-4 py-2 text-sm font-medium rounded-t-lg ${employeeAreaTab === 'FOH'
-                        ? 'bg-white border-x border-t text-blue-600 border-gray-200'
+                      className={`py-3 text-sm font-medium ${employeeAreaTab === 'FOH'
+                        ? 'bg-gray-100 text-blue-600 border-b-2 border-blue-600'
                         : 'bg-gray-50 text-gray-600 hover:bg-gray-100'}`}
                     >
                       Front of House
                     </button>
                     <button
                       onClick={() => setEmployeeAreaTab('BOH')}
-                      className={`px-4 py-2 text-sm font-medium rounded-t-lg ${employeeAreaTab === 'BOH'
-                        ? 'bg-white border-x border-t text-green-600 border-gray-200'
+                      className={`py-3 text-sm font-medium ${employeeAreaTab === 'BOH'
+                        ? 'bg-gray-100 text-green-600 border-b-2 border-green-600'
                         : 'bg-gray-50 text-gray-600 hover:bg-gray-100'}`}
                     >
                       Kitchen
@@ -3776,7 +3786,7 @@ export function DailyView({ setup, onBack }: DailyViewProps) {
 
                 <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-3 mb-4">
                   <div className="flex items-center gap-2">
-                    <Badge className="bg-blue-600">
+                    <Badge className={`${employeeAreaTab === 'BOH' ? 'bg-green-600' : 'bg-blue-600'}`}>
                       {filterEmployeesByArea(scheduledEmployees).length}
                     </Badge>
                     <span className="text-sm font-medium">
