@@ -859,6 +859,54 @@ router.get('/progress', auth, async (req, res) => {
   }
 });
 
+// Get assigned training plans for the current user
+router.get('/user/assigned', auth, async (req, res) => {
+  try {
+    console.log('Fetching assigned training plans for user:', req.user._id);
+
+    const trainingProgress = await TrainingProgress.find({
+      trainee: req.user._id,
+      deleted: { $ne: true }
+    })
+    .populate({
+      path: 'trainingPlan',
+      select: 'name description type department position days'
+    })
+    .sort({ createdAt: -1 });
+
+    console.log(`Found ${trainingProgress.length} assigned training plans for user`);
+
+    // Calculate progress for each plan
+    const transformedProgress = trainingProgress.map(progress => {
+      // Calculate progress percentage based on completed modules
+      let progressPercentage = 0;
+      const moduleProgress = progress.moduleProgress || [];
+      const totalModules = moduleProgress.length;
+
+      if (totalModules > 0) {
+        const completedModules = moduleProgress.filter(mp => mp.completed).length;
+        progressPercentage = Math.round((completedModules / totalModules) * 100);
+      }
+
+      // Log the status for debugging
+      console.log(`Training plan ${progress.trainingPlan?.name} status: ${progress.status}`);
+
+      return {
+        _id: progress._id,
+        trainingPlan: progress.trainingPlan,
+        status: progress.status,
+        startDate: progress.startDate,
+        progress: progressPercentage
+      };
+    });
+
+    res.json(transformedProgress);
+  } catch (error) {
+    console.error('Error fetching assigned training plans:', error);
+    res.status(500).json({ message: 'Error fetching assigned training plans' });
+  }
+});
+
 // Update competency checklist item
 router.patch('/progress/:progressId/tasks/:taskId/competency/:itemId', auth, async (req, res) => {
   try {

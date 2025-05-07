@@ -11,7 +11,7 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table'
-import { Plus, Search, Eye, UserPlus, ClipboardList, Users, ClipboardCheck } from 'lucide-react'
+import { Plus, Search, Eye, UserPlus, ClipboardList, Users, ClipboardCheck, CheckCircle2, Clock } from 'lucide-react'
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog'
 import CreatePlanForm from '../Progress/components/CreatePlanForm'
 import { toast } from '@/components/ui/use-toast'
@@ -121,11 +121,11 @@ export default function TrainingPlanList() {
       // For team members, also fetch their assigned training plans
       if (!isManager) {
         const assignedResponse = await api.get('/api/training/user/assigned')
+        console.log('Assigned plans response:', assignedResponse.data)
 
         // Transform the data to include both plans and progress
         const assignedPlansData = assignedResponse.data.map((progressItem: any) => {
           // Process this trainee progress item
-
           return {
             _id: progressItem.trainingPlan?._id || '',
             name: progressItem.trainingPlan?.name || 'Unknown Plan',
@@ -133,6 +133,7 @@ export default function TrainingPlanList() {
             type: progressItem.trainingPlan?.type || 'Standard',
             department: progressItem.trainingPlan?.department || '',
             position: progressItem.trainingPlan?.position || '',
+            days: progressItem.trainingPlan?.days || [],
             progress: progressItem.progress || 0,
             status: progressItem.status || 'not_started',
             startDate: progressItem.startDate || '',
@@ -140,6 +141,7 @@ export default function TrainingPlanList() {
           }
         })
 
+        console.log('Transformed assigned plans:', assignedPlansData)
         setAssignedPlans(assignedPlansData)
       }
     } catch (error) {
@@ -238,12 +240,53 @@ export default function TrainingPlanList() {
   const plansToDisplay = isManager ? trainingPlans : assignedPlans
 
   // Calculate stats for the info cards
+  console.log('Plans to display:', plansToDisplay.map(plan => ({
+    name: plan.name,
+    status: plan.status,
+    startDate: plan.startDate
+  })));
+
   const activePlansCount = isManager
     ? trainingPlans.filter(plan => plan.status !== 'completed').length // For managers, all non-completed plans are active
-    : plansToDisplay.filter(plan =>
-        plan.status === 'in_progress' ||
-        (!plan.status && plan.startDate) // Count plans with start date but no explicit status as active
-      ).length
+    : plansToDisplay.filter(plan => {
+        const isActive = plan.status === 'in_progress' ||
+                        plan.status === 'IN_PROGRESS' ||
+                        (!plan.status && plan.startDate); // Count plans with start date but no explicit status as active
+        console.log(`Plan ${plan.name} active status: ${isActive}, status: ${plan.status}`);
+        return isActive;
+      }).length
+
+  // Calculate completed plans count
+  const completedPlansCount = plansToDisplay.filter(plan =>
+    plan.status === 'completed' || plan.status === 'COMPLETED'
+  ).length
+
+  // Calculate average training duration in days
+  const calculateAverageDuration = () => {
+    if (!plansToDisplay.length) return '0'
+
+    let totalMinutes = 0
+    let planCount = 0
+
+    plansToDisplay.forEach(plan => {
+      if (plan.days && Array.isArray(plan.days)) {
+        planCount++
+        plan.days.forEach(day => {
+          if (day?.tasks && Array.isArray(day.tasks)) {
+            day.tasks.forEach(task => {
+              totalMinutes += task?.duration || 0
+            })
+          }
+        })
+      }
+    })
+
+    if (planCount === 0) return '0'
+    const avgMinutes = totalMinutes / planCount
+    const avgDays = Math.ceil(avgMinutes / (8 * 60)) // Assuming 8 hours per day
+
+    return avgDays.toString()
+  }
 
   const filteredPlans = plansToDisplay.filter(plan =>
     plan.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
@@ -281,35 +324,61 @@ export default function TrainingPlanList() {
   return (
     <div className="space-y-6">
       {/* Dashboard Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+      <div className="grid grid-cols-2 md:grid-cols-2 lg:grid-cols-4 gap-3 md:gap-4 mb-6">
         {/* Active Plans Card */}
-        <Card className="bg-white rounded-[20px] hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1">
-          <CardContent className="p-8">
-            <div className="flex items-start justify-between">
-              <div>
-                <p className="text-[#27251F]/60 font-medium">Active Plans</p>
-                <h3 className="text-3xl font-bold mt-2 text-[#27251F]">{activePlansCount}</h3>
-              </div>
-              <div className="h-14 w-14 bg-[#E51636]/10 rounded-2xl flex items-center justify-center">
-                <ClipboardCheck className="h-7 w-7 text-[#E51636]" />
-              </div>
+        <Card className="bg-white rounded-[20px] p-3 md:p-5 shadow-sm hover:shadow-md transition-shadow">
+          <div className="flex items-start justify-between">
+            <div>
+              <p className="text-[#6B7280] text-xs md:text-sm font-medium">Active Plans</p>
+              <h3 className="text-2xl md:text-[32px] font-bold mt-1 md:mt-1.5 text-[#27251F] leading-none">{activePlansCount}</h3>
+              <p className="text-[#6B7280] text-[11px] md:text-[13px] mt-0.5 md:mt-1">Currently active</p>
             </div>
-          </CardContent>
+            <div className="h-9 w-9 md:h-12 md:w-12 bg-[#FEE4E2] rounded-full flex items-center justify-center">
+              <ClipboardCheck className="h-4 w-4 md:h-6 md:w-6 text-[#E51636]" />
+            </div>
+          </div>
         </Card>
 
         {/* Total Plans Card */}
-        <Card className="bg-white rounded-[20px] hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1">
-          <CardContent className="p-8">
-            <div className="flex items-start justify-between">
-              <div>
-                <p className="text-[#27251F]/60 font-medium">Total Plans</p>
-                <h3 className="text-3xl font-bold mt-2 text-[#27251F]">{plansToDisplay.length}</h3>
-              </div>
-              <div className="h-14 w-14 bg-[#E51636]/10 rounded-2xl flex items-center justify-center">
-                <Users className="h-7 w-7 text-[#E51636]" />
-              </div>
+        <Card className="bg-white rounded-[20px] p-3 md:p-5 shadow-sm hover:shadow-md transition-shadow">
+          <div className="flex items-start justify-between">
+            <div>
+              <p className="text-[#6B7280] text-xs md:text-sm font-medium">Total Plans</p>
+              <h3 className="text-2xl md:text-[32px] font-bold mt-1 md:mt-1.5 text-[#27251F] leading-none">{plansToDisplay.length}</h3>
+              <p className="text-[#6B7280] text-[11px] md:text-[13px] mt-0.5 md:mt-1">Available plans</p>
             </div>
-          </CardContent>
+            <div className="h-9 w-9 md:h-12 md:w-12 bg-[#FEE4E2] rounded-full flex items-center justify-center">
+              <Users className="h-4 w-4 md:h-6 md:w-6 text-[#E51636]" />
+            </div>
+          </div>
+        </Card>
+
+        {/* Completed Plans Card */}
+        <Card className="bg-white rounded-[20px] p-3 md:p-5 shadow-sm hover:shadow-md transition-shadow">
+          <div className="flex items-start justify-between">
+            <div>
+              <p className="text-[#6B7280] text-xs md:text-sm font-medium">Completed Plans</p>
+              <h3 className="text-2xl md:text-[32px] font-bold mt-1 md:mt-1.5 text-[#27251F] leading-none">{completedPlansCount}</h3>
+              <p className="text-[#6B7280] text-[11px] md:text-[13px] mt-0.5 md:mt-1">Fully completed</p>
+            </div>
+            <div className="h-9 w-9 md:h-12 md:w-12 bg-[#DCFCE7] rounded-full flex items-center justify-center">
+              <CheckCircle2 className="h-4 w-4 md:h-6 md:w-6 text-[#16A34A]" />
+            </div>
+          </div>
+        </Card>
+
+        {/* Average Duration Card */}
+        <Card className="bg-white rounded-[20px] p-3 md:p-5 shadow-sm hover:shadow-md transition-shadow">
+          <div className="flex items-start justify-between">
+            <div>
+              <p className="text-[#6B7280] text-xs md:text-sm font-medium">Avg. Duration</p>
+              <h3 className="text-2xl md:text-[32px] font-bold mt-1 md:mt-1.5 text-[#27251F] leading-none">{calculateAverageDuration()}</h3>
+              <p className="text-[#6B7280] text-[11px] md:text-[13px] mt-0.5 md:mt-1">Days to complete</p>
+            </div>
+            <div className="h-9 w-9 md:h-12 md:w-12 bg-[#FEE4E2] rounded-full flex items-center justify-center">
+              <Clock className="h-4 w-4 md:h-6 md:w-6 text-[#E51636]" />
+            </div>
+          </div>
         </Card>
       </div>
 
@@ -351,12 +420,12 @@ export default function TrainingPlanList() {
                     {/* Show status for team members */}
                     {!isManager && plan.status && (
                       <span className={`inline-flex px-2 py-1 text-xs font-medium rounded-full mt-2 ${
-                        plan.status === 'completed' ? 'bg-green-100 text-green-800' :
-                        plan.status === 'in_progress' ? 'bg-blue-100 text-blue-800' :
+                        plan.status === 'completed' || plan.status === 'COMPLETED' ? 'bg-green-100 text-green-800' :
+                        plan.status === 'in_progress' || plan.status === 'IN_PROGRESS' ? 'bg-blue-100 text-blue-800' :
                         'bg-gray-100 text-gray-800'
                       }`}>
-                        {plan.status === 'completed' ? 'Completed' :
-                         plan.status === 'in_progress' ? 'In Progress' :
+                        {plan.status === 'completed' || plan.status === 'COMPLETED' ? 'Completed' :
+                         plan.status === 'in_progress' || plan.status === 'IN_PROGRESS' ? 'In Progress' :
                          'Not Started'}
                       </span>
                     )}
@@ -388,12 +457,12 @@ export default function TrainingPlanList() {
                     </div>
                     <div className="space-y-1">
                       <p className="text-sm text-gray-600">
-                        {plan.status === 'completed' ? 'Completed On' : 'Status'}
+                        {plan.status === 'completed' || plan.status === 'COMPLETED' ? 'Completed On' : 'Status'}
                       </p>
                       <p className="font-medium text-gray-900">
                         {plan.completedAt ?
                           new Date(plan.completedAt).toLocaleDateString() :
-                          plan.status === 'in_progress' ? 'In Progress' : 'Not Started'}
+                          plan.status === 'in_progress' || plan.status === 'IN_PROGRESS' ? 'In Progress' : 'Not Started'}
                       </p>
                     </div>
                   </div>

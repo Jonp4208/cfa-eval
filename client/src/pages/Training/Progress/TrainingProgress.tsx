@@ -494,7 +494,7 @@ export default function TrainingProgress() {
                 placeholder="Search trainees..."
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                className="pl-9 w-full bg-white border border-gray-200 shadow-sm rounded-full"
+                className="pl-9 w-full"
               />
             </div>
           </div>
