@@ -129,14 +129,14 @@ export default function TrainingDetails() {
     try {
       setLoading(true)
       const response = await api.get(`/api/training/progress/${id}`)
-      
+
       setTrainingDetails({
         ...response.data,
-        trainee: response.data.trainee || { 
-          name: 'Unknown Trainee', 
+        trainee: response.data.trainee || {
+          name: 'Unknown Trainee',
           position: 'Unknown Position'
         },
-        trainingPlan: response.data.trainingPlan || { 
+        trainingPlan: response.data.trainingPlan || {
           name: 'Unknown Plan',
           days: []
         }
@@ -323,10 +323,10 @@ export default function TrainingDetails() {
   const progressPercentage = Math.round((completedModules / totalModules) * 100)
 
   return (
-    <div className="p-6">
+    <div className="p-1 sm:p-2 md:p-4 max-w-full">
       {/* Header */}
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-6">
-        <div className="flex flex-col md:flex-row items-start md:items-center gap-4">
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-3 mb-4">
+        <div className="flex flex-col md:flex-row items-start md:items-center gap-3">
           <Button
             variant="outline"
             onClick={() => navigate(isManager ? '/training/progress' : '/training/plans')}
@@ -353,9 +353,9 @@ export default function TrainingDetails() {
       </div>
 
       {/* Progress Overview */}
-      <Card className="mb-6">
-        <CardContent className="p-4 md:p-6">
-          <div className="space-y-4">
+      <Card className="mb-4 w-full">
+        <CardContent className="p-3 md:p-4">
+          <div className="space-y-3">
             <div className="flex items-center justify-between">
               <h2 className="text-lg font-semibold text-[#27251F]">Progress Overview</h2>
               <span className={`px-3 py-1 rounded-full text-xs md:text-sm font-medium ${
@@ -382,22 +382,22 @@ export default function TrainingDetails() {
       </Card>
 
       {/* Modules List */}
-      <div className="space-y-4">
+      <div className="space-y-3 w-full">
         {trainingDetails.trainingPlan.days.map((day, index) => (
-          <Card key={index}>
-            <CardHeader className="p-4 md:p-6">
+          <Card key={index} className="w-full">
+            <CardHeader className="p-3 md:p-4">
               <CardTitle className="text-base md:text-lg font-semibold text-[#27251F]">
                 Day {day.dayNumber}
               </CardTitle>
             </CardHeader>
-            <CardContent className="p-4 md:p-6 pt-0 space-y-4">
+            <CardContent className="p-2 sm:p-3 md:p-4 pt-0 space-y-3">
               {day.tasks.map((task) => (
-                <div key={task._id} className="border border-[#27251F]/10 rounded-lg p-4 space-y-4">
-                  <div className="flex flex-col md:flex-row md:items-start justify-between gap-4">
-                    <div className="space-y-2 flex-1">
-                      <h3 className="font-medium text-[#27251F]">{task.name}</h3>
+                <div key={task._id} className="border border-[#27251F]/10 rounded-lg p-2 sm:p-3 space-y-3 w-full">
+                  <div className="flex flex-col md:flex-row md:items-start justify-between gap-3">
+                    <div className="space-y-2 flex-1 w-full">
+                      <h3 className="font-medium text-[#27251F] break-words">{task.name}</h3>
                       {task.description && (
-                        <p className="text-sm text-[#27251F]/60">{task.description}</p>
+                        <p className="text-sm text-[#27251F]/60 break-words">{task.description}</p>
                       )}
                       {task.duration && (
                         <p className="text-sm text-[#27251F]/60 flex items-center gap-1">
@@ -410,13 +410,13 @@ export default function TrainingDetails() {
 
                   {/* Pathway URL */}
                   {task.pathwayUrl && (
-                    <div className="space-y-2">
+                    <div className="space-y-1">
                       <h4 className="text-sm font-medium text-[#27251F]">Pathway Resource</h4>
                       <a
                         href={task.pathwayUrl}
                         target="_blank"
                         rel="noopener noreferrer"
-                        className="text-sm text-[#E51636] hover:text-[#E51636]/90 flex items-center gap-1"
+                        className="text-sm text-[#E51636] hover:text-[#E51636]/90 flex items-center gap-1 break-words"
                       >
                         <LinkIcon className="w-4 h-4 flex-shrink-0" />
                         Access Pathway Training
@@ -426,7 +426,7 @@ export default function TrainingDetails() {
 
                   {/* Additional URLs Section */}
                   {task.urls && task.urls.length > 0 && (
-                    <div className="space-y-2">
+                    <div className="space-y-1">
                       <h4 className="text-sm font-medium text-[#27251F]">Additional Resources</h4>
                       <div className="space-y-1">
                         {task.urls.map((url, urlIndex) => (
@@ -435,10 +435,10 @@ export default function TrainingDetails() {
                             href={url}
                             target="_blank"
                             rel="noopener noreferrer"
-                            className="text-sm text-[#E51636] hover:text-[#E51636]/90 flex items-center gap-1 break-all"
+                            className="text-sm text-[#E51636] hover:text-[#E51636]/90 flex items-center gap-1 break-words"
                           >
                             <LinkIcon className="w-4 h-4 flex-shrink-0" />
-                            {url}
+                            <span className="line-clamp-2">{url}</span>
                           </a>
                         ))}
                       </div>
@@ -447,9 +447,9 @@ export default function TrainingDetails() {
 
                   {/* Competency Checklist Section */}
                   {task.competencyChecklist && task.competencyChecklist.length > 0 && (
-                    <div className="mt-4">
+                    <div className="mt-3">
                       <h4 className="font-semibold mb-2 text-[#27251F]">Competency Checklist</h4>
-                      <div className="space-y-3">
+                      <div className="space-y-2">
                         {task.competencyChecklist.map((item, itemIndex) => {
                           const itemId = `${task._id}-${itemIndex}`
                           const progress = task.competencyProgress?.find(cp => cp.itemId === itemId)
@@ -457,7 +457,7 @@ export default function TrainingDetails() {
                           return (
                             <div
                               key={itemId}
-                              className="flex items-start gap-3 min-w-0"
+                              className="flex items-start gap-2 min-w-0 w-full"
                             >
                               <div
                                 onClick={(e) => {
@@ -476,7 +476,7 @@ export default function TrainingDetails() {
                                   aria-label={`Mark ${item} as ${progress?.completed ? 'incomplete' : 'complete'}`}
                                 />
                               </div>
-                              <div className="flex-1 space-y-1 min-w-0">
+                              <div className="flex-1 space-y-1 min-w-0 w-full">
                                 <span className="text-sm leading-tight text-[#27251F] break-words">
                                   {item}
                                 </span>
@@ -498,15 +498,15 @@ export default function TrainingDetails() {
 
                   {/* General Checklist Section */}
                   {task.checklist && task.checklist.length > 0 && (
-                    <div className="space-y-2">
+                    <div className="space-y-1">
                       <h4 className="text-sm font-medium text-[#27251F]">Additional Checklist</h4>
-                      <div className="space-y-2">
+                      <div className="space-y-1">
                         {task.checklist.map((item, itemIndex) => (
-                          <div key={itemIndex} className="flex items-start gap-3">
+                          <div key={itemIndex} className="flex items-start gap-2 w-full">
                             <div className="mt-0.5">
                               <CheckSquare className="w-4 h-4 text-[#27251F]/60 flex-shrink-0" />
                             </div>
-                            <span className="text-sm text-[#27251F]/80 flex-1">{item}</span>
+                            <span className="text-sm text-[#27251F]/80 flex-1 break-words">{item}</span>
                           </div>
                         ))}
                       </div>
@@ -515,14 +515,14 @@ export default function TrainingDetails() {
 
                   {/* Completion Details and Action */}
                   {(task.progress?.completed || canUpdateProgress) && (
-                    <div className="mt-6 pt-4 border-t border-[#27251F]/10">
-                      <div className="flex flex-col-reverse md:flex-row md:items-center justify-between gap-4">
+                    <div className="mt-4 pt-3 border-t border-[#27251F]/10">
+                      <div className="flex flex-col-reverse md:flex-row md:items-center justify-between gap-3">
                         {task.progress?.completed && task.progress?.completedBy && (
-                          <div className="text-xs md:text-sm text-[#27251F]/60 flex items-center gap-1">
+                          <div className="text-xs md:text-sm text-[#27251F]/60 flex items-center gap-1 flex-wrap">
                             <CheckCircle className="w-3 h-3" />
-                            Completed by {task.progress.completedBy.name}
+                            <span>Completed by {task.progress.completedBy.name}</span>
                             {task.progress.completedAt && (
-                              <> on {new Date(task.progress.completedAt).toLocaleDateString()}</>
+                              <span className="whitespace-nowrap"> on {new Date(task.progress.completedAt).toLocaleDateString()}</span>
                             )}
                           </div>
                         )}
@@ -560,24 +560,24 @@ export default function TrainingDetails() {
       </div>
 
       <Dialog open={isUpdateDialogOpen} onOpenChange={setIsUpdateDialogOpen}>
-        <DialogContent className="sm:max-w-[425px]">
-          <DialogHeader>
-            <DialogTitle className="text-[#27251F]">
+        <DialogContent className="w-[98%] max-w-[425px] p-3 sm:p-4">
+          <DialogHeader className="pb-2">
+            <DialogTitle className="text-[#27251F] text-center">
               {selectedModule?.completed ? 'Mark as Incomplete' : 'Mark as Complete'}
             </DialogTitle>
           </DialogHeader>
-          <div className="grid gap-4 py-4">
+          <div className="grid gap-3 py-2">
             <div className="space-y-2">
-              <h4 className="font-medium text-[#27251F]">Module: {selectedModule?.name}</h4>
+              <h4 className="font-medium text-[#27251F] break-words">{selectedModule?.name}</h4>
               <Textarea
                 placeholder="Add notes about completion or reason for incompletion..."
                 value={notes}
                 onChange={(e) => setNotes(e.target.value)}
-                className="min-h-[100px] resize-none"
+                className="min-h-[100px] resize-none w-full"
               />
             </div>
           </div>
-          <DialogFooter className="gap-2 sm:gap-0">
+          <DialogFooter className="flex flex-col sm:flex-row gap-2 w-full pt-2">
             <Button
               type="button"
               variant="outline"
@@ -587,7 +587,7 @@ export default function TrainingDetails() {
                 setNotes('')
               }}
               disabled={isUpdating}
-              className="flex-1 sm:flex-none"
+              className="flex-1 w-full sm:w-auto"
             >
               Cancel
             </Button>
@@ -595,7 +595,7 @@ export default function TrainingDetails() {
               type="submit"
               onClick={handleUpdateProgress}
               disabled={isUpdating}
-              className="bg-[#E51636] text-white hover:bg-[#E51636]/90 flex-1 sm:flex-none"
+              className="bg-[#E51636] text-white hover:bg-[#E51636]/90 flex-1 w-full sm:w-auto"
             >
               {isUpdating ? (
                 <div className="flex items-center gap-2">
