@@ -10,17 +10,13 @@ import {
   ShieldCheck,
   AlertTriangle,
   CheckCircle2,
-  Clock,
   ChefHat,
   Thermometer,
   ClipboardCheck,
   ArrowRight,
   ClipboardList,
   AlertCircle,
-  Sparkles,
-  TrendingUp,
-  TrendingDown,
-  DollarSign
+  Sparkles
 } from 'lucide-react'
 import { kitchenService } from '@/services/kitchenService'
 import useWasteStore from '@/stores/useWasteStore'
@@ -90,27 +86,7 @@ export default function KitchenHome() {
     return t('common.goodEvening')
   }
 
-  // Get quick summary insights
-  const getQuickInsights = () => {
-    const totalIssues =
-      metrics.foodSafety.criticalTasks +
-      metrics.equipment.needsMaintenance +
-      metrics.equipment.offline +
-      metrics.equipment.temperatureAlerts
 
-    // Sample waste comparison - in a real app, this would come from actual data
-    const previousWaste = 120 // Sample value
-    const currentWaste = getTodaysWaste()
-    const wasteChange = previousWaste > 0 ?
-      ((currentWaste - previousWaste) / previousWaste) * 100 : 0
-
-    return {
-      totalIssues,
-      wasteAmount: currentWaste,
-      wasteChange,
-      completionRate: metrics.checklists.completionRate
-    }
-  }
 
   useEffect(() => {
     try {
@@ -541,65 +517,7 @@ export default function KitchenHome() {
 
 
 
-  // Insights stat card for overview section
-  const InsightStat = ({
-    icon: Icon,
-    label,
-    value,
-    trend,
-    trendValue,
-    variant = 'default'
-  }: {
-    icon: any
-    label: string
-    value: string | number
-    trend?: 'up' | 'down' | 'neutral'
-    trendValue?: string | number
-    variant?: 'default' | 'success' | 'warning' | 'error'
-  }) => {
-    const getVariantClasses = () => {
-      switch(variant) {
-        case 'success': return 'bg-green-50 text-green-700';
-        case 'warning': return 'bg-orange-50 text-orange-700';
-        case 'error': return 'bg-red-50 text-red-700';
-        default: return 'bg-blue-50 text-blue-700';
-      }
-    }
 
-    const getTrendIcon = () => {
-      if (!trend) return null;
-      if (trend === 'up') return <TrendingUp className="h-3 w-3" />;
-      if (trend === 'down') return <TrendingDown className="h-3 w-3" />;
-      return null;
-    }
-
-    const getTrendClasses = () => {
-      if (!trend) return '';
-      if (trend === 'up') return 'text-red-600';
-      if (trend === 'down') return 'text-green-600';
-      return '';
-    }
-
-    return (
-      <div className="flex flex-col rounded-xl shadow-md border border-gray-200 p-3 sm:p-4 bg-white">
-        <div className="flex items-center justify-between mb-1">
-          <div className={`h-7 w-7 sm:h-8 sm:w-8 rounded-full ${getVariantClasses()} flex items-center justify-center`}>
-            <Icon className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
-          </div>
-          {trend && (
-            <div className={`flex items-center text-xs gap-0.5 font-medium ${getTrendClasses()}`}>
-              {getTrendIcon()}
-              {trendValue}
-            </div>
-          )}
-        </div>
-        <div className="mt-1">
-          <h4 className="text-xl sm:text-2xl font-bold text-[#27251F]">{value}</h4>
-          <p className="text-xs text-[#27251F]/60 mt-0.5">{label}</p>
-        </div>
-      </div>
-    );
-  };
 
   if (loading) {
     return (
@@ -612,7 +530,14 @@ export default function KitchenHome() {
     )
   }
 
-  const insights = getQuickInsights();
+  // Debug log for attention needed items
+  console.log('Attention needed items breakdown:', {
+    criticalTasks: metrics.foodSafety.criticalTasks,
+    needsMaintenance: metrics.equipment.needsMaintenance,
+    needsRepair: metrics.equipment.needsRepair,
+    offline: metrics.equipment.offline,
+    temperatureAlerts: metrics.equipment.temperatureAlerts
+  });
 
   return (
     <div className="space-y-4 sm:space-y-5">
@@ -620,7 +545,7 @@ export default function KitchenHome() {
       <Card className="bg-gradient-to-br from-white to-gray-50 rounded-[16px] shadow-md border border-gray-200 overflow-hidden">
         <div className="p-4 sm:p-5">
           {/* Greeting and overview */}
-          <div className="flex flex-col sm:flex-row sm:items-center justify-between mb-4 sm:mb-5">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between">
             <div>
               <h2 className="text-base sm:text-xl font-bold text-[#27251F] flex items-center gap-2">
                 {getTimeBasedGreeting()}, {user?.name?.split(' ')[0] || t('common.user')}
@@ -638,36 +563,6 @@ export default function KitchenHome() {
               <BarChart2 className="mr-1 h-3 w-3" />
               {t('kitchen.viewAnalytics')}
             </Button>
-          </div>
-
-          {/* Summary insights - Mobile optimized */}
-          <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 sm:gap-3">
-            <InsightStat
-              icon={AlertCircle}
-              label={t('kitchen.attentionNeeded')}
-              value={insights.totalIssues}
-              variant={insights.totalIssues > 5 ? 'error' : insights.totalIssues > 0 ? 'warning' : 'success'}
-            />
-            <InsightStat
-              icon={DollarSign}
-              label={t('kitchen.todaysWaste')}
-              value={`$${insights.wasteAmount.toFixed(2)}`}
-              trend={insights.wasteChange > 0 ? 'up' : insights.wasteChange < 0 ? 'down' : 'neutral'}
-              trendValue={`${Math.abs(insights.wasteChange).toFixed(1)}%`}
-              variant={insights.wasteChange > 10 ? 'warning' : 'default'}
-            />
-            <InsightStat
-              icon={CheckCircle2}
-              label={t('kitchen.taskCompletion')}
-              value={`${insights.completionRate}%`}
-              variant={insights.completionRate > 70 ? 'success' : insights.completionRate > 40 ? 'warning' : 'error'}
-            />
-            <InsightStat
-              icon={Clock}
-              label={t('kitchen.lastUpdate')}
-              value={format(new Date(), 'h:mm a')}
-              variant="default"
-            />
           </div>
         </div>
       </Card>

@@ -245,12 +245,6 @@ export default function Layout({ children }: { children: React.ReactNode }) {
           badge: null
         },
         {
-          icon: Trash2,
-          label: t('navigation.wasteTracker'),
-          href: '/kitchen/waste-tracker',
-          badge: null
-        },
-        {
           icon: BarChart2,
           label: t('navigation.analytics'),
           href: '/kitchen/waste-tracker/analytics',
@@ -266,6 +260,18 @@ export default function Layout({ children }: { children: React.ReactNode }) {
           icon: ShieldCheck,
           label: t('navigation.foodSafety'),
           href: '/kitchen/food-safety',
+          badge: null
+        },
+        {
+          icon: ClipboardList,
+          label: t('kitchen.shiftChecklists', 'Shift Checklists'),
+          href: '/kitchen/checklists',
+          badge: null
+        },
+        {
+          icon: Trash2,
+          label: t('navigation.wasteTracker'),
+          href: '/kitchen/waste-tracker',
           badge: null
         }
       ]
@@ -432,15 +438,15 @@ export default function Layout({ children }: { children: React.ReactNode }) {
       try {
         // Check if notification permission was already asked
         const notificationPermissionAsked = localStorage.getItem('notificationPermissionAsked');
-        
+
         // Only ask once per session if not already granted
         if (Notification.permission !== 'granted' && !notificationPermissionAsked) {
           const granted = await requestNotificationPermission();
           localStorage.setItem('notificationPermissionAsked', 'true');
-          
+
           if (granted) {
             showNotification(
-              'success', 
+              'success',
               t('notifications.permissionGranted', 'Notifications Enabled'),
               t('notifications.willReceiveNotifications', 'You will now receive notifications about important updates')
             );
