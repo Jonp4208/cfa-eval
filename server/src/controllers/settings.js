@@ -46,7 +46,7 @@ export const getSettings = async (req, res) => {
 
     // Validate and repair settings if needed
     const validation = await validateAndRepairSettings(req.user.store);
-    
+
     // If repairs were made, log them
     if (validation.wasRepaired) {
       handleError(
@@ -88,7 +88,7 @@ export const updateSettings = async (req, res) => {
       const allowedFields = ['darkMode', 'compactMode', 'language'];
       const requestedFields = Object.keys(req.body);
       const hasRestrictedFields = requestedFields.some(field => !allowedFields.includes(field));
-      
+
       if (hasRestrictedFields) {
         return res.status(403).json({ error: 'Only administrators can update these settings' });
       }
@@ -132,7 +132,7 @@ export const updateSettings = async (req, res) => {
       // If enabling auto-scheduling, validate all requirements are met
       if (req.body.evaluations.scheduling?.autoSchedule) {
         const autoScheduleValidation = await validateAutoScheduling(req.user.store);
-        
+
         // Only block enabling if there are critical issues
         if (!autoScheduleValidation.isValid) {
           // Preserve existing settings in the error response
@@ -163,7 +163,7 @@ export const updateSettings = async (req, res) => {
         // Run initial scheduling
         try {
           schedulingResults = await scheduleStoreEvaluations(req.user.store);
-          
+
           // Include scheduling results summary
           if (schedulingResults) {
             console.log('Auto-scheduling results:', {
@@ -213,21 +213,58 @@ export const updateSettings = async (req, res) => {
       settings.language = req.body.language;
     }
 
+    // Update UI preferences (like mobile navigation)
+    if (req.body.uiPreferences) {
+      // Initialize if not exists
+      if (!settings.uiPreferences) {
+        settings.uiPreferences = {};
+      }
+
+      // Update mobile navigation preferences
+      if (req.body.uiPreferences.mobileNavigation) {
+        if (!settings.uiPreferences.mobileNavigation) {
+          settings.uiPreferences.mobileNavigation = {};
+        }
+
+        // Update items array
+        if (req.body.uiPreferences.mobileNavigation.items) {
+          settings.uiPreferences.mobileNavigation.items =
+            req.body.uiPreferences.mobileNavigation.items;
+
+          // Log the update for debugging
+          console.log('Updated mobile navigation items:',
+            settings.uiPreferences.mobileNavigation.items);
+        }
+
+        // Update max items
+        if (req.body.uiPreferences.mobileNavigation.maxItems !== undefined) {
+          settings.uiPreferences.mobileNavigation.maxItems =
+            req.body.uiPreferences.mobileNavigation.maxItems;
+        }
+      }
+    }
+
     // Save the settings
     await settings.save();
 
-    // Get final validation state including configuration issues
-    const finalValidation = await validateAutoScheduling(req.user.store);
+    // Only run validation if we're updating evaluation settings
+    // Skip validation for UI preferences and other non-evaluation updates
+    let response = settings.toObject();
 
-    // Return settings with scheduling results and configuration issues
-    const response = {
-      ...settings.toObject(),
-      schedulingResults,
-      evaluations: {
-        ...settings.toObject().evaluations,
-        configurationIssues: finalValidation.configurationIssues
-      }
-    };
+    if (req.body.evaluations) {
+      // Get final validation state including configuration issues
+      const finalValidation = await validateAutoScheduling(req.user.store);
+
+      // Return settings with scheduling results and configuration issues
+      response = {
+        ...response,
+        schedulingResults,
+        evaluations: {
+          ...response.evaluations,
+          configurationIssues: finalValidation.configurationIssues
+        }
+      };
+    }
 
     res.json(response);
   } catch (error) {
@@ -246,7 +283,7 @@ export const validateSettings = async (req, res) => {
     }
 
     const autoScheduleValidation = await validateAutoScheduling(req.user.store);
-    
+
     res.json({
       isValid: autoScheduleValidation.isValid,
       issues: autoScheduleValidation.issues,
@@ -274,10 +311,10 @@ export const resetSettings = async (req, res) => {
       darkMode: false,
       compactMode: false
     });
-    
+
     // Get store info
     const store = await Store.findById(req.user.store);
-    
+
     // Combine settings with store info
     const response = {
       ...settings.toObject(),
@@ -289,7 +326,7 @@ export const resetSettings = async (req, res) => {
       visionStatement: store.visionStatement,
       missionStatement: store.missionStatement
     };
-    
+
     res.json(response);
   } catch (error) {
     console.error('Error in resetSettings:', error);

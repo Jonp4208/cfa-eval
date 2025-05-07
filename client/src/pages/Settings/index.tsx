@@ -14,7 +14,9 @@ import { Settings as SettingsIcon, Users, FileText, Bell, BarChart, Save, Rotate
 import { cn } from "@/lib/utils";
 import UserAccessSettings from './components/UserAccessSettings';
 import ChangePasswordForm from './components/ChangePasswordForm';
+import MobileNavigationSettings from './components/MobileNavigationSettings';
 import { settingsService } from '@/lib/services/settings';
+import { userPreferencesService } from '@/lib/services/userPreferences';
 import api from '@/lib/axios';
 import { handleError } from '@/lib/utils/error-handler';
 import { useNavigate } from 'react-router-dom';
@@ -46,10 +48,37 @@ const SettingsPage = () => {
     queryFn: settingsService.getSettings
   });
 
+  // Fetch user preferences
+  const { data: userPreferences, isLoading: isUserPreferencesLoading } = useQuery({
+    queryKey: ['userPreferences'],
+    queryFn: userPreferencesService.getUserPreferences
+  });
+
+  // Create a mutation for updating user preferences
+  const updateUserPreferencesMutation = useMutation({
+    mutationFn: userPreferencesService.updateUserPreferences,
+    onSuccess: (data) => {
+      setSuccess(t('settings.settingsSaved'));
+      setTimeout(() => setSuccess(''), 3000);
+      setError('');
+
+      // Update the cache directly with the returned data
+      queryClient.setQueryData(['userPreferences'], data);
+
+      // Then invalidate to ensure fresh data on next fetch
+      queryClient.invalidateQueries({ queryKey: ['userPreferences'] });
+    },
+    onError: (error) => {
+      setError(t('settings.errorSavingSettings'));
+      handleError(error, 'Error updating user preferences');
+    }
+  });
+
   // Define available tabs based on user role
   const availableTabs = [
     'general',
     'password',
+    'mobile-navigation',
     ...(isAdmin ? ['users', 'grading-scales'] : [])
   ];
 
@@ -127,6 +156,11 @@ const SettingsPage = () => {
       }
       setTimeout(() => setSuccess(''), 3000);
       setError('');
+
+      // Update the cache directly with the returned data
+      queryClient.setQueryData(['settings'], data);
+
+      // Then invalidate to ensure fresh data on next fetch
       queryClient.invalidateQueries({ queryKey: ['settings'] });
     },
     onError: (error: any) => {
@@ -307,6 +341,17 @@ const SettingsPage = () => {
             >
               Password
             </TabsTrigger>
+            <TabsTrigger
+              value="mobile-navigation"
+              className="data-[state=active]:bg-[#E51636] data-[state=active]:text-white rounded-[14px] h-10 focus:ring-2 focus:ring-[#E51636] focus:ring-offset-2"
+              role="tab"
+              aria-selected={activeTab === 'mobile-navigation'}
+              tabIndex={activeTab === 'mobile-navigation' ? 0 : -1}
+              aria-controls="mobile-navigation-tab"
+              title="Mobile Navigation Settings (Alt+3)"
+            >
+              Mobile Menu
+            </TabsTrigger>
             {isAdmin && (
               <TabsTrigger
                 value="users"
@@ -447,6 +492,26 @@ const SettingsPage = () => {
 
           <TabsContent value="password" id="password-tab" role="tabpanel" aria-labelledby="password-tab" tabIndex={0}>
             <ChangePasswordForm />
+          </TabsContent>
+
+          <TabsContent value="mobile-navigation" id="mobile-navigation-tab" role="tabpanel" aria-labelledby="mobile-navigation-tab" tabIndex={0}>
+            {userPreferences && (
+              <MobileNavigationSettings
+                preferences={userPreferences?.uiPreferences}
+                onUpdate={(data) => {
+                  console.log('Settings page received update request:', data);
+                  updateUserPreferencesMutation.mutate({
+                    uiPreferences: data
+                  });
+                }}
+                isUpdating={updateUserPreferencesMutation.isPending}
+              />
+            )}
+            {isUserPreferencesLoading && (
+              <div className="flex items-center justify-center p-8">
+                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-red-600"></div>
+              </div>
+            )}
           </TabsContent>
 
           <TabsContent value="users" id="users-tab" role="tabpanel" aria-labelledby="users-tab" tabIndex={0}>

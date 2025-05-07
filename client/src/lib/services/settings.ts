@@ -32,6 +32,18 @@ export interface EvaluationSettings {
   };
 }
 
+export interface MobileNavigationItem {
+  key: string;
+  show: boolean;
+}
+
+export interface UIPreferences {
+  mobileNavigation: {
+    items: MobileNavigationItem[];
+    maxItems: number;
+  };
+}
+
 export interface StoreSettings {
   darkMode: boolean;
   compactMode: boolean;
@@ -45,6 +57,7 @@ export interface StoreSettings {
   missionStatement: string;
   userAccess: UserAccessSettings;
   evaluations?: EvaluationSettings;
+  uiPreferences?: UIPreferences;
 }
 
 export interface StoreInfo {

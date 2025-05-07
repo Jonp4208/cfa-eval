@@ -109,9 +109,34 @@ const settingsSchema = new mongoose.Schema({
     type: Map,
     of: Number,
     default: {}
+  },
+  // User interface preferences
+  uiPreferences: {
+    // Mobile navigation preferences
+    mobileNavigation: {
+      // Array of navigation items to show in the mobile bottom menu
+      items: {
+        type: [{
+          key: String,
+          show: Boolean
+        }],
+        default: [
+          { key: 'foh', show: true },
+          { key: 'documentation', show: true },
+          { key: 'kitchen', show: true },
+          { key: 'training', show: true },
+          { key: 'setupSheet', show: true }
+        ]
+      },
+      // Maximum number of items to show in the mobile navigation
+      maxItems: {
+        type: Number,
+        default: 5
+      }
+    }
   }
 }, {
   timestamps: true
 });
 
-export default settingsSchema; 
+export default settingsSchema;

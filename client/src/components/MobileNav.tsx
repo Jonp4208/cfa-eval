@@ -1,8 +1,10 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
 import { useTranslation } from '@/contexts/TranslationContext';
 import { cn } from '@/lib/utils';
+import { useQuery } from '@tanstack/react-query';
+import { userPreferencesService, MobileNavigationItem } from '@/lib/services/userPreferences';
 import {
   Home,
   ChefHat,
@@ -13,72 +15,218 @@ import {
   Calendar,
   CalendarDays,
   LayoutDashboard,
-  Plus
+  Plus,
+  Users,
+  TrendingUp,
+  BarChart
 } from 'lucide-react';
+
+// Define all available navigation items with their configurations
+const ALL_NAV_ITEMS = {
+  dashboard: {
+    icon: LayoutDashboard,
+    label: 'Dashboard',
+    href: '/dashboard',
+    defaultShow: false
+  },
+  home: {
+    icon: Home,
+    label: 'Home',
+    href: '/',
+    defaultShow: true
+  },
+  foh: {
+    icon: CheckSquare,
+    label: 'FOH Tasks',
+    href: '/foh',
+    defaultShow: true
+  },
+  documentation: {
+    icon: FileText,
+    getLabel: (user: any, t: any) => user?.position === 'Team Member' ? 'My Documentation' : 'Documentation',
+    href: '/documentation',
+    defaultShow: true
+  },
+  kitchen: {
+    icon: ChefHat,
+    getLabel: (user: any, t: any) => t('navigation.kitchen'),
+    href: '/kitchen',
+    showIf: (user: any) => user?.departments?.includes('Kitchen') || ['Director', 'Leader'].includes(user?.position || ''),
+    defaultShow: true
+  },
+  training: {
+    icon: GraduationCap,
+    getLabel: (user: any, t: any) => t('navigation.training'),
+    href: '/training',
+    defaultShow: true
+  },
+  setupSheet: {
+    icon: CalendarDays,
+    label: 'Setup Sheet',
+    href: '/saved-setups',
+    defaultShow: true
+  },
+  evaluations: {
+    icon: ClipboardList,
+    label: 'Evaluations',
+    href: '/evaluations',
+    defaultShow: false
+  },
+  leadership: {
+    icon: TrendingUp,
+    label: 'Leadership',
+    href: '/leadership',
+    showIf: (user: any) => user?.position !== 'Team Member',
+    defaultShow: false
+  },
+  analytics: {
+    icon: BarChart,
+    label: 'Analytics',
+    href: '/analytics',
+    showIf: (user: any) => user?.position !== 'Team Member',
+    defaultShow: false
+  },
+  users: {
+    icon: Users,
+    getLabel: (user: any, t: any) => user?.position === 'Team Member' ? 'My Profile' : 'Team Members',
+    href: (user: any) => user?.position === 'Team Member' ? `/users/${user?._id}` : '/users',
+    defaultShow: false
+  }
+};
 
 export function MobileNav() {
   const location = useLocation();
   const navigate = useNavigate();
   const { user } = useAuth();
   const { t } = useTranslation();
+  const [navItems, setNavItems] = useState<any[]>([]);
 
-  const navItems = [
-    // Dashboard removed - users can click the logo to go to home page
-    {
-      icon: CheckSquare,
-      label: 'FOH Tasks',
-      href: '/foh',
-      show: true
-    },
-    // Shifts functionality removed
-    {
-      icon: FileText,
-      label: user?.position === 'Team Member' ? 'My Documentation' : 'Documentation',
-      href: '/documentation',
-      show: true
-    },
-    {
-      icon: ChefHat,
-      label: t('navigation.kitchen'),
-      href: '/kitchen',
-      show: user?.departments?.includes('Kitchen') || ['Director', 'Leader'].includes(user?.position || '')
-    },
-    {
-      icon: GraduationCap,
-      label: t('navigation.training'),
-      href: '/training',
-      show: true
-    },
-    {
-      icon: CalendarDays,
-      label: 'Setup Sheet',
-      href: '/saved-setups',
-      show: true,
-      badge: null
+  // Fetch user preferences to get navigation preferences
+  const { data: userPreferences } = useQuery({
+    queryKey: ['userPreferences'],
+    queryFn: userPreferencesService.getUserPreferences,
+    staleTime: 0, // Always fetch fresh data
+    refetchOnWindowFocus: true // Refetch when window regains focus
+  });
+
+  // Process navigation items based on user preferences
+  useEffect(() => {
+    // Log user preferences for debugging
+    console.log('MobileNav received user preferences:', userPreferences?.uiPreferences?.mobileNavigation);
+
+    // Get navigation preferences from user preferences
+    const userNavPreferences = userPreferences?.uiPreferences?.mobileNavigation?.items;
+
+    // If user has custom navigation preferences, use those
+    if (userNavPreferences && userNavPreferences.length > 0) {
+      console.log('Using custom navigation preferences:', userNavPreferences);
+
+      const processedItems = userNavPreferences
+        .map(item => {
+          const navConfig = ALL_NAV_ITEMS[item.key];
+          if (!navConfig) return null;
+
+          // Check if this item should be shown based on user role/department
+          let shouldShow = item.show;
+          if (navConfig.showIf && typeof navConfig.showIf === 'function') {
+            shouldShow = shouldShow && navConfig.showIf(user);
+          }
+
+          // Get the label (static or dynamic)
+          let label = navConfig.label;
+          if (navConfig.getLabel && typeof navConfig.getLabel === 'function') {
+            label = navConfig.getLabel(user, t);
+          }
+
+          // Get the href (static or dynamic)
+          let href = navConfig.href;
+          if (typeof href === 'function') {
+            href = href(user);
+          }
+
+          return {
+            icon: navConfig.icon,
+            label,
+            href,
+            show: shouldShow
+          };
+        })
+        .filter(Boolean); // Remove null items
+
+      setNavItems(processedItems);
+    } else {
+      console.log('Using default navigation items');
+      // Use default navigation items if no custom preferences
+      const defaultItems = [
+        { key: 'dashboard', show: true },
+        { key: 'foh', show: true },
+        { key: 'documentation', show: true },
+        { key: 'evaluations', show: true },
+        { key: 'users', show: true }
+      ];
+
+      const processedItems = defaultItems
+        .map(item => {
+          const navConfig = ALL_NAV_ITEMS[item.key];
+          if (!navConfig) return null;
+
+          // Check if this item should be shown based on user role/department
+          let shouldShow = item.show;
+          if (navConfig.showIf && typeof navConfig.showIf === 'function') {
+            shouldShow = shouldShow && navConfig.showIf(user);
+          }
+
+          // Get the label (static or dynamic)
+          let label = navConfig.label;
+          if (navConfig.getLabel && typeof navConfig.getLabel === 'function') {
+            label = navConfig.getLabel(user, t);
+          }
+
+          // Get the href (static or dynamic)
+          let href = navConfig.href;
+          if (typeof href === 'function') {
+            href = href(user);
+          }
+
+          return {
+            icon: navConfig.icon,
+            label,
+            href,
+            show: shouldShow
+          };
+        })
+        .filter(Boolean); // Remove null items
+
+      setNavItems(processedItems);
     }
-  ];
+  }, [userPreferences, user, t]);
 
   // Function to detect iPhone 13
   const isIPhone13 = () => {
     if (typeof window === 'undefined') return false;
-    
+
     // iPhone 13 has 390x844 logical resolution
     const { width, height } = window.screen;
-    const isIPhone13Dimensions = 
-      (width === 390 && height === 844) || 
+    const isIPhone13Dimensions =
+      (width === 390 && height === 844) ||
       (height === 390 && width === 844);
-    
+
     return isIPhone13Dimensions && /iPhone/.test(navigator.userAgent);
   };
 
+  // If no items are available or still loading, show a placeholder
+  if (navItems.length === 0) {
+    return null;
+  }
+
   return (
-    <nav 
-      className="min-[938px]:hidden fixed bottom-0 left-0 right-0 bg-white border-t z-[9999] shadow-[0_-1px_3px_rgba(0,0,0,0.1)] mobile-nav" 
-      style={{ 
-        touchAction: 'manipulation', 
-        position: 'fixed', 
+    <nav
+      className="min-[938px]:hidden fixed bottom-0 left-0 right-0 bg-white border-t z-[9999] shadow-[0_-1px_3px_rgba(0,0,0,0.1)] mobile-nav"
+      style={{
+        touchAction: 'manipulation',
+        position: 'fixed',
         bottom: 0,
-        paddingBottom: isIPhone13() ? '0.5rem' : undefined 
+        paddingBottom: isIPhone13() ? '0.5rem' : undefined
       }}
     >
       <div className={cn(
@@ -100,7 +248,7 @@ export function MobileNav() {
                 onClick={() => navigate(item.href)}
                 className={cn(
                   "flex flex-col items-center gap-0.5 py-2 px-1 flex-1 touch-manipulation mobile-nav-button",
-                  "transition-colors duration-200 relative", 
+                  "transition-colors duration-200 relative",
                   "active:opacity-70",
                   isActive ? "text-red-600" : "text-gray-500 hover:text-gray-900"
                 )}
