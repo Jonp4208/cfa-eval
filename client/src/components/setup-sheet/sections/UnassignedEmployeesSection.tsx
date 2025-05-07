@@ -12,6 +12,7 @@ interface UnassignedEmployeesSectionProps {
   handleBreakClick: (id: string, name: string) => void;
   handleReplaceClick: (id: string, name: string) => void;
   endBreak: (id: string) => void;
+  scheduledEmployees?: any[]; // Add scheduledEmployees prop
 }
 
 export const UnassignedEmployeesSection: React.FC<UnassignedEmployeesSectionProps> = ({
@@ -21,7 +22,8 @@ export const UnassignedEmployeesSection: React.FC<UnassignedEmployeesSectionProp
   hasHadBreak,
   handleBreakClick,
   handleReplaceClick,
-  endBreak
+  endBreak,
+  scheduledEmployees = [] // Default to empty array
 }) => {
   if (filteredUnassignedEmployees.length === 0) {
     return null;

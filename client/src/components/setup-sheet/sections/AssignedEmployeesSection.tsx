@@ -12,6 +12,7 @@ interface AssignedEmployeesSectionProps {
   handleBreakClick: (id: string, name: string) => void;
   handleReplaceClick: (id: string, name: string) => void;
   endBreak: (id: string) => void;
+  scheduledEmployees?: any[]; // Add scheduledEmployees prop
 }
 
 export const AssignedEmployeesSection: React.FC<AssignedEmployeesSectionProps> = ({
@@ -21,7 +22,8 @@ export const AssignedEmployeesSection: React.FC<AssignedEmployeesSectionProps> =
   hasHadBreak,
   handleBreakClick,
   handleReplaceClick,
-  endBreak
+  endBreak,
+  scheduledEmployees = [] // Default to empty array
 }) => {
   if (filteredAssignedEmployees.length === 0) {
     return null;
@@ -86,11 +88,14 @@ export const AssignedEmployeesSection: React.FC<AssignedEmployeesSectionProps> =
                   <div className="text-xs text-gray-500 mt-2 flex items-center">
                     <Clock className="h-3 w-3 mr-1 text-gray-400" />
                     <span>
-                      {employee.timeBlock ?
-                        employee.timeBlock.split(' - ').map(time => formatHourTo12Hour(time)).join(' - ') :
-                        employee.timeBlocks && employee.timeBlocks.length > 0 ?
-                          employee.timeBlocks.map(block => block.split(' - ').map(time => formatHourTo12Hour(time)).join(' - ')).join(', ') :
-                          'No schedule'
+                      {/* Show the full shift time from scheduledEmployees if available */}
+                      {scheduledEmployees?.find(e => e.id === employee.id)?.timeBlock ?
+                        scheduledEmployees.find(e => e.id === employee.id)?.timeBlock.split(' - ').map(time => formatHourTo12Hour(time)).join(' - ') :
+                        employee.timeBlock ?
+                          employee.timeBlock.split(' - ').map(time => formatHourTo12Hour(time)).join(' - ') :
+                          employee.timeBlocks && employee.timeBlocks.length > 0 ?
+                            employee.timeBlocks.map(block => block.split(' - ').map(time => formatHourTo12Hour(time)).join(' - ')).join(', ') :
+                            'No schedule'
                       }
                     </span>
                   </div>
