@@ -229,7 +229,7 @@ const SettingsPage = () => {
       if (isAdmin) {
         await updateStoreInfoMutation.mutateAsync({
           name: formState.storeName,
-          storeNumber: formState.storeNumber,
+          // storeNumber is intentionally omitted to prevent changes
           storeAddress: formState.storeAddress,
           storePhone: formState.storePhone,
           storeEmail: formState.storeEmail
@@ -238,7 +238,7 @@ const SettingsPage = () => {
 
       await updateSettingsMutation.mutateAsync({
         storeName: formState.storeName,
-        storeNumber: formState.storeNumber,
+        // storeNumber is intentionally omitted to prevent changes
         storeAddress: formState.storeAddress,
         storePhone: formState.storePhone,
         storeEmail: formState.storeEmail
@@ -417,9 +417,11 @@ const SettingsPage = () => {
                         <Input
                           id="storeNumber"
                           value={formState.storeNumber}
-                          onChange={(e) => handleSettingChange('storeNumber', e.target.value)}
+                          readOnly
+                          className="bg-gray-50 cursor-not-allowed"
                           placeholder={t('settings.storeNumber')}
                         />
+                        <p className="text-xs text-gray-500 mt-1">{t('settings.storeNumberReadOnly', 'Store number cannot be changed')}</p>
                       </div>
                       <div className="space-y-2 md:col-span-2">
                         <label htmlFor="storeAddress" className="text-sm font-medium">{t('settings.storeAddress')}</label>
