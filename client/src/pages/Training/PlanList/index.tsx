@@ -11,7 +11,7 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table'
-import { Plus, Search, Eye, UserPlus, ClipboardList, CheckCircle, Clock, Users } from 'lucide-react'
+import { Plus, Search, Eye, UserPlus, ClipboardList, Users, ClipboardCheck } from 'lucide-react'
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog'
 import CreatePlanForm from '../Progress/components/CreatePlanForm'
 import { toast } from '@/components/ui/use-toast'
@@ -34,6 +34,8 @@ import {
 import { cn } from '@/lib/utils'
 import { CalendarIcon } from 'lucide-react'
 import { useAuth } from '@/contexts/AuthContext'
+import { useTranslation } from '@/contexts/TranslationContext'
+import PageHeader from '@/components/PageHeader'
 
 interface TrainingPlan {
   _id: string
@@ -70,6 +72,7 @@ interface User {
 export default function TrainingPlanList() {
   const navigate = useNavigate()
   const { user } = useAuth() // Get the current user from auth context
+  const { t } = useTranslation()
   const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false)
   const [isAssignDialogOpen, setIsAssignDialogOpen] = useState(false)
   const [selectedPlan, setSelectedPlan] = useState<TrainingPlan | null>(null)
@@ -84,7 +87,7 @@ export default function TrainingPlanList() {
   // Check if user is a manager/leader or team member
   const isManager = user?.position === 'Leader' || user?.position === 'Director'
 
-  const handleCreatePlan = async (plan: NewTrainingPlan) => {
+  const handleCreatePlan = async (plan: any) => {
     try {
       await api.post('/api/training/plans', plan)
       toast({
@@ -118,11 +121,11 @@ export default function TrainingPlanList() {
       // For team members, also fetch their assigned training plans
       if (!isManager) {
         const assignedResponse = await api.get('/api/training/user/assigned')
-        
+
         // Transform the data to include both plans and progress
         const assignedPlansData = assignedResponse.data.map((progressItem: any) => {
           // Process this trainee progress item
-          
+
           return {
             _id: progressItem.trainingPlan?._id || '',
             name: progressItem.trainingPlan?.name || 'Unknown Plan',
@@ -136,7 +139,7 @@ export default function TrainingPlanList() {
             progressId: progressItem._id // Store the progress ID for navigation
           }
         })
-        
+
         setAssignedPlans(assignedPlansData)
       }
     } catch (error) {
@@ -166,8 +169,8 @@ export default function TrainingPlanList() {
       }
 
       const transformedUsers = response.data.users
-        .filter(user => user.status !== 'inactive')
-        .map(user => ({
+        .filter((user: any) => user.status !== 'inactive')
+        .map((user: any) => ({
           _id: user._id,
           name: user.name || 'Unknown Name',
           email: user.email || '',
@@ -234,6 +237,14 @@ export default function TrainingPlanList() {
   // For managers, show all plans
   const plansToDisplay = isManager ? trainingPlans : assignedPlans
 
+  // Calculate stats for the info cards
+  const activePlansCount = isManager
+    ? trainingPlans.filter(plan => plan.status !== 'completed').length // For managers, all non-completed plans are active
+    : plansToDisplay.filter(plan =>
+        plan.status === 'in_progress' ||
+        (!plan.status && plan.startDate) // Count plans with start date but no explicit status as active
+      ).length
+
   const filteredPlans = plansToDisplay.filter(plan =>
     plan.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
     (plan.department && plan.department.toLowerCase().includes(searchQuery.toLowerCase())) ||
@@ -259,297 +270,262 @@ export default function TrainingPlanList() {
     return `${remainingDays}d`
   }
 
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center h-64">
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[#E51636]" />
+      </div>
+    )
+  }
+
   return (
-    <div className="p-6">
-      <div className="flex flex-col gap-6">
-        {/* Header Section */}
-        <div className="space-y-2">
-          <h1 className="text-3xl font-semibold text-gray-900">Training Plans</h1>
+    <div className="space-y-6">
+      {/* Dashboard Cards */}
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        {/* Active Plans Card */}
+        <Card className="bg-white rounded-[20px] hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1">
+          <CardContent className="p-8">
+            <div className="flex items-start justify-between">
+              <div>
+                <p className="text-[#27251F]/60 font-medium">Active Plans</p>
+                <h3 className="text-3xl font-bold mt-2 text-[#27251F]">{activePlansCount}</h3>
+              </div>
+              <div className="h-14 w-14 bg-[#E51636]/10 rounded-2xl flex items-center justify-center">
+                <ClipboardCheck className="h-7 w-7 text-[#E51636]" />
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* Total Plans Card */}
+        <Card className="bg-white rounded-[20px] hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1">
+          <CardContent className="p-8">
+            <div className="flex items-start justify-between">
+              <div>
+                <p className="text-[#27251F]/60 font-medium">Total Plans</p>
+                <h3 className="text-3xl font-bold mt-2 text-[#27251F]">{plansToDisplay.length}</h3>
+              </div>
+              <div className="h-14 w-14 bg-[#E51636]/10 rounded-2xl flex items-center justify-center">
+                <Users className="h-7 w-7 text-[#E51636]" />
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+
+      {/* Search bar and Create Button */}
+      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+        <div className="relative w-full sm:w-[300px]">
+          <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-500" />
+          <Input
+            placeholder="Search plans..."
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            className="pl-9 w-full"
+          />
         </div>
+        {/* Only show Create Plan button for managers */}
+        {isManager && (
+          <Button
+            className="gap-2 rounded-full bg-[#E51636] text-white hover:bg-[#E51636]/90 w-full sm:w-auto px-8"
+            onClick={() => setIsCreateDialogOpen(true)}
+          >
+            <Plus className="h-4 w-4" />
+            Create Plan
+          </Button>
+        )}
+      </div>
 
-        {/* Info Cards */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-          <Card className="bg-gradient-to-br from-blue-50 to-blue-100 border-none shadow-sm">
+      {/* Plans Grid */}
+      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+        {filteredPlans.map((plan) => (
+          <Card key={plan._id} className="overflow-hidden">
             <CardContent className="p-6">
-              <div className="flex items-start justify-between">
-                <div className="space-y-2">
-                  <h3 className="font-medium text-blue-800">Active Plans</h3>
-                  <p className="text-3xl font-bold text-blue-900">{plansToDisplay.filter(p => p.status === 'in_progress').length}</p>
-                  <p className="text-sm text-blue-700">Currently in progress</p>
-                </div>
-                <div className="h-12 w-12 rounded-full bg-blue-200 flex items-center justify-center text-blue-700">
-                  <ClipboardList className="h-6 w-6" />
-                </div>
-              </div>
-            </CardContent>
-          </Card>
+              <div className="space-y-4">
+                {/* Plan Info */}
+                <div className="flex items-start justify-between">
+                  <div className="space-y-1">
+                    <h3 className="font-semibold text-lg text-gray-900">{plan.name}</h3>
+                    <p className="text-gray-600">{plan.type}</p>
 
-          <Card className="bg-gradient-to-br from-green-50 to-green-100 border-none shadow-sm">
-            <CardContent className="p-6">
-              <div className="flex items-start justify-between">
-                <div className="space-y-2">
-                  <h3 className="font-medium text-green-800">Completed</h3>
-                  <p className="text-3xl font-bold text-green-900">{plansToDisplay.filter(p => p.status === 'completed').length}</p>
-                  <p className="text-sm text-green-700">Successfully finished</p>
-                </div>
-                <div className="h-12 w-12 rounded-full bg-green-200 flex items-center justify-center text-green-700">
-                  <CheckCircle className="h-6 w-6" />
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-
-          <Card className="bg-gradient-to-br from-amber-50 to-amber-100 border-none shadow-sm">
-            <CardContent className="p-6">
-              <div className="flex items-start justify-between">
-                <div className="space-y-2">
-                  <h3 className="font-medium text-amber-800">Average Duration</h3>
-                  <p className="text-3xl font-bold text-amber-900">
-                    {plansToDisplay.length > 0 ? 
-                      `${Math.round(plansToDisplay.reduce((acc, plan) => {
-                        const days = plan.days?.length || 0;
-                        return acc + days;
-                      }, 0) / Math.max(plansToDisplay.length, 1))} days` : 
-                      'N/A'}
-                  </p>
-                  <p className="text-sm text-amber-700">Per training plan</p>
-                </div>
-                <div className="h-12 w-12 rounded-full bg-amber-200 flex items-center justify-center text-amber-700">
-                  <Clock className="h-6 w-6" />
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-
-          <Card className="bg-gradient-to-br from-purple-50 to-purple-100 border-none shadow-sm">
-            <CardContent className="p-6">
-              <div className="flex items-start justify-between">
-                <div className="space-y-2">
-                  <h3 className="font-medium text-purple-800">Total Plans</h3>
-                  <p className="text-3xl font-bold text-purple-900">{plansToDisplay.length}</p>
-                  <p className="text-sm text-purple-700">{isManager ? 'Available to assign' : 'In your curriculum'}</p>
-                </div>
-                <div className="h-12 w-12 rounded-full bg-purple-200 flex items-center justify-center text-purple-700">
-                  <Users className="h-6 w-6" />
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-        </div>
-
-        {/* Search and Actions */}
-        <div className="flex flex-col sm:flex-row gap-4 items-center justify-between">
-          <div className="relative w-full sm:w-[300px]">
-            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-500" />
-            <Input
-              placeholder="Search plans..."
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              className="pl-9 w-full bg-white border-none shadow-sm rounded-full"
-            />
-          </div>
-          {/* Only show Create Plan button for managers */}
-          {isManager && (
-            <Button
-              className="gap-2 rounded-full bg-[#E51636] text-white hover:bg-[#E51636]/90 w-full sm:w-auto px-8"
-              onClick={() => setIsCreateDialogOpen(true)}
-            >
-              <Plus className="h-4 w-4" />
-              Create Plan
-            </Button>
-          )}
-        </div>
-
-        {/* Plans Grid */}
-        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-          {filteredPlans.map((plan) => (
-            <Card key={plan._id} className="overflow-hidden">
-              <CardContent className="p-6">
-                <div className="space-y-4">
-                  {/* Plan Info */}
-                  <div className="flex items-start justify-between">
-                    <div className="space-y-1">
-                      <h3 className="font-semibold text-lg text-gray-900">{plan.name}</h3>
-                      <p className="text-gray-600">{plan.type}</p>
-
-                      {/* Show status for team members */}
-                      {!isManager && plan.status && (
-                        <span className={`inline-flex px-2 py-1 text-xs font-medium rounded-full mt-2 ${
-                          plan.status === 'completed' ? 'bg-green-100 text-green-800' :
-                          plan.status === 'in_progress' ? 'bg-blue-100 text-blue-800' :
-                          'bg-gray-100 text-gray-800'
-                        }`}>
-                          {plan.status === 'completed' ? 'Completed' :
-                           plan.status === 'in_progress' ? 'In Progress' :
-                           'Not Started'}
-                        </span>
-                      )}
-                    </div>
-                    <span className="text-sm font-medium bg-gray-100 px-2 py-1 rounded-full">
-                      {plan.days && plan.days.length > 0 ? calculateDuration(plan.days) : 'N/A'}
-                    </span>
+                    {/* Show status for team members */}
+                    {!isManager && plan.status && (
+                      <span className={`inline-flex px-2 py-1 text-xs font-medium rounded-full mt-2 ${
+                        plan.status === 'completed' ? 'bg-green-100 text-green-800' :
+                        plan.status === 'in_progress' ? 'bg-blue-100 text-blue-800' :
+                        'bg-gray-100 text-gray-800'
+                      }`}>
+                        {plan.status === 'completed' ? 'Completed' :
+                         plan.status === 'in_progress' ? 'In Progress' :
+                         'Not Started'}
+                      </span>
+                    )}
                   </div>
+                  <span className="text-sm font-medium bg-gray-100 px-2 py-1 rounded-full">
+                    {plan.days && plan.days.length > 0 ? calculateDuration(plan.days) : 'N/A'}
+                  </span>
+                </div>
 
-                  {/* Department and Position for managers */}
-                  {isManager ? (
-                    <div className="grid grid-cols-2 gap-4">
-                      <div className="space-y-1">
-                        <p className="text-sm text-gray-600">Department</p>
-                        <p className="font-medium text-gray-900">{plan.department || 'N/A'}</p>
-                      </div>
-                      <div className="space-y-1">
-                        <p className="text-sm text-gray-600">Position</p>
-                        <p className="font-medium text-gray-900">{plan.position || 'N/A'}</p>
-                      </div>
+                {/* Department and Position for managers */}
+                {isManager ? (
+                  <div className="grid grid-cols-2 gap-4">
+                    <div className="space-y-1">
+                      <p className="text-sm text-gray-600">Department</p>
+                      <p className="font-medium text-gray-900">{plan.department || 'N/A'}</p>
                     </div>
-                  ) : (
-                    <div className="grid grid-cols-2 gap-4">
-                      <div className="space-y-1">
-                        <p className="text-sm text-gray-600">Start Date</p>
-                        <p className="font-medium text-gray-900">
-                          {plan.startDate ? new Date(plan.startDate).toLocaleDateString() : 'N/A'}
-                        </p>
-                      </div>
-                      <div className="space-y-1">
-                        <p className="text-sm text-gray-600">
-                          {plan.status === 'completed' ? 'Completed On' : 'Status'}
-                        </p>
-                        <p className="font-medium text-gray-900">
-                          {plan.completedAt ?
-                            new Date(plan.completedAt).toLocaleDateString() :
-                            plan.status === 'in_progress' ? 'In Progress' : 'Not Started'}
-                        </p>
-                      </div>
+                    <div className="space-y-1">
+                      <p className="text-sm text-gray-600">Position</p>
+                      <p className="font-medium text-gray-900">{plan.position || 'N/A'}</p>
                     </div>
-                  )}
+                  </div>
+                ) : (
+                  <div className="grid grid-cols-2 gap-4">
+                    <div className="space-y-1">
+                      <p className="text-sm text-gray-600">Start Date</p>
+                      <p className="font-medium text-gray-900">
+                        {plan.startDate ? new Date(plan.startDate).toLocaleDateString() : 'N/A'}
+                      </p>
+                    </div>
+                    <div className="space-y-1">
+                      <p className="text-sm text-gray-600">
+                        {plan.status === 'completed' ? 'Completed On' : 'Status'}
+                      </p>
+                      <p className="font-medium text-gray-900">
+                        {plan.completedAt ?
+                          new Date(plan.completedAt).toLocaleDateString() :
+                          plan.status === 'in_progress' ? 'In Progress' : 'Not Started'}
+                      </p>
+                    </div>
+                  </div>
+                )}
 
-                  {/* Actions */}
-                  <div className="flex flex-col gap-2 pt-2">
+                {/* Actions */}
+                <div className="flex flex-col gap-2 pt-2">
+                  <Button
+                    variant="ghost"
+                    onClick={() => {
+                      // For team members, navigate to progress details
+                      // For managers, navigate to plan details
+                      if (!isManager && plan.progressId) {
+                        navigate(`/training/progress/${plan.progressId}`)
+                      } else {
+                        handleViewDetails(plan._id)
+                      }
+                    }}
+                    className="w-full justify-center rounded-full bg-[#FEE4E2] text-[#E51636] hover:bg-[#FEE4E2]/80 hover:text-[#E51636] gap-2 font-medium"
+                  >
+                    <Eye className="h-4 w-4" />
+                    {!isManager ? 'View Progress' : 'View Details'}
+                  </Button>
+
+                  {/* Only show Assign button for managers */}
+                  {isManager && (
                     <Button
                       variant="ghost"
                       onClick={() => {
-                        // For team members, navigate to progress details
-                        // For managers, navigate to plan details
-                        if (!isManager && plan.progressId) {
-                          navigate(`/training/progress/${plan.progressId}`)
-                        } else {
-                          handleViewDetails(plan._id)
-                        }
+                        setSelectedPlan(plan)
+                        setIsAssignDialogOpen(true)
                       }}
-                      className="w-full justify-center rounded-full bg-[#FEE4E2] text-[#E51636] hover:bg-[#FEE4E2]/80 hover:text-[#E51636] gap-2 font-medium"
+                      className="w-full justify-center rounded-full bg-[#E51636] text-white hover:bg-[#E51636]/90 gap-2 font-medium"
                     >
-                      <Eye className="h-4 w-4" />
-                      {!isManager ? 'View Progress' : 'View Details'}
+                      <UserPlus className="h-4 w-4" />
+                      Assign
                     </Button>
-
-                    {/* Only show Assign button for managers */}
-                    {isManager && (
-                      <Button
-                        variant="ghost"
-                        onClick={() => {
-                          setSelectedPlan(plan)
-                          setIsAssignDialogOpen(true)
-                        }}
-                        className="w-full justify-center rounded-full bg-[#E51636] text-white hover:bg-[#E51636]/90 gap-2 font-medium"
-                      >
-                        <UserPlus className="h-4 w-4" />
-                        Assign
-                      </Button>
-                    )}
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-          ))}
-        </div>
-
-        {filteredPlans.length === 0 && (
-          <Card>
-            <CardContent className="p-12 text-center">
-              <div className="flex flex-col items-center gap-4">
-                <ClipboardList className="h-12 w-12 text-gray-400" />
-                <div className="space-y-1">
-                  <h3 className="font-semibold text-gray-900">No Training Plans Found</h3>
-                  <p className="text-gray-600">There are no training plans matching your search criteria.</p>
+                  )}
                 </div>
               </div>
             </CardContent>
           </Card>
-        )}
+        ))}
+      </div>
 
-        {/* Keep existing dialogs */}
-        <Dialog open={isCreateDialogOpen} onOpenChange={setIsCreateDialogOpen}>
-          <DialogContent className="max-w-4xl max-h-[90vh] overflow-hidden flex flex-col bg-white border-none shadow-lg rounded-[20px]">
-            <DialogHeader className="px-6 pt-6">
-              <DialogTitle>Create Training Plan</DialogTitle>
-            </DialogHeader>
-            <div className="flex-1 overflow-y-auto px-6 pb-6">
-              <CreatePlanForm onSubmit={handleCreatePlan} />
-            </div>
-          </DialogContent>
-        </Dialog>
-
-        <Dialog open={isAssignDialogOpen} onOpenChange={setIsAssignDialogOpen}>
-          <DialogContent className="max-w-md bg-white border-none shadow-lg rounded-[20px]">
-            <DialogHeader className="px-6 pt-6">
-              <DialogTitle>Assign Training Plan</DialogTitle>
-            </DialogHeader>
-            <div className="p-6">
-              <div className="space-y-4">
-                <div className="space-y-2">
-                  <Label>Select Employee</Label>
-                  <Select value={selectedUser} onValueChange={setSelectedUser}>
-                    <SelectTrigger className="rounded-[20px] border-gray-200 focus-visible:ring-1 focus-visible:ring-gray-200 focus-visible:border-gray-200">
-                      <SelectValue placeholder="Select an employee" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {users.map((user) => (
-                        <SelectItem key={user._id} value={user._id}>
-                          {user.name} - {user.position}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
-
-                <div className="space-y-2">
-                  <Label>Start Date</Label>
-                  <Popover>
-                    <PopoverTrigger asChild>
-                      <Button
-                        variant="outline"
-                        className={cn(
-                          'w-full justify-start text-left font-normal rounded-[20px] border-gray-200',
-                          !startDate && 'text-muted-foreground'
-                        )}
-                      >
-                        <CalendarIcon className="mr-2 h-4 w-4" />
-                        {startDate ? format(startDate, 'PPP') : <span>Pick a date</span>}
-                      </Button>
-                    </PopoverTrigger>
-                    <PopoverContent className="w-auto p-0" align="start">
-                      <Calendar
-                        mode="single"
-                        selected={startDate}
-                        onSelect={(date) => date && setStartDate(date)}
-                        initialFocus
-                      />
-                    </PopoverContent>
-                  </Popover>
-                </div>
-
-                <Button
-                  onClick={handleAssign}
-                  className="w-full gap-2 rounded-[20px] bg-[#E51636] text-white hover:bg-[#E51636]/90"
-                >
-                  <UserPlus className="h-4 w-4" />
-                  Assign Plan
-                </Button>
+      {filteredPlans.length === 0 && (
+        <Card>
+          <CardContent className="p-12 text-center">
+            <div className="flex flex-col items-center gap-4">
+              <ClipboardList className="h-12 w-12 text-gray-400" />
+              <div className="space-y-1">
+                <h3 className="font-semibold text-gray-900">No Training Plans Found</h3>
+                <p className="text-gray-600">There are no training plans matching your search criteria.</p>
               </div>
             </div>
-          </DialogContent>
-        </Dialog>
-      </div>
+          </CardContent>
+        </Card>
+      )}
+
+      {/* Create Plan Dialog */}
+      <Dialog open={isCreateDialogOpen} onOpenChange={setIsCreateDialogOpen}>
+        <DialogContent className="max-w-4xl max-h-[90vh] overflow-hidden flex flex-col bg-white border-none shadow-lg rounded-[20px]">
+          <DialogHeader className="px-6 pt-6">
+            <DialogTitle>Create Training Plan</DialogTitle>
+          </DialogHeader>
+          <div className="flex-1 overflow-y-auto px-6 pb-6">
+            <CreatePlanForm onSubmit={handleCreatePlan} />
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* Assign Plan Dialog */}
+      <Dialog open={isAssignDialogOpen} onOpenChange={setIsAssignDialogOpen}>
+        <DialogContent className="max-w-md bg-white border-none shadow-lg rounded-[20px]">
+          <DialogHeader className="px-6 pt-6">
+            <DialogTitle>Assign Training Plan</DialogTitle>
+          </DialogHeader>
+          <div className="p-6">
+            <div className="space-y-4">
+              <div className="space-y-2">
+                <Label>Select Employee</Label>
+                <Select value={selectedUser} onValueChange={setSelectedUser}>
+                  <SelectTrigger className="rounded-[20px] border-gray-200 focus-visible:ring-1 focus-visible:ring-gray-200 focus-visible:border-gray-200">
+                    <SelectValue placeholder="Select an employee" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {users.map((user) => (
+                      <SelectItem key={user._id} value={user._id}>
+                        {user.name} - {user.position}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+
+              <div className="space-y-2">
+                <Label>Start Date</Label>
+                <Popover>
+                  <PopoverTrigger asChild>
+                    <Button
+                      variant="outline"
+                      className={cn(
+                        'w-full justify-start text-left font-normal rounded-[20px] border-gray-200',
+                        !startDate && 'text-muted-foreground'
+                      )}
+                    >
+                      <CalendarIcon className="mr-2 h-4 w-4" />
+                      {startDate ? format(startDate, 'PPP') : <span>Pick a date</span>}
+                    </Button>
+                  </PopoverTrigger>
+                  <PopoverContent className="w-auto p-0" align="start">
+                    <Calendar
+                      mode="single"
+                      selected={startDate}
+                      onSelect={(date) => date && setStartDate(date)}
+                      initialFocus
+                    />
+                  </PopoverContent>
+                </Popover>
+              </div>
+
+              <Button
+                onClick={handleAssign}
+                className="w-full gap-2 rounded-[20px] bg-[#E51636] text-white hover:bg-[#E51636]/90"
+              >
+                <UserPlus className="h-4 h-4" />
+                Assign Plan
+              </Button>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   )
 }

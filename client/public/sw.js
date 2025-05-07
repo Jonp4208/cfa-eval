@@ -1,7 +1,7 @@
 // Service Worker for LD Growth PWA
 
 // Change this version number whenever you want to force an update
-const CACHE_VERSION = '1.0.95';
+const CACHE_VERSION = '1.0.96';
 const CACHE_NAME = `ld-growth-cache-${CACHE_VERSION}`;
 const urlsToCache = [
   '/',
@@ -93,7 +93,7 @@ self.addEventListener('activate', event => {
 // Listen for push events (notifications from the server)
 self.addEventListener('push', event => {
   console.log('[Service Worker] Push received');
-  
+
   let notificationData = {};
   if (event.data) {
     try {
