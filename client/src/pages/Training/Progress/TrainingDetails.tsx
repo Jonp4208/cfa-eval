@@ -128,7 +128,7 @@ export default function TrainingDetails() {
   const fetchTrainingDetails = async () => {
     try {
       setLoading(true)
-      const response = await api.get(`/api/training/trainee-progress/${id}`)
+      const response = await api.get(`/api/training/progress/${id}`)
       
       setTrainingDetails({
         ...response.data,
