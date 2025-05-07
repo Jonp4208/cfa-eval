@@ -482,205 +482,200 @@ export default function TrainingProgress() {
         </Card>
       </div>
 
-      {/* Trainees Table Section */}
-      <Card className="bg-white">
-        <div className="flex flex-col gap-4 mb-6">
-          {/* Search and Filter Row */}
-          <div className="flex flex-col sm:flex-row gap-4 justify-between items-center p-2">
-            {/* Search */}
-            <div className="w-full sm:w-[300px]">
-              <div className="relative">
-                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
-                <Input
-                  placeholder="Search trainees..."
-                  value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
-                  className="pl-9 w-full bg-white border border-gray-200 shadow-sm rounded-full"
-                />
-              </div>
+      {/* Search, Filter, and Assign Section */}
+      <div className="flex flex-col gap-4 mb-6">
+        {/* Search and Filter Row */}
+        <div className="flex flex-col sm:flex-row gap-4 justify-between items-center">
+          {/* Search */}
+          <div className="w-full sm:w-[300px]">
+            <div className="relative">
+              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
+              <Input
+                placeholder="Search trainees..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className="pl-9 w-full bg-white border border-gray-200 shadow-sm rounded-full"
+              />
             </div>
-
-            {/* Filter Tabs */}
-            <div className="bg-white rounded-full flex p-1 shadow-sm border border-gray-200 w-full sm:w-auto">
-              <Button
-                variant="ghost"
-                onClick={() => setActiveTab('active')}
-                className={`rounded-full px-4 sm:px-8 border flex-1 sm:flex-initial ${
-                  activeTab === 'active'
-                    ? 'bg-[#FEE4E2] text-[#E51636] font-medium border-[#E51636]'
-                    : 'text-gray-600 hover:text-[#E51636] hover:bg-gray-50 border-transparent'
-                }`}
-              >
-                Active
-              </Button>
-              <Button
-                variant="ghost"
-                onClick={() => setActiveTab('completed')}
-                className={`rounded-full px-4 sm:px-8 border flex-1 sm:flex-initial ${
-                  activeTab === 'completed'
-                    ? 'bg-[#FEE4E2] text-[#E51636] font-medium border-[#E51636]'
-                    : 'text-gray-600 hover:text-[#E51636] hover:bg-gray-50 border-transparent'
-                }`}
-              >
-                Completed
-              </Button>
-            </div>
-
-            {/* Assign Training Button */}
-            {(user?.position === 'Leader' || user?.position === 'Director') && (
-              <Button
-                onClick={() => setIsAssignDialogOpen(true)}
-                className="bg-[#E51636] text-white hover:bg-[#E51636]/90 rounded-full gap-2 whitespace-nowrap px-6 w-full sm:w-auto"
-              >
-                <Plus className="h-4 w-4" />
-                Assign Training
-              </Button>
-            )}
           </div>
+
+          {/* Filter Tabs */}
+          <div className="bg-white rounded-full flex p-1 shadow-sm border border-gray-200 w-full sm:w-auto">
+            <Button
+              variant="ghost"
+              onClick={() => setActiveTab('active')}
+              className={`rounded-full px-4 sm:px-8 border flex-1 sm:flex-initial ${
+                activeTab === 'active'
+                  ? 'bg-[#FEE4E2] text-[#E51636] font-medium border-[#E51636]'
+                  : 'text-gray-600 hover:text-[#E51636] hover:bg-gray-50 border-transparent'
+              }`}
+            >
+              Active
+            </Button>
+            <Button
+              variant="ghost"
+              onClick={() => setActiveTab('completed')}
+              className={`rounded-full px-4 sm:px-8 border flex-1 sm:flex-initial ${
+                activeTab === 'completed'
+                  ? 'bg-[#FEE4E2] text-[#E51636] font-medium border-[#E51636]'
+                  : 'text-gray-600 hover:text-[#E51636] hover:bg-gray-50 border-transparent'
+              }`}
+            >
+              Completed
+            </Button>
+          </div>
+
+          {/* Assign Training Button */}
+          {(user?.position === 'Leader' || user?.position === 'Director') && (
+            <Button
+              onClick={() => setIsAssignDialogOpen(true)}
+              className="bg-[#E51636] text-white hover:bg-[#E51636]/90 rounded-full gap-2 whitespace-nowrap px-6 w-full sm:w-auto"
+            >
+              <Plus className="h-4 w-4" />
+              Assign Training
+            </Button>
+          )}
         </div>
+      </div>
 
-        {/* Table Card */}
-        <CardContent className="p-0">
-          {/* Desktop Table */}
-          <div className="hidden md:block">
-            <Table>
-              <TableHeader>
-                <TableRow className="hover:bg-transparent border-b border-gray-100">
-                  <TableHead className="text-gray-600 w-1/5">Trainee</TableHead>
-                  <TableHead className="text-gray-600 w-1/6">Position</TableHead>
-                  <TableHead className="text-gray-600 w-1/5">Current Plan</TableHead>
-                  <TableHead className="text-gray-600 w-1/4">Progress</TableHead>
-                  <TableHead className="text-gray-600 w-1/8">Status</TableHead>
-                  <TableHead className="text-gray-600 w-1/8">Actions</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {filteredTrainees.map((trainee) => {
-                  // Calculate the capped progress for display (0-100%)
-                  const displayProgress = Math.min(trainee.progress || 0, 100)
-                  const formattedProgress = formatProgress(trainee.progress)
-
-                  return (
-                    <TableRow key={trainee._id} className="hover:bg-gray-50">
-                      <TableCell className="font-medium">{trainee.name}</TableCell>
-                      <TableCell>{trainee.position}</TableCell>
-                      <TableCell>{trainee.currentPlan?.name || 'No Plan'}</TableCell>
-                      <TableCell>
-                        <div className="flex items-center gap-2">
-                          <div className="w-full max-w-[300px] h-2 bg-gray-100 rounded-full overflow-hidden">
-                            <div
-                              className="h-full bg-[#E51636] rounded-full"
-                              style={{ width: `${displayProgress}%` }}
-                            />
-                          </div>
-                          <span className="text-sm text-gray-600 min-w-[45px]">
-                            {formatProgress(trainee.progress)}
-                          </span>
-                        </div>
-                      </TableCell>
-                      <TableCell>
-                        <span className={`inline-flex px-3 py-1 rounded-full text-xs font-medium ${getStatusStyles(trainee.status)}`}>
-                          {getStatusText(trainee.status)}
-                        </span>
-                      </TableCell>
-                      <TableCell>
-                        <div className="flex items-center gap-2">
-                          <Button
-                            variant="ghost"
-                            onClick={() => {
-                              if (trainee._id) {
-                                navigate(`/training/progress/${trainee._id}`)
-                              }
-                            }}
-                            disabled={!trainee.currentPlan}
-                            className={`rounded-full ${!trainee.currentPlan ? 'cursor-not-allowed opacity-50' : 'hover:bg-[#FEE4E2] hover:text-[#E51636]'}`}
-                          >
-                            View Details
-                          </Button>
-                          {user?.position === 'Director' && trainee.currentPlan && (
-                            <Button
-                              variant="ghost"
-                              size="icon"
-                              onClick={() => {
-                                setDeleteTraineeId(trainee._id)
-                                setIsDeleteDialogOpen(true)
-                              }}
-                              className="rounded-full hover:bg-[#FEE4E2] hover:text-[#E51636]"
-                            >
-                              <Trash2 className="h-4 w-4" />
-                            </Button>
-                          )}
-                        </div>
-                      </TableCell>
-                    </TableRow>
-                  )
-                })}
-              </TableBody>
-            </Table>
-          </div>
-
-          {/* Mobile Table */}
-          <div className="md:hidden">
+      {/* Desktop Table */}
+      <div className="hidden md:block bg-white rounded-lg shadow-sm">
+        <Table>
+          <TableHeader>
+            <TableRow className="hover:bg-transparent border-b border-gray-100">
+              <TableHead className="text-gray-600 w-1/5">Trainee</TableHead>
+              <TableHead className="text-gray-600 w-1/6">Position</TableHead>
+              <TableHead className="text-gray-600 w-1/5">Current Plan</TableHead>
+              <TableHead className="text-gray-600 w-1/4">Progress</TableHead>
+              <TableHead className="text-gray-600 w-1/8">Status</TableHead>
+              <TableHead className="text-gray-600 w-1/8">Actions</TableHead>
+            </TableRow>
+          </TableHeader>
+          <TableBody>
             {filteredTrainees.map((trainee) => {
               // Calculate the capped progress for display (0-100%)
               const displayProgress = Math.min(trainee.progress || 0, 100)
+              const formattedProgress = formatProgress(trainee.progress)
 
               return (
-                <Card key={trainee._id} className="overflow-hidden">
-                  <CardHeader className="p-4">
-                    <div className="flex items-center justify-between">
-                      <div className="flex items-center gap-3">
-                        <Avatar className="h-9 w-9">
-                          <AvatarFallback>{getInitials(trainee.name)}</AvatarFallback>
-                        </Avatar>
-                        <div>
-                          <CardTitle className="text-base">{trainee.name}</CardTitle>
-                          <CardDescription>{trainee.position}</CardDescription>
-                        </div>
+                <TableRow key={trainee._id} className="hover:bg-gray-50">
+                  <TableCell className="font-medium">{trainee.name}</TableCell>
+                  <TableCell>{trainee.position}</TableCell>
+                  <TableCell>{trainee.currentPlan?.name || 'No Plan'}</TableCell>
+                  <TableCell>
+                    <div className="flex items-center gap-2">
+                      <div className="w-full max-w-[300px] h-2 bg-gray-100 rounded-full overflow-hidden">
+                        <div
+                          className="h-full bg-[#E51636] rounded-full"
+                          style={{ width: `${displayProgress}%` }}
+                        />
                       </div>
-                      <Badge className={cn(getStatusStyles(trainee.status))}>
-                        {getStatusText(trainee.status)}
-                      </Badge>
+                      <span className="text-sm text-gray-600 min-w-[45px]">
+                        {formatProgress(trainee.progress)}
+                      </span>
                     </div>
-                  </CardHeader>
-                  <CardContent className="p-4 pt-0">
-                    {trainee.currentPlan ? (
-                      <div className="flex flex-col gap-1">
-                        <div className="font-medium">{trainee.currentPlan.name}</div>
-                        <div className="flex w-full items-center gap-2">
-                          <Progress
-                            value={displayProgress}
-                            className="h-2"
-                          />
-                          <span
-                            className="text-xs font-medium"
-                            title={trainee.progress > 100 ? `Raw value: ${trainee.progress}%` : undefined}
-                          >
-                            {formatProgress(trainee.progress)}
-                          </span>
-                        </div>
-                      </div>
-                    ) : (
-                      <span className="text-muted-foreground">No active plan</span>
-                    )}
-                  </CardContent>
-                  <CardFooter className="p-4 pt-0">
-                    <Button variant="secondary" size="sm" className="w-full" onClick={() => navigate(`/training/progress/${trainee._id}`)}>
-                      View Details
-                    </Button>
-                  </CardFooter>
-                </Card>
+                  </TableCell>
+                  <TableCell>
+                    <span className={`inline-flex px-3 py-1 rounded-full text-xs font-medium ${getStatusStyles(trainee.status)}`}>
+                      {getStatusText(trainee.status)}
+                    </span>
+                  </TableCell>
+                  <TableCell>
+                    <div className="flex items-center gap-2">
+                      <Button
+                        variant="ghost"
+                        onClick={() => {
+                          if (trainee._id) {
+                            navigate(`/training/progress/${trainee._id}`)
+                          }
+                        }}
+                        disabled={!trainee.currentPlan}
+                        className={`rounded-full ${!trainee.currentPlan ? 'cursor-not-allowed opacity-50' : 'hover:bg-[#FEE4E2] hover:text-[#E51636]'}`}
+                      >
+                        View Details
+                      </Button>
+                      {user?.position === 'Director' && trainee.currentPlan && (
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          onClick={() => {
+                            setDeleteTraineeId(trainee._id)
+                            setIsDeleteDialogOpen(true)
+                          }}
+                          className="rounded-full hover:bg-[#FEE4E2] hover:text-[#E51636]"
+                        >
+                          <Trash2 className="h-4 w-4" />
+                        </Button>
+                      )}
+                    </div>
+                  </TableCell>
+                </TableRow>
               )
             })}
-          </div>
+          </TableBody>
+        </Table>
+      </div>
 
-          {filteredTrainees.length === 0 && (
-            <div className="py-12 text-center text-gray-500">
-              No trainees found
-            </div>
-          )}
-        </CardContent>
-      </Card>
+      {/* Mobile Table */}
+      <div className="md:hidden space-y-4">
+        {filteredTrainees.map((trainee) => {
+          // Calculate the capped progress for display (0-100%)
+          const displayProgress = Math.min(trainee.progress || 0, 100)
+
+          return (
+            <Card key={trainee._id} className="overflow-hidden">
+              <CardHeader className="p-4">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-3">
+                    <Avatar className="h-9 w-9">
+                      <AvatarFallback>{getInitials(trainee.name)}</AvatarFallback>
+                    </Avatar>
+                    <div>
+                      <CardTitle className="text-base">{trainee.name}</CardTitle>
+                      <CardDescription>{trainee.position}</CardDescription>
+                    </div>
+                  </div>
+                  <Badge className={cn(getStatusStyles(trainee.status))}>
+                    {getStatusText(trainee.status)}
+                  </Badge>
+                </div>
+              </CardHeader>
+              <CardContent className="p-4 pt-0">
+                {trainee.currentPlan ? (
+                  <div className="flex flex-col gap-1">
+                    <div className="font-medium">{trainee.currentPlan.name}</div>
+                    <div className="flex w-full items-center gap-2">
+                      <Progress
+                        value={displayProgress}
+                        className="h-2"
+                      />
+                      <span
+                        className="text-xs font-medium"
+                        title={trainee.progress > 100 ? `Raw value: ${trainee.progress}%` : undefined}
+                      >
+                        {formatProgress(trainee.progress)}
+                      </span>
+                    </div>
+                  </div>
+                ) : (
+                  <span className="text-muted-foreground">No active plan</span>
+                )}
+              </CardContent>
+              <CardFooter className="p-4 pt-0">
+                <Button variant="secondary" size="sm" className="w-full" onClick={() => navigate(`/training/progress/${trainee._id}`)}>
+                  View Details
+                </Button>
+              </CardFooter>
+            </Card>
+          )
+        })}
+      </div>
+
+      {filteredTrainees.length === 0 && (
+        <div className="py-12 text-center text-gray-500">
+          No trainees found
+        </div>
+      )}
 
       {/* Assign Dialog */}
       <Dialog open={isAssignDialogOpen} onOpenChange={setIsAssignDialogOpen}>
