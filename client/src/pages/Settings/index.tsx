@@ -10,9 +10,8 @@ import { Input } from "@/components/ui/input";
 import { Switch } from "@/components/ui/switch";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Settings as SettingsIcon, Users, FileText, Bell, BarChart, Save, RotateCcw, ChevronLeft, Scale, Mail } from 'lucide-react';
+import { Settings as SettingsIcon, FileText, Bell, BarChart, Save, RotateCcw, Scale, Mail, LayoutDashboard } from 'lucide-react';
 import { cn } from "@/lib/utils";
-import UserAccessSettings from './components/UserAccessSettings';
 import ChangePasswordForm from './components/ChangePasswordForm';
 import MobileNavigationSettings from './components/MobileNavigationSettings';
 import { settingsService } from '@/lib/services/settings';
@@ -20,6 +19,7 @@ import { userPreferencesService } from '@/lib/services/userPreferences';
 import api from '@/lib/axios';
 import { handleError } from '@/lib/utils/error-handler';
 import { useNavigate } from 'react-router-dom';
+import PageHeader, { headerButtonClass } from '@/components/PageHeader';
 import GradingScales from './components/GradingScales';
 
 const SettingsPage = () => {
@@ -79,7 +79,7 @@ const SettingsPage = () => {
     'general',
     'password',
     'mobile-navigation',
-    ...(isAdmin ? ['users', 'grading-scales'] : [])
+    ...(isAdmin ? ['grading-scales'] : [])
   ];
 
   // Handle keyboard navigation between tabs
@@ -266,25 +266,20 @@ const SettingsPage = () => {
     <div className="min-h-screen p-4 md:p-6">
       <div className="max-w-7xl mx-auto space-y-6">
         {/* Header */}
-        <div className="bg-gradient-to-r from-[#E51636] to-[#DD0031] rounded-[20px] p-8 text-white shadow-xl relative overflow-hidden">
-          <div className="absolute inset-0 bg-[url('/pattern.png')] opacity-10" />
-          <div className="relative">
-            <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-6">
-              <div>
-                <h1 className="text-3xl md:text-4xl font-bold">{t('settings.title')}</h1>
-                <p className="text-white/80 mt-2">{t('settings.subtitle')}</p>
-              </div>
-              <Button
-                variant="secondary"
-                className="bg-white/10 hover:bg-white/20 text-white border-0 h-12 px-6"
-                onClick={() => navigate('/')}
-              >
-                <ChevronLeft className="w-5 h-5 mr-2" />
-                Back to Dashboard
-              </Button>
-            </div>
-          </div>
-        </div>
+        <PageHeader
+          title={t('settings.title')}
+          subtitle={t('settings.subtitle')}
+          icon={<SettingsIcon className="h-5 w-5" />}
+          actions={
+            <Button
+              className={headerButtonClass}
+              onClick={() => navigate('/')}
+            >
+              <LayoutDashboard className="w-4 h-4" />
+              <span>Back to Dashboard</span>
+            </Button>
+          }
+        />
 
         {/* Error and Success Messages */}
         {error && (
@@ -352,19 +347,7 @@ const SettingsPage = () => {
             >
               Mobile Menu
             </TabsTrigger>
-            {isAdmin && (
-              <TabsTrigger
-                value="users"
-                className="data-[state=active]:bg-[#E51636] data-[state=active]:text-white rounded-[14px] h-10 focus:ring-2 focus:ring-[#E51636] focus:ring-offset-2"
-                role="tab"
-                aria-selected={activeTab === 'users'}
-                tabIndex={activeTab === 'users' ? 0 : -1}
-                aria-controls="users-tab"
-                title="User Access Settings (Alt+3)"
-              >
-                {t('settings.userAccess')}
-              </TabsTrigger>
-            )}
+
             {isAdmin && (
               <TabsTrigger
                 value="grading-scales"
@@ -514,13 +497,7 @@ const SettingsPage = () => {
             )}
           </TabsContent>
 
-          <TabsContent value="users" id="users-tab" role="tabpanel" aria-labelledby="users-tab" tabIndex={0}>
-            <UserAccessSettings
-              settings={settings?.userAccess}
-              onUpdate={(data) => updateSettingsMutation.mutate({ userAccess: data })}
-              isUpdating={updateSettingsMutation.isPending}
-            />
-          </TabsContent>
+
 
           <TabsContent value="grading-scales" id="grading-scales-tab" role="tabpanel" aria-labelledby="grading-scales-tab" tabIndex={0}>
             <GradingScales />
