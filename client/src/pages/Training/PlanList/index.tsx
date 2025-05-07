@@ -11,7 +11,7 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table'
-import { Plus, Search, Eye, UserPlus, ClipboardList } from 'lucide-react'
+import { Plus, Search, Eye, UserPlus, ClipboardList, CheckCircle, Clock, Users } from 'lucide-react'
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog'
 import CreatePlanForm from '../Progress/components/CreatePlanForm'
 import { toast } from '@/components/ui/use-toast'
@@ -265,11 +265,76 @@ export default function TrainingPlanList() {
         {/* Header Section */}
         <div className="space-y-2">
           <h1 className="text-3xl font-semibold text-gray-900">Training Plans</h1>
-          <p className="text-gray-600 text-lg">
-            {isManager
-              ? 'Track and manage training plans for employees'
-              : 'View your assigned training plans'}
-          </p>
+        </div>
+
+        {/* Info Cards */}
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+          <Card className="bg-gradient-to-br from-blue-50 to-blue-100 border-none shadow-sm">
+            <CardContent className="p-6">
+              <div className="flex items-start justify-between">
+                <div className="space-y-2">
+                  <h3 className="font-medium text-blue-800">Active Plans</h3>
+                  <p className="text-3xl font-bold text-blue-900">{plansToDisplay.filter(p => p.status === 'in_progress').length}</p>
+                  <p className="text-sm text-blue-700">Currently in progress</p>
+                </div>
+                <div className="h-12 w-12 rounded-full bg-blue-200 flex items-center justify-center text-blue-700">
+                  <ClipboardList className="h-6 w-6" />
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+
+          <Card className="bg-gradient-to-br from-green-50 to-green-100 border-none shadow-sm">
+            <CardContent className="p-6">
+              <div className="flex items-start justify-between">
+                <div className="space-y-2">
+                  <h3 className="font-medium text-green-800">Completed</h3>
+                  <p className="text-3xl font-bold text-green-900">{plansToDisplay.filter(p => p.status === 'completed').length}</p>
+                  <p className="text-sm text-green-700">Successfully finished</p>
+                </div>
+                <div className="h-12 w-12 rounded-full bg-green-200 flex items-center justify-center text-green-700">
+                  <CheckCircle className="h-6 w-6" />
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+
+          <Card className="bg-gradient-to-br from-amber-50 to-amber-100 border-none shadow-sm">
+            <CardContent className="p-6">
+              <div className="flex items-start justify-between">
+                <div className="space-y-2">
+                  <h3 className="font-medium text-amber-800">Average Duration</h3>
+                  <p className="text-3xl font-bold text-amber-900">
+                    {plansToDisplay.length > 0 ? 
+                      `${Math.round(plansToDisplay.reduce((acc, plan) => {
+                        const days = plan.days?.length || 0;
+                        return acc + days;
+                      }, 0) / Math.max(plansToDisplay.length, 1))} days` : 
+                      'N/A'}
+                  </p>
+                  <p className="text-sm text-amber-700">Per training plan</p>
+                </div>
+                <div className="h-12 w-12 rounded-full bg-amber-200 flex items-center justify-center text-amber-700">
+                  <Clock className="h-6 w-6" />
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+
+          <Card className="bg-gradient-to-br from-purple-50 to-purple-100 border-none shadow-sm">
+            <CardContent className="p-6">
+              <div className="flex items-start justify-between">
+                <div className="space-y-2">
+                  <h3 className="font-medium text-purple-800">Total Plans</h3>
+                  <p className="text-3xl font-bold text-purple-900">{plansToDisplay.length}</p>
+                  <p className="text-sm text-purple-700">{isManager ? 'Available to assign' : 'In your curriculum'}</p>
+                </div>
+                <div className="h-12 w-12 rounded-full bg-purple-200 flex items-center justify-center text-purple-700">
+                  <Users className="h-6 w-6" />
+                </div>
+              </div>
+            </CardContent>
+          </Card>
         </div>
 
         {/* Search and Actions */}
