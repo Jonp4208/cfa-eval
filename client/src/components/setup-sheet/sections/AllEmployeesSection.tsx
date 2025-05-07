@@ -91,7 +91,14 @@ export const AllEmployeesSection: React.FC<AllEmployeesSectionProps> = ({
                   </div>
                   <div className="text-xs text-gray-500 mt-2 flex items-center">
                     <Clock className="h-3 w-3 mr-1 text-gray-400" />
-                    <span>{employee.timeBlock}</span>
+                    <span>
+                      {employee.timeBlock ?
+                        employee.timeBlock.split(' - ').map(time => formatHourTo12Hour(time)).join(' - ') :
+                        employee.timeBlocks && employee.timeBlocks.length > 0 ?
+                          employee.timeBlocks.map(block => block.split(' - ').map(time => formatHourTo12Hour(time)).join(' - ')).join(', ') :
+                          'No schedule'
+                      }
+                    </span>
                   </div>
                 </div>
               </div>

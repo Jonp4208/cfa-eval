@@ -1480,22 +1480,18 @@ export function DailyView({ setup, onBack }: DailyViewProps) {
       // IMPORTANT: Also remove the employee from the uploadedSchedules array
       // This ensures the employee is removed from the database
       if (newSetup.uploadedSchedules) {
-        const originalLength = newSetup.uploadedSchedules.length;
         newSetup.uploadedSchedules = newSetup.uploadedSchedules.filter(
           (emp: any) => emp.id !== employeeId
         );
-        const newLength = newSetup.uploadedSchedules.length;
-        // Console statement removed
+        console.log(`Removed employee ${employeeId} from uploadedSchedules`);
       }
 
       // If the setup has an employees array, remove from there too
       if (newSetup.employees && Array.isArray(newSetup.employees)) {
-        const originalLength = newSetup.employees.length;
         newSetup.employees = newSetup.employees.filter(
           (emp: any) => emp.id !== employeeId
         );
-        const newLength = newSetup.employees.length;
-        // Console statement removed
+        console.log(`Removed employee ${employeeId} from employees array`);
       }
 
       // Update the UI immediately
@@ -1525,22 +1521,33 @@ export function DailyView({ setup, onBack }: DailyViewProps) {
 
       // Save changes to the server
       try {
+        console.log(`Saving changes after deleting employee ${employeeId}`);
+
         // Create the payload with all scheduled employees
+        // Make sure we're explicitly filtering out the deleted employee
+        const filteredUploadedSchedules = (newSetup.uploadedSchedules || updatedEmployees).filter(
+          (emp: any) => emp.id !== employeeId
+        );
+
         const payload = {
           name: newSetup.name,
           startDate: newSetup.startDate,
           endDate: newSetup.endDate,
           weekSchedule: newSetup.weekSchedule,
-          uploadedSchedules: newSetup.uploadedSchedules || updatedEmployees,
-          employees: newSetup.employees || [] // Include the employees array if it exists
+          uploadedSchedules: filteredUploadedSchedules,
+          employees: newSetup.employees ? newSetup.employees.filter((emp: any) => emp.id !== employeeId) : [] // Include the employees array if it exists
         };
 
-        // Call the API directly to ensure we're sending the correct data
+        console.log(`Payload uploadedSchedules length: ${payload.uploadedSchedules.length}`);
+
+        // Add a special header to indicate this is a delete employee operation
+        // This can help the server prioritize the employee deletion
         const response = await fetch(`/api/weekly-setups/${setup._id}`, {
           method: 'PUT',
           headers: {
             'Content-Type': 'application/json',
-            'Authorization': `Bearer ${token}`
+            'Authorization': `Bearer ${token}`,
+            'X-Delete-Employee': employeeId // Add custom header to indicate employee deletion
           },
           body: JSON.stringify(payload),
         });
@@ -1552,11 +1559,49 @@ export function DailyView({ setup, onBack }: DailyViewProps) {
 
         // Update the original setup with the response from the server
         const updatedSetup = await response.json();
-        setOriginalSetup(updatedSetup);
 
-        // Console statement removed
+        // Verify the employee was actually removed in the response
+        const employeeStillExists = updatedSetup.uploadedSchedules?.some((emp: any) => emp.id === employeeId);
+        if (employeeStillExists) {
+          console.warn(`Employee ${employeeId} still exists in the response from server`);
+
+          // Try a second save with explicit filtering
+          const filteredUploadedSchedules = updatedSetup.uploadedSchedules.filter(
+            (emp: any) => emp.id !== employeeId
+          );
+
+          const secondPayload = {
+            ...payload,
+            uploadedSchedules: filteredUploadedSchedules
+          };
+
+          console.log(`Attempting second save with explicitly filtered uploadedSchedules (${filteredUploadedSchedules.length})`);
+
+          const secondResponse = await fetch(`/api/weekly-setups/${setup._id}`, {
+            method: 'PUT',
+            headers: {
+              'Content-Type': 'application/json',
+              'Authorization': `Bearer ${token}`,
+              'X-Delete-Employee': employeeId, // Add custom header to indicate employee deletion
+              'X-Second-Attempt': 'true' // Indicate this is a second attempt
+            },
+            body: JSON.stringify(secondPayload),
+          });
+
+          if (!secondResponse.ok) {
+            const errorData = await secondResponse.json();
+            throw new Error(errorData.message || 'Failed to save changes on second attempt');
+          }
+
+          const secondUpdatedSetup = await secondResponse.json();
+          setOriginalSetup(secondUpdatedSetup);
+          console.log('Second save successful');
+        } else {
+          setOriginalSetup(updatedSetup);
+          console.log('Employee successfully removed from database');
+        }
       } catch (error) {
-        // Console statement removed
+        console.error('Error saving changes after deleting employee:', error);
 
         // Revert changes on error
         setModifiedSetup(originalSetup);
@@ -1569,7 +1614,7 @@ export function DailyView({ setup, onBack }: DailyViewProps) {
         });
       }
     } catch (error) {
-      // Console statement removed
+      console.error('Error in handleDeleteEmployee:', error);
       toast({
         title: 'Error',
         description: 'Failed to delete employee. Please try again.',
@@ -3799,6 +3844,7 @@ export function DailyView({ setup, onBack }: DailyViewProps) {
                   handleBreakClick={handleBreakClick}
                   handleReplaceClick={handleReplaceClick}
                   endBreak={endBreak}
+                  scheduledEmployees={scheduledEmployees}
                 />
 
                 {/* Unassigned Employees Section - Show Second */}

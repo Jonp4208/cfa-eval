@@ -88,7 +88,10 @@ export const UnassignedEmployeesSection: React.FC<UnassignedEmployeesSectionProp
                     <span>
                       {employee.timeBlock ?
                         employee.timeBlock.split(' - ').map(time => formatHourTo12Hour(time)).join(' - ') :
-                        ''}
+                        employee.timeBlocks && employee.timeBlocks.length > 0 ?
+                          employee.timeBlocks.map(block => block.split(' - ').map(time => formatHourTo12Hour(time)).join(' - ')).join(', ') :
+                          'No schedule'
+                      }
                     </span>
                   </div>
                 </div>

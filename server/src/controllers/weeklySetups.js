@@ -277,6 +277,17 @@ export const updateWeeklySetup = async (req, res) => {
     const { id } = req.params;
     const { name, startDate, endDate, weekSchedule, uploadedSchedules, isShared } = req.body;
 
+    // Check for employee deletion header
+    const employeeToDeleteId = req.headers['x-delete-employee'];
+    const isSecondAttempt = req.headers['x-second-attempt'] === 'true';
+
+    if (employeeToDeleteId) {
+      console.log(`Detected employee deletion request for employee ID: ${employeeToDeleteId}`);
+      if (isSecondAttempt) {
+        console.log(`This is a second attempt to delete employee ${employeeToDeleteId}`);
+      }
+    }
+
     if (!mongoose.Types.ObjectId.isValid(id)) {
       return res.status(404).json({ message: 'Invalid ID format' });
     }
@@ -512,6 +523,34 @@ export const updateWeeklySetup = async (req, res) => {
     // Update the mergedUploadedSchedules array with the updated employee data
     mergedUploadedSchedules = Array.from(existingEmployeeMap.values());
 
+    // If this is an employee deletion request, explicitly remove the employee from mergedUploadedSchedules
+    if (employeeToDeleteId) {
+      console.log(`Explicitly removing employee ${employeeToDeleteId} from mergedUploadedSchedules`);
+      const beforeLength = mergedUploadedSchedules.length;
+      mergedUploadedSchedules = mergedUploadedSchedules.filter(emp => emp.id !== employeeToDeleteId);
+      const afterLength = mergedUploadedSchedules.length;
+      console.log(`Removed ${beforeLength - afterLength} employee records with ID ${employeeToDeleteId}`);
+
+      // Also remove the employee from all positions in the weekSchedule
+      let positionsCleared = 0;
+      Object.keys(mergedWeekSchedule).forEach(day => {
+        if (mergedWeekSchedule[day] && mergedWeekSchedule[day].timeBlocks) {
+          mergedWeekSchedule[day].timeBlocks.forEach(block => {
+            if (block.positions) {
+              block.positions.forEach(position => {
+                if (position.employeeId === employeeToDeleteId) {
+                  position.employeeId = undefined;
+                  position.employeeName = undefined;
+                  positionsCleared++;
+                }
+              });
+            }
+          });
+        }
+      });
+      console.log(`Cleared employee ${employeeToDeleteId} from ${positionsCleared} positions in the weekSchedule`);
+    }
+
     if (uploadedSchedules) {
       console.log(`Processing ${uploadedSchedules.length} employee records from request`);
 
@@ -568,6 +607,12 @@ export const updateWeeklySetup = async (req, res) => {
 
         // Update or add employees from the request
         uploadedSchedules.forEach(newEmp => {
+          // Skip this employee if it's the one being deleted
+          if (employeeToDeleteId && newEmp.id === employeeToDeleteId) {
+            console.log(`Skipping employee ${newEmp.id} (${newEmp.name}) as it's marked for deletion`);
+            return;
+          }
+
           if (existingEmployeeMap.has(newEmp.id)) {
             // Update existing employee with new data, but preserve fields that might not be in the new data
             const existingEmp = existingEmployeeMap.get(newEmp.id);
@@ -600,6 +645,12 @@ export const updateWeeklySetup = async (req, res) => {
         console.log('Replacing entire uploadedSchedules array');
         mergedUploadedSchedules = uploadedSchedules;
       }
+    }
+
+    // One final check to ensure the employee is removed if this is a deletion request
+    if (employeeToDeleteId) {
+      console.log(`Final check: ensuring employee ${employeeToDeleteId} is removed from uploadedSchedules`);
+      mergedUploadedSchedules = mergedUploadedSchedules.filter(emp => emp.id !== employeeToDeleteId);
     }
 
     const updatedSetup = await WeeklySetup.findByIdAndUpdate(
