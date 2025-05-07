@@ -495,17 +495,17 @@ export default function TrainingProgress() {
                   placeholder="Search trainees..."
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
-                  className="pl-9 w-full bg-white border-none shadow-sm rounded-full"
+                  className="pl-9 w-full bg-white border border-gray-200 shadow-sm rounded-full"
                 />
               </div>
             </div>
 
             {/* Filter Tabs */}
-            <div className="bg-white rounded-full flex p-1 shadow-sm border border-gray-200">
+            <div className="bg-white rounded-full flex p-1 shadow-sm border border-gray-200 w-full sm:w-auto">
               <Button
                 variant="ghost"
                 onClick={() => setActiveTab('active')}
-                className={`rounded-full px-8 border ${
+                className={`rounded-full px-4 sm:px-8 border flex-1 sm:flex-initial ${
                   activeTab === 'active'
                     ? 'bg-[#FEE4E2] text-[#E51636] font-medium border-[#E51636]'
                     : 'text-gray-600 hover:text-[#E51636] hover:bg-gray-50 border-transparent'
@@ -516,7 +516,7 @@ export default function TrainingProgress() {
               <Button
                 variant="ghost"
                 onClick={() => setActiveTab('completed')}
-                className={`rounded-full px-8 border ${
+                className={`rounded-full px-4 sm:px-8 border flex-1 sm:flex-initial ${
                   activeTab === 'completed'
                     ? 'bg-[#FEE4E2] text-[#E51636] font-medium border-[#E51636]'
                     : 'text-gray-600 hover:text-[#E51636] hover:bg-gray-50 border-transparent'
@@ -525,12 +525,12 @@ export default function TrainingProgress() {
                 Completed
               </Button>
             </div>
-            
+
             {/* Assign Training Button */}
             {(user?.position === 'Leader' || user?.position === 'Director') && (
               <Button
                 onClick={() => setIsAssignDialogOpen(true)}
-                className="bg-[#E51636] text-white hover:bg-[#E51636]/90 rounded-full gap-2 whitespace-nowrap px-6"
+                className="bg-[#E51636] text-white hover:bg-[#E51636]/90 rounded-full gap-2 whitespace-nowrap px-6 w-full sm:w-auto"
               >
                 <Plus className="h-4 w-4" />
                 Assign Training
