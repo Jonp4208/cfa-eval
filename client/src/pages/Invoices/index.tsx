@@ -196,12 +196,12 @@ export default function InvoicesPage() {
             onValueChange={setSelectedTab}
             className="w-full"
           >
-            <TabsList className="grid grid-cols-2 xs:grid-cols-3 sm:grid-cols-5 mb-4 gap-1">
-              <TabsTrigger value="all">All</TabsTrigger>
-              <TabsTrigger value="draft">Draft</TabsTrigger>
-              <TabsTrigger value="sent">Sent</TabsTrigger>
-              <TabsTrigger value="paid">Paid</TabsTrigger>
-              <TabsTrigger value="overdue">Overdue</TabsTrigger>
+            <TabsList className="flex flex-wrap mb-4 w-full">
+              <TabsTrigger value="all" className="flex-1 min-w-[80px]">All</TabsTrigger>
+              <TabsTrigger value="draft" className="flex-1 min-w-[80px]">Draft</TabsTrigger>
+              <TabsTrigger value="sent" className="flex-1 min-w-[80px]">Sent</TabsTrigger>
+              <TabsTrigger value="paid" className="flex-1 min-w-[80px]">Paid</TabsTrigger>
+              <TabsTrigger value="overdue" className="flex-1 min-w-[80px]">Overdue</TabsTrigger>
             </TabsList>
 
             <TabsContent value={selectedTab} className="mt-0">
