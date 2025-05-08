@@ -1,7 +1,7 @@
 // Service Worker for LD Growth PWA
 
 // Change this version number whenever you want to force an update
-const CACHE_VERSION = '1.0.120';
+const CACHE_VERSION = '1.0.121';
 const CACHE_NAME = `ld-growth-cache-${CACHE_VERSION}`;
 const urlsToCache = [
   '/',
@@ -16,7 +16,6 @@ self.addEventListener('install', event => {
   event.waitUntil(
     caches.open(CACHE_NAME)
       .then(cache => {
-        console.log('Opened cache');
         return cache.addAll(urlsToCache);
       })
   );
@@ -60,9 +59,7 @@ self.addEventListener('fetch', event => {
 
             return response;
           })
-          .catch(error => {
-            console.log('Fetch failed; returning offline page instead.', error);
-
+          .catch(() => {
             // If the fetch fails (e.g. network offline), try to return the cached homepage
             return caches.match('/');
           });
@@ -78,7 +75,6 @@ self.addEventListener('activate', event => {
       return Promise.all(
         cacheNames.map(cacheName => {
           if (cacheWhitelist.indexOf(cacheName) === -1) {
-            console.log('Deleting old cache:', cacheName);
             return caches.delete(cacheName);
           }
         })
@@ -92,7 +88,6 @@ self.addEventListener('activate', event => {
 
 // Listen for push events (notifications from the server)
 self.addEventListener('push', event => {
-  console.log('[Service Worker] Push received');
 
   let notificationData = {};
   if (event.data) {
@@ -132,7 +127,6 @@ self.addEventListener('push', event => {
 
 // Handle notification clicks
 self.addEventListener('notificationclick', event => {
-  console.log('[Service Worker] Notification click received:', event);
 
   event.notification.close();
 
@@ -161,9 +155,6 @@ self.addEventListener('notificationclick', event => {
 // Listen for messages from the client
 self.addEventListener('message', event => {
   if (event.data && event.data.type === 'SKIP_WAITING') {
-    console.log('[Service Worker] Received skip waiting message');
-    self.skipWaiting()
-      .then(() => console.log('[Service Worker] Skip waiting successful'))
-      .catch(err => console.error('[Service Worker] Skip waiting failed:', err));
+    self.skipWaiting();
   }
 });
