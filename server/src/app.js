@@ -42,6 +42,7 @@ import weeklySetupsRouter from './routes/weeklySetups.js';
 import leadsRouter from './routes/leads.js';
 import breaksRouter from './routes/breaks.js';
 import userPreferencesRouter from './routes/userPreferences.js';
+import invoicesRouter from './routes/invoices.js';
 
 // Services
 import { initCronJobs } from './services/cronService.js';
@@ -158,6 +159,7 @@ apiRouter.use('/weekly-setups', weeklySetupsRouter);
 apiRouter.use('/leads', leadsRouter);
 apiRouter.use('/breaks', breaksRouter);
 apiRouter.use('/user-preferences', userPreferencesRouter);
+apiRouter.use('/invoices', invoicesRouter);
 
 // Test Email Configuration
 apiRouter.post('/test-email', async (req, res) => {

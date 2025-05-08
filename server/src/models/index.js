@@ -11,3 +11,4 @@ export { default as TrainingProgress } from './TrainingProgress.js';
 export { default as StoreSubscription } from './StoreSubscription.js';
 export { default as ShiftSetup } from './ShiftSetup.js';
 export { default as DefaultPositions } from './defaultPositions.js';
+export { default as Invoice } from './Invoice.js';

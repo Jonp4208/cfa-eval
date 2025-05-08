@@ -72,7 +72,7 @@ export const verifyEmailConfig = async () => {
       message: error.message,
       code: error.code
     });
-    
+
     // Try alternate transporter if primary fails
     try {
       logger.debug('Trying alternate email configuration...');
@@ -97,35 +97,54 @@ const createMockTransporter = () => {
   logger.warn('Using mock email transport - emails will be logged but not sent');
   return {
     sendMail: async (options) => {
-      logger.info('MOCK EMAIL:', {
+      const logInfo = {
         to: options.to,
         subject: options.subject,
         html: options.html.substring(0, 100) + '...'
-      });
+      };
+
+      if (options.attachments && options.attachments.length > 0) {
+        logInfo.attachments = options.attachments.map(att => ({
+          filename: att.filename,
+          path: att.path ? att.path.substring(0, 50) + '...' : '[content]'
+        }));
+      }
+
+      logger.info('MOCK EMAIL:', logInfo);
       return { messageId: 'mock-' + Date.now() };
     }
   };
 };
 
-export const sendEmailWithRetry = async ({ to, subject, html }, retries = 0) => {
+export const sendEmailWithRetry = async ({ to, subject, html, attachments = [] }, retries = 0) => {
   try {
     logger.debug(`Attempting to send email (attempt ${retries + 1}/${MAX_RETRIES})...`);
 
     // Use mock transporter if email config failed verification
     const transporter = emailConfigVerified ? createTransporter() : createMockTransporter();
-    
+
     const mailOptions = {
       from: process.env.EMAIL_USER,
       to,
       subject,
-      html
+      html,
+      attachments
     };
 
-    logger.debug('Mail options:', {
+    const logOptions = {
       from: process.env.EMAIL_USER,
       to,
       subject
-    });
+    };
+
+    if (attachments && attachments.length > 0) {
+      logOptions.attachments = attachments.map(att => ({
+        filename: att.filename,
+        contentType: att.contentType
+      }));
+    }
+
+    logger.debug('Mail options:', logOptions);
 
     const result = await transporter.sendMail(mailOptions);
     logger.info('Email sent successfully:', { messageId: result.messageId });
@@ -138,25 +157,33 @@ export const sendEmailWithRetry = async ({ to, subject, html }, retries = 0) => 
 
     if (retries < MAX_RETRIES - 1) {
       logger.info(`Retrying in ${RETRY_DELAY/1000} seconds...`);
-      
+
       // If this was the first failure, try the alternate transporter next time
       if (retries === 0 && error.code === 'EAUTH') {
         logger.info('Auth error detected, will try alternate transporter on next attempt');
       }
-      
+
       await new Promise(resolve => setTimeout(resolve, RETRY_DELAY));
-      return sendEmailWithRetry({ to, subject, html }, retries + 1);
+      return sendEmailWithRetry({ to, subject, html, attachments }, retries + 1);
     }
 
     // If all retries fail, log the email content but don't block the app
-    logger.warn('Failed to send email after all retries, logging content:', {
+    const logInfo = {
       to,
       subject,
       html: html.substring(0, 100) + '...'
-    });
-    
+    };
+
+    if (attachments && attachments.length > 0) {
+      logInfo.attachments = attachments.map(att => ({
+        filename: att.filename
+      }));
+    }
+
+    logger.warn('Failed to send email after all retries, logging content:', logInfo);
+
     // Return mock success - this prevents the app from crashing due to email failures
-    return { 
+    return {
       messageId: 'failed-but-logged-' + Date.now(),
       status: 'logged-only'
     };
@@ -164,19 +191,27 @@ export const sendEmailWithRetry = async ({ to, subject, html }, retries = 0) => 
 };
 
 // Backward compatibility wrapper
-export const sendEmail = async ({ to, subject, html }) => {
+export const sendEmail = async ({ to, subject, html, attachments = [] }) => {
   try {
-    return await sendEmailWithRetry({ to, subject, html });
+    return await sendEmailWithRetry({ to, subject, html, attachments });
   } catch (error) {
     // Log but don't rethrow to prevent email issues from crashing the app
-    logger.error('Email sending completely failed, continuing app execution:', {
+    const logInfo = {
       error: error.message,
       to,
       subject
-    });
-    
+    };
+
+    if (attachments && attachments.length > 0) {
+      logInfo.attachments = attachments.map(att => ({
+        filename: att.filename
+      }));
+    }
+
+    logger.error('Email sending completely failed, continuing app execution:', logInfo);
+
     // Return a mock result
-    return { 
+    return {
       messageId: 'failed-gracefully-' + Date.now(),
       status: 'failed-gracefully'
     };
