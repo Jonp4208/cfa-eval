@@ -196,7 +196,7 @@ export default function InvoicesPage() {
             onValueChange={setSelectedTab}
             className="w-full"
           >
-            <TabsList className="grid grid-cols-3 sm:grid-cols-5 mb-4 gap-1">
+            <TabsList className="grid grid-cols-2 xs:grid-cols-3 sm:grid-cols-5 mb-4 gap-1">
               <TabsTrigger value="all">All</TabsTrigger>
               <TabsTrigger value="draft">Draft</TabsTrigger>
               <TabsTrigger value="sent">Sent</TabsTrigger>
