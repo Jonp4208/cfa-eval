@@ -87,6 +87,7 @@ import { SavedSetups } from '@/pages/SavedSetups';
 import { SetupView } from '@/pages/SetupView';
 import { EditTemplate } from '@/pages/EditTemplate';
 import InvoicesPage from '@/pages/Invoices';
+import AdminPage from '@/pages/Admin';
 
 interface PrivateRouteProps {
   children: React.ReactNode;
@@ -255,8 +256,9 @@ export default function AppRoutes() {
       {/* Redirect /goals to /leadership/goals since goals feature has been moved */}
       <Route path="/goals" element={<Navigate to="/leadership/goals" replace />} />
 
-      {/* Hidden Invoice Page - Admin Only */}
+      {/* Admin Pages - Restricted Access */}
       <Route path="/admin/invoices" element={<PrivateRoute><InvoicesPage /></PrivateRoute>} />
+      <Route path="/admin/stores" element={<PrivateRoute><AdminPage /></PrivateRoute>} />
 
       <Route path="*" element={<Navigate to="/" replace />} />
     </Routes>

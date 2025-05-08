@@ -30,8 +30,8 @@ export default function InvoicesPage() {
   const [selectedInvoice, setSelectedInvoice] = useState<Invoice | null>(null);
   const [showInvoiceDetails, setShowInvoiceDetails] = useState(false);
 
-  // Check if user is admin
-  const isAdmin = user?.role === 'admin' || user?.isAdmin;
+  // Check if user is Jonathon Pope (only user with access to invoices)
+  const isJonathonPope = user?.email === 'jonp4208@gmail.com';
 
   // Fetch invoices
   const { data: invoices, isLoading, refetch } = useQuery({
@@ -40,7 +40,7 @@ export default function InvoicesPage() {
       const filter = selectedTab !== 'all' ? { status: selectedTab } : undefined;
       return invoiceService.getAllInvoices(filter);
     },
-    enabled: isAdmin // Only fetch if user is admin
+    enabled: isJonathonPope // Only fetch if user is Jonathon Pope
   });
 
   // Send invoice mutation
@@ -149,15 +149,15 @@ export default function InvoicesPage() {
     }
   };
 
-  // If user is not admin, show access denied
-  if (!isAdmin) {
+  // If user is not Jonathon Pope, show access denied
+  if (!isJonathonPope) {
     return (
       <div className="container mx-auto py-6">
         <Card>
           <CardContent className="pt-6">
             <div className="text-center">
               <h2 className="text-2xl font-bold text-red-600">Access Denied</h2>
-              <p className="mt-2">You do not have permission to access this page.</p>
+              <p className="mt-2">This page is restricted to authorized personnel only.</p>
             </div>
           </CardContent>
         </Card>

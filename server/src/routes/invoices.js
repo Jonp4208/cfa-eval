@@ -1,6 +1,6 @@
 import express from 'express';
 import { auth } from '../middleware/auth.js';
-import { isStoreAdmin } from '../middleware/roles.js';
+import { isJonathonPope } from '../middleware/roles.js';
 import Invoice from '../models/Invoice.js';
 import expressAsyncHandler from 'express-async-handler';
 import { sendEmail } from '../utils/email.js';
@@ -13,8 +13,8 @@ const router = express.Router();
 // All routes require authentication
 router.use(auth);
 
-// All invoice routes require admin access
-router.use(isStoreAdmin);
+// All invoice routes require Jonathon Pope's access only
+router.use(isJonathonPope);
 
 // Get all invoices
 router.get('/', expressAsyncHandler(async (req, res) => {

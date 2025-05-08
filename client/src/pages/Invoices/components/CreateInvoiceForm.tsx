@@ -1,10 +1,10 @@
-import React, { useState } from 'react';
-import { useMutation } from '@tanstack/react-query';
+import React, { useState, useEffect } from 'react';
+import { useMutation, useQuery } from '@tanstack/react-query';
 import { useForm, useFieldArray } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
 import { format } from 'date-fns';
-import { CalendarIcon, Plus, Trash2, Calculator } from 'lucide-react';
+import { CalendarIcon, Plus, Trash2, Calculator, Building } from 'lucide-react';
 import {
   Dialog,
   DialogContent,
@@ -38,9 +38,12 @@ import {
 import { Calendar } from '@/components/ui/calendar';
 import { cn } from '@/lib/utils';
 import invoiceService, { Invoice, InvoiceItem } from '@/services/invoiceService';
+import storeService, { StoreBasic } from '@/services/storeService';
+import { useAuth } from '@/contexts/AuthContext';
 
 // Form schema
 const formSchema = z.object({
+  storeId: z.string().optional().nullable(),
   client: z.object({
     name: z.string().min(1, 'Client name is required'),
     email: z.string().email('Invalid email address'),
@@ -91,11 +94,23 @@ export default function CreateInvoiceForm({
   onSuccess
 }: CreateInvoiceFormProps) {
   const [isCalculating, setIsCalculating] = useState(false);
+  const { user } = useAuth();
+
+  // Check if user is Jonathon Pope (admin)
+  const isAdmin = user?.email === 'jonp4208@gmail.com';
+
+  // Fetch stores for dropdown
+  const { data: stores, isLoading: isLoadingStores } = useQuery({
+    queryKey: ['admin-stores-for-invoice'],
+    queryFn: storeService.getAllStores,
+    enabled: isAdmin // Only fetch if user is admin
+  });
 
   // Initialize form
   const form = useForm<FormValues>({
     resolver: zodResolver(formSchema),
     defaultValues: {
+      storeId: undefined,
       client: {
         name: '',
         email: '',
@@ -135,6 +150,20 @@ export default function CreateInvoiceForm({
     },
   });
 
+  // Handle store selection
+  const handleStoreChange = (storeId: string) => {
+    if (!storeId) return;
+
+    const selectedStore = stores?.find(store => store._id === storeId);
+    if (selectedStore) {
+      form.setValue('storeId', storeId);
+      form.setValue('client.name', selectedStore.name);
+      form.setValue('client.email', selectedStore.storeEmail || '');
+      form.setValue('client.phone', selectedStore.storePhone || '');
+      form.setValue('client.address.street', selectedStore.storeAddress || '');
+    }
+  };
+
   // Field array for invoice items
   const { fields, append, remove } = useFieldArray({
     control: form.control,
@@ -144,15 +173,14 @@ export default function CreateInvoiceForm({
   // Create invoice mutation
   const createInvoiceMutation = useMutation({
     mutationFn: (data: FormValues) => {
-      console.log('Submitting invoice data:', data);
-      return invoiceService.createInvoice(data as Invoice);
+      // Remove storeId from the data before submitting
+      const { storeId, ...invoiceData } = data;
+      return invoiceService.createInvoice(invoiceData as Invoice);
     },
     onSuccess: (data) => {
-      console.log('Invoice created successfully:', data);
       onSuccess?.();
     },
     onError: (error: any) => {
-      console.error('Error creating invoice:', error);
       // Display error message to user
       alert(`Failed to create invoice: ${error.message || 'Unknown error'}`);
     }
@@ -201,6 +229,45 @@ export default function CreateInvoiceForm({
 
         <Form {...form}>
           <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
+            {/* Store Selection (Admin Only) */}
+            {isAdmin && stores && stores.length > 0 && (
+              <div className="space-y-4">
+                <h3 className="text-lg font-semibold">Select Store</h3>
+                <div className="grid grid-cols-1 gap-4">
+                  <FormField
+                    control={form.control}
+                    name="storeId"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Store</FormLabel>
+                        <Select
+                          onValueChange={(value) => {
+                            field.onChange(value);
+                            handleStoreChange(value);
+                          }}
+                          value={field.value}
+                        >
+                          <FormControl>
+                            <SelectTrigger>
+                              <SelectValue placeholder="Select a store" />
+                            </SelectTrigger>
+                          </FormControl>
+                          <SelectContent>
+                            {stores.map((store) => (
+                              <SelectItem key={store._id} value={store._id}>
+                                {store.name} (#{store.storeNumber})
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                </div>
+              </div>
+            )}
+
             {/* Client Information */}
             <div className="space-y-4">
               <h3 className="text-lg font-semibold">Client Information</h3>

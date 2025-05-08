@@ -8,6 +8,16 @@ export const isStoreAdmin = (req, res, next) => {
   next();
 };
 
+// Check if user is Jonathon Pope (for invoices page)
+export const isJonathonPope = (req, res, next) => {
+  if (req.user.email !== 'jonp4208@gmail.com') {
+    return res.status(403).json({
+      message: 'Forbidden - Access restricted to authorized personnel only'
+    });
+  }
+  next();
+};
+
 export const isManager = async (req, res, next) => {
   try {
     const managerPositions = [
@@ -52,8 +62,8 @@ export const checkRole = (roles) => {
       return next();
     }
 
-    return res.status(403).json({ 
-      message: 'Forbidden - Insufficient permissions' 
+    return res.status(403).json({
+      message: 'Forbidden - Insufficient permissions'
     });
   };
 };
@@ -67,12 +77,12 @@ export const canManageDepartment = (req, res, next) => {
     }
 
     // Get the target departments from request
-    const targetDepartments = Array.isArray(req.body.departments) 
-      ? req.body.departments 
+    const targetDepartments = Array.isArray(req.body.departments)
+      ? req.body.departments
       : [req.body.department || req.params.department];
 
     // Check if user's departments include all target departments
-    const canManage = targetDepartments.every(dept => 
+    const canManage = targetDepartments.every(dept =>
       req.user.departments.includes(dept)
     );
 
