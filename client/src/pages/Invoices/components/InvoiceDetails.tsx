@@ -1,18 +1,18 @@
 import React from 'react';
 import { format } from 'date-fns';
-import { 
-  Dialog, 
-  DialogContent, 
-  DialogHeader, 
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
   DialogTitle,
   DialogFooter
 } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
-import { 
-  Send, 
-  DollarSign, 
-  Trash2, 
-  Printer, 
+import {
+  Send,
+  DollarSign,
+  Trash2,
+  Printer,
   Download,
   Calendar,
   Mail,
@@ -49,7 +49,7 @@ export default function InvoiceDetails({
   const handlePrint = () => {
     const printContent = document.getElementById('invoice-print-content');
     const originalContents = document.body.innerHTML;
-    
+
     if (printContent) {
       document.body.innerHTML = printContent.innerHTML;
       window.print();
@@ -61,7 +61,7 @@ export default function InvoiceDetails({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
         <DialogHeader>
-          <DialogTitle className="text-xl font-bold flex items-center justify-between">
+          <DialogTitle className="text-xl font-bold flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2">
             <span>Invoice #{invoice.invoiceNumber}</span>
             <Badge className={`
               ${invoice.status === 'draft' ? 'bg-gray-200 text-gray-800' :
@@ -74,7 +74,7 @@ export default function InvoiceDetails({
             </Badge>
           </DialogTitle>
         </DialogHeader>
-        
+
         <div id="invoice-print-content" className="space-y-6">
           {/* Header */}
           <div className="flex flex-col md:flex-row justify-between">
@@ -82,20 +82,20 @@ export default function InvoiceDetails({
               <h2 className="text-2xl font-bold text-primary">INVOICE</h2>
               <p className="text-muted-foreground">#{invoice.invoiceNumber}</p>
             </div>
-            <div className="text-right mt-4 md:mt-0">
-              <div className="flex items-center justify-end gap-2">
+            <div className="mt-4 md:mt-0 flex flex-col items-start md:items-end">
+              <div className="flex items-center gap-2">
                 <Calendar className="h-4 w-4" />
                 <span>Issue Date: {formatDate(invoice.issueDate)}</span>
               </div>
-              <div className="flex items-center justify-end gap-2">
+              <div className="flex items-center gap-2">
                 <Calendar className="h-4 w-4" />
                 <span>Due Date: {formatDate(invoice.dueDate)}</span>
               </div>
             </div>
           </div>
-          
+
           <Separator />
-          
+
           {/* Client and Billing Info */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <div>
@@ -136,7 +136,7 @@ export default function InvoiceDetails({
                 )}
               </div>
             </div>
-            
+
             <div>
               <h3 className="font-semibold mb-2">Payment Details:</h3>
               <p className="capitalize text-sm">
@@ -160,11 +160,13 @@ export default function InvoiceDetails({
               )}
             </div>
           </div>
-          
+
           {/* Invoice Items */}
           <div>
             <h3 className="font-semibold mb-2">Invoice Items:</h3>
-            <div className="overflow-x-auto">
+
+            {/* Desktop view - Table */}
+            <div className="hidden md:block overflow-x-auto">
               <table className="w-full border-collapse">
                 <thead>
                   <tr className="bg-muted text-muted-foreground text-sm">
@@ -202,8 +204,47 @@ export default function InvoiceDetails({
                 </tfoot>
               </table>
             </div>
+
+            {/* Mobile view - Cards */}
+            <div className="md:hidden space-y-4">
+              {/* Items */}
+              <div className="space-y-3">
+                {invoice.items.map((item, index) => (
+                  <div key={index} className="border rounded-md p-3">
+                    <div className="font-medium mb-1">{item.description}</div>
+                    <div className="grid grid-cols-3 text-sm">
+                      <div>
+                        <span className="text-muted-foreground">Qty:</span> {item.quantity}
+                      </div>
+                      <div>
+                        <span className="text-muted-foreground">Price:</span> ${item.unitPrice.toFixed(2)}
+                      </div>
+                      <div className="text-right font-medium">
+                        ${item.amount.toFixed(2)}
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+
+              {/* Totals */}
+              <div className="border rounded-md p-3 space-y-2">
+                <div className="flex justify-between">
+                  <span className="text-muted-foreground">Subtotal:</span>
+                  <span>${invoice.subtotal.toFixed(2)}</span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-muted-foreground">Tax ({invoice.taxRate}%):</span>
+                  <span>${invoice.taxAmount.toFixed(2)}</span>
+                </div>
+                <div className="flex justify-between font-bold border-t pt-2 mt-2">
+                  <span>Total:</span>
+                  <span>${invoice.total.toFixed(2)}</span>
+                </div>
+              </div>
+            </div>
           </div>
-          
+
           {/* Notes and Terms */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             {invoice.notes && (
@@ -212,7 +253,7 @@ export default function InvoiceDetails({
                 <p className="text-sm text-muted-foreground whitespace-pre-line">{invoice.notes}</p>
               </div>
             )}
-            
+
             {invoice.terms && (
               <div>
                 <h3 className="font-semibold mb-2">Terms & Conditions:</h3>
@@ -220,7 +261,7 @@ export default function InvoiceDetails({
               </div>
             )}
           </div>
-          
+
           {/* Status Information */}
           {(invoice.sentAt || invoice.paidAt) && (
             <div className="bg-muted p-3 rounded-md">
@@ -236,56 +277,61 @@ export default function InvoiceDetails({
             </div>
           )}
         </div>
-        
-        <DialogFooter className="flex flex-wrap gap-2 justify-between sm:justify-end">
-          <div className="flex gap-2">
-            <Button 
-              variant="outline" 
+
+        <DialogFooter className="flex flex-col sm:flex-row gap-3 sm:gap-2 w-full sm:justify-end">
+          <div className="flex w-full sm:w-auto justify-center sm:justify-start">
+            <Button
+              variant="outline"
               size="sm"
               onClick={handlePrint}
+              className="w-full sm:w-auto"
             >
               <Printer className="h-4 w-4 mr-2" />
               Print
             </Button>
           </div>
-          
-          <div className="flex gap-2">
+
+          <div className="flex flex-wrap gap-2 w-full sm:w-auto justify-center sm:justify-end">
             {invoice.status === 'draft' && (
               <>
-                <Button 
-                  variant="default" 
+                <Button
+                  variant="default"
                   size="sm"
                   onClick={() => onSend(invoice._id!)}
+                  className="flex-1 sm:flex-none"
                 >
                   <Send className="h-4 w-4 mr-2" />
                   Send
                 </Button>
-                <Button 
-                  variant="destructive" 
+                <Button
+                  variant="destructive"
                   size="sm"
                   onClick={() => onDelete(invoice._id!)}
+                  className="flex-1 sm:flex-none"
                 >
                   <Trash2 className="h-4 w-4 mr-2" />
                   Delete
                 </Button>
               </>
             )}
-            
+
             {invoice.status === 'sent' && (
-              <Button 
-                variant="default" 
+              <Button
+                variant="default"
                 size="sm"
                 onClick={() => onMarkAsPaid(invoice._id!)}
+                className="flex-1 sm:flex-none"
               >
                 <DollarSign className="h-4 w-4 mr-2" />
                 Mark as Paid
               </Button>
             )}
-            
-            <Button 
-              variant="outline" 
+
+            <Button
+              variant="outline"
               size="sm"
               onClick={() => onOpenChange(false)}
+              className="flex-1 sm:flex-none"
             >
               Close
             </Button>

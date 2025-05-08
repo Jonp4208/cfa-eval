@@ -168,9 +168,9 @@ export default function InvoicesPage() {
   return (
     <div className="container mx-auto py-6">
       <Card className="mb-6">
-        <CardHeader className="flex flex-row items-center justify-between pb-2">
+        <CardHeader className="flex flex-col sm:flex-row items-start sm:items-center justify-between pb-2 gap-4">
           <CardTitle className="text-2xl font-bold">Invoices</CardTitle>
-          <div className="flex space-x-2">
+          <div className="flex space-x-2 w-full sm:w-auto justify-end">
             <Button
               variant="outline"
               size="sm"
@@ -178,14 +178,14 @@ export default function InvoicesPage() {
               disabled={isLoading}
             >
               <RefreshCw className="h-4 w-4 mr-2" />
-              Refresh
+              <span className="sm:inline">Refresh</span>
             </Button>
             <Button
               onClick={() => setShowCreateForm(true)}
               size="sm"
             >
               <Plus className="h-4 w-4 mr-2" />
-              Create Invoice
+              <span className="sm:inline">Create Invoice</span>
             </Button>
           </div>
         </CardHeader>
@@ -196,7 +196,7 @@ export default function InvoicesPage() {
             onValueChange={setSelectedTab}
             className="w-full"
           >
-            <TabsList className="grid grid-cols-5 mb-4">
+            <TabsList className="grid grid-cols-3 sm:grid-cols-5 mb-4 gap-1">
               <TabsTrigger value="all">All</TabsTrigger>
               <TabsTrigger value="draft">Draft</TabsTrigger>
               <TabsTrigger value="sent">Sent</TabsTrigger>
@@ -208,87 +208,172 @@ export default function InvoicesPage() {
               {isLoading ? (
                 <div className="text-center py-4">Loading invoices...</div>
               ) : invoices && invoices.length > 0 ? (
-                <div className="overflow-x-auto">
-                  <table className="w-full border-collapse">
-                    <thead>
-                      <tr className="bg-muted">
-                        <th className="text-left p-2">Invoice #</th>
-                        <th className="text-left p-2">Client</th>
-                        <th className="text-left p-2">Issue Date</th>
-                        <th className="text-left p-2">Due Date</th>
-                        <th className="text-right p-2">Amount</th>
-                        <th className="text-center p-2">Status</th>
-                        <th className="text-right p-2">Actions</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {invoices.map((invoice: Invoice) => (
-                        <tr key={invoice._id} className="border-b hover:bg-muted/50">
-                          <td className="p-2">{invoice.invoiceNumber}</td>
-                          <td className="p-2">{invoice.client.name}</td>
-                          <td className="p-2">
-                            {invoice.issueDate ? format(new Date(invoice.issueDate), 'MMM d, yyyy') : 'N/A'}
-                          </td>
-                          <td className="p-2">
-                            {invoice.dueDate ? format(new Date(invoice.dueDate), 'MMM d, yyyy') : 'N/A'}
-                          </td>
-                          <td className="p-2 text-right">${invoice.total.toFixed(2)}</td>
-                          <td className="p-2 text-center">
-                            <span className={`px-2 py-1 rounded-full text-xs font-medium ${
-                              invoice.status === 'draft' ? 'bg-gray-200 text-gray-800' :
-                              invoice.status === 'sent' ? 'bg-blue-100 text-blue-800' :
-                              invoice.status === 'paid' ? 'bg-green-100 text-green-800' :
-                              invoice.status === 'overdue' ? 'bg-red-100 text-red-800' :
-                              'bg-gray-100 text-gray-800'
-                            }`}>
-                              {invoice.status}
-                            </span>
-                          </td>
-                          <td className="p-2 text-right">
-                            <div className="flex justify-end space-x-1">
-                              <Button
-                                variant="ghost"
-                                size="icon"
-                                onClick={() => handleViewInvoice(invoice)}
-                              >
-                                <Eye className="h-4 w-4" />
-                              </Button>
-
-                              {invoice.status === 'draft' && (
-                                <>
-                                  <Button
-                                    variant="ghost"
-                                    size="icon"
-                                    onClick={() => handleSendInvoice(invoice._id!)}
-                                  >
-                                    <Send className="h-4 w-4" />
-                                  </Button>
-                                  <Button
-                                    variant="ghost"
-                                    size="icon"
-                                    onClick={() => handleDeleteInvoice(invoice._id!)}
-                                  >
-                                    <Trash2 className="h-4 w-4" />
-                                  </Button>
-                                </>
-                              )}
-
-                              {invoice.status === 'sent' && (
+                <>
+                  {/* Desktop view - Table */}
+                  <div className="hidden md:block overflow-x-auto">
+                    <table className="w-full border-collapse">
+                      <thead>
+                        <tr className="bg-muted">
+                          <th className="text-left p-2">Invoice #</th>
+                          <th className="text-left p-2">Client</th>
+                          <th className="text-left p-2">Issue Date</th>
+                          <th className="text-left p-2">Due Date</th>
+                          <th className="text-right p-2">Amount</th>
+                          <th className="text-center p-2">Status</th>
+                          <th className="text-right p-2">Actions</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {invoices.map((invoice: Invoice) => (
+                          <tr key={invoice._id} className="border-b hover:bg-muted/50">
+                            <td className="p-2">{invoice.invoiceNumber}</td>
+                            <td className="p-2">{invoice.client.name}</td>
+                            <td className="p-2">
+                              {invoice.issueDate ? format(new Date(invoice.issueDate), 'MMM d, yyyy') : 'N/A'}
+                            </td>
+                            <td className="p-2">
+                              {invoice.dueDate ? format(new Date(invoice.dueDate), 'MMM d, yyyy') : 'N/A'}
+                            </td>
+                            <td className="p-2 text-right">${invoice.total.toFixed(2)}</td>
+                            <td className="p-2 text-center">
+                              <span className={`px-2 py-1 rounded-full text-xs font-medium ${
+                                invoice.status === 'draft' ? 'bg-gray-200 text-gray-800' :
+                                invoice.status === 'sent' ? 'bg-blue-100 text-blue-800' :
+                                invoice.status === 'paid' ? 'bg-green-100 text-green-800' :
+                                invoice.status === 'overdue' ? 'bg-red-100 text-red-800' :
+                                'bg-gray-100 text-gray-800'
+                              }`}>
+                                {invoice.status}
+                              </span>
+                            </td>
+                            <td className="p-2 text-right">
+                              <div className="flex justify-end space-x-1">
                                 <Button
                                   variant="ghost"
                                   size="icon"
-                                  onClick={() => handleMarkAsPaid(invoice._id!)}
+                                  onClick={() => handleViewInvoice(invoice)}
                                 >
-                                  <DollarSign className="h-4 w-4" />
+                                  <Eye className="h-4 w-4" />
                                 </Button>
-                              )}
-                            </div>
-                          </td>
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
-                </div>
+
+                                {invoice.status === 'draft' && (
+                                  <>
+                                    <Button
+                                      variant="ghost"
+                                      size="icon"
+                                      onClick={() => handleSendInvoice(invoice._id!)}
+                                    >
+                                      <Send className="h-4 w-4" />
+                                    </Button>
+                                    <Button
+                                      variant="ghost"
+                                      size="icon"
+                                      onClick={() => handleDeleteInvoice(invoice._id!)}
+                                    >
+                                      <Trash2 className="h-4 w-4" />
+                                    </Button>
+                                  </>
+                                )}
+
+                                {invoice.status === 'sent' && (
+                                  <Button
+                                    variant="ghost"
+                                    size="icon"
+                                    onClick={() => handleMarkAsPaid(invoice._id!)}
+                                  >
+                                    <DollarSign className="h-4 w-4" />
+                                  </Button>
+                                )}
+                              </div>
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+
+                  {/* Mobile view - Cards */}
+                  <div className="grid grid-cols-1 gap-4 md:hidden">
+                    {invoices.map((invoice: Invoice) => (
+                      <div key={invoice._id} className="bg-card border rounded-lg p-4 shadow-sm">
+                        <div className="flex justify-between items-start mb-3">
+                          <div>
+                            <h3 className="font-semibold text-lg">Invoice #{invoice.invoiceNumber}</h3>
+                            <p className="text-sm text-muted-foreground">{invoice.client.name}</p>
+                          </div>
+                          <span className={`px-2 py-1 rounded-full text-xs font-medium ${
+                            invoice.status === 'draft' ? 'bg-gray-200 text-gray-800' :
+                            invoice.status === 'sent' ? 'bg-blue-100 text-blue-800' :
+                            invoice.status === 'paid' ? 'bg-green-100 text-green-800' :
+                            invoice.status === 'overdue' ? 'bg-red-100 text-red-800' :
+                            'bg-gray-100 text-gray-800'
+                          }`}>
+                            {invoice.status}
+                          </span>
+                        </div>
+
+                        <div className="grid grid-cols-2 gap-2 text-sm mb-3">
+                          <div>
+                            <span className="text-muted-foreground">Issue Date:</span><br />
+                            {invoice.issueDate ? format(new Date(invoice.issueDate), 'MMM d, yyyy') : 'N/A'}
+                          </div>
+                          <div>
+                            <span className="text-muted-foreground">Due Date:</span><br />
+                            {invoice.dueDate ? format(new Date(invoice.dueDate), 'MMM d, yyyy') : 'N/A'}
+                          </div>
+                        </div>
+
+                        <div className="flex justify-between items-center mb-3">
+                          <span className="text-sm text-muted-foreground">Amount:</span>
+                          <span className="font-semibold">${invoice.total.toFixed(2)}</span>
+                        </div>
+
+                        <div className="flex justify-end space-x-1 border-t pt-3">
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => handleViewInvoice(invoice)}
+                          >
+                            <Eye className="h-4 w-4 mr-2" />
+                            View
+                          </Button>
+
+                          {invoice.status === 'draft' && (
+                            <>
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                onClick={() => handleSendInvoice(invoice._id!)}
+                              >
+                                <Send className="h-4 w-4 mr-2" />
+                                Send
+                              </Button>
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                onClick={() => handleDeleteInvoice(invoice._id!)}
+                              >
+                                <Trash2 className="h-4 w-4 mr-2" />
+                                Delete
+                              </Button>
+                            </>
+                          )}
+
+                          {invoice.status === 'sent' && (
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              onClick={() => handleMarkAsPaid(invoice._id!)}
+                            >
+                              <DollarSign className="h-4 w-4 mr-2" />
+                              Mark Paid
+                            </Button>
+                          )}
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </>
               ) : (
                 <div className="text-center py-4 text-muted-foreground">
                   No invoices found. Create your first invoice to get started.
