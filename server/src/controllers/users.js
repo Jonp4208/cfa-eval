@@ -91,8 +91,45 @@ export const updateUser = async (req, res) => {
               nextEvaluationDate = new Date(today);
               nextEvaluationDate.setDate(today.getDate() + Number(frequency));
             }
+          } else if (cycleStart === 'hire_date') {
+            // Get the user to access their hire date
+            const user = await User.findById(id);
+            if (user && user.startDate) {
+              const hireDate = new Date(user.startDate);
+              if (!isNaN(hireDate.getTime())) {
+                // Use the month and day from hire date, but current year
+                const currentYear = today.getFullYear();
+                const hireMonth = hireDate.getMonth();
+                const hireDay = hireDate.getDate();
+
+                // Create a date with current year but hire month/day
+                nextEvaluationDate = new Date(currentYear, hireMonth, hireDay);
+
+                // If this date is in the past (already passed this year), use next year
+                if (nextEvaluationDate < today) {
+                  nextEvaluationDate = new Date(currentYear + 1, hireMonth, hireDay);
+                }
+
+                // If frequency is less than 365, adjust the date accordingly
+                if (Number(frequency) < 365) {
+                  // Find the next occurrence based on frequency
+                  while (nextEvaluationDate < today) {
+                    // Add frequency days
+                    nextEvaluationDate.setDate(nextEvaluationDate.getDate() + Number(frequency));
+                  }
+                }
+              } else {
+                // Invalid hire date, fallback to today
+                nextEvaluationDate = new Date(today);
+                nextEvaluationDate.setDate(today.getDate() + Number(frequency));
+              }
+            } else {
+              // No hire date found, fallback to today
+              nextEvaluationDate = new Date(today);
+              nextEvaluationDate.setDate(today.getDate() + Number(frequency));
+            }
           } else {
-            // No previous evaluation or using hire date, schedule from today
+            // No previous evaluation or invalid cycle start, schedule from today
             nextEvaluationDate = new Date(today);
             nextEvaluationDate.setDate(today.getDate() + Number(frequency));
           }

@@ -125,10 +125,44 @@ const scheduleUserEvaluations = async () => {
 
         await evaluation.save();
 
-        // Calculate next evaluation date properly
-        const newNextDate = new Date(today);
-        // Use setTime to add milliseconds instead of setDate
-        newNextDate.setTime(newNextDate.getTime() + (user.schedulingPreferences.frequency * 24 * 60 * 60 * 1000));
+        // Calculate next evaluation date properly based on cycle start preference
+        let newNextDate;
+
+        if (user.schedulingPreferences.cycleStart === 'hire_date' && user.startDate) {
+          const hireDate = new Date(user.startDate);
+          if (!isNaN(hireDate.getTime())) {
+            // Use the month and day from hire date, but current year
+            const currentYear = today.getFullYear();
+            const hireMonth = hireDate.getMonth();
+            const hireDay = hireDate.getDate();
+
+            // Create a date with current year but hire month/day
+            newNextDate = new Date(currentYear, hireMonth, hireDay);
+
+            // If this date is in the past (already passed this year), use next year
+            if (newNextDate < today) {
+              newNextDate = new Date(currentYear + 1, hireMonth, hireDay);
+            }
+
+            // If frequency is less than 365, adjust the date accordingly
+            if (user.schedulingPreferences.frequency < 365) {
+              // Find the next occurrence based on frequency
+              while (newNextDate < today) {
+                // Add frequency days
+                newNextDate.setTime(newNextDate.getTime() + (user.schedulingPreferences.frequency * 24 * 60 * 60 * 1000));
+              }
+            }
+          } else {
+            // Invalid hire date, fallback to today
+            newNextDate = new Date(today);
+            newNextDate.setTime(newNextDate.getTime() + (user.schedulingPreferences.frequency * 24 * 60 * 60 * 1000));
+          }
+        } else {
+          // Use today as the base for calculation
+          newNextDate = new Date(today);
+          // Add frequency days
+          newNextDate.setTime(newNextDate.getTime() + (user.schedulingPreferences.frequency * 24 * 60 * 60 * 1000));
+        }
 
         await User.findByIdAndUpdate(user._id, {
           $set: {
