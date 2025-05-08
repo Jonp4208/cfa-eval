@@ -97,36 +97,50 @@ export const updateUser = async (req, res) => {
             if (user && user.startDate) {
               const hireDate = new Date(user.startDate);
               if (!isNaN(hireDate.getTime())) {
-                // Use the month and day from hire date, but current year
-                const currentYear = today.getFullYear();
-                const hireMonth = hireDate.getMonth();
+                // Extract month and day from hire date
+                const hireMonth = hireDate.getMonth(); // 0-indexed (0 = January, 1 = February, etc.)
                 const hireDay = hireDate.getDate();
 
-                // Create a date with current year but hire month/day
-                nextEvaluationDate = new Date(currentYear, hireMonth, hireDay);
+                console.log(`Hire date: ${hireDate.toISOString()}, Month: ${hireMonth + 1}, Day: ${hireDay}`);
 
-                // If this date is in the past (already passed this year), use next year
-                if (nextEvaluationDate < today) {
-                  nextEvaluationDate = new Date(currentYear + 1, hireMonth, hireDay);
-                }
+                // Use current year with hire month/day
+                const currentYear = today.getFullYear();
 
-                // If frequency is less than 365, adjust the date accordingly
-                if (Number(frequency) < 365) {
-                  // Find the next occurrence based on frequency
+                // Create a date with current year and hire month/day
+                const hireAnniversaryThisYear = new Date(currentYear, hireMonth, hireDay);
+                console.log(`Anniversary this year: ${hireAnniversaryThisYear.toISOString()}`);
+
+                // Calculate the next evaluation date based on frequency
+                if (Number(frequency) >= 365) {
+                  // For annual or longer frequencies, use the hire date anniversary
+                  if (hireAnniversaryThisYear < today) {
+                    // If this year's anniversary has passed, use next year
+                    nextEvaluationDate = new Date(currentYear + 1, hireMonth, hireDay);
+                    console.log(`Using next year's anniversary: ${nextEvaluationDate.toISOString()}`);
+                  } else {
+                    // Use this year's anniversary
+                    nextEvaluationDate = hireAnniversaryThisYear;
+                    console.log(`Using this year's anniversary: ${nextEvaluationDate.toISOString()}`);
+                  }
+                } else {
+                  // For frequencies less than a year (e.g., 180 days = 6 months)
+                  // Start with this year's anniversary
+                  nextEvaluationDate = new Date(hireAnniversaryThisYear);
+
+                  // If the anniversary is in the past, add the frequency to it
+                  // until we get a future date
                   while (nextEvaluationDate < today) {
                     // Add frequency days
                     nextEvaluationDate.setDate(nextEvaluationDate.getDate() + Number(frequency));
+                    console.log(`Added ${frequency} days, new date: ${nextEvaluationDate.toISOString()}`);
                   }
                 }
-              } else {
-                // Invalid hire date, fallback to today
-                nextEvaluationDate = new Date(today);
-                nextEvaluationDate.setDate(today.getDate() + Number(frequency));
               }
             } else {
               // No hire date found, fallback to today
               nextEvaluationDate = new Date(today);
               nextEvaluationDate.setDate(today.getDate() + Number(frequency));
+              console.log(`No hire date, using today plus frequency: ${nextEvaluationDate.toISOString()}`);
             }
           } else {
             // No previous evaluation or invalid cycle start, schedule from today
