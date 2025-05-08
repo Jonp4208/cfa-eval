@@ -224,8 +224,20 @@ export function MobileNav() {
       (width === 428 && height === 926) ||
       (height === 428 && width === 926);
 
-    return isIPhone13ProMaxDimensions && /iPhone/.test(navigator.userAgent);
+    const result = isIPhone13ProMaxDimensions && /iPhone/.test(navigator.userAgent);
+    if (result) {
+      console.log('MobileNav detected iPhone 13 Pro Max');
+    }
+    return result;
   };
+
+  // Add iPhone 13 Pro Max class to document if detected
+  useEffect(() => {
+    if (isIPhone13ProMax() && typeof document !== 'undefined') {
+      document.documentElement.classList.add('iphone-13-pro-max-detected');
+      console.log('Added iphone-13-pro-max-detected class');
+    }
+  }, []);
 
   // If no items are available or still loading, show a placeholder
   if (navItems.length === 0) {
@@ -239,12 +251,13 @@ export function MobileNav() {
         touchAction: 'manipulation',
         position: 'fixed',
         bottom: 0,
-        paddingBottom: isIPhone13() ? '0.5rem' : isIPhone13ProMax() ? '1.25rem' : undefined
+        paddingBottom: isIPhone13() ? '0.5rem' : isIPhone13ProMax() ? '1.75rem' : undefined,
+        zIndex: 9999
       }}
     >
       <div className={cn(
         "flex items-center justify-between px-2",
-        isIPhone13() ? "pb-0" : isIPhone13ProMax() ? "pb-1" : "safe-area-bottom"
+        isIPhone13() ? "pb-0" : isIPhone13ProMax() ? "pb-2" : "safe-area-bottom"
       )}>
         {/* Bottom navigation items */}
         {navItems

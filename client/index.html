@@ -65,6 +65,7 @@
               deviceInfo.isIPhone13ProMax = true;
               deviceInfo.isIPhone12 = true; // Keep for backward compatibility
               deviceInfo.isNotchedDevice = true;
+              console.log('Detected iPhone 13 Pro Max');
             }
             // iPhone 14 Pro (393x852)
             else if (window.screen.height === 852 && window.screen.width === 393) {
@@ -124,6 +125,7 @@
           }
           if (deviceModel.isIPhone13ProMax) {
             document.documentElement.classList.add('iphone-13-pro-max');
+            console.log('Applied iPhone 13 Pro Max class');
           }
           if (deviceModel.isIPhone14) {
             document.documentElement.classList.add('iphone-14');
@@ -146,6 +148,38 @@
     </script>
     <meta name="google" content="notranslate">
     <meta http-equiv="Content-Language" content="en">
+
+    <!-- Direct iPhone 13 Pro Max styles -->
+    <style>
+      @media screen and (width: 428px) and (height: 926px) {
+        html.iphone-13-pro-max .mobile-nav,
+        html.iphone-13-pro-max-detected .mobile-nav {
+          padding-bottom: calc(env(safe-area-inset-bottom) + 25px) !important;
+          height: auto !important;
+          margin-bottom: 0 !important;
+          position: fixed !important;
+          bottom: 0 !important;
+          left: 0 !important;
+          right: 0 !important;
+          z-index: 9999 !important;
+        }
+
+        html.iphone-13-pro-max .nav-spacer,
+        html.iphone-13-pro-max-detected .nav-spacer {
+          height: 100px !important;
+        }
+
+        html.iphone-13-pro-max .ios-status-bar-height,
+        html.iphone-13-pro-max-detected .ios-status-bar-height {
+          height: calc(env(safe-area-inset-top) + 10px) !important;
+        }
+
+        html.iphone-13-pro-max .fixed-header-ios,
+        html.iphone-13-pro-max-detected .fixed-header-ios {
+          padding-top: calc(env(safe-area-inset-top) + 10px) !important;
+        }
+      }
+    </style>
   </head>
   <body>
     <div id="root"></div>

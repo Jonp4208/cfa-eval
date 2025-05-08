@@ -329,48 +329,59 @@ html, body {
 }
 
 /* Additional fixes specific to iPhone 13 Pro Max */
-@media screen and (min-width: 428px) and (min-height: 926px) {
-  .iphone-13-pro-max .mobile-nav {
-    padding-bottom: calc(env(safe-area-inset-bottom) + 15px);
+@media screen and (min-width: 428px) and (min-height: 926px),
+       screen and (width: 428px) and (height: 926px) {
+  html.iphone-13-pro-max .mobile-nav {
+    padding-bottom: calc(env(safe-area-inset-bottom) + 25px) !important;
     height: auto !important;
+    margin-bottom: 0 !important;
   }
 
-  .iphone-13-pro-max .safe-area-bottom {
-    padding-bottom: calc(env(safe-area-inset-bottom) + 15px);
+  html.iphone-13-pro-max .safe-area-bottom {
+    padding-bottom: calc(env(safe-area-inset-bottom) + 25px) !important;
   }
 
-  .iphone-13-pro-max .nav-spacer {
-    height: calc(90px + env(safe-area-inset-bottom)) !important;
+  html.iphone-13-pro-max .nav-spacer {
+    height: calc(100px + env(safe-area-inset-bottom)) !important;
   }
 
   /* Optimize mobile nav buttons for iPhone 13 Pro Max */
-  .iphone-13-pro-max .mobile-nav-button {
-    padding-top: 8px;
-    padding-bottom: 8px;
+  html.iphone-13-pro-max .mobile-nav-button {
+    padding-top: 10px !important;
+    padding-bottom: 10px !important;
   }
 
-  .iphone-13-pro-max .mobile-nav-button svg {
-    width: 28px !important;
-    height: 28px !important;
+  html.iphone-13-pro-max .mobile-nav-button svg {
+    width: 30px !important;
+    height: 30px !important;
   }
 
-  .iphone-13-pro-max .mobile-nav-button span {
-    font-size: 12px;
-    margin-top: 4px;
+  html.iphone-13-pro-max .mobile-nav-button span {
+    font-size: 12px !important;
+    margin-top: 5px !important;
   }
 
   /* Fix top header for iPhone 13 Pro Max */
-  .iphone-13-pro-max .fixed-header-ios {
-    padding-top: calc(env(safe-area-inset-top) + 8px);
+  html.iphone-13-pro-max .fixed-header-ios {
+    padding-top: calc(env(safe-area-inset-top) + 10px) !important;
   }
 
-  .iphone-13-pro-max .ios-status-bar-height {
-    height: calc(env(safe-area-inset-top) + 8px);
+  html.iphone-13-pro-max .ios-status-bar-height {
+    height: calc(env(safe-area-inset-top) + 10px) !important;
   }
 
   /* Adjust main content padding for iPhone 13 Pro Max */
-  .iphone-13-pro-max main {
-    padding-top: calc(4rem + env(safe-area-inset-top) + 8px);
+  html.iphone-13-pro-max main {
+    padding-top: calc(4rem + env(safe-area-inset-top) + 10px) !important;
+  }
+
+  /* Force bottom nav to stay at bottom with proper spacing */
+  html.iphone-13-pro-max nav.mobile-nav {
+    position: fixed !important;
+    bottom: 0 !important;
+    left: 0 !important;
+    right: 0 !important;
+    z-index: 9999 !important;
   }
 }
 

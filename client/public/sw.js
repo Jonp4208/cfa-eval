@@ -1,7 +1,7 @@
 // Service Worker for LD Growth PWA
 
 // Change this version number whenever you want to force an update
-const CACHE_VERSION = '1.0.123';
+const CACHE_VERSION = '1.0.124';
 const CACHE_NAME = `ld-growth-cache-${CACHE_VERSION}`;
 const urlsToCache = [
   '/',
@@ -13,6 +13,9 @@ const urlsToCache = [
 
 // Install event - cache basic assets
 self.addEventListener('install', event => {
+  // Skip waiting to activate immediately
+  self.skipWaiting();
+
   event.waitUntil(
     caches.open(CACHE_NAME)
       .then(cache => {
