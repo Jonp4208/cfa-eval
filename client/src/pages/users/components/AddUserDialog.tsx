@@ -86,12 +86,12 @@ export default function AddUserDialog({ open, onOpenChange, user }: AddUserDialo
     queryKey: ['managers'],
     queryFn: async () => {
       const response = await api.get('/api/users', {
-        params: { 
-          excludeId: user?._id 
+        params: {
+          excludeId: user?._id
         }
       });
       // Filter for users with Director or Leader positions on the client side
-      return response.data.users.filter((user: User) => 
+      return response.data.users.filter((user: User) =>
         ['Director', 'Leader'].includes(user.position)
       );
     }
@@ -128,21 +128,21 @@ export default function AddUserDialog({ open, onOpenChange, user }: AddUserDialo
 
   const validateForm = () => {
     const newErrors: Record<string, string> = {};
-    
+
     if (!formData.name) newErrors.name = 'Name is required';
     if (!formData.email) newErrors.email = 'Email is required';
     if (!formData.position) newErrors.position = 'Position is required';
     if (formData.departments.length === 0) newErrors.departments = 'At least one department is required';
     if (!formData.shift) newErrors.shift = 'Shift is required';
     if (!formData.startDate) newErrors.startDate = 'Start date is required';
-    
+
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    
+
     if (!validateForm()) return;
 
     try {
@@ -183,8 +183,8 @@ export default function AddUserDialog({ open, onOpenChange, user }: AddUserDialo
       }
 
       queryClient.invalidateQueries({ queryKey: ['users'] });
-      
-      // Wait a bit to show the success message before closing
+
+      // Wait longer to show the success message before closing
       setTimeout(() => {
         setFormData({
           name: '',
@@ -197,11 +197,21 @@ export default function AddUserDialog({ open, onOpenChange, user }: AddUserDialo
           startDate: new Date().toISOString().split('T')[0]
         });
         onOpenChange(false);
-      }, 1500);
+
+        // Show a toast notification that persists after dialog closes
+        if (statusMessage?.type === 'success') {
+          toast({
+            title: "Success",
+            description: statusMessage.text,
+            variant: "default",
+            duration: 3000,
+          });
+        }
+      }, 3000);
     } catch (error: any) {
       console.error('Error saving user:', error);
-      setStatusMessage({ 
-        type: 'error', 
+      setStatusMessage({
+        type: 'error',
         text: error.response?.data?.message || (user ? "Failed to update team member" : "Failed to create team member")
       });
     }
@@ -213,23 +223,11 @@ export default function AddUserDialog({ open, onOpenChange, user }: AddUserDialo
         <DialogHeader>
           <DialogTitle className="text-2xl font-bold text-[#27251F]">{user ? 'Edit Team Member' : 'Add Team Member'}</DialogTitle>
           <DialogDescription className="text-[#27251F]/60">
-            {user 
-              ? 'Edit the team member\'s information below.' 
+            {user
+              ? 'Edit the team member\'s information below.'
               : 'Add a new team member to your organization.'}
           </DialogDescription>
         </DialogHeader>
-
-        {statusMessage && (
-          <div 
-            className={`p-4 mb-4 rounded-lg ${
-              statusMessage.type === 'success' 
-                ? 'bg-green-100 text-green-800 border border-green-200' 
-                : 'bg-red-100 text-red-800 border border-red-200'
-            }`}
-          >
-            {statusMessage.text}
-          </div>
-        )}
 
         <form onSubmit={handleSubmit} className="space-y-4">
           <div className="grid gap-4 py-4">
@@ -328,9 +326,9 @@ export default function AddUserDialog({ open, onOpenChange, user }: AddUserDialo
               <label htmlFor="manager" className="text-sm font-medium text-[#27251F]">Manager</label>
               <Select
                 value={formData.managerId || "none"}
-                onValueChange={(value) => setFormData(prev => ({ 
-                  ...prev, 
-                  managerId: value === "none" ? "" : value 
+                onValueChange={(value) => setFormData(prev => ({
+                  ...prev,
+                  managerId: value === "none" ? "" : value
                 }))}
               >
                 <SelectTrigger id="manager" className="bg-white border-gray-200 text-[#27251F] focus:ring-[#E51636]">
@@ -373,16 +371,28 @@ export default function AddUserDialog({ open, onOpenChange, user }: AddUserDialo
             </div>
           )}
 
+          {statusMessage && (
+            <div
+              className={`p-4 mb-4 rounded-lg ${
+                statusMessage.type === 'success'
+                  ? 'bg-green-100 text-green-800 border border-green-200'
+                  : 'bg-red-100 text-red-800 border border-red-200'
+              }`}
+            >
+              {statusMessage.text}
+            </div>
+          )}
+
           <DialogFooter>
-            <Button 
-              type="button" 
-              variant="outline" 
+            <Button
+              type="button"
+              variant="outline"
               onClick={() => onOpenChange(false)}
               className="border-[#E51636] text-[#E51636] hover:bg-[#E51636]/10"
             >
               Cancel
             </Button>
-            <Button 
+            <Button
               type="submit"
               className="bg-[#E51636] text-white hover:bg-[#E51636]/90"
             >

@@ -128,6 +128,7 @@ export const updateUser = async (req, res) => {
       status: updates.status,
       shift: updates.shift,
       manager: updates.manager,
+      startDate: updates.startDate,
       schedulingPreferences: updates.schedulingPreferences
     };
 
