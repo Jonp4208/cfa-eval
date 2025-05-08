@@ -43,6 +43,8 @@ interface TeamMemberDashboardData {
     id: string | null;
     acknowledged?: boolean;
     lastEvaluationDate?: string | null;
+    autoScheduled?: boolean;
+    frequency?: number;
   };
   activeGoals: number;
   goals: Array<{
@@ -199,7 +201,7 @@ export default function TeamMemberDashboard() {
         />
 
         {/* Performance Overview Cards */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           {/* Performance Card */}
           <Card className="bg-white rounded-[20px] overflow-hidden border-none shadow-lg hover:shadow-xl transition-all duration-300 group">
             <CardHeader className="bg-gradient-to-br from-[#E51636]/5 to-[#E51636]/10 pb-0">
@@ -263,6 +265,19 @@ export default function TeamMemberDashboard() {
                     </span>
                   </div>
 
+                  {dashboardData.nextEvaluation.autoScheduled && (
+                    <div className="mt-1 flex items-center gap-1">
+                      <span className="px-2 py-0.5 bg-blue-100 text-blue-700 text-xs font-medium rounded-full">
+                        Auto-Scheduled
+                      </span>
+                      {dashboardData.nextEvaluation.frequency && (
+                        <span className="text-xs text-[#27251F]/60">
+                          Every {dashboardData.nextEvaluation.frequency} days
+                        </span>
+                      )}
+                    </div>
+                  )}
+
                   {dashboardData.nextEvaluation.lastEvaluationDate && (
                     <p className="text-[#27251F]/60 text-sm mt-1">
                       {t('dashboard.lastEvaluation', 'Last evaluation: {{date}}', {
@@ -295,6 +310,11 @@ export default function TeamMemberDashboard() {
                         {t('dashboard.reviewAndAcknowledge', 'Review & Acknowledge')}
                       </Button>
                     )}
+                    {dashboardData.nextEvaluation.status === 'auto_scheduled' && (
+                      <div className="px-4 py-2 bg-blue-50 text-blue-700 rounded-xl text-center text-sm font-medium">
+                        {t('dashboard.autoScheduled', 'Auto-Scheduled')}
+                      </div>
+                    )}
                   </div>
                 </div>
               ) : (
@@ -319,50 +339,10 @@ export default function TeamMemberDashboard() {
               )}
             </CardContent>
           </Card>
-
-          {/* Active Goals Card */}
-          <Card className="bg-white rounded-[20px] overflow-hidden border-none shadow-lg hover:shadow-xl transition-all duration-300 group">
-            <CardHeader className="bg-gradient-to-br from-green-50 to-green-100/50 pb-0">
-              <div className="flex items-center justify-between">
-                <CardTitle className="text-lg font-semibold text-[#27251F] group-hover:text-green-600 transition-colors">
-                  {t('dashboard.activeGoals', 'Active Goals')}
-                </CardTitle>
-                <div className="h-10 w-10 bg-green-100 rounded-full flex items-center justify-center group-hover:scale-110 transition-transform">
-                  <Target className="h-5 w-5 text-green-600" />
-                </div>
-              </div>
-            </CardHeader>
-            <CardContent className="pt-4 pb-6">
-              <div className="flex flex-col">
-                <div className="flex items-end gap-2">
-                  <span className="text-4xl font-bold text-[#27251F]">{dashboardData.activeGoals}</span>
-                  <span className="text-sm text-[#27251F]/60 font-medium pb-1">
-                    {t('dashboard.goalsInProgress', 'goals in progress')}
-                  </span>
-                </div>
-
-                {dashboardData.goals.length > 0 && (
-                  <div className="mt-4">
-                    <div className="flex items-center justify-between text-sm">
-                      <span className="font-medium text-[#27251F]">{dashboardData.goals[0].name}</span>
-                      <span className="text-green-600 font-medium">{dashboardData.goals[0].progress}%</span>
-                    </div>
-                    <Progress
-                      value={dashboardData.goals[0].progress || 0}
-                      className="h-2 mt-2 bg-green-100 [&>div]:bg-green-600"
-                    />
-                  </div>
-                )}
-
-
-              </div>
-            </CardContent>
-          </Card>
         </div>
 
-        {/* FOH Task Completion and Goals Grid */}
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-          {/* FOH Task Completion */}
+        {/* FOH Task Completion */}
+        <div className="grid grid-cols-1 gap-6">
           <Card className="bg-white rounded-[20px] hover:shadow-xl transition-all duration-300 group">
             <CardHeader className="flex flex-row items-center justify-between p-8">
               <div>
@@ -411,78 +391,6 @@ export default function TeamMemberDashboard() {
                   </div>
                   <Progress value={0} className="h-2 bg-gray-100 [&>div]:bg-blue-600" />
                 </div>
-              </div>
-            </CardContent>
-          </Card>
-
-          {/* Current Goals */}
-          <Card className="bg-white rounded-[20px] overflow-hidden border-none shadow-lg hover:shadow-xl transition-all duration-300">
-            <CardHeader className="border-b border-gray-100 pb-4">
-              <div className="flex items-center justify-between">
-                <div>
-                  <CardTitle className="text-xl font-bold text-[#27251F]">{t('dashboard.storeGoals', 'Store Goals')}</CardTitle>
-                  <CardDescription className="text-[#27251F]/60 mt-1">{t('dashboard.storeTargets', 'Our team performance targets')}</CardDescription>
-                </div>
-                <Button
-                  variant="outline"
-                  onClick={() => navigate('/goals')}
-                  className="text-[#E51636] border-[#E51636]/30 hover:bg-[#E51636]/5 text-sm"
-                >
-                  {t('dashboard.viewAll', 'View All')}
-                </Button>
-              </div>
-            </CardHeader>
-            <CardContent className="p-6">
-              <div className="space-y-4">
-                {dashboardData.goals.length === 0 ? (
-                  <div className="py-8 text-center">
-                    <BarChart3 className="h-12 w-12 text-gray-300 mx-auto mb-3" />
-                    <p className="text-[#27251F]/60">{t('dashboard.noStoreGoals', 'No store goals currently set')}</p>
-                    <Button
-                      variant="outline"
-                      className="mt-4 text-sm"
-                      onClick={() => navigate('/goals')}
-                    >
-                      {t('dashboard.viewMetrics', 'View Store Metrics')}
-                    </Button>
-                  </div>
-                ) : (
-                  dashboardData.goals.map((goal) => (
-                    <div key={goal.id} className="p-4 bg-[#F8F8F8] rounded-xl hover:bg-[#F4F4F4] transition-colors border border-gray-100">
-                      <div className="flex items-start justify-between mb-2">
-                        <div>
-                          <div className="flex items-center gap-2 mb-1">
-                            {/* Category tag based on goal type */}
-                            <span className={`px-2 py-0.5 text-xs font-medium rounded-full ${
-                              goal.name.toLowerCase().includes('drive') ? 'bg-blue-100 text-blue-700' :
-                              goal.name.toLowerCase().includes('sales') ? 'bg-green-100 text-green-700' :
-                              goal.name.toLowerCase().includes('customer') ? 'bg-purple-100 text-purple-700' :
-                              'bg-gray-100 text-gray-700'
-                            }`}>
-                              {goal.name.toLowerCase().includes('drive') ? 'Drive-thru' :
-                               goal.name.toLowerCase().includes('sales') ? 'Sales' :
-                               goal.name.toLowerCase().includes('customer') ? 'Customer Service' :
-                               'Operations'}
-                            </span>
-                          </div>
-                          <h3 className="font-medium text-[#27251F]">{goal.name}</h3>
-                          <div className="flex items-center gap-2 mt-1">
-                            <p className="text-sm text-[#27251F]/60">{t('dashboard.target', 'Target: {{date}}', { date: new Date(goal.targetDate).toLocaleDateString() })}</p>
-                            {/* Add baseline info if available */}
-                            {goal.baseline && (
-                              <p className="text-xs text-[#27251F]/60">Baseline: {goal.baseline}</p>
-                            )}
-                          </div>
-                        </div>
-                        <span className="text-sm font-medium text-green-600">{goal.progress}%</span>
-                      </div>
-                      <Progress
-                        value={goal.progress}
-                        className="h-2 mt-2 bg-green-100 [&>div]:bg-green-600"
-                      />
-                    </div>
-                  ))
-                )}
               </div>
             </CardContent>
           </Card>
@@ -605,55 +513,9 @@ export default function TeamMemberDashboard() {
             </Card>
           </div>
 
-          {/* Right Column - Achievements and Schedule */}
+          {/* Right Column - Empty */}
           <div className="space-y-6">
-            {/* Recent Achievements */}
-            <Card className="bg-white rounded-[20px] overflow-hidden border-none shadow-lg hover:shadow-xl transition-all duration-300">
-              <CardHeader className="border-b border-gray-100 pb-4">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <CardTitle className="text-xl font-bold text-[#27251F]">{t('dashboard.recentAchievements', 'Recent Achievements')}</CardTitle>
-                    <CardDescription className="text-[#27251F]/60 mt-1">{t('dashboard.yourLatestAccomplishments', 'Your latest accomplishments')}</CardDescription>
-                  </div>
-                </div>
-              </CardHeader>
-              <CardContent className="p-6">
-                <div className="space-y-4">
-                  {dashboardData.achievements.length === 0 ? (
-                    <div className="py-8 text-center">
-                      <Award className="h-12 w-12 text-gray-300 mx-auto mb-3" />
-                      <p className="text-[#27251F]/60">{t('dashboard.noRecentAchievements', 'No recent achievements')}</p>
-                    </div>
-                  ) : (
-                    dashboardData.achievements.map((achievement) => (
-                      <div key={achievement.id} className="p-4 bg-[#F8F8F8] rounded-xl hover:bg-[#F4F4F4] transition-colors border border-gray-100 group">
-                        <div className="flex items-center gap-3">
-                          <div className={`h-10 w-10 rounded-full flex items-center justify-center group-hover:scale-110 transition-transform ${
-                            achievement.type === 'award' ? 'bg-amber-100' :
-                            achievement.type === 'milestone' ? 'bg-purple-100' :
-                            'bg-[#E51636]/10'
-                          }`}>
-                            <span className={`text-lg font-bold ${
-                              achievement.type === 'award' ? 'text-amber-600' :
-                              achievement.type === 'milestone' ? 'text-purple-600' :
-                              'text-[#E51636]'
-                            }`}>
-                              {achievement.type === 'award' ? '🏆' : achievement.type === 'milestone' ? '⭐' : '📜'}
-                            </span>
-                          </div>
-                          <div>
-                            <h3 className="font-medium text-[#27251F] group-hover:text-[#E51636] transition-colors">{achievement.title}</h3>
-                            <p className="text-sm text-[#27251F]/60">{achievement.date}</p>
-                          </div>
-                        </div>
-                      </div>
-                    ))
-                  )}
-                </div>
-              </CardContent>
-            </Card>
-
-
+            {/* This column intentionally left empty */}
           </div>
         </div>
 

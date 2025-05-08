@@ -372,7 +372,7 @@ export const getTeamMemberDashboard = async (req, res) => {
             .populate('store', 'name storeNumber location')
             .populate('evaluator', 'name')
             .populate('manager', 'name')
-            .select('name position departments positionType status evaluations development recognition');
+            .select('name position departments positionType status evaluations development recognition schedulingPreferences');
 
         if (!user) {
             return res.status(404).json({ message: 'User not found' });
@@ -467,7 +467,18 @@ export const getTeamMemberDashboard = async (req, res) => {
                 evaluator: nextEvaluation.evaluator?.name,
                 id: nextEvaluation._id,
                 acknowledged: nextEvaluation.acknowledged || false,
-                lastEvaluationDate: lastCompletedEvaluation?.completedDate || null
+                lastEvaluationDate: lastCompletedEvaluation?.completedDate || null,
+                autoScheduled: false
+            } : user.schedulingPreferences?.autoSchedule && user.schedulingPreferences?.nextEvaluationDate ? {
+                date: user.schedulingPreferences.nextEvaluationDate,
+                templateName: 'Auto-Scheduled Evaluation',
+                status: 'auto_scheduled',
+                evaluator: user.evaluator?.name || null,
+                id: null,
+                acknowledged: false,
+                lastEvaluationDate: lastCompletedEvaluation?.completedDate || null,
+                autoScheduled: true,
+                frequency: user.schedulingPreferences.frequency || 90
             } : {
                 date: null,
                 templateName: 'Not Scheduled',
@@ -475,7 +486,8 @@ export const getTeamMemberDashboard = async (req, res) => {
                 evaluator: null,
                 id: null,
                 acknowledged: false,
-                lastEvaluationDate: lastCompletedEvaluation?.completedDate || null
+                lastEvaluationDate: lastCompletedEvaluation?.completedDate || null,
+                autoScheduled: false
             },
             evaluator: user.evaluator?.name,
             manager: user.manager?.name,
