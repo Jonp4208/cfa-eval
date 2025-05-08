@@ -915,7 +915,7 @@ export default function Layout({ children }: { children: React.ReactNode }) {
         height: window?.screen?.height === 844 && window?.screen?.width === 390 && /iPhone/.test(navigator.userAgent)
           ? "66px"
           : window?.screen?.height === 926 && window?.screen?.width === 428 && /iPhone/.test(navigator.userAgent)
-          ? "75px"
+          ? "90px"
           : undefined
       }}></div>
     </div>

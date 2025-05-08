@@ -188,25 +188,34 @@
   @media screen and (width: 428px) and (height: 926px) {
     .mobile-nav {
       height: auto !important;
-      padding-bottom: 0.5rem !important;
+      padding-bottom: 1.25rem !important;
     }
 
     .nav-spacer {
-      height: 75px !important;
+      height: 90px !important;
     }
 
     .mobile-nav-button {
-      padding: 6px 2px !important;
+      padding: 8px 2px !important;
     }
 
     .mobile-nav-button svg {
-      width: 26px !important;
-      height: 26px !important;
+      width: 28px !important;
+      height: 28px !important;
     }
 
     .mobile-nav-button span {
       font-size: 12px !important;
-      margin-top: 3px !important;
+      margin-top: 4px !important;
+    }
+
+    /* Fix top header */
+    .fixed-header-ios {
+      padding-top: env(safe-area-inset-top) !important;
+    }
+
+    .ios-status-bar-height {
+      height: calc(env(safe-area-inset-top) + 8px) !important;
     }
   }
 

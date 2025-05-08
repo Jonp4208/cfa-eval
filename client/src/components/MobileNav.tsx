@@ -239,12 +239,12 @@ export function MobileNav() {
         touchAction: 'manipulation',
         position: 'fixed',
         bottom: 0,
-        paddingBottom: isIPhone13() ? '0.5rem' : isIPhone13ProMax() ? '0.5rem' : undefined
+        paddingBottom: isIPhone13() ? '0.5rem' : isIPhone13ProMax() ? '1.25rem' : undefined
       }}
     >
       <div className={cn(
         "flex items-center justify-between px-2",
-        isIPhone13() ? "pb-0" : isIPhone13ProMax() ? "pb-0.5" : "safe-area-bottom"
+        isIPhone13() ? "pb-0" : isIPhone13ProMax() ? "pb-1" : "safe-area-bottom"
       )}>
         {/* Bottom navigation items */}
         {navItems
