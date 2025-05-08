@@ -5,14 +5,14 @@ import { useQuery, useMutation } from '@tanstack/react-query';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { useAuth } from '@/contexts/AuthContext';
-import { 
-  Plus, 
-  FileText, 
-  Users, 
-  Trash2, 
-  Calendar, 
-  ArrowUpDown, 
-  Filter, 
+import {
+  Plus,
+  FileText,
+  Users,
+  Trash2,
+  Calendar,
+  ArrowUpDown,
+  Filter,
   AlertTriangle,
   Search,
   Clock,
@@ -21,11 +21,15 @@ import {
   ChevronRight,
   Mail,
   Bell,
-  ClipboardCheck
+  ClipboardCheck,
+  UserCircle,
+  Store
 } from 'lucide-react';
 import { useNotification } from '@/contexts/NotificationContext';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import { Progress } from '@/components/ui/progress';
+import { Switch } from '@/components/ui/switch';
+import { Label } from '@/components/ui/label';
 import api from '@/lib/axios';
 import { handleError } from '@/lib/utils/error-handler';
 import { toast } from '@/components/ui/use-toast';
@@ -69,14 +73,14 @@ export default function Evaluations() {
   const navigate = useNavigate();
   const { user } = useAuth();
   const { showNotification } = useNotification();
-  
+
   // Add debug logging
   console.log('User data:', {
     user,
     isAdmin: user?.isAdmin,
     position: user?.position
   });
-  
+
   const [view, setView] = useState<'all' | 'pending' | 'completed'>(user?.position === 'Team Member' ? 'all' : 'pending');
   const [sortField, setSortField] = useState<SortField>('date');
   const [sortOrder, setSortOrder] = useState<SortOrder>('desc');
@@ -84,6 +88,7 @@ export default function Evaluations() {
   const [searchQuery, setSearchQuery] = useState('');
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
   const [evaluationToDelete, setEvaluationToDelete] = useState<string | null>(null);
+  const [viewScope, setViewScope] = useState<'team' | 'store'>(user?.position === 'Team Member' ? 'store' : 'team');
 
   // Fetch evaluations
   const { data: evaluations, isLoading, error, refetch } = useQuery({
@@ -207,6 +212,12 @@ export default function Evaluations() {
         shouldShow = evaluation.status === 'completed';
       }
 
+      // Team/Store scope filter
+      if (shouldShow && viewScope === 'team' && user?._id) {
+        // Show only evaluations where the current user is the evaluator
+        shouldShow = evaluation.evaluator?._id === user._id;
+      }
+
       // Department filter
       if (shouldShow && departmentFilter !== 'all') {
         const employeeDepartment = evaluation.employee.position?.split(' ')[0];
@@ -229,6 +240,7 @@ export default function Evaluations() {
     total: evaluations?.length || 0,
     filtered: filteredEvaluations?.length || 0,
     view,
+    viewScope,
     departmentFilter,
     searchQuery
   });
@@ -261,9 +273,9 @@ export default function Evaluations() {
       case 'in_review_session':
         return isManager ? 'Action Required: Complete Review' : 'In Review Session';
       case 'completed':
-        return evaluation.acknowledgement?.acknowledged 
+        return evaluation.acknowledgement?.acknowledged
           ? 'Completed & Acknowledged'
-          : isEmployee 
+          : isEmployee
             ? 'Action Required: Acknowledge'
             : 'Completed';
       default:
@@ -303,11 +315,11 @@ export default function Evaluations() {
   const sendEvaluationEmail = async (evaluationId: string) => {
     try {
       const response = await api.post(`/api/evaluations/${evaluationId}/send-email`);
-      
+
       if (!response.data) {
         throw new Error('Failed to send evaluation email');
       }
-      
+
       showNotification(
         'success',
         'Email Sent',
@@ -336,8 +348,8 @@ export default function Evaluations() {
                 </div>
                 <h1 className="text-xl font-semibold mb-2 text-[#27251F]">Error Loading Evaluations</h1>
                 <p className="text-[#27251F]/60 mb-6">There was a problem loading the evaluations. Please try again later.</p>
-                <Button 
-                  onClick={() => refetch()} 
+                <Button
+                  onClick={() => refetch()}
                   variant="outline"
                   className="min-w-[120px]"
                 >
@@ -468,40 +480,60 @@ export default function Evaluations() {
                   className="w-full h-10 sm:h-12 pl-10 pr-4 rounded-xl border border-gray-200 focus:outline-none focus:ring-2 focus:ring-[#E51636] focus:border-transparent text-sm sm:text-base"
                 />
               </div>
-              <div className="flex flex-wrap gap-2">
-                <Button
-                  variant={view === 'all' ? 'default' : 'outline'}
-                  onClick={() => setView('all')}
-                  className={`rounded-full text-sm sm:text-base ${
-                    view === 'all' 
-                      ? 'bg-[#E51636] hover:bg-[#E51636]/90 text-white' 
-                      : 'hover:bg-[#E51636]/10 hover:text-[#E51636]'
-                  }`}
-                >
-                  All Reviews
-                </Button>
-                <Button
-                  variant={view === 'pending' ? 'default' : 'outline'}
-                  onClick={() => setView('pending')}
-                  className={`rounded-full text-sm sm:text-base ${
-                    view === 'pending' 
-                      ? 'bg-[#E51636] hover:bg-[#E51636]/90 text-white' 
-                      : 'hover:bg-[#E51636]/10 hover:text-[#E51636]'
-                  }`}
-                >
-                  Pending
-                </Button>
-                <Button
-                  variant={view === 'completed' ? 'default' : 'outline'}
-                  onClick={() => setView('completed')}
-                  className={`rounded-full text-sm sm:text-base ${
-                    view === 'completed' 
-                      ? 'bg-[#E51636] hover:bg-[#E51636]/90 text-white' 
-                      : 'hover:bg-[#E51636]/10 hover:text-[#E51636]'
-                  }`}
-                >
-                  Completed
-                </Button>
+              <div className="flex flex-col sm:flex-row gap-3 sm:gap-4">
+                <div className="flex flex-wrap gap-2">
+                  <Button
+                    variant={view === 'all' ? 'default' : 'outline'}
+                    onClick={() => setView('all')}
+                    className={`rounded-full text-sm sm:text-base ${
+                      view === 'all'
+                        ? 'bg-[#E51636] hover:bg-[#E51636]/90 text-white'
+                        : 'hover:bg-[#E51636]/10 hover:text-[#E51636]'
+                    }`}
+                  >
+                    All Reviews
+                  </Button>
+                  <Button
+                    variant={view === 'pending' ? 'default' : 'outline'}
+                    onClick={() => setView('pending')}
+                    className={`rounded-full text-sm sm:text-base ${
+                      view === 'pending'
+                        ? 'bg-[#E51636] hover:bg-[#E51636]/90 text-white'
+                        : 'hover:bg-[#E51636]/10 hover:text-[#E51636]'
+                    }`}
+                  >
+                    Pending
+                  </Button>
+                  <Button
+                    variant={view === 'completed' ? 'default' : 'outline'}
+                    onClick={() => setView('completed')}
+                    className={`rounded-full text-sm sm:text-base ${
+                      view === 'completed'
+                        ? 'bg-[#E51636] hover:bg-[#E51636]/90 text-white'
+                        : 'hover:bg-[#E51636]/10 hover:text-[#E51636]'
+                    }`}
+                  >
+                    Completed
+                  </Button>
+                </div>
+
+                {/* Team/Store Toggle */}
+                <div className="flex items-center justify-center sm:justify-end gap-2 ml-auto bg-gray-50 p-2 rounded-xl">
+                  <div className="flex items-center gap-2">
+                    <UserCircle className={`h-5 w-5 ${viewScope === 'team' ? 'text-[#E51636]' : 'text-gray-400'}`} />
+                    <Label htmlFor="team-store-toggle" className="text-sm font-medium cursor-pointer">Your Team</Label>
+                  </div>
+                  <Switch
+                    id="team-store-toggle"
+                    checked={viewScope === 'store'}
+                    onCheckedChange={(checked) => setViewScope(checked ? 'store' : 'team')}
+                    className="data-[state=checked]:bg-[#E51636]"
+                  />
+                  <div className="flex items-center gap-2">
+                    <Label htmlFor="team-store-toggle" className="text-sm font-medium cursor-pointer">All Store</Label>
+                    <Store className={`h-5 w-5 ${viewScope === 'store' ? 'text-[#E51636]' : 'text-gray-400'}`} />
+                  </div>
+                </div>
               </div>
             </div>
           </CardContent>
@@ -537,7 +569,7 @@ export default function Evaluations() {
                         </div>
                       </div>
                       <p className="text-sm text-[#27251F]/60 mb-3">{evaluation.employee?.position}</p>
-                      
+
                       {/* Template name with icon */}
                       <div className="flex items-center gap-2 text-sm text-[#27251F]/80">
                         <FileText className="w-4 h-4 text-[#27251F]/40" />
@@ -549,7 +581,7 @@ export default function Evaluations() {
                     <div className="flex flex-col gap-3 sm:text-right">
                       <div className="flex items-center gap-2 text-sm">
                         <Calendar className="w-4 h-4 text-[#27251F]/40" />
-                        <span className="text-[#27251F]/60">Scheduled:</span>
+                        <span className="text-[#27251F]/60">Employee Due:</span>
                         <span className="font-medium text-[#27251F]">
                           {evaluation.scheduledDate ? new Date(evaluation.scheduledDate).toLocaleDateString() : 'Not scheduled'}
                         </span>
@@ -574,20 +606,20 @@ export default function Evaluations() {
                       </div>
                     )}
                   </div>
-                  
+
                   {/* Progress indicator bar at bottom */}
                   <div className="h-1 w-full bg-gray-100 group-hover:bg-gray-200 transition-colors">
-                    <div 
+                    <div
                       className={`h-full ${
-                        evaluation.status === 'completed' 
-                          ? 'bg-green-500' 
+                        evaluation.status === 'completed'
+                          ? 'bg-green-500'
                           : evaluation.status === 'in_review_session'
                           ? 'bg-purple-500'
                           : 'bg-[#E51636]'
                       }`}
                       style={{
-                        width: evaluation.status === 'completed' 
-                          ? '100%' 
+                        width: evaluation.status === 'completed'
+                          ? '100%'
                           : evaluation.status === 'in_review_session'
                           ? '66%'
                           : evaluation.status === 'pending_manager_review'

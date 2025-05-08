@@ -3,14 +3,14 @@ import { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { Link } from 'react-router-dom';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { 
-  Search, 
-  Filter, 
-  Plus, 
+import {
+  Search,
+  Filter,
+  Plus,
   ChevronDown,
   Clock,
   CheckCircle,
-  AlertCircle 
+  AlertCircle
 } from 'lucide-react';
 import api from '../../lib/axios';
 
@@ -124,14 +124,14 @@ const getStatusBadge = (status: StatusType) => {
     value: string | number;
     label: string;
   }
-  
+
   interface FilterDropdownProps {
     label: string;
     options: Option[];
     value: string | number;
     onChange: (value: string) => void;
   }
-  
+
   const FilterDropdown = ({ label, options, value, onChange }: FilterDropdownProps) => (
     <div className="relative">
       <select
@@ -244,7 +244,7 @@ const getStatusBadge = (status: StatusType) => {
                     Status
                   </th>
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Scheduled Date
+                    Employee Due Date
                   </th>
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                     Evaluator
@@ -295,7 +295,7 @@ const getStatusBadge = (status: StatusType) => {
                         {evaluation.evaluator.name}
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-gray-500">
-  {evaluation.submittedAt || evaluation.acknowledgedAt 
+  {evaluation.submittedAt || evaluation.acknowledgedAt
     ? new Date(evaluation.submittedAt || evaluation.acknowledgedAt || '').toLocaleString()
     : 'Not updated'}
 </td>

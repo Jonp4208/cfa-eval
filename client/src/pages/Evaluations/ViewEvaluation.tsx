@@ -6,7 +6,8 @@ import { Button } from '@/components/ui/button';
 import { useToast } from '@/components/ui/use-toast';
 import { useAuth } from '@/contexts/AuthContext';
 import api from '@/lib/axios';
-import { AlertCircle } from 'lucide-react';
+import { AlertCircle, ClipboardCheck, FileText, GraduationCap, Calendar } from 'lucide-react';
+import PageHeader from '@/components/PageHeader';
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Progress } from '@/components/ui/progress';
 
@@ -65,6 +66,34 @@ interface GradingScale {
   description?: string;
   grades: Grade[];
   isDefault: boolean;
+}
+
+interface Documentation {
+  _id: string;
+  date: string;
+  type: string;
+  category: string;
+  description: string;
+  status: string;
+  supervisor: {
+    _id: string;
+    name: string;
+  };
+  createdAt: string;
+}
+
+interface TrainingProgress {
+  _id: string;
+  trainingPlan: {
+    _id: string;
+    name: string;
+    type: string;
+    department: string;
+    position: string;
+  };
+  startDate: string;
+  status: 'IN_PROGRESS' | 'COMPLETED' | 'ON_HOLD';
+  progress: number;
 }
 
 interface Question {
@@ -136,7 +165,7 @@ export default function ViewEvaluation() {
 
   const getRatingColor = (rating: number | string, gradingScale?: GradingScale): string => {
     if (!gradingScale) return '#000000';
-    
+
     const ratingNum = Number(rating);
     const grade = gradingScale.grades.find(g => g.value === ratingNum);
     return grade ? grade.color : '#000000';
@@ -151,36 +180,148 @@ export default function ViewEvaluation() {
     }
   });
 
+  // Fetch employee documentation
+  const { data: employeeDocumentation, isLoading: isLoadingDocumentation } = useQuery({
+    queryKey: ['employeeDocumentation', evaluation?.employee?._id],
+    queryFn: async () => {
+      if (!evaluation?.employee?._id) return [];
+      const response = await api.get(`/api/documentation/employee/${evaluation.employee._id}`);
+      return response.data;
+    },
+    enabled: !!evaluation?.employee?._id && evaluation?.status === 'pending_manager_review'
+  });
+
+  // Fetch employee training progress
+  const { data: employeeTraining, isLoading: isLoadingTraining } = useQuery({
+    queryKey: ['employeeTraining', evaluation?.employee?._id],
+    queryFn: async () => {
+      if (!evaluation?.employee?._id) return [];
+      const response = await api.get(`/api/training/employees/training-progress`);
+      // Filter for the current employee
+      return response.data.filter((progress: any) =>
+        progress.trainee?._id === evaluation.employee._id
+      );
+    },
+    enabled: !!evaluation?.employee?._id && evaluation?.status === 'pending_manager_review'
+  });
+
   // Initialize answers when evaluation data is loaded
   useEffect(() => {
     if (evaluation) {
+      console.log('Loading evaluation data:', {
+        status: evaluation.status,
+        selfEvaluation: !!evaluation.selfEvaluation,
+        managerEvaluation: !!evaluation.managerEvaluation,
+        draftEvaluation: !!evaluation.draftEvaluation,
+        isEmployee: user?._id === evaluation.employee._id,
+        isManager: user?._id === evaluation.evaluator._id
+      });
+
       // If user is the employee and self-evaluation exists, load it
       if (user?._id === evaluation.employee._id && evaluation.selfEvaluation) {
         setAnswers(evaluation.selfEvaluation);
       }
-      // If user is the manager and manager evaluation exists, load it
-      else if (user?._id === evaluation.evaluator._id && evaluation.managerEvaluation) {
-        setAnswers(evaluation.managerEvaluation);
-        setOverallComments(evaluation.overallComments || '');
+      // If user is the manager, load the appropriate evaluation data
+      else if (user?._id === evaluation.evaluator._id) {
+        // First priority: Load draft evaluation if it exists (for in_review_session)
+        if (evaluation.draftEvaluation && Object.keys(evaluation.draftEvaluation).length > 0) {
+          console.log('Loading draft evaluation');
+          setAnswers(evaluation.draftEvaluation);
+          setOverallComments(evaluation.draftComments || '');
+        }
+        // Second priority: Load manager evaluation if it exists (for completed evaluations)
+        else if (evaluation.managerEvaluation && Object.keys(evaluation.managerEvaluation).length > 0) {
+          console.log('Loading manager evaluation');
+          setAnswers(evaluation.managerEvaluation);
+          setOverallComments(evaluation.overallComments || '');
+        }
+        // If we're in review session but no draft exists yet, initialize with empty answers
+        else if (evaluation.status === 'in_review_session') {
+          console.log('Initializing empty answers for in_review_session');
+          setAnswers({});
+          setOverallComments('');
+        }
       }
     }
   }, [evaluation, user]);
 
-  // Calculate total questions when evaluation loads
+  // Determine if the current user can edit this evaluation
+  const isEmployee = user?._id === evaluation?.employee?._id;
+  const isManager = user?._id === evaluation?.evaluator?._id;
+  const canEdit = (isEmployee && evaluation?.status === 'pending_self_evaluation') ||
+                 (isManager && evaluation?.status === 'in_review_session');
+
+  // Calculate total questions and set initial question index when evaluation loads
   useEffect(() => {
     if (evaluation) {
+      // Calculate total questions
       const total = evaluation.template.sections.reduce(
         (total: number, section: Section) => total + section.questions.length,
         0
       );
       setTotalQuestions(total);
+
+      // Set initial question index to the first unanswered question
+      const userCanEdit = (isEmployee && evaluation.status === 'pending_self_evaluation') ||
+                         (isManager && evaluation.status === 'in_review_session');
+
+      if (userCanEdit && Object.keys(answers).length > 0) {
+        // Count total questions and answered questions
+        let totalQuestionsCount = 0;
+        let answeredQuestionsCount = 0;
+
+        // Check each question to see if it's answered
+        for (let s = 0; s < evaluation.template.sections.length; s++) {
+          const section = evaluation.template.sections[s];
+          for (let q = 0; q < section.questions.length; q++) {
+            totalQuestionsCount++;
+            const key = `${s}-${q}`;
+            if (answers[key]) {
+              answeredQuestionsCount++;
+            }
+          }
+        }
+
+        // If all questions are answered and we're in review session, show the summary
+        if (answeredQuestionsCount === totalQuestionsCount &&
+            isManager &&
+            evaluation.status === 'in_review_session') {
+          console.log('All questions answered, showing summary');
+          setShowSummary(true);
+          return;
+        }
+
+        // Otherwise, find the first unanswered question
+        let foundUnanswered = false;
+
+        for (let s = 0; s < evaluation.template.sections.length; s++) {
+          const section = evaluation.template.sections[s];
+          for (let q = 0; q < section.questions.length; q++) {
+            const key = `${s}-${q}`;
+            if (!answers[key]) {
+              setCurrentQuestionIndex({ section: s, question: q });
+              foundUnanswered = true;
+              break;
+            }
+          }
+          if (foundUnanswered) break;
+        }
+
+        // If all questions are answered but we're not showing summary, set to the last question
+        if (!foundUnanswered) {
+          // Find the last section and question
+          const lastSectionIndex = evaluation.template.sections.length - 1;
+          const lastQuestionIndex = evaluation.template.sections[lastSectionIndex].questions.length - 1;
+          setCurrentQuestionIndex({ section: lastSectionIndex, question: lastQuestionIndex });
+        }
+      }
     }
-  }, [evaluation]);
+  }, [evaluation, answers, isEmployee, isManager]);
 
   // Helper function to get next question indices
   const getNextQuestionIndices = (currentSection: number, currentQuestion: number) => {
     if (!evaluation) return null;
-    
+
     // Start searching from the current position
     let section = currentSection;
     let question = currentQuestion + 1;
@@ -188,7 +329,7 @@ export default function ViewEvaluation() {
     // Search through all sections and questions
     while (section < evaluation.template.sections.length) {
       const currentSectionQuestions = evaluation.template.sections[section].questions;
-      
+
       while (question < currentSectionQuestions.length) {
         // Check if this question is unanswered
         const key = `${section}-${question}`;
@@ -197,7 +338,7 @@ export default function ViewEvaluation() {
         }
         question++;
       }
-      
+
       // Move to next section
       section++;
       question = 0;
@@ -210,7 +351,7 @@ export default function ViewEvaluation() {
     while (section <= currentSection) {
       const currentSectionQuestions = evaluation.template.sections[section].questions;
       const maxQuestion = (section === currentSection) ? currentQuestion : currentSectionQuestions.length;
-      
+
       while (question < maxQuestion) {
         // Check if this question is unanswered
         const key = `${section}-${question}`;
@@ -219,11 +360,11 @@ export default function ViewEvaluation() {
         }
         question++;
       }
-      
+
       section++;
       question = 0;
     }
-    
+
     // If no unanswered questions found, return null
     return null;
   };
@@ -231,26 +372,26 @@ export default function ViewEvaluation() {
   // Helper function to get previous question indices
   const getPreviousQuestionIndices = (currentSection: number, currentQuestion: number) => {
     if (!evaluation) return null;
-    
+
     if (currentQuestion > 0) {
       return { section: currentSection, question: currentQuestion - 1 };
     }
-    
+
     if (currentSection > 0) {
       const previousSection = evaluation.template.sections[currentSection - 1];
-      return { 
-        section: currentSection - 1, 
-        question: previousSection.questions.length - 1 
+      return {
+        section: currentSection - 1,
+        question: previousSection.questions.length - 1
       };
     }
-    
+
     return null;
   };
 
   // Calculate current question number (1-based)
   const getCurrentQuestionNumber = () => {
     if (!evaluation) return 1;
-    
+
     let questionNumber = 1;
     for (let s = 0; s < currentQuestionIndex.section; s++) {
       questionNumber += evaluation.template.sections[s].questions.length;
@@ -338,11 +479,11 @@ export default function ViewEvaluation() {
         title: "Success",
         description: "Evaluation completed successfully",
       });
-      
+
       // Invalidate and refetch queries to update the UI
       queryClient.invalidateQueries({ queryKey: ['evaluation', id] });
       queryClient.invalidateQueries({ queryKey: ['evaluations'] });
-      
+
       // Navigate back to evaluations list
       navigate('/evaluations');
     },
@@ -380,18 +521,35 @@ export default function ViewEvaluation() {
   const saveDraft = useMutation({
     mutationFn: async () => {
       if (isEmployee) {
-        await api.post(`/api/evaluations/${id}/self-evaluation`, {
+        const response = await api.post(`/api/evaluations/${id}/self-evaluation`, {
           selfEvaluation: answers,
           preventStatusChange: true
         });
+        return response.data;
       } else {
-        await api.post(`/api/evaluations/${id}/save-draft`, {
+        const response = await api.post(`/api/evaluations/${id}/save-draft`, {
           managerEvaluation: answers,
           overallComments
         });
+        return response.data;
       }
     },
-    onSuccess: () => {
+    onSuccess: (data) => {
+      // Update the local cache with the saved draft data
+      queryClient.setQueryData(['evaluation', id], (oldData: any) => {
+        if (!oldData) return oldData;
+
+        const userIsEmployee = user?._id === oldData.employee?._id;
+        const userIsManager = user?._id === oldData.evaluator?._id;
+
+        return {
+          ...oldData,
+          draftEvaluation: userIsManager ? answers : oldData.draftEvaluation,
+          draftComments: userIsManager ? overallComments : oldData.draftComments,
+          selfEvaluation: userIsEmployee ? answers : oldData.selfEvaluation
+        };
+      });
+
       // Create and show success notification
       const notification = document.createElement('div');
       notification.className = 'fixed top-4 right-4 bg-green-600 text-white px-6 py-4 rounded-xl shadow-lg z-[9999] flex items-center transform transition-all duration-300 translate-y-0';
@@ -554,7 +712,7 @@ export default function ViewEvaluation() {
       if (context?.previousEvaluation) {
         await queryClient.setQueryData(['evaluation', id], context.previousEvaluation);
       }
-      
+
       // Then show error toast
       console.error('Complete review error:', error);
       toast({
@@ -609,22 +767,22 @@ export default function ViewEvaluation() {
   const getRatingValue = (rating: string | number | undefined, gradingScale?: GradingScale): number => {
     if (!rating || !gradingScale) return 0;
     if (typeof rating === 'number') return rating;
-    
+
     // If the rating is a numeric string, convert it to a number
     const numericValue = Number(rating);
     if (!isNaN(numericValue)) return numericValue;
-    
+
     // If we have a grading scale, find the grade by label
-    const grade = gradingScale.grades.find(g => 
+    const grade = gradingScale.grades.find(g =>
       rating.includes(g.label) || rating.includes(`- ${g.label}`)
     );
-    
+
     // Find the index of the grade in the sorted grades array (1-based)
     if (grade) {
       const sortedGrades = [...gradingScale.grades].sort((a, b) => a.value - b.value);
       return sortedGrades.findIndex(g => g.label === grade.label) + 1;
     }
-    
+
     return 0;
   };
 
@@ -655,7 +813,7 @@ export default function ViewEvaluation() {
   // Add helper function to compare ratings
   const getComparisonStyle = (employeeRating: string | number | undefined, managerRating: string | number | undefined, gradingScale?: GradingScale): string => {
     if (!employeeRating || !managerRating || !gradingScale) return '';
-    
+
     const employeeValue = getRatingValue(employeeRating, gradingScale);
     const managerValue = getRatingValue(managerRating, gradingScale);
 
@@ -670,14 +828,32 @@ export default function ViewEvaluation() {
       const response = await api.post(`/api/evaluations/${id}/start-review`);
       return response.data;
     },
-    onSuccess: () => {
+    onSuccess: (data) => {
+      // Update the local cache with the updated status
+      queryClient.setQueryData(['evaluation', id], (oldData: any) => {
+        if (!oldData) return oldData;
+
+        return {
+          ...oldData,
+          status: 'in_review_session',
+          // Preserve any existing draft data
+          draftEvaluation: oldData.draftEvaluation || {},
+          draftComments: oldData.draftComments || ''
+        };
+      });
+
       // Invalidate and refetch queries to update the UI
       queryClient.invalidateQueries({ queryKey: ['evaluation', id] });
       queryClient.invalidateQueries({ queryKey: ['evaluations'] });
-      
+
       // Update local state
       setShowScheduleReview(false);
       setIsEditing(true);
+
+      toast({
+        title: "Review Started",
+        description: "You can now complete the evaluation for this employee.",
+      });
     },
     onError: (error) => {
       toast({
@@ -702,9 +878,6 @@ export default function ViewEvaluation() {
     status: evaluation.status
   });
 
-  const isEmployee = user?._id === evaluation.employee._id;
-  const isManager = user?._id === evaluation.evaluator._id;
-  
   // Add debug logging
   console.log('Debug - Evaluation Display Conditions:', {
     isManager,
@@ -714,38 +887,16 @@ export default function ViewEvaluation() {
     evaluatorId: evaluation.evaluator._id
   });
 
-  const canEdit = (isEmployee && evaluation.status === 'pending_self_evaluation') ||
-                 (isManager && evaluation.status === 'in_review_session');
-
   return (
     <div className="min-h-screen p-4 md:p-6">
       <div className="max-w-7xl mx-auto space-y-6">
         {/* Header */}
-        <div className="bg-gradient-to-r from-[#E51636] to-[#DD0031] rounded-[20px] p-8 text-white shadow-xl relative overflow-hidden">
-          <div className="absolute inset-0 bg-[url('/pattern.png')] opacity-10" />
-          <div className="relative">
-            <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-6">
-              <div>
-                <h1 className="text-3xl md:text-4xl font-bold">
-                  Evaluation for {evaluation?.employee?.name || 'Loading...'}
-                </h1>
-                <p className="text-white/80 mt-2 text-lg">
-                  Evaluator: {evaluation?.evaluator?.name || 'Loading...'}
-                </p>
-              </div>
-              <Button
-                variant="ghost"
-                onClick={() => navigate(-1)}
-                className="h-12 px-6 bg-white/10 hover:bg-white/20 text-white rounded-2xl border-0"
-              >
-                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="mr-2">
-                  <path d="m15 18-6-6 6-6"/>
-                </svg>
-                Back to Evaluations
-              </Button>
-            </div>
-          </div>
-        </div>
+        <PageHeader
+          title={`Evaluation for ${evaluation?.employee?.name || 'Loading...'}`}
+          subtitle={`Evaluator: ${evaluation?.evaluator?.name || 'Loading...'}`}
+          showBackButton={true}
+          icon={<ClipboardCheck className="h-5 w-5" />}
+        />
 
         {/* Main Content */}
         <Card className="bg-white rounded-[20px] shadow-md border-0">
@@ -770,7 +921,7 @@ export default function ViewEvaluation() {
                 <div>
                   <h3 className="text-sm font-medium text-[#27251F]/60 mb-2">Status</h3>
                   <span className={`inline-flex items-center px-4 py-2 rounded-full text-sm font-medium ${
-                    evaluation?.status === 'completed' 
+                    evaluation?.status === 'completed'
                       ? 'bg-green-100 text-green-800'
                       : evaluation?.status === 'in_review_session'
                       ? 'bg-purple-100 text-purple-800'
@@ -782,7 +933,7 @@ export default function ViewEvaluation() {
                   </span>
                 </div>
                 <div>
-                  <h3 className="text-sm font-medium text-[#27251F]/60 mb-2">Scheduled Date</h3>
+                  <h3 className="text-sm font-medium text-[#27251F]/60 mb-2">Employee Due Date</h3>
                   <p className="text-[#27251F] text-lg font-medium">
                     {evaluation?.scheduledDate ? new Date(evaluation.scheduledDate).toLocaleDateString() : 'Loading...'}
                   </p>
@@ -870,8 +1021,8 @@ export default function ViewEvaluation() {
                     <h3 className="text-lg font-medium text-[#27251F]">Question {getCurrentQuestionNumber()} of {totalQuestions}</h3>
                     <span className="text-sm text-[#27251F]/60">{Math.round((getCurrentQuestionNumber() / totalQuestions) * 100)}%</span>
                   </div>
-                  <Progress 
-                    value={(getCurrentQuestionNumber() / totalQuestions) * 100} 
+                  <Progress
+                    value={(getCurrentQuestionNumber() / totalQuestions) * 100}
                     className="h-2 bg-[#27251F]/10 rounded-full [&>div]:bg-[#E51636] [&>div]:rounded-full"
                   />
                 </div>
@@ -930,7 +1081,7 @@ export default function ViewEvaluation() {
                     >
                       Previous Question
                     </Button>
-                    
+
                     <div className="flex flex-col md:flex-row gap-4 w-full md:w-auto">
                       <Button
                         type="button"
@@ -941,7 +1092,7 @@ export default function ViewEvaluation() {
                       >
                         {saveDraft.isPending ? 'Saving...' : 'Save Draft'}
                       </Button>
-                      
+
                       {getNextQuestionIndices(currentQuestionIndex.section, currentQuestionIndex.question) ? (
                         <Button
                           type="button"
@@ -978,40 +1129,183 @@ export default function ViewEvaluation() {
               </>
             )}
 
-            {/* Manager Review Session Notice */}
+            {/* Employee Documentation and Training Section */}
             {isManager && evaluation.status === 'pending_manager_review' && !showScheduleReview && (
-              <Card className="mb-8 bg-yellow-50 border-yellow-200 rounded-[20px]">
-                <CardContent className="p-6">
+              <>
+                {/* Employee History Section */}
+                <div className="mb-8 space-y-6">
+                  <h3 className="text-xl font-medium text-[#27251F]">Employee History</h3>
+
+                  {/* Documentation Section */}
+                  <Card className="bg-white rounded-[20px] shadow-sm border border-gray-100">
+                    <CardHeader className="pb-2">
+                      <div className="flex items-center gap-2">
+                        <div className="h-8 w-8 bg-blue-50 rounded-full flex items-center justify-center">
+                          <FileText className="h-4 w-4 text-blue-500" />
+                        </div>
+                        <CardTitle className="text-lg text-[#27251F]">Recent Documentation</CardTitle>
+                      </div>
+                    </CardHeader>
+                    <CardContent>
+                      {isLoadingDocumentation ? (
+                        <div className="py-4 text-center text-[#27251F]/60">Loading documentation...</div>
+                      ) : employeeDocumentation && employeeDocumentation.length > 0 ? (
+                        <div className="space-y-3">
+                          {employeeDocumentation.slice(0, 5).map((doc: Documentation) => (
+                            <div key={doc._id} className="p-3 bg-gray-50 rounded-xl">
+                              <div className="flex justify-between items-start">
+                                <div>
+                                  <div className="font-medium text-[#27251F]">{doc.type}</div>
+                                  <div className="text-sm text-[#27251F]/60 mt-1">{doc.description.substring(0, 100)}{doc.description.length > 100 ? '...' : ''}</div>
+                                </div>
+                                <div className="text-xs text-[#27251F]/60 whitespace-nowrap">
+                                  {new Date(doc.date).toLocaleDateString()}
+                                </div>
+                              </div>
+                              <div className="flex justify-between items-center mt-2">
+                                <span className={`text-xs px-2 py-1 rounded-full ${
+                                  doc.category === 'Disciplinary'
+                                    ? 'bg-red-100 text-red-800'
+                                    : 'bg-blue-100 text-blue-800'
+                                }`}>
+                                  {doc.category}
+                                </span>
+                                <span className="text-xs text-[#27251F]/60">
+                                  By: {doc.supervisor.name}
+                                </span>
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                      ) : (
+                        <div className="py-4 text-center text-[#27251F]/60">No recent documentation found</div>
+                      )}
+
+                      {employeeDocumentation && employeeDocumentation.length > 0 && (
+                        <div className="mt-4 text-center">
+                          <Button
+                            variant="outline"
+                            onClick={() => navigate(`/documentation?employee=${evaluation.employee._id}`)}
+                            className="text-sm"
+                          >
+                            View All Documentation
+                          </Button>
+                        </div>
+                      )}
+                    </CardContent>
+                  </Card>
+
+                  {/* Training Section */}
+                  <Card className="bg-white rounded-[20px] shadow-sm border border-gray-100">
+                    <CardHeader className="pb-2">
+                      <div className="flex items-center gap-2">
+                        <div className="h-8 w-8 bg-green-50 rounded-full flex items-center justify-center">
+                          <GraduationCap className="h-4 w-4 text-green-500" />
+                        </div>
+                        <CardTitle className="text-lg text-[#27251F]">Training Progress</CardTitle>
+                      </div>
+                    </CardHeader>
+                    <CardContent>
+                      {isLoadingTraining ? (
+                        <div className="py-4 text-center text-[#27251F]/60">Loading training data...</div>
+                      ) : employeeTraining && employeeTraining.length > 0 ? (
+                        <div className="space-y-3">
+                          {employeeTraining.map((training: TrainingProgress) => (
+                            <div key={training._id} className="p-3 bg-gray-50 rounded-xl">
+                              <div className="flex justify-between items-start">
+                                <div>
+                                  <div className="font-medium text-[#27251F]">{training.trainingPlan.name}</div>
+                                  <div className="text-sm text-[#27251F]/60 mt-1">
+                                    {training.trainingPlan.department} - {training.trainingPlan.position}
+                                  </div>
+                                </div>
+                                <div className="text-xs text-[#27251F]/60 whitespace-nowrap flex items-center gap-1">
+                                  <Calendar className="h-3 w-3" />
+                                  {new Date(training.startDate).toLocaleDateString()}
+                                </div>
+                              </div>
+                              <div className="mt-3">
+                                <div className="flex justify-between items-center mb-1">
+                                  <span className="text-xs text-[#27251F]/60">Progress</span>
+                                  <span className="text-xs font-medium">{training.progress}%</span>
+                                </div>
+                                <div className="w-full bg-[#27251F]/10 rounded-full h-2">
+                                  <div
+                                    className={`h-2 rounded-full ${
+                                      training.status === 'COMPLETED'
+                                        ? 'bg-green-500'
+                                        : training.status === 'ON_HOLD'
+                                        ? 'bg-yellow-500'
+                                        : 'bg-blue-500'
+                                    }`}
+                                    style={{ width: `${training.progress}%` }}
+                                  />
+                                </div>
+                                <div className="flex justify-end mt-1">
+                                  <span className={`text-xs px-2 py-1 rounded-full ${
+                                    training.status === 'COMPLETED'
+                                      ? 'bg-green-100 text-green-800'
+                                      : training.status === 'ON_HOLD'
+                                      ? 'bg-yellow-100 text-yellow-800'
+                                      : 'bg-blue-100 text-blue-800'
+                                  }`}>
+                                    {training.status.replace('_', ' ')}
+                                  </span>
+                                </div>
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                      ) : (
+                        <div className="py-4 text-center text-[#27251F]/60">No training data found</div>
+                      )}
+
+                      {employeeTraining && employeeTraining.length > 0 && (
+                        <div className="mt-4 text-center">
+                          <Button
+                            variant="outline"
+                            onClick={() => navigate(`/training/progress?employee=${evaluation.employee._id}`)}
+                            className="text-sm"
+                          >
+                            View All Training
+                          </Button>
+                        </div>
+                      )}
+                    </CardContent>
+                  </Card>
+                </div>
+
+                {/* Action Required Card */}
+                <div className="mb-8 p-6 bg-yellow-50 border border-yellow-100 rounded-[20px]">
                   <div className="flex flex-col items-center gap-4">
-                    <div className="flex items-center justify-center gap-2 text-yellow-800">
+                    <div className="flex items-center justify-center gap-2 text-amber-800">
                       <AlertCircle className="w-5 h-5" />
                       <p className="text-center font-medium">
                         Action Required: Schedule or Complete Review
                       </p>
                     </div>
-                    <p className="text-center text-yellow-700">
+                    <p className="text-center text-amber-700">
                       You can either schedule a review session with the employee or complete the evaluation now.
                     </p>
-                    <div className="flex gap-4">
-                      <button
-                        type="button"
+                    <div className="flex gap-4 mt-2">
+                      <Button
                         onClick={() => setShowScheduleReview(true)}
-                        className="inline-flex items-center justify-center px-6 py-3 bg-[#E51636] text-white font-medium rounded-xl hover:bg-[#E51636]/90 transition-colors"
+                        className="bg-[#E51636] hover:bg-[#E51636]/90 text-white rounded-xl"
                       >
                         Schedule Review Session
-                      </button>
-                      <button
-                        type="button"
+                      </Button>
+                      <Button
+                        variant="outline"
                         onClick={() => startReviewNow.mutate()}
                         disabled={startReviewNow.isPending}
-                        className="inline-flex items-center justify-center px-6 py-3 bg-white border border-[#E51636] text-[#E51636] font-medium rounded-xl hover:bg-[#E51636]/10 transition-colors"
+                        className="border-[#E51636] text-[#E51636] hover:bg-[#E51636]/10 rounded-xl"
                       >
                         {startReviewNow.isPending ? 'Starting...' : 'Complete Now'}
-                      </button>
+                      </Button>
                     </div>
                   </div>
-                </CardContent>
-              </Card>
+                </div>
+              </>
             )}
 
             {/* Current evaluation form */}
@@ -1019,11 +1313,15 @@ export default function ViewEvaluation() {
               <>
                 <div className="mb-8">
                   <div className="flex justify-between items-center mb-3">
-                    <h3 className="text-lg font-medium text-[#27251F]">Question {getCurrentQuestionNumber()} of {totalQuestions}</h3>
-                    <span className="text-sm text-[#27251F]/60">{Math.round((getCurrentQuestionNumber() / totalQuestions) * 100)}%</span>
+                    {calculateProgress() === 100 ? (
+                      <h3 className="text-lg font-medium text-[#27251F]">All questions answered</h3>
+                    ) : (
+                      <h3 className="text-lg font-medium text-[#27251F]">Question {getCurrentQuestionNumber()} of {totalQuestions}</h3>
+                    )}
+                    <span className="text-sm text-[#27251F]/60">{calculateProgress()}%</span>
                   </div>
-                  <Progress 
-                    value={(getCurrentQuestionNumber() / totalQuestions) * 100} 
+                  <Progress
+                    value={calculateProgress()}
                     className="h-2 bg-[#27251F]/10 rounded-full [&>div]:bg-[#E51636] [&>div]:rounded-full"
                   />
                 </div>
@@ -1056,7 +1354,7 @@ export default function ViewEvaluation() {
                         <div className="flex items-center gap-2">
                           <div
                             className="w-3 h-3 rounded-full"
-                            style={{ 
+                            style={{
                               backgroundColor: getRatingColor(
                                 evaluation.selfEvaluation?.[`${currentQuestionIndex.section}-${currentQuestionIndex.question}`],
                                 evaluation.template.sections[currentQuestionIndex.section]
@@ -1073,7 +1371,7 @@ export default function ViewEvaluation() {
                           </span>
                         </div>
                       </div>
-                      
+
                       {/* Manager's Input */}
                       <div>
                         <select
@@ -1106,7 +1404,7 @@ export default function ViewEvaluation() {
                       >
                         Previous Question
                       </Button>
-                      
+
                       <div className="flex flex-col md:flex-row gap-4 w-full md:w-auto">
                         <Button
                           type="button"
@@ -1117,25 +1415,85 @@ export default function ViewEvaluation() {
                         >
                           {saveDraft.isPending ? 'Saving...' : 'Save Draft'}
                         </Button>
-                        
+
                         {getNextQuestionIndices(currentQuestionIndex.section, currentQuestionIndex.question) ? (
                           <Button
                             type="button"
                             onClick={() => {
-                              const next = getNextQuestionIndices(currentQuestionIndex.section, currentQuestionIndex.question);
-                              if (next) setCurrentQuestionIndex(next);
+                              // First save the current answer
+                              saveDraft.mutate(undefined, {
+                                onSuccess: () => {
+                                  const next = getNextQuestionIndices(currentQuestionIndex.section, currentQuestionIndex.question);
+                                  if (next) {
+                                    setCurrentQuestionIndex(next);
+                                  } else {
+                                    // Check if all questions are answered
+                                    let allAnswered = true;
+                                    let totalQuestionsCount = 0;
+                                    let answeredQuestionsCount = 0;
+
+                                    for (let s = 0; s < evaluation.template.sections.length; s++) {
+                                      const section = evaluation.template.sections[s];
+                                      for (let q = 0; q < section.questions.length; q++) {
+                                        totalQuestionsCount++;
+                                        const key = `${s}-${q}`;
+                                        if (answers[key]) {
+                                          answeredQuestionsCount++;
+                                        } else {
+                                          allAnswered = false;
+                                        }
+                                      }
+                                    }
+
+                                    // If all questions are answered, show the summary
+                                    if (allAnswered) {
+                                      console.log('All questions answered, showing summary');
+                                      setShowSummary(true);
+                                      toast({
+                                        title: "All questions completed",
+                                        description: "Your review has been saved and is ready to discuss with the employee.",
+                                      });
+                                    } else {
+                                      // Otherwise, find the first unanswered question
+                                      for (let s = 0; s < evaluation.template.sections.length; s++) {
+                                        const section = evaluation.template.sections[s];
+                                        for (let q = 0; q < section.questions.length; q++) {
+                                          const key = `${s}-${q}`;
+                                          if (!answers[key]) {
+                                            setCurrentQuestionIndex({ section: s, question: q });
+                                            break;
+                                          }
+                                        }
+                                      }
+                                    }
+                                  }
+                                }
+                              });
                             }}
+                            disabled={saveDraft.isPending}
                             className="w-full md:w-auto bg-[#E51636] text-white hover:bg-[#E51636]/90 h-12 px-6 rounded-2xl"
                           >
-                            Next Question
+                            {saveDraft.isPending ? 'Saving...' : 'Next Question'}
                           </Button>
                         ) : (
                           <Button
                             type="button"
-                            onClick={() => setShowSummary(true)}
+                            onClick={() => {
+                              // Save the draft first, then show summary
+                              saveDraft.mutate(undefined, {
+                                onSuccess: () => {
+                                  setShowSummary(true);
+                                  toast({
+                                    title: "Review saved",
+                                    description: "Your review has been saved and is ready to discuss with the employee.",
+                                  });
+                                }
+                              });
+                            }}
+                            disabled={saveDraft.isPending}
                             className="w-full md:w-auto bg-[#E51636] text-white hover:bg-[#E51636]/90 h-12 px-6 rounded-2xl"
                           >
-                            Finalize Review
+                            {saveDraft.isPending ? 'Saving...' : 'Finalize Review'}
                           </Button>
                         )}
                       </div>
@@ -1218,7 +1576,7 @@ export default function ViewEvaluation() {
                                 const managerColor = getRatingColor(managerRating, question.gradingScale);
                                 const employeeValue = getRatingValue(employeeRating, question.gradingScale);
                                 const managerValue = getRatingValue(managerRating, question.gradingScale);
-                                
+
                                 let comparisonStyle = '';
                                 if (managerValue > employeeValue) {
                                   comparisonStyle = 'bg-green-50 border-green-200';
@@ -1282,14 +1640,44 @@ export default function ViewEvaluation() {
                       </div>
 
                       {/* Complete Review Button */}
-                      <div className="flex justify-end">
+                      <div className="flex justify-between">
                         <Button
                           type="button"
-                          onClick={handleCompleteReview}
+                          variant="outline"
+                          onClick={() => {
+                            // Save the draft first, then go back to editing
+                            saveDraft.mutate(undefined, {
+                              onSuccess: () => {
+                                // Find the last section and question
+                                const lastSectionIndex = evaluation.template.sections.length - 1;
+                                const lastQuestionIndex = evaluation.template.sections[lastSectionIndex].questions.length - 1;
+
+                                // Set the current question to the last question
+                                setCurrentQuestionIndex({ section: lastSectionIndex, question: lastQuestionIndex });
+
+                                // Hide the summary view
+                                setShowSummary(false);
+
+                                toast({
+                                  title: "Review saved",
+                                  description: "Your changes have been saved. You can continue editing.",
+                                });
+                              }
+                            });
+                          }}
+                          disabled={saveDraft.isPending}
+                          className="h-12 px-6 rounded-2xl"
+                        >
+                          {saveDraft.isPending ? 'Saving...' : 'Continue Editing'}
+                        </Button>
+
+                        <Button
+                          type="button"
+                          onClick={() => setShowConfirmSubmit(true)}
                           disabled={completeReview.isPending}
                           className="bg-[#E51636] text-white hover:bg-[#E51636]/90 h-12 px-6 rounded-2xl"
                         >
-                          {completeReview.isPending ? 'Completing...' : 'Complete'}
+                          {completeReview.isPending ? 'Completing...' : 'Complete Evaluation'}
                         </Button>
                       </div>
 
@@ -1298,11 +1686,21 @@ export default function ViewEvaluation() {
                         <Dialog open={showConfirmSubmit} onOpenChange={setShowConfirmSubmit}>
                           <DialogContent>
                             <DialogHeader>
-                              <DialogTitle>Complete Review</DialogTitle>
+                              <DialogTitle>Complete Evaluation</DialogTitle>
                               <DialogDescription>
-                                Are you sure you want to complete this review? This action cannot be undone.
+                                This will mark the evaluation as complete and send a notification to the employee to review and acknowledge it.
                               </DialogDescription>
                             </DialogHeader>
+                            <div className="py-4">
+                              <p className="text-sm text-[#27251F]/70">
+                                After completing the evaluation:
+                              </p>
+                              <ul className="list-disc list-inside text-sm text-[#27251F]/70 mt-2 space-y-1">
+                                <li>The employee will be able to view all ratings and comments</li>
+                                <li>The employee will need to acknowledge the evaluation</li>
+                                <li>You will not be able to make further changes</li>
+                              </ul>
+                            </div>
                             <DialogFooter>
                               <Button
                                 variant="outline"
@@ -1315,7 +1713,7 @@ export default function ViewEvaluation() {
                                 disabled={completeReview.isPending}
                                 className="bg-[#E51636] text-white hover:bg-[#E51636]/90"
                               >
-                                {completeReview.isPending ? 'Completing...' : 'Complete'}
+                                {completeReview.isPending ? 'Completing...' : 'Complete Evaluation'}
                               </Button>
                             </DialogFooter>
                           </DialogContent>
@@ -1401,7 +1799,7 @@ export default function ViewEvaluation() {
                           const managerColor = getRatingColor(managerRating, question.gradingScale);
                           const employeeValue = getRatingValue(employeeRating, question.gradingScale);
                           const managerValue = getRatingValue(managerRating, question.gradingScale);
-                          
+
                           let comparisonStyle = '';
                           if (managerValue > employeeValue) {
                             comparisonStyle = 'bg-green-50 border-green-200';
@@ -1507,4 +1905,4 @@ export default function ViewEvaluation() {
       </div>
     </div>
   );
-} 
+}

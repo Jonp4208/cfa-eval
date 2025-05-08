@@ -6,7 +6,7 @@ import { useTranslation } from '@/contexts/TranslationContext';
 import { ClipboardCheck } from 'lucide-react';
 
 // Standard button class for PageHeader action buttons
-export const headerButtonClass = "w-full md:w-auto bg-white hover:bg-white/90 text-[#E51636] flex items-center justify-center gap-2 py-2 px-4 rounded-xl transition-all duration-300 text-sm font-medium shadow-sm border border-white/20";
+export const headerButtonClass = "w-full md:w-auto bg-white hover:bg-white/90 text-[#E51636] flex items-center justify-center gap-2 py-2 px-4 md:py-3 md:px-6 rounded-xl transition-all duration-300 text-sm md:text-base font-medium shadow-sm border border-white/20";
 
 interface PageHeaderProps {
   title: string;
@@ -77,7 +77,7 @@ const PageHeader: React.FC<PageHeaderProps> = ({
                 {t('common.back')}
               </Button>
             )}
-            
+
             {actions && (
               <div className={cn(
                 'w-full md:w-auto',

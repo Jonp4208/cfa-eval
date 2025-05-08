@@ -63,7 +63,7 @@ interface Template {
   criteriaCount: number;
 }
 
-const steps = ['Select Employees', 'Choose Template', 'Schedule'];
+const steps = ['Select Employees', 'Choose Template', 'Set Due Date'];
 
 export default function NewEvaluation() {
   const navigate = useNavigate();
@@ -79,6 +79,7 @@ export default function NewEvaluation() {
   const [selectedCountByDepartment, setSelectedCountByDepartment] = useState<Record<string, number>>({});
   const queryClient = useQueryClient();
   const [showAllEmployees, setShowAllEmployees] = useState(false);
+  const [updateNextEvaluationDate, setUpdateNextEvaluationDate] = useState(false);
 
   // Predefined departments that match the server's enum values
   const DEPARTMENTS = ['all', 'FOH', 'BOH', 'Leadership'];
@@ -313,6 +314,7 @@ export default function NewEvaluation() {
       employeeIds: selectedEmployees.map(emp => emp._id),
       templateId: selectedTemplate.id,
       scheduledDate,
+      updateNextEvaluationDate,
     });
   };
 
@@ -732,11 +734,11 @@ export default function NewEvaluation() {
             {currentStep === 3 && (
               <div className="max-w-md mx-auto space-y-6">
                 <div>
-                  <h2 className="text-base sm:text-lg font-medium text-[#27251F] mb-4">Schedule the Evaluation</h2>
+                  <h2 className="text-base sm:text-lg font-medium text-[#27251F] mb-4">Set Employee Deadline</h2>
                   <div className="space-y-4">
                     <div>
                       <label className="block text-sm font-medium text-[#27251F]/60 mb-1">
-                        Scheduled Date
+                        Employee Complete By Date
                       </label>
                       <input
                         type="date"
@@ -745,6 +747,26 @@ export default function NewEvaluation() {
                         className="w-full p-3 border rounded-xl focus:outline-none focus:ring-2 focus:ring-[#E51636] focus:border-transparent text-base"
                         min={new Date().toISOString().split('T')[0]}
                       />
+                      <p className="text-xs text-gray-500 mt-2">
+                        This is the deadline by which the employee should complete their self-evaluation.
+                      </p>
+                    </div>
+
+                    {/* Option to update next evaluation date */}
+                    <div className="mt-6 pt-4 border-t border-gray-100">
+                      <div className="flex items-center space-x-2">
+                        <Switch
+                          id="update-next-eval"
+                          checked={updateNextEvaluationDate}
+                          onCheckedChange={setUpdateNextEvaluationDate}
+                        />
+                        <Label htmlFor="update-next-eval" className="text-sm text-gray-600">
+                          Update next evaluation date for employees with auto-scheduling
+                        </Label>
+                      </div>
+                      <p className="text-xs text-gray-500 mt-2 ml-7">
+                        If enabled, this will reset the next automated evaluation date based on the employee's frequency settings.
+                      </p>
                     </div>
                   </div>
                 </div>

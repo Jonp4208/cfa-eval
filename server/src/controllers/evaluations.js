@@ -63,7 +63,7 @@ const createNotificationIfNeeded = async (evaluation, type) => {
 // Create new evaluation
 export const createEvaluation = async (req, res) => {
     try {
-        const { employeeIds, templateId, scheduledDate, overallComments, developmentPlan, sectionResults } = req.body;
+        const { employeeIds, templateId, scheduledDate, overallComments, developmentPlan, sectionResults, updateNextEvaluationDate } = req.body;
 
         if (!employeeIds || !templateId || !scheduledDate) {
             return res.status(400).json({ message: 'Missing required fields' });
@@ -80,11 +80,11 @@ export const createEvaluation = async (req, res) => {
             return res.status(404).json({ message: 'Template not found or inactive' });
         }
 
-        // Get all employees with their managers
+        // Get all employees with their managers and scheduling preferences
         const employees = await User.find({
             _id: { $in: employeeIds },
             store: req.user.store._id
-        }).populate('manager', '_id');
+        }).populate('manager', '_id').select('+schedulingPreferences');
 
         if (employees.length === 0) {
             return res.status(404).json({ message: 'No employees found' });
@@ -98,12 +98,12 @@ export const createEvaluation = async (req, res) => {
         const isDirector = req.user.position === 'Director';
         if (!isDirector) {
             // For non-directors, check if they are the manager of each employee
-            const unauthorizedEmployees = employees.filter(employee => 
+            const unauthorizedEmployees = employees.filter(employee =>
                 employee.manager?._id.toString() !== req.user._id.toString()
             );
 
             if (unauthorizedEmployees.length > 0) {
-                return res.status(403).json({ 
+                return res.status(403).json({
                     message: 'You can only create evaluations for your direct reports',
                     unauthorizedEmployees: unauthorizedEmployees.map(e => e.name)
                 });
@@ -137,7 +137,7 @@ export const createEvaluation = async (req, res) => {
             });
 
             await evaluation.save();
-            
+
             // Create initial notification
             const notification = new Notification({
                 user: employee._id,
@@ -145,7 +145,7 @@ export const createEvaluation = async (req, res) => {
                 type: 'evaluation',
                 priority: 'high',
                 title: 'New Evaluation Scheduled',
-                message: `${employee.name}'s evaluation has been scheduled for ${new Date(scheduledDate).toLocaleDateString()}`,
+                message: `${employee.name}'s evaluation needs to be completed by ${new Date(scheduledDate).toLocaleDateString()}`,
                 evaluationId: evaluation._id,
                 employee: {
                     name: employee.name,
@@ -155,12 +155,42 @@ export const createEvaluation = async (req, res) => {
             });
 
             await notification.save();
-            
+
             // Update notification status
             evaluation.notificationStatus.employee.scheduled = true;
             await evaluation.save();
-            
+
             createdEvaluations.push(evaluation);
+
+            // Update nextEvaluationDate if requested and auto-scheduling is enabled
+            if (updateNextEvaluationDate === true && employee.schedulingPreferences?.autoSchedule) {
+                try {
+                    // Calculate new next evaluation date based on frequency
+                    const today = new Date();
+                    let newNextDate = new Date(today);
+
+                    // Add frequency days to today
+                    if (employee.schedulingPreferences.frequency) {
+                        newNextDate.setTime(newNextDate.getTime() +
+                            (employee.schedulingPreferences.frequency * 24 * 60 * 60 * 1000));
+                    } else {
+                        // Default to 90 days if no frequency is set
+                        newNextDate.setDate(newNextDate.getDate() + 90);
+                    }
+
+                    // Update the user's nextEvaluationDate
+                    await User.findByIdAndUpdate(employee._id, {
+                        $set: {
+                            'schedulingPreferences.nextEvaluationDate': newNextDate,
+                            'schedulingPreferences.lastCalculatedAt': today
+                        }
+                    });
+
+                    console.log(`[Scheduling] ✓ Updated nextEvaluationDate for ${employee.name} to ${newNextDate.toISOString()}`);
+                } catch (updateError) {
+                    console.error(`[Scheduling] ✕ Failed to update nextEvaluationDate for ${employee.name}:`, updateError.message);
+                }
+            }
 
             // Send email to employee
             if (employee.email) {
@@ -173,15 +203,15 @@ export const createEvaluation = async (req, res) => {
                                 <div style="background-color: #E4002B; padding: 20px; border-radius: 8px; margin-bottom: 30px;">
                                     <h1 style="color: white; margin: 0;">New Evaluation Scheduled</h1>
                                 </div>
-                                
+
                                 <div style="background-color: #f8f8f8; padding: 20px; border-radius: 8px; margin-bottom: 30px;">
                                     <h2 style="color: #333; margin-top: 0;">Evaluation Details</h2>
-                                    <p><strong>Scheduled Date:</strong> ${new Date(scheduledDate).toLocaleDateString()}</p>
+                                    <p><strong>Employee Due Date:</strong> ${new Date(scheduledDate).toLocaleDateString()}</p>
                                     <p><strong>Evaluator:</strong> ${req.user.name}</p>
                                 </div>
 
                                 <div style="margin-bottom: 30px;">
-                                    <p>Please log in to LD Growth to complete your self-evaluation before the scheduled date.</p>
+                                    <p>Please log in to LD Growth to complete your self-evaluation before the deadline date.</p>
                                     <p>Your input is valuable for your professional development.</p>
                                 </div>
 
@@ -215,10 +245,10 @@ export const createEvaluation = async (req, res) => {
 export const getEvaluations = async (req, res) => {
     try {
         const isDirector = req.user.position === 'Director';
-        
+
         // Base query - always filter by store
         let query = { store: req.user.store._id };
-        
+
         // If not a director, only show evaluations where user is employee or evaluator
         if (!isDirector) {
             query.$or = [
@@ -253,7 +283,7 @@ export const getEvaluation = async (req, res) => {
     try {
         const evaluationId = req.params.evaluationId;
         const isDirector = req.user.position === 'Director';
-        
+
         if (!evaluationId) {
             console.error('Missing evaluation ID in request params:', req.params);
             return res.status(400).json({ message: 'Evaluation ID is required' });
@@ -265,7 +295,7 @@ export const getEvaluation = async (req, res) => {
             userStore: req.user.store._id,
             isDirector
         });
-        
+
         // Build query based on user role
         let query = {
             _id: evaluationId,
@@ -279,7 +309,7 @@ export const getEvaluation = async (req, res) => {
                 { evaluator: req.user._id }
             ];
         }
-        
+
         const evaluation = await Evaluation.findOne(query)
         .populate({
             path: 'template',
@@ -319,7 +349,7 @@ export const getEvaluation = async (req, res) => {
         }
 
         // Get default grading scale for any missing scales
-        const defaultScale = await GradingScale.findOne({ 
+        const defaultScale = await GradingScale.findOne({
             store: req.user.store._id,
             isDefault: true,
             isActive: true
@@ -340,7 +370,7 @@ export const getEvaluation = async (req, res) => {
                 }))
             }
         }, null, 2));
-        
+
         const transformedEvaluation = {
             ...evaluation.toObject(),
             template: {
@@ -519,7 +549,7 @@ export const getEmployeeEvaluations = async (req, res) => {
     try {
         // Check if user has access to employee's evaluations
         if (
-            req.user.role === 'evaluator' && 
+            req.user.role === 'evaluator' &&
             req.params.employeeId !== req.user.userId
         ) {
             return res.status(403).json({ message: 'Access denied' });
@@ -605,7 +635,7 @@ export const submitSelfEvaluation = async (req, res) => {
                             <div style="background-color: #E4002B; padding: 20px; border-radius: 8px; margin-bottom: 30px;">
                                 <h1 style="color: white; margin: 0;">Self-Evaluation Completed</h1>
                             </div>
-                            
+
                             <div style="background-color: #f8f8f8; padding: 20px; border-radius: 8px; margin-bottom: 30px;">
                                 <h2 style="color: #333; margin-top: 0;">Employee Details</h2>
                                 <p><strong>Employee:</strong> ${evaluation.employee.name}</p>
@@ -629,7 +659,7 @@ export const submitSelfEvaluation = async (req, res) => {
             }
         }
 
-        res.json({ 
+        res.json({
             message: 'Self evaluation submitted successfully',
             evaluation
         });
@@ -699,7 +729,7 @@ export const scheduleReviewSession = async (req, res) => {
                             <div style="background-color: #E4002B; padding: 20px; border-radius: 8px; margin-bottom: 30px;">
                                 <h1 style="color: white; margin: 0;">Evaluation Review Session Scheduled</h1>
                             </div>
-                            
+
                             <div style="background-color: #f8f8f8; padding: 20px; border-radius: 8px; margin-bottom: 30px;">
                                 <h2 style="color: #333; margin-top: 0;">Session Details</h2>
                                 <p><strong>Date and Time:</strong> ${formattedDate}</p>
@@ -769,7 +799,7 @@ export const completeManagerEvaluation = async (req, res) => {
         }
 
         // Get default grading scale for any criteria without a specific scale
-        const defaultScale = await GradingScale.findOne({ 
+        const defaultScale = await GradingScale.findOne({
             store: req.user.store._id,
             isDefault: true,
             isActive: true
@@ -803,14 +833,14 @@ export const completeManagerEvaluation = async (req, res) => {
                 const key = `${sectionIndex}-${criterionIndex}`;
                 const score = req.body.evaluation[key];
                 const scale = criterion.gradingScale || defaultScale;
-                
+
                 console.log('Processing criterion score:', {
                     key,
                     score,
                     hasScale: !!scale,
                     scaleGrades: scale?.grades
                 });
-                
+
                 if (score !== undefined && scale) {
                     const numericScore = Number(score);
                     totalScore += numericScore;
@@ -882,7 +912,7 @@ export const completeManagerEvaluation = async (req, res) => {
                             <div style="background-color: #E4002B; padding: 20px; border-radius: 8px; margin-bottom: 30px;">
                                 <h1 style="color: white; margin: 0;">Evaluation Completed</h1>
                             </div>
-                            
+
                             <div style="background-color: #f8f8f8; padding: 20px; border-radius: 8px; margin-bottom: 30px;">
                                 <h2 style="color: #333; margin-top: 0;">Evaluation Details</h2>
                                 <p><strong>Employee:</strong> ${evaluation.employee.name}</p>
@@ -912,7 +942,7 @@ export const completeManagerEvaluation = async (req, res) => {
         evaluationResponse.managerEvaluation = Object.fromEntries(evaluation.managerEvaluation);
 
         console.log('Completion successful, sending response');
-        res.json({ 
+        res.json({
             message: 'Evaluation completed successfully',
             evaluation: evaluationResponse
         });
@@ -977,12 +1007,12 @@ export const acknowledgeEvaluation = async (req, res) => {
                                 const key = `0-${criterionIndex}`;
                                 const rating = managerEvaluation[key];
                                 const scale = criterion.gradingScale;
-                                
+
                                 console.log(`Key: ${key}, Rating:`, rating, 'Scale:', scale);
-                                
+
                                 let ratingText = 'N/A';
                                 let ratingColor = '#666';
-                                
+
                                 if (rating && scale) {
                                     const grade = scale.grades.find(g => g.value === Number(rating));
                                     if (grade) {
@@ -990,7 +1020,7 @@ export const acknowledgeEvaluation = async (req, res) => {
                                         ratingColor = grade.color || '#666';
                                     }
                                 }
-                                
+
                                 return `
                                     <div style="margin-bottom: 15px; padding: 12px; background-color: #f5f5f5; border-radius: 8px;">
                                         <p style="margin: 0 0 8px 0; font-weight: 600;">${criterion.name}</p>
@@ -1011,7 +1041,7 @@ export const acknowledgeEvaluation = async (req, res) => {
                     <div style="margin-bottom: 20px;">
                         <h3 style="color: #333;">Overall Comments</h3>
                         <p style="margin-bottom: 15px;">${evaluation.overallComments || 'No overall comments provided.'}</p>
-                        
+
                         <h3 style="color: #333;">Development Plan</h3>
                         <p>${evaluation.developmentPlan || 'No development plan provided.'}</p>
                     </div>
@@ -1023,7 +1053,7 @@ export const acknowledgeEvaluation = async (req, res) => {
                     html: `
                         <div style="font-family: Arial, sans-serif; max-width: 800px; margin: 0 auto;">
                             <h1 style="color: #E4002B;">Evaluation Acknowledgment</h1>
-                            
+
                             <div style="background-color: #f9f9f9; padding: 15px; border-radius: 5px; margin: 20px 0;">
                                 <p><strong>Store:</strong> ${evaluation.store.name}</p>
                                 <p><strong>Employee:</strong> ${evaluation.employee.name} (${evaluation.employee.position})</p>
@@ -1060,13 +1090,13 @@ export const acknowledgeEvaluation = async (req, res) => {
 export const markNotificationViewed = async (req, res) => {
     try {
         const evaluation = await Evaluation.findById(req.params.evaluationId);
-        
+
         if (!evaluation) {
             return res.status(404).json({ message: 'Evaluation not found' });
         }
 
         // Check if user has permission to view this evaluation
-        if (evaluation.employee.toString() !== req.user._id.toString() && 
+        if (evaluation.employee.toString() !== req.user._id.toString() &&
             evaluation.evaluator.toString() !== req.user._id.toString()) {
             return res.status(403).json({ message: 'Not authorized to view this evaluation' });
         }
@@ -1087,9 +1117,9 @@ export const markNotificationViewed = async (req, res) => {
         res.json({ message: 'Notification marked as viewed' });
     } catch (error) {
         console.error('Error marking notification as viewed:', error);
-        res.status(500).json({ 
+        res.status(500).json({
             message: 'Error marking notification as viewed',
-            error: error.message 
+            error: error.message
         });
     }
 };
@@ -1131,7 +1161,7 @@ export const saveDraft = async (req, res) => {
         }
 
         await evaluation.save();
-        
+
         console.log('Draft saved successfully:', {
             evaluationId: evaluation._id,
             status: evaluation.status,
@@ -1139,7 +1169,7 @@ export const saveDraft = async (req, res) => {
             overallComments: evaluation.overallComments
         });
 
-        res.json({ 
+        res.json({
             message: 'Draft saved successfully',
             evaluation: {
                 ...evaluation.toObject(),
@@ -1163,7 +1193,7 @@ export const saveDraft = async (req, res) => {
 export const sendCompletedEvaluationEmail = async (req, res) => {
     try {
         // First get the default grading scale
-        const defaultScale = await GradingScale.findOne({ 
+        const defaultScale = await GradingScale.findOne({
             store: req.user.store._id,
             isDefault: true,
             isActive: true
@@ -1236,7 +1266,7 @@ export const sendCompletedEvaluationEmail = async (req, res) => {
                                 const key = `0-${criterionIndex}`;
                                 const rating = managerEvaluation[key];
                                 const scale = criterion.gradingScale || defaultScale;
-                                
+
                                 console.log(`Processing criterion ${criterionIndex}:`, {
                                     key,
                                     rating,
@@ -1244,10 +1274,10 @@ export const sendCompletedEvaluationEmail = async (req, res) => {
                                     hasGradingScale: !!scale,
                                     gradingScaleGrades: scale?.grades
                                 });
-                                
+
                                 let ratingText = 'N/A';
                                 let ratingColor = '#666';
-                                
+
                                 if (rating !== undefined && scale && scale.grades) {
                                     const grade = scale.grades.find(g => g.value === Number(rating));
                                     console.log('Found grade:', {
@@ -1255,13 +1285,13 @@ export const sendCompletedEvaluationEmail = async (req, res) => {
                                         grade,
                                         allGrades: scale.grades
                                     });
-                                    
+
                                     if (grade) {
                                         ratingText = `${rating} - ${grade.label}`;
                                         ratingColor = grade.color || '#666';
                                     }
                                 }
-                                
+
                                 return `
                                     <div style="margin-bottom: 15px; padding: 12px; background-color: #f5f5f5; border-radius: 8px;">
                                         <p style="margin: 0 0 8px 0; font-weight: 600;">${criterion.name}</p>
@@ -1288,7 +1318,7 @@ export const sendCompletedEvaluationEmail = async (req, res) => {
                     <div style="background-color: #E4002B; padding: 20px; border-radius: 8px; margin-bottom: 30px;">
                         <h1 style="color: white; margin: 0;">Completed Evaluation Report</h1>
                     </div>
-                    
+
                     <div style="background-color: #f8f8f8; padding: 20px; border-radius: 8px; margin-bottom: 30px;">
                         <h2 style="color: #333; margin-top: 0;">Evaluation Details</h2>
                         <p><strong>Employee:</strong> ${evaluation.employee.name} (${evaluation.employee.position || 'Team Member'})</p>
@@ -1296,12 +1326,12 @@ export const sendCompletedEvaluationEmail = async (req, res) => {
                         <p><strong>Completion Date:</strong> ${new Date().toLocaleDateString()}</p>
                         <p><strong>Template:</strong> ${evaluation.template.name}</p>
                     </div>
-                    
+
                     <div style="margin-bottom: 30px;">
                         <h2 style="color: #333;">Evaluation Results</h2>
                         ${sectionsHtml}
                     </div>
-                    
+
                     <div style="background-color: #f8f8f8; padding: 20px; border-radius: 8px;">
                         <h2 style="color: #333; margin-top: 0;">Overall Assessment</h2>
                         <div style="margin-bottom: 20px;">
@@ -1363,9 +1393,9 @@ export const sendUnacknowledgedNotification = async (req, res) => {
 
         await notification.save();
 
-        res.json({ 
+        res.json({
             message: 'Notification sent successfully',
-            notification 
+            notification
         });
     } catch (error) {
         console.error('Error sending unacknowledged notification:', error);
@@ -1390,15 +1420,15 @@ export const startReview = async (req, res) => {
         // Update status to in_review_session
         evaluation.status = 'in_review_session';
         evaluation.reviewSessionDate = new Date(); // Set to current time since we're starting now
-        
+
         await evaluation.save();
 
         // Create notification for the employee
         await createNotificationIfNeeded(evaluation, 'review_started');
 
-        res.json({ 
+        res.json({
             message: 'Review started successfully',
-            evaluation 
+            evaluation
         });
 
     } catch (error) {
