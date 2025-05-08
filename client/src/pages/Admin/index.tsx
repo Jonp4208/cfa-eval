@@ -311,9 +311,9 @@ export default function AdminPage() {
   return (
     <div className="container mx-auto py-6">
       <Card className="mb-6">
-        <CardHeader className="flex flex-row items-center justify-between pb-2">
+        <CardHeader className="flex flex-col sm:flex-row items-start sm:items-center justify-between pb-2 gap-4">
           <CardTitle className="text-2xl font-bold">Store Management</CardTitle>
-          <div className="flex space-x-2">
+          <div className="flex space-x-2 w-full sm:w-auto justify-end">
             <Button
               variant="outline"
               size="sm"
@@ -321,14 +321,14 @@ export default function AdminPage() {
               disabled={isLoading}
             >
               <RefreshCw className="h-4 w-4 mr-2" />
-              Refresh
+              <span className="sm:inline">Refresh</span>
             </Button>
             <Button
               onClick={() => setShowAddStoreDialog(true)}
               size="sm"
             >
               <Plus className="h-4 w-4 mr-2" />
-              Add Store
+              <span className="sm:inline">Add Store</span>
             </Button>
           </div>
         </CardHeader>
@@ -336,31 +336,135 @@ export default function AdminPage() {
           {isLoading ? (
             <div className="text-center py-4">Loading stores...</div>
           ) : stores && stores.length > 0 ? (
-            <div className="overflow-x-auto">
-              <table className="w-full border-collapse">
-                <thead>
-                  <tr className="bg-muted">
-                    <th className="text-left p-2">Store #</th>
-                    <th className="text-left p-2">Name</th>
-                    <th className="text-left p-2">Address</th>
-                    <th className="text-center p-2">Users</th>
-                    <th className="text-center p-2">Created</th>
-                    <th className="text-center p-2">Subscription</th>
-                    <th className="text-center p-2">Status</th>
-                    <th className="text-right p-2">Actions</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {stores.map((store: Store) => (
-                    <tr key={store._id} className="border-b hover:bg-muted/50">
-                      <td className="p-2">{store.storeNumber}</td>
-                      <td className="p-2">{store.name}</td>
-                      <td className="p-2">{store.storeAddress}</td>
-                      <td className="p-2 text-center">{store.userCount || 0}</td>
-                      <td className="p-2 text-center">
-                        {store.createdAt ? format(new Date(store.createdAt), 'MMM d, yyyy') : 'N/A'}
-                      </td>
-                      <td className="p-2 text-center">
+            <>
+              {/* Desktop view - Table */}
+              <div className="hidden md:block overflow-x-auto">
+                <table className="w-full border-collapse">
+                  <thead>
+                    <tr className="bg-muted">
+                      <th className="text-left p-2">Store #</th>
+                      <th className="text-left p-2">Name</th>
+                      <th className="text-left p-2">Address</th>
+                      <th className="text-center p-2">Users</th>
+                      <th className="text-center p-2">Created</th>
+                      <th className="text-center p-2">Subscription</th>
+                      <th className="text-center p-2">Status</th>
+                      <th className="text-right p-2">Actions</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {stores.map((store: Store) => (
+                      <tr key={store._id} className="border-b hover:bg-muted/50">
+                        <td className="p-2">{store.storeNumber}</td>
+                        <td className="p-2">{store.name}</td>
+                        <td className="p-2">{store.storeAddress}</td>
+                        <td className="p-2 text-center">{store.userCount || 0}</td>
+                        <td className="p-2 text-center">
+                          {store.createdAt ? format(new Date(store.createdAt), 'MMM d, yyyy') : 'N/A'}
+                        </td>
+                        <td className="p-2 text-center">
+                          {store.subscription ? (
+                            <Badge
+                              variant={
+                                store.subscription.status === 'active' ? 'default' :
+                                store.subscription.status === 'trial' ? 'secondary' :
+                                'outline'
+                              }
+                            >
+                              {store.subscription.status}
+                            </Badge>
+                          ) : (
+                            <Badge variant="outline">none</Badge>
+                          )}
+                        </td>
+                        <td className="p-2 text-center">
+                          <Badge
+                            variant={store.status === 'active' ? 'success' : 'destructive'}
+                            className="cursor-pointer"
+                            onClick={() => handleStatusChange(store._id, store.status || 'active')}
+                          >
+                            {store.status || 'active'}
+                          </Badge>
+                        </td>
+                        <td className="p-2 text-right">
+                          <div className="flex justify-end space-x-1">
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              title="View Users"
+                              onClick={() => handleViewUsers(store._id)}
+                            >
+                              <Users className="h-4 w-4 text-blue-500" />
+                            </Button>
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              title={store.status === 'inactive' ? 'Activate Store' : 'Deactivate Store'}
+                              onClick={() => handleStatusChange(store._id, store.status || 'active')}
+                            >
+                              {store.status === 'inactive' ? (
+                                <CheckCircle className="h-4 w-4 text-green-500" />
+                              ) : (
+                                <XCircle className="h-4 w-4 text-red-500" />
+                              )}
+                            </Button>
+                          </div>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+
+              {/* Mobile view - Cards */}
+              <div className="grid grid-cols-1 gap-4 md:hidden">
+                {stores.map((store: Store) => (
+                  <div key={store._id} className="bg-card border rounded-lg p-4 shadow-sm">
+                    <div className="flex justify-between items-start mb-2">
+                      <div>
+                        <h3 className="font-semibold text-lg">{store.name}</h3>
+                        <p className="text-sm text-muted-foreground">#{store.storeNumber}</p>
+                      </div>
+                      <div className="flex space-x-1">
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          title="View Users"
+                          onClick={() => handleViewUsers(store._id)}
+                        >
+                          <Users className="h-4 w-4 text-blue-500" />
+                        </Button>
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          title={store.status === 'inactive' ? 'Activate Store' : 'Deactivate Store'}
+                          onClick={() => handleStatusChange(store._id, store.status || 'active')}
+                        >
+                          {store.status === 'inactive' ? (
+                            <CheckCircle className="h-4 w-4 text-green-500" />
+                          ) : (
+                            <XCircle className="h-4 w-4 text-red-500" />
+                          )}
+                        </Button>
+                      </div>
+                    </div>
+
+                    <div className="text-sm mb-2">
+                      <p className="text-muted-foreground">{store.storeAddress}</p>
+                    </div>
+
+                    <div className="grid grid-cols-2 gap-2 text-sm mb-3">
+                      <div>
+                        <span className="text-muted-foreground">Users:</span> {store.userCount || 0}
+                      </div>
+                      <div>
+                        <span className="text-muted-foreground">Created:</span> {store.createdAt ? format(new Date(store.createdAt), 'MMM d, yyyy') : 'N/A'}
+                      </div>
+                    </div>
+
+                    <div className="flex justify-between items-center">
+                      <div>
+                        <span className="text-sm text-muted-foreground mr-2">Subscription:</span>
                         {store.subscription ? (
                           <Badge
                             variant={
@@ -374,8 +478,8 @@ export default function AdminPage() {
                         ) : (
                           <Badge variant="outline">none</Badge>
                         )}
-                      </td>
-                      <td className="p-2 text-center">
+                      </div>
+                      <div>
                         <Badge
                           variant={store.status === 'active' ? 'success' : 'destructive'}
                           className="cursor-pointer"
@@ -383,36 +487,12 @@ export default function AdminPage() {
                         >
                           {store.status || 'active'}
                         </Badge>
-                      </td>
-                      <td className="p-2 text-right">
-                        <div className="flex justify-end space-x-1">
-                          <Button
-                            variant="ghost"
-                            size="icon"
-                            title="View Users"
-                            onClick={() => handleViewUsers(store._id)}
-                          >
-                            <Users className="h-4 w-4 text-blue-500" />
-                          </Button>
-                          <Button
-                            variant="ghost"
-                            size="icon"
-                            title={store.status === 'inactive' ? 'Activate Store' : 'Deactivate Store'}
-                            onClick={() => handleStatusChange(store._id, store.status || 'active')}
-                          >
-                            {store.status === 'inactive' ? (
-                              <CheckCircle className="h-4 w-4 text-green-500" />
-                            ) : (
-                              <XCircle className="h-4 w-4 text-red-500" />
-                            )}
-                          </Button>
-                        </div>
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </>
           ) : (
             <div className="text-center py-4 text-muted-foreground">
               No stores found. Add your first store to get started.
@@ -432,7 +512,7 @@ export default function AdminPage() {
           </DialogHeader>
           <form onSubmit={handleSubmit}>
             <div className="grid gap-4 py-4">
-              <div className="grid grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div className="space-y-2">
                   <Label htmlFor="storeNumber">Store Number *</Label>
                   <Input
@@ -464,7 +544,7 @@ export default function AdminPage() {
                   required
                 />
               </div>
-              <div className="grid grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div className="space-y-2">
                   <Label htmlFor="storePhone">Store Phone</Label>
                   <Input
@@ -557,34 +637,57 @@ export default function AdminPage() {
 
               <TabsContent value="admins" className="mt-4">
                 {storeUsersData?.admins && storeUsersData.admins.length > 0 ? (
-                  <div className="overflow-x-auto">
-                    <table className="w-full border-collapse">
-                      <thead>
-                        <tr className="bg-muted">
-                          <th className="text-left p-2">Name</th>
-                          <th className="text-left p-2">Email</th>
-                          <th className="text-left p-2">Position</th>
-                          <th className="text-center p-2">Status</th>
-                        </tr>
-                      </thead>
-                      <tbody>
-                        {storeUsersData.admins.map((admin) => (
-                          <tr key={admin._id} className="border-b hover:bg-muted/50">
-                            <td className="p-2">{admin.name}</td>
-                            <td className="p-2">{admin.email}</td>
-                            <td className="p-2">{admin.position}</td>
-                            <td className="p-2 text-center">
-                              <Badge
-                                variant={admin.status === 'active' ? 'success' : 'destructive'}
-                              >
-                                {admin.status}
-                              </Badge>
-                            </td>
+                  <>
+                    {/* Desktop view for admins */}
+                    <div className="hidden md:block overflow-x-auto">
+                      <table className="w-full border-collapse">
+                        <thead>
+                          <tr className="bg-muted">
+                            <th className="text-left p-2">Name</th>
+                            <th className="text-left p-2">Email</th>
+                            <th className="text-left p-2">Position</th>
+                            <th className="text-center p-2">Status</th>
                           </tr>
-                        ))}
-                      </tbody>
-                    </table>
-                  </div>
+                        </thead>
+                        <tbody>
+                          {storeUsersData.admins.map((admin) => (
+                            <tr key={admin._id} className="border-b hover:bg-muted/50">
+                              <td className="p-2">{admin.name}</td>
+                              <td className="p-2">{admin.email}</td>
+                              <td className="p-2">{admin.position}</td>
+                              <td className="p-2 text-center">
+                                <Badge
+                                  variant={admin.status === 'active' ? 'success' : 'destructive'}
+                                >
+                                  {admin.status}
+                                </Badge>
+                              </td>
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
+                    </div>
+
+                    {/* Mobile view for admins */}
+                    <div className="grid grid-cols-1 gap-3 md:hidden">
+                      {storeUsersData.admins.map((admin) => (
+                        <div key={admin._id} className="bg-card border rounded-lg p-3 shadow-sm">
+                          <div className="flex justify-between items-start">
+                            <div>
+                              <h3 className="font-semibold">{admin.name}</h3>
+                              <p className="text-sm text-muted-foreground">{admin.email}</p>
+                              <p className="text-sm mt-1">{admin.position}</p>
+                            </div>
+                            <Badge
+                              variant={admin.status === 'active' ? 'success' : 'destructive'}
+                            >
+                              {admin.status}
+                            </Badge>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </>
                 ) : (
                   <div className="text-center py-4 text-muted-foreground">
                     No admins found for this store.
@@ -594,36 +697,62 @@ export default function AdminPage() {
 
               <TabsContent value="users" className="mt-4">
                 {storeUsersData?.users && storeUsersData.users.length > 0 ? (
-                  <div className="overflow-x-auto">
-                    <table className="w-full border-collapse">
-                      <thead>
-                        <tr className="bg-muted">
-                          <th className="text-left p-2">Name</th>
-                          <th className="text-left p-2">Email</th>
-                          <th className="text-left p-2">Position</th>
-                          <th className="text-left p-2">Departments</th>
-                          <th className="text-center p-2">Status</th>
-                        </tr>
-                      </thead>
-                      <tbody>
-                        {storeUsersData.users.map((user) => (
-                          <tr key={user._id} className="border-b hover:bg-muted/50">
-                            <td className="p-2">{user.name}</td>
-                            <td className="p-2">{user.email}</td>
-                            <td className="p-2">{user.position}</td>
-                            <td className="p-2">{user.departments.join(', ')}</td>
-                            <td className="p-2 text-center">
-                              <Badge
-                                variant={user.status === 'active' ? 'success' : 'destructive'}
-                              >
-                                {user.status}
-                              </Badge>
-                            </td>
+                  <>
+                    {/* Desktop view for users */}
+                    <div className="hidden md:block overflow-x-auto">
+                      <table className="w-full border-collapse">
+                        <thead>
+                          <tr className="bg-muted">
+                            <th className="text-left p-2">Name</th>
+                            <th className="text-left p-2">Email</th>
+                            <th className="text-left p-2">Position</th>
+                            <th className="text-left p-2">Departments</th>
+                            <th className="text-center p-2">Status</th>
                           </tr>
-                        ))}
-                      </tbody>
-                    </table>
-                  </div>
+                        </thead>
+                        <tbody>
+                          {storeUsersData.users.map((user) => (
+                            <tr key={user._id} className="border-b hover:bg-muted/50">
+                              <td className="p-2">{user.name}</td>
+                              <td className="p-2">{user.email}</td>
+                              <td className="p-2">{user.position}</td>
+                              <td className="p-2">{user.departments.join(', ')}</td>
+                              <td className="p-2 text-center">
+                                <Badge
+                                  variant={user.status === 'active' ? 'success' : 'destructive'}
+                                >
+                                  {user.status}
+                                </Badge>
+                              </td>
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
+                    </div>
+
+                    {/* Mobile view for users */}
+                    <div className="grid grid-cols-1 gap-3 md:hidden">
+                      {storeUsersData.users.map((user) => (
+                        <div key={user._id} className="bg-card border rounded-lg p-3 shadow-sm">
+                          <div className="flex justify-between items-start">
+                            <div>
+                              <h3 className="font-semibold">{user.name}</h3>
+                              <p className="text-sm text-muted-foreground">{user.email}</p>
+                              <p className="text-sm mt-1">{user.position}</p>
+                            </div>
+                            <Badge
+                              variant={user.status === 'active' ? 'success' : 'destructive'}
+                            >
+                              {user.status}
+                            </Badge>
+                          </div>
+                          <div className="mt-2 text-sm">
+                            <span className="text-muted-foreground">Departments:</span> {user.departments.join(', ')}
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </>
                 ) : (
                   <div className="text-center py-4 text-muted-foreground">
                     No users found for this store.
@@ -695,7 +824,7 @@ export default function AdminPage() {
           ) : (
             <form onSubmit={handleAddUserSubmit}>
               <div className="grid gap-4 py-4">
-                <div className="grid grid-cols-2 gap-4">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   <div className="space-y-2">
                     <Label htmlFor="name">Name *</Label>
                     <Input
@@ -739,7 +868,7 @@ export default function AdminPage() {
 
                 <div className="space-y-2">
                   <Label>Departments *</Label>
-                  <div className="grid grid-cols-2 gap-2 mt-1">
+                  <div className="grid grid-cols-1 xs:grid-cols-2 gap-2 mt-1">
                     <div className="flex items-center space-x-2">
                       <Checkbox
                         id="dept-front-counter"
