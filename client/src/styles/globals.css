@@ -184,6 +184,32 @@
     }
   }
 
+  /* iPhone 13 Pro Max specific fixes */
+  @media screen and (width: 428px) and (height: 926px) {
+    .mobile-nav {
+      height: auto !important;
+      padding-bottom: 0.5rem !important;
+    }
+
+    .nav-spacer {
+      height: 75px !important;
+    }
+
+    .mobile-nav-button {
+      padding: 6px 2px !important;
+    }
+
+    .mobile-nav-button svg {
+      width: 26px !important;
+      height: 26px !important;
+    }
+
+    .mobile-nav-button span {
+      font-size: 12px !important;
+      margin-top: 3px !important;
+    }
+  }
+
   /* Ensure nav-spacer has correct height for proper content spacing */
   .nav-spacer {
     height: calc(80px + env(safe-area-inset-bottom, 0px));

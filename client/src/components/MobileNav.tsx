@@ -214,6 +214,19 @@ export function MobileNav() {
     return isIPhone13Dimensions && /iPhone/.test(navigator.userAgent);
   };
 
+  // Function to detect iPhone 13 Pro Max
+  const isIPhone13ProMax = () => {
+    if (typeof window === 'undefined') return false;
+
+    // iPhone 13 Pro Max has 428x926 logical resolution
+    const { width, height } = window.screen;
+    const isIPhone13ProMaxDimensions =
+      (width === 428 && height === 926) ||
+      (height === 428 && width === 926);
+
+    return isIPhone13ProMaxDimensions && /iPhone/.test(navigator.userAgent);
+  };
+
   // If no items are available or still loading, show a placeholder
   if (navItems.length === 0) {
     return null;
@@ -226,12 +239,12 @@ export function MobileNav() {
         touchAction: 'manipulation',
         position: 'fixed',
         bottom: 0,
-        paddingBottom: isIPhone13() ? '0.5rem' : undefined
+        paddingBottom: isIPhone13() ? '0.5rem' : isIPhone13ProMax() ? '0.5rem' : undefined
       }}
     >
       <div className={cn(
         "flex items-center justify-between px-2",
-        isIPhone13() ? "pb-0" : "safe-area-bottom"
+        isIPhone13() ? "pb-0" : isIPhone13ProMax() ? "pb-0.5" : "safe-area-bottom"
       )}>
         {/* Bottom navigation items */}
         {navItems

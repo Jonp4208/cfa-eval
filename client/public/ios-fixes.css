@@ -38,7 +38,7 @@ html, body {
     background-color: white;
     border-bottom: 1px solid #e5e7eb;
   }
-  
+
   .ios-status-bar-height {
     height: env(safe-area-inset-top);
     background-color: white;
@@ -64,7 +64,7 @@ html, body {
   .safe-area-bottom {
     padding-bottom: env(safe-area-inset-bottom);
   }
-  
+
   /* Specific fix for bottom navigation in PWA mode */
   /* More adaptive approach that adjusts based on device size */
   .ios-pwa .mobile-nav-button {
@@ -76,23 +76,23 @@ html, body {
     justify-content: center;
     height: auto;
   }
-  
+
   .ios-pwa .mobile-nav-button span {
     font-size: min(10px, 2.5vw);
     line-height: 1.2;
     margin-top: 2px;
   }
-  
+
   .ios-pwa .mobile-nav-button svg {
     width: min(22px, 5.5vw);
     height: min(22px, 5.5vw);
   }
-  
+
   /* Adjust the spacer height to match smaller navigation */
   .ios-pwa .nav-spacer {
     height: max(50px, calc(env(safe-area-inset-bottom) + 45px));
   }
-  
+
   /* Adjust the entire navigation container */
   .ios-pwa nav.fixed {
     max-height: max(60px, calc(env(safe-area-inset-bottom) + 50px));
@@ -119,7 +119,7 @@ html, body {
     -webkit-overflow-scrolling: touch;
     overscroll-behavior-y: none;
   }
-  
+
   /* Ensure fixed elements stay fixed */
   .fixed {
     position: fixed !important;
@@ -133,12 +133,12 @@ html, body {
     width: 24px !important;
     height: 24px !important;
   }
-  
+
   .mobile-nav-button {
     padding-top: 8px;
     padding-bottom: 8px;
   }
-  
+
   .mobile-nav-button span {
     font-size: 11px;
     margin-top: 4px;
@@ -176,13 +176,37 @@ html, body {
 }
 
 /* iPhone 12, 13 specific fixes */
-.iphone-12 {
-  /* iPhone 12 has a slightly taller notch */
+.iphone-12, .iphone-13 {
+  /* iPhone 12/13 has a slightly taller notch */
   --iphone-12-status-bar-adjust: 3px;
 }
 
-.iphone-12 .ios-status-bar-height {
+.iphone-12 .ios-status-bar-height,
+.iphone-13 .ios-status-bar-height {
   height: calc(env(safe-area-inset-top) + var(--iphone-12-status-bar-adjust));
+}
+
+/* iPhone 13 Pro Max specific fixes */
+.iphone-13-pro-max {
+  /* iPhone 13 Pro Max has a larger screen and home indicator */
+  --iphone-13-pro-max-status-bar-adjust: 4px;
+  --iphone-13-pro-max-home-indicator-adjust: 5px;
+}
+
+.iphone-13-pro-max .ios-status-bar-height {
+  height: calc(env(safe-area-inset-top) + var(--iphone-13-pro-max-status-bar-adjust));
+}
+
+.iphone-13-pro-max.ios-pwa .fixed-header-ios {
+  padding-top: calc(env(safe-area-inset-top) + var(--iphone-13-pro-max-status-bar-adjust));
+}
+
+.iphone-13-pro-max .mobile-nav {
+  padding-bottom: calc(env(safe-area-inset-bottom) + var(--iphone-13-pro-max-home-indicator-adjust));
+}
+
+.iphone-13-pro-max .safe-area-bottom {
+  padding-bottom: calc(env(safe-area-inset-bottom) + var(--iphone-13-pro-max-home-indicator-adjust));
 }
 
 /* iPhone 14 Pro, 14 Pro Max specific fixes */
@@ -254,7 +278,7 @@ html, body {
     padding-left: env(safe-area-inset-left);
     padding-right: env(safe-area-inset-right);
   }
-  
+
   .notched-device .ios-pwa .fixed-header-ios {
     padding-left: env(safe-area-inset-left);
     padding-right: env(safe-area-inset-right);
@@ -268,34 +292,65 @@ html, body {
     /* Dynamic Island needs more space */
     height: calc(env(safe-area-inset-top) + 10px);
   }
-  
+
   .notched-device.ios-pwa .fixed-header-ios {
     padding-top: calc(env(safe-area-inset-top) + 10px);
   }
-  
+
   /* Specific fixes for iPhone 14 Pro bottom nav */
   .notched-device .mobile-nav {
     padding-bottom: calc(env(safe-area-inset-bottom) + 6px);
   }
-  
+
   .notched-device .mobile-nav .safe-area-bottom {
     padding-bottom: calc(env(safe-area-inset-bottom) + 6px);
   }
-  
+
   /* Reduce height of nav buttons on iPhone 14 Pro to keep above home indicator */
   .notched-device .mobile-nav .mobile-nav-button {
     padding-top: 5px;
     padding-bottom: 5px;
   }
-  
+
   /* Adjust the nav spacer to account for taller safe area */
   .notched-device .nav-spacer {
     height: calc(75px + env(safe-area-inset-bottom));
   }
-  
+
   /* Ensure enough room for home indicator without overlapping content */
   .notched-device #root {
     padding-bottom: calc(env(safe-area-inset-bottom) + 6px);
+  }
+}
+
+/* Additional fixes specific to iPhone 13 Pro Max */
+@media screen and (min-width: 428px) and (min-height: 926px) {
+  .iphone-13-pro-max .mobile-nav {
+    padding-bottom: calc(env(safe-area-inset-bottom) + 5px);
+  }
+
+  .iphone-13-pro-max .safe-area-bottom {
+    padding-bottom: calc(env(safe-area-inset-bottom) + 5px);
+  }
+
+  .iphone-13-pro-max .nav-spacer {
+    height: calc(75px + env(safe-area-inset-bottom));
+  }
+
+  /* Optimize mobile nav buttons for iPhone 13 Pro Max */
+  .iphone-13-pro-max .mobile-nav-button {
+    padding-top: 6px;
+    padding-bottom: 6px;
+  }
+
+  .iphone-13-pro-max .mobile-nav-button svg {
+    width: 26px !important;
+    height: 26px !important;
+  }
+
+  .iphone-13-pro-max .mobile-nav-button span {
+    font-size: 12px;
+    margin-top: 3px;
   }
 }
 
@@ -304,11 +359,11 @@ html, body {
   .iphone-16 .mobile-nav {
     padding-bottom: calc(env(safe-area-inset-bottom) + 10px);
   }
-  
+
   .iphone-16 .safe-area-bottom {
     padding-bottom: calc(env(safe-area-inset-bottom) + 10px);
   }
-  
+
   .iphone-16 .nav-spacer {
     height: calc(80px + env(safe-area-inset-bottom));
   }

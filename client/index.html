@@ -26,20 +26,22 @@
       (function() {
         var iOS = /iPad|iPhone|iPod/.test(navigator.userAgent) && !window.MSStream;
         var isPWA = window.navigator.standalone === true;
-        
-        // Device detection 
+
+        // Device detection
         function getDeviceModel() {
           var userAgent = navigator.userAgent;
           var deviceInfo = {
             isIPhoneX: false,
             isIPhoneXR: false,
             isIPhone12: false,
+            isIPhone13: false,
+            isIPhone13ProMax: false,
             isIPhone14: false,
             isIPhone15: false,
             isIPhone16: false,
             isNotchedDevice: false
           };
-          
+
           // Check for devices with notches (iPhone X and above)
           if (/iPhone/.test(userAgent)) {
             // iPhone X, XS, 11 Pro (375×812)
@@ -54,12 +56,14 @@
             }
             // iPhone 12, 12 Pro, 13, 13 Pro (390×844)
             else if (window.screen.height === 844 && window.screen.width === 390) {
-              deviceInfo.isIPhone12 = true;
+              deviceInfo.isIPhone13 = true;
+              deviceInfo.isIPhone12 = true; // Keep for backward compatibility
               deviceInfo.isNotchedDevice = true;
             }
             // iPhone 12 Pro Max, 13 Pro Max (428×926)
             else if (window.screen.height === 926 && window.screen.width === 428) {
-              deviceInfo.isIPhone12 = true;
+              deviceInfo.isIPhone13ProMax = true;
+              deviceInfo.isIPhone12 = true; // Keep for backward compatibility
               deviceInfo.isNotchedDevice = true;
             }
             // iPhone 14 Pro (393x852)
@@ -92,7 +96,7 @@
               deviceInfo.isNotchedDevice = true;
             }
           }
-          
+
           return deviceInfo;
         }
 
@@ -102,18 +106,24 @@
           link.href = '/ios-fixes.css';
           document.head.appendChild(link);
           document.documentElement.classList.add('ios-device');
-          
+
           var deviceModel = getDeviceModel();
-          
+
           // Add specific classes based on device model
           if (deviceModel.isIPhoneX) {
             document.documentElement.classList.add('iphone-x');
-          } 
+          }
           if (deviceModel.isIPhoneXR) {
             document.documentElement.classList.add('iphone-xr');
           }
           if (deviceModel.isIPhone12) {
             document.documentElement.classList.add('iphone-12');
+          }
+          if (deviceModel.isIPhone13) {
+            document.documentElement.classList.add('iphone-13');
+          }
+          if (deviceModel.isIPhone13ProMax) {
+            document.documentElement.classList.add('iphone-13-pro-max');
           }
           if (deviceModel.isIPhone14) {
             document.documentElement.classList.add('iphone-14');
