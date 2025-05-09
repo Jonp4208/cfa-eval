@@ -150,7 +150,18 @@ const AnalyticsHub = () => {
           subtitle="Team performance and development tracking"
           icon={<BarChart4 className="h-5 w-5" />}
           actions={
-            <div className="w-full sm:w-auto">
+            <div className="flex flex-col sm:flex-row gap-3 w-full sm:w-auto">
+              <Select value={timeframe} onValueChange={setTimeframe}>
+                <SelectTrigger className="w-full sm:w-[140px] bg-white border-2 border-gray-200 rounded-[32px] px-4 text-[14px] font-medium text-[#27251F] hover:border-gray-300 focus:border-[#E51636] focus:ring-0 transition-colors">
+                  <SelectValue placeholder="Last 30 Days" />
+                </SelectTrigger>
+                <SelectContent className="bg-white border-2 border-gray-200 rounded-2xl shadow-lg min-w-[140px]">
+                  <SelectItem value="last30" className="text-[14px] font-medium text-[#27251F] focus:bg-[#E51636]/5 focus:text-[#E51636]">Last 30 Days</SelectItem>
+                  <SelectItem value="last90" className="text-[14px] font-medium text-[#27251F] focus:bg-[#E51636]/5 focus:text-[#E51636]">Last 90 Days</SelectItem>
+                  <SelectItem value="last180" className="text-[14px] font-medium text-[#27251F] focus:bg-[#E51636]/5 focus:text-[#E51636]">Last 6 Months</SelectItem>
+                  <SelectItem value="last365" className="text-[14px] font-medium text-[#27251F] focus:bg-[#E51636]/5 focus:text-[#E51636]">Last Year</SelectItem>
+                </SelectContent>
+              </Select>
               <button
                 onClick={() => navigate('/')}
                 className="w-full sm:w-auto bg-white hover:bg-white/90 text-[#E51636] flex items-center justify-center gap-2 py-2 px-3 sm:px-4 rounded-xl transition-all duration-300 text-sm font-medium shadow-sm border border-white/20"
@@ -203,15 +214,20 @@ const AnalyticsHub = () => {
                         <div>
                           <p className="text-[#27251F]/60 font-medium">Avg Performance</p>
                           <h3 className="text-3xl font-bold mt-2 text-[#27251F]">{quickStats.avgPerformance}%</h3>
-                          <p className="text-xs text-[#27251F]/60 mt-1">
-                            {quickStats.improvementRate > 0 ? (
-                              <span className="text-green-600">↑ {quickStats.improvementRate}%</span>
-                            ) : quickStats.improvementRate < 0 ? (
-                              <span className="text-red-600">↓ {Math.abs(quickStats.improvementRate)}%</span>
-                            ) : (
-                              <span>No change</span>
-                            )}
-                          </p>
+                          <div className="flex flex-col gap-0.5">
+                            <p className="text-xs text-[#27251F]/60 mt-1">
+                              Last {timeframe.replace('last', '')} days
+                            </p>
+                            <p className="text-xs text-[#27251F]/60">
+                              {quickStats.improvementRate > 0 ? (
+                                <span className="text-green-600">↑ {quickStats.improvementRate}%</span>
+                              ) : quickStats.improvementRate < 0 ? (
+                                <span className="text-red-600">↓ {Math.abs(quickStats.improvementRate)}%</span>
+                              ) : (
+                                <span>No change</span>
+                              )}
+                            </p>
+                          </div>
                         </div>
                         <div className="h-14 w-14 bg-[#E51636]/10 rounded-2xl flex items-center justify-center">
                           <Medal className="h-7 w-7 text-[#E51636]" />
@@ -245,10 +261,15 @@ const AnalyticsHub = () => {
                         <div>
                           <p className="text-[#27251F]/60 font-medium">Evaluations</p>
                           <h3 className="text-3xl font-bold mt-2 text-[#27251F]">{quickStats.completedEvaluations}</h3>
-                          <p className="text-xs text-[#27251F]/60 mt-1">
-                            {quickStats.pendingEvaluations > 0 ?
-                              `${quickStats.pendingEvaluations} pending` : 'All complete'}
-                          </p>
+                          <div className="flex flex-col gap-0.5">
+                            <p className="text-xs text-[#27251F]/60 mt-1">
+                              Last {timeframe.replace('last', '')} days
+                            </p>
+                            <p className="text-xs text-[#27251F]/60">
+                              {quickStats.pendingEvaluations > 0 ?
+                                `${quickStats.pendingEvaluations} pending` : 'All complete'}
+                            </p>
+                          </div>
                         </div>
                         <div className="h-14 w-14 bg-[#E51636]/10 rounded-2xl flex items-center justify-center">
                           <FileText className="h-7 w-7 text-[#E51636]" />
