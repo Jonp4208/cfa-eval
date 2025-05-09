@@ -141,7 +141,7 @@ export default function PlanDetails() {
 
   return (
     <div className="min-h-screen bg-background">
-      <div className="container mx-auto px-4 py-6 max-w-5xl">
+      <div className="container mx-auto px-3 sm:px-4 py-4 sm:py-6 max-w-5xl">
         <div className="flex flex-col gap-4 mb-6">
           <Button
             variant="ghost"
@@ -169,9 +169,9 @@ export default function PlanDetails() {
         </div>
 
         <div className="space-y-6">
-          <Card className="overflow-hidden">
-            <CardContent className="p-6">
-              <div className="space-y-6">
+          <Card className="overflow-hidden w-full">
+            <CardContent className="p-3 sm:p-4">
+              <div className="space-y-4">
                 {/* Title and Description */}
                 <div className="space-y-2">
                   <h1 className="text-2xl font-semibold text-[#27251F] break-words">{plan.name}</h1>
@@ -182,7 +182,7 @@ export default function PlanDetails() {
 
                 {/* Info Cards Grid */}
                 <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-                  <div className="bg-gray-50 rounded-lg p-4 flex items-center gap-3">
+                  <div className="bg-gray-50 rounded-lg p-3 flex items-center gap-3">
                     <div className="text-[#E51636]">
                       <Users className="h-5 w-5" />
                     </div>
@@ -192,7 +192,7 @@ export default function PlanDetails() {
                     </div>
                   </div>
 
-                  <div className="bg-gray-50 rounded-lg p-4 flex items-center gap-3">
+                  <div className="bg-gray-50 rounded-lg p-3 flex items-center gap-3">
                     <div className="text-[#E51636]">
                       <Clock className="h-5 w-5" />
                     </div>
@@ -202,7 +202,7 @@ export default function PlanDetails() {
                     </div>
                   </div>
 
-                  <div className="bg-gray-50 rounded-lg p-4 flex items-center gap-3">
+                  <div className="bg-gray-50 rounded-lg p-3 flex items-center gap-3">
                     <div className="text-[#E51636]">
                       <Calendar className="h-5 w-5" />
                     </div>
@@ -214,52 +214,51 @@ export default function PlanDetails() {
                 </div>
 
                 {/* Days Section */}
-                <div className="space-y-6">
+                <div className="space-y-4">
                   <h2 className="text-xl font-semibold text-[#27251F]">Training Schedule</h2>
                   {plan.days.map((day) => (
-                    <Card key={day.dayNumber} className="border border-[#27251F]/10">
-                      <CardContent className="p-4">
-                        <h3 className="text-lg font-medium mb-4 text-[#27251F]">{plan.usePhaseTerminology ? 'Phase' : 'Day'} {day.dayNumber}</h3>
-                        <div className="space-y-4">
-                          {day.tasks.map((task, taskIndex) => (
-                            <div key={taskIndex} className="p-4 border rounded-lg border-[#27251F]/10">
-                              <div className="flex justify-between items-start gap-4">
-                                <div className="space-y-2 flex-1 min-w-0">
-                                  <h4 className="font-medium text-[#27251F] break-words">{task.name}</h4>
-                                  {task.description && (
-                                    <p className="text-sm text-[#27251F]/60 break-words">{task.description}</p>
-                                  )}
-                                </div>
-                                <span className="text-sm text-[#27251F]/60 whitespace-nowrap">{task.duration} minutes</span>
-                              </div>
-                              {task.pathwayUrl && (
-                                <div className="mt-3 text-sm">
-                                  <span className="text-[#27251F]/60">Pathway: </span>
-                                  <a
-                                    href={task.pathwayUrl}
-                                    target="_blank"
-                                    rel="noopener noreferrer"
-                                    className="text-[#E51636] hover:text-[#E51636]/90 break-words"
-                                  >
-                                    {task.pathwayUrl}
-                                  </a>
-                                </div>
-                              )}
-                              {task.competencyChecklist && task.competencyChecklist.length > 0 && (
-                                <div className="mt-3">
-                                  <h5 className="text-sm font-medium mb-2 text-[#27251F]">Competency Checklist:</h5>
-                                  <ul className="list-disc list-inside text-sm text-[#27251F]/60 space-y-1">
-                                    {task.competencyChecklist.map((item, index) => (
-                                      <li key={index} className="break-words">{item}</li>
-                                    ))}
-                                  </ul>
-                                </div>
-                              )}
+                    <div key={day.dayNumber} className="mb-6">
+                      <h3 className="text-lg font-medium mb-3 text-[#27251F] px-1">{plan.usePhaseTerminology ? 'Phase' : 'Day'} {day.dayNumber}</h3>
+                      <div className="space-y-3">
+                        {day.tasks.map((task, taskIndex) => (
+                          <div key={taskIndex} className="p-2.5 sm:p-3 bg-white border rounded-lg border-[#27251F]/10 w-full">
+                            <div className="flex justify-between items-start gap-2 w-full">
+                              <h4 className="font-medium text-[#27251F] break-words">{task.name}</h4>
+                              <span className="text-sm text-[#27251F]/60 whitespace-nowrap ml-2">{task.duration} min</span>
                             </div>
-                          ))}
-                        </div>
-                      </CardContent>
-                    </Card>
+
+                            {task.description && (
+                              <p className="text-sm text-[#27251F]/60 break-words mt-2">{task.description}</p>
+                            )}
+
+                            {task.pathwayUrl && (
+                              <div className="mt-3 text-sm">
+                                <span className="text-[#27251F]/60">Pathway: </span>
+                                <a
+                                  href={task.pathwayUrl}
+                                  target="_blank"
+                                  rel="noopener noreferrer"
+                                  className="text-[#E51636] hover:text-[#E51636]/90 break-words inline-block max-w-full overflow-hidden text-ellipsis"
+                                >
+                                  {task.pathwayUrl}
+                                </a>
+                              </div>
+                            )}
+
+                            {task.competencyChecklist && task.competencyChecklist.length > 0 && (
+                              <div className="mt-3">
+                                <h5 className="text-sm font-medium mb-2 text-[#27251F]">Competency Checklist:</h5>
+                                <ul className="list-disc pl-5 text-sm text-[#27251F]/60 space-y-1">
+                                  {task.competencyChecklist.map((item, index) => (
+                                    <li key={index} className="break-words">{item}</li>
+                                  ))}
+                                </ul>
+                              </div>
+                            )}
+                          </div>
+                        ))}
+                      </div>
+                    </div>
                   ))}
                 </div>
               </div>
