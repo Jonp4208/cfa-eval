@@ -59,6 +59,7 @@ import AddEvaluators from '@/pages/Leadership/Evaluations360/AddEvaluators';
 import View360Evaluation from '@/pages/Leadership/Evaluations360/View360Evaluation';
 import Evaluators from '@/pages/Leadership/Evaluations360/Evaluators';
 import Checklists from '@/pages/Kitchen/Checklists';
+import KitchenChecklistHistory from '@/pages/Kitchen/Checklists/History';
 import WasteTracker from '@/pages/Kitchen/WasteTracker';
 
 import Equipment from '@/pages/Kitchen/Equipment';
@@ -189,6 +190,7 @@ export default function AppRoutes() {
         <Route path="food-safety/view/:id" element={<ViewCompletion />} />
 
         <Route path="checklists" element={<Checklists />} />
+        <Route path="checklists/history" element={<KitchenChecklistHistory />} />
       </Route>
 
       <Route path="/food-safety" element={<PrivateRoute><FoodSafety /></PrivateRoute>} />

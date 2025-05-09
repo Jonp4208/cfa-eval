@@ -1,11 +1,12 @@
 import React, { useState, useEffect } from 'react'
 import axios from 'axios'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
+import { useNavigate } from 'react-router-dom'
 import { Card } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { useToast } from '@/components/ui/use-toast'
-import { CheckCircle2, Loader2, Sun, Moon, ArrowLeftRight, Pencil } from 'lucide-react'
+import { CheckCircle2, Loader2, Sun, Moon, ArrowLeftRight, Pencil, History } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { KitchenTaskList } from '@/components/kitchen/checklists/KitchenTaskList'
 import { EditChecklistDialog } from '@/components/kitchen/checklists/EditChecklistDialog'
@@ -33,6 +34,7 @@ export function KitchenChecklist() {
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false)
   const { toast } = useToast()
   const queryClient = useQueryClient()
+  const navigate = useNavigate()
 
   // Get today's date in YYYY-MM-DD format using our utility function
   const today = getTodayDateString()
@@ -318,6 +320,15 @@ export function KitchenChecklist() {
             </div>
           </div>
           <div className="flex flex-wrap gap-2 w-full sm:w-auto">
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => navigate('/kitchen/checklists/history')}
+              className="flex items-center gap-2 text-[#E51636] border-[#E51636] hover:bg-[#E51636]/5 w-full sm:w-auto h-9 rounded-lg transition-all duration-200 touch-manipulation active-scale"
+            >
+              <History className="h-4 w-4" />
+              <span>History</span>
+            </Button>
             <Button
               variant="outline"
               size="sm"
