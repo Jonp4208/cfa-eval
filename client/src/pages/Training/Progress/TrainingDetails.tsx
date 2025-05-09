@@ -63,6 +63,7 @@ interface TrainingDetails {
     description?: string
     type: string
     modules: Module[]
+    usePhaseTerminology?: boolean
     days: {
       dayNumber: number
       tasks: {
@@ -387,7 +388,7 @@ export default function TrainingDetails() {
           <Card key={index} className="w-full">
             <CardHeader className="p-3 md:p-4">
               <CardTitle className="text-base md:text-lg font-semibold text-[#27251F]">
-                Day {day.dayNumber}
+                {trainingDetails.trainingPlan.usePhaseTerminology ? 'Phase' : 'Day'} {day.dayNumber}
               </CardTitle>
             </CardHeader>
             <CardContent className="p-2 sm:p-3 md:p-4 pt-0 space-y-3">

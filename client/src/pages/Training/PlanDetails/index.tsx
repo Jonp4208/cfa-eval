@@ -31,6 +31,7 @@ interface TrainingPlan {
   days: Day[]
   createdAt: string
   selfPaced: boolean
+  usePhaseTerminology?: boolean
   createdBy: {
     firstName: string
     lastName: string
@@ -108,14 +109,16 @@ export default function PlanDetails() {
       const dayMinutes = day.tasks.reduce((sum, task) => sum + task.duration, 0)
       return acc + dayMinutes
     }, 0)
-    
+
     const weeks = Math.floor(totalMinutes / (5 * 8 * 60)) // Assuming 8 hours per day, 5 days per week
     const remainingDays = Math.ceil((totalMinutes % (5 * 8 * 60)) / (8 * 60))
-    
+
+    const dayTerm = plan?.usePhaseTerminology ? 'phases' : 'days'
+
     if (weeks > 0) {
-      return `${weeks} weeks ${remainingDays} days`
+      return `${weeks} weeks ${remainingDays} ${dayTerm}`
     }
-    return `${remainingDays} days`
+    return `${remainingDays} ${dayTerm}`
   }
 
   if (loading) {
@@ -148,14 +151,14 @@ export default function PlanDetails() {
             <ArrowLeft className="h-4 w-4" />
             Back to Plans
           </Button>
-          <Button 
+          <Button
             onClick={() => setIsEditDialogOpen(true)}
             className="gap-2 bg-[#E51636] text-white hover:bg-[#E51636]/90 w-full sm:w-auto"
           >
             <Edit2 className="h-4 w-4" />
             Edit Plan
           </Button>
-          <Button 
+          <Button
             variant="outline"
             onClick={() => setIsDeleteDialogOpen(true)}
             className="gap-2 border-[#E51636] text-[#E51636] hover:bg-[#E51636]/10 w-full sm:w-auto"
@@ -216,7 +219,7 @@ export default function PlanDetails() {
                   {plan.days.map((day) => (
                     <Card key={day.dayNumber} className="border border-[#27251F]/10">
                       <CardContent className="p-4">
-                        <h3 className="text-lg font-medium mb-4 text-[#27251F]">Day {day.dayNumber}</h3>
+                        <h3 className="text-lg font-medium mb-4 text-[#27251F]">{plan.usePhaseTerminology ? 'Phase' : 'Day'} {day.dayNumber}</h3>
                         <div className="space-y-4">
                           {day.tasks.map((task, taskIndex) => (
                             <div key={taskIndex} className="p-4 border rounded-lg border-[#27251F]/10">
@@ -232,9 +235,9 @@ export default function PlanDetails() {
                               {task.pathwayUrl && (
                                 <div className="mt-3 text-sm">
                                   <span className="text-[#27251F]/60">Pathway: </span>
-                                  <a 
-                                    href={task.pathwayUrl} 
-                                    target="_blank" 
+                                  <a
+                                    href={task.pathwayUrl}
+                                    target="_blank"
                                     rel="noopener noreferrer"
                                     className="text-[#E51636] hover:text-[#E51636]/90 break-words"
                                   >
@@ -294,7 +297,7 @@ export default function PlanDetails() {
             <DialogHeader>
               <DialogTitle>Edit Training Plan</DialogTitle>
             </DialogHeader>
-            <CreatePlanForm 
+            <CreatePlanForm
               onSubmit={handleEditPlan}
               initialData={{
                 name: plan.name,
@@ -311,4 +314,4 @@ export default function PlanDetails() {
       </div>
     </div>
   )
-} 
+}

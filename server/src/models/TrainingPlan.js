@@ -3,10 +3,10 @@ const Schema = mongoose.Schema;
 
 const trainingMaterialSchema = new Schema({
     title: { type: String, required: true },
-    type: { 
-        type: String, 
-        enum: ['DOCUMENT', 'VIDEO', 'PATHWAY_LINK'], 
-        required: true 
+    type: {
+        type: String,
+        enum: ['DOCUMENT', 'VIDEO', 'PATHWAY_LINK'],
+        required: true
     },
     url: { type: String, required: true },
     category: { type: String, required: true }
@@ -15,10 +15,10 @@ const trainingMaterialSchema = new Schema({
 const trainingModuleSchema = new Schema({
     name: { type: String, required: true },
     description: { type: String },
-    department: { 
-        type: String, 
-        enum: ['FOH', 'BOH'], 
-        required: true 
+    department: {
+        type: String,
+        enum: ['FOH', 'BOH'],
+        required: true
     },
     estimatedDuration: { type: String, required: true },
     dayNumber: { type: Number, required: true },
@@ -107,6 +107,7 @@ const trainingPlanSchema = new Schema({
     includesCoreValues: { type: Boolean, default: false },
     includesBrandStandards: { type: Boolean, default: false },
     isTemplate: { type: Boolean, default: false },
+    usePhaseTerminology: { type: Boolean, default: false },
     store: {
         type: Schema.Types.ObjectId,
         ref: 'Store',
@@ -126,10 +127,10 @@ trainingPlanSchema.pre('remove', async function(next) {
     try {
         // Import TrainingProgress model here to avoid circular dependency
         const TrainingProgress = mongoose.model('TrainingProgress');
-        
+
         // Delete all training progress records associated with this plan
         await TrainingProgress.deleteMany({ trainingPlan: this._id });
-        
+
         next();
     } catch (error) {
         next(error);

@@ -27,6 +27,7 @@ interface NewTrainingPlan {
   position: string
   type: 'New Hire' | 'Regular'
   selfPaced: boolean
+  usePhaseTerminology?: boolean
   days: {
     dayNumber: number
     tasks: {
@@ -193,17 +194,32 @@ export default function CreatePlanForm({ onSubmit, initialData }: CreatePlanForm
         </div>
       </div>
 
-      <div className="flex items-center space-x-2">
-        <Checkbox
-          id="selfPaced"
-          checked={formData.selfPaced}
-          onCheckedChange={(checked) => {
-            setFormData(prev => ({ ...prev, selfPaced: checked as boolean }))
-          }}
-        />
-        <Label htmlFor="selfPaced" className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70">
-          Allow trainees to complete tasks on their own (self-paced)
-        </Label>
+      <div className="flex flex-col space-y-2">
+        <div className="flex items-center space-x-2">
+          <Checkbox
+            id="selfPaced"
+            checked={formData.selfPaced}
+            onCheckedChange={(checked) => {
+              setFormData(prev => ({ ...prev, selfPaced: checked as boolean }))
+            }}
+          />
+          <Label htmlFor="selfPaced" className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70">
+            Allow trainees to complete tasks on their own (self-paced)
+          </Label>
+        </div>
+
+        <div className="flex items-center space-x-2">
+          <Checkbox
+            id="usePhaseTerminology"
+            checked={formData.usePhaseTerminology || false}
+            onCheckedChange={(checked) => {
+              setFormData(prev => ({ ...prev, usePhaseTerminology: checked as boolean }))
+            }}
+          />
+          <Label htmlFor="usePhaseTerminology" className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70">
+            Use "Phase" instead of "Day" terminology
+          </Label>
+        </div>
       </div>
 
       <div className="space-y-2">
@@ -254,13 +270,13 @@ export default function CreatePlanForm({ onSubmit, initialData }: CreatePlanForm
       <div className="space-y-4">
         <div className="flex items-center justify-between">
           <h3 className="text-lg font-medium">Training Schedule</h3>
-          <Button 
-            type="button" 
+          <Button
+            type="button"
             onClick={addDay}
             className="gap-2 rounded-[20px] bg-[#E51636] text-white hover:bg-[#E51636]/90"
           >
             <Plus className="h-4 w-4" />
-            Add Day
+            Add {formData.usePhaseTerminology ? 'Phase' : 'Day'}
           </Button>
         </div>
 
@@ -268,7 +284,7 @@ export default function CreatePlanForm({ onSubmit, initialData }: CreatePlanForm
           <Card key={dayIndex} className="relative">
             <CardContent className="p-6">
               <div className="flex items-center justify-between mb-4">
-                <h4 className="text-base font-medium">Day {day.dayNumber}</h4>
+                <h4 className="text-base font-medium">{formData.usePhaseTerminology ? 'Phase' : 'Day'} {day.dayNumber}</h4>
                 {dayIndex > 0 && (
                   <Button
                     type="button"
@@ -398,8 +414,8 @@ export default function CreatePlanForm({ onSubmit, initialData }: CreatePlanForm
       </div>
 
       <div className="flex justify-end gap-4">
-        <Button 
-          type="submit" 
+        <Button
+          type="submit"
           disabled={loading}
           className="rounded-[20px] bg-[#E51636] text-white hover:bg-[#E51636]/90"
         >
@@ -408,4 +424,4 @@ export default function CreatePlanForm({ onSubmit, initialData }: CreatePlanForm
       </div>
     </form>
   )
-} 
+}

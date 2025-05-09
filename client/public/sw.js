@@ -1,7 +1,7 @@
 // Service Worker for LD Growth PWA
 
 // Change this version number whenever you want to force an update
-const CACHE_VERSION = '1.0.128';
+const CACHE_VERSION = '1.0.129';
 const CACHE_NAME = `ld-growth-cache-${CACHE_VERSION}`;
 const urlsToCache = [
   '/',
