@@ -20,6 +20,7 @@ import { kitchenService, ShiftChecklistItem, ShiftChecklistCompletion } from '@/
 import { useSnackbar } from 'notistack'
 import { format, formatDistanceToNow } from 'date-fns'
 import { useAuth } from '@/hooks/useAuth'
+import { getTodayDateString, isNewDay } from '@/lib/utils/date-utils'
 
 interface ShiftChecklistProps {
   type: string
@@ -71,12 +72,16 @@ export function ShiftChecklist({ type, onSave }: ShiftChecklistProps) {
   useEffect(() => {
     const checkForReset = async () => {
       try {
-        // Get the last saved date from localStorage
-        const lastSavedDate = localStorage.getItem(`${type}-checklist-last-saved`)
-        const today = new Date().toISOString().split('T')[0] // YYYY-MM-DD
+        // Get the last saved date from localStorage - use a single key for all shift types
+        const lastSavedDate = localStorage.getItem('kitchen-checklist-last-saved')
 
-        // If it's a new day, reset the checklist
-        if (lastSavedDate && lastSavedDate !== today) {
+        // Use the getTodayDateString utility to get today's date in NY timezone
+        const today = getTodayDateString()
+
+        // If it's a new day (past midnight in NY timezone), we should reset the checklist
+        if (isNewDay(lastSavedDate)) {
+          console.log(`New day detected, resetting ${type} kitchen checklist`)
+
           // Reset all items to uncompleted
           const resetItems = items.map(item => ({
             ...item,
@@ -85,7 +90,12 @@ export function ShiftChecklist({ type, onSave }: ShiftChecklistProps) {
           setItems(resetItems)
 
           // Update localStorage with today's date
-          localStorage.setItem(`${type}-checklist-last-saved`, today)
+          localStorage.setItem('kitchen-checklist-last-saved', today)
+
+          // Show a toast notification
+          enqueueSnackbar(`The ${type} checklist has been reset for a new day.`, {
+            variant: 'info'
+          })
         }
       } catch (error) {
         console.error('Error checking for reset:', error)
@@ -95,7 +105,12 @@ export function ShiftChecklist({ type, onSave }: ShiftChecklistProps) {
     if (items.length > 0) {
       checkForReset()
     }
-  }, [items, type])
+
+    // Also set up an interval to check for reset (in case the app is left open overnight)
+    const resetCheckInterval = setInterval(checkForReset, 60000) // Check every minute
+
+    return () => clearInterval(resetCheckInterval)
+  }, [items, type, enqueueSnackbar])
 
   const loadItems = useCallback(async () => {
     try {
@@ -186,6 +201,25 @@ export function ShiftChecklist({ type, onSave }: ShiftChecklistProps) {
 
   const handleItemToggle = async (id: string) => {
     try {
+      // First, check if we need to reset the checklist (new day)
+      const lastSavedDate = localStorage.getItem('kitchen-checklist-last-saved')
+      if (isNewDay(lastSavedDate)) {
+        // It's a new day, we should reset before proceeding
+        console.log('New day detected during task toggle, resetting checklist')
+
+        // Update localStorage with today's date
+        localStorage.setItem('kitchen-checklist-last-saved', getTodayDateString())
+
+        // Show a notification about the reset
+        enqueueSnackbar(`The ${type} checklist has been reset for a new day.`, {
+          variant: 'info'
+        })
+
+        // Reload items to get fresh state
+        await loadItems()
+        return
+      }
+
       const now = new Date()
       const targetItem = items.find(item => item.id === id)
 
@@ -244,11 +278,17 @@ export function ShiftChecklist({ type, onSave }: ShiftChecklistProps) {
   const saveToLocalStorage = (updatedItems: ShiftChecklistItem[]) => {
     try {
       const now = new Date()
+
+      // Save the state with type-specific key (for component-specific state)
       localStorage.setItem(`${type}-checklist-state`, JSON.stringify({
         items: updatedItems,
         savedAt: now.toISOString()
       }))
-      localStorage.setItem(`${type}-checklist-last-saved`, now.toISOString().split('T')[0])
+
+      // Use the shared key for tracking the last saved date (for reset logic)
+      // Use getTodayDateString to ensure consistent format with FOH
+      localStorage.setItem('kitchen-checklist-last-saved', getTodayDateString())
+
       setLastSaved(now)
     } catch (e) {
       console.error('Error saving to localStorage:', e)
@@ -257,6 +297,25 @@ export function ShiftChecklist({ type, onSave }: ShiftChecklistProps) {
 
   const handleSave = async () => {
     try {
+      // First, check if we need to reset the checklist (new day)
+      const lastSavedDate = localStorage.getItem('kitchen-checklist-last-saved')
+      if (isNewDay(lastSavedDate)) {
+        // It's a new day, we should reset before proceeding
+        console.log('New day detected during save, resetting checklist')
+
+        // Update localStorage with today's date
+        localStorage.setItem('kitchen-checklist-last-saved', getTodayDateString())
+
+        // Show a notification about the reset
+        enqueueSnackbar(`The ${type} checklist has been reset for a new day.`, {
+          variant: 'info'
+        })
+
+        // Reload items to get fresh state
+        await loadItems()
+        return
+      }
+
       setSaving(true)
 
       // Save directly to server
