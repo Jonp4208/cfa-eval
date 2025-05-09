@@ -2,6 +2,7 @@ import React from 'react';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { User, Coffee, Play, RefreshCw, Check, Clock, Pencil } from 'lucide-react';
+import { formatHourTo12Hour } from '@/lib/utils/date-utils';
 
 interface AllEmployeesSectionProps {
   filteredScheduledEmployees: any[];
