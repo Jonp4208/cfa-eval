@@ -35,8 +35,11 @@ import {
   Brush,
   CalendarClock,
   Calendar,
-  MessageSquare
+  MessageSquare,
+  Timer,
+  BarChart
 } from 'lucide-react'
+import { EquipmentIcon } from './components/EquipmentIcon'
 import { useSnackbar } from 'notistack'
 import { kitchenService, EquipmentStatus, EquipmentConfig, EquipmentItem, MaintenanceRecord, CleaningSchedule } from '@/services/kitchenService'
 import { cn } from "@/lib/utils"
@@ -138,19 +141,19 @@ export default function Equipment() {
   const loadEquipmentUpdates = async (equipmentId: string) => {
     try {
       const history = await kitchenService.getEquipmentHistory(equipmentId);
-      
+
       // Filter for only update records
-      const updateRecords = history.filter(record => 
-        record.type === 'note' || 
+      const updateRecords = history.filter(record =>
+        record.type === 'note' ||
         (record.notes && (
-          record.notes.startsWith('[UPDATE]') || 
-          record.notes.startsWith('[PARTS ORDERED]') || 
-          record.notes.startsWith('[REPAIR SCHEDULED]') || 
+          record.notes.startsWith('[UPDATE]') ||
+          record.notes.startsWith('[PARTS ORDERED]') ||
+          record.notes.startsWith('[REPAIR SCHEDULED]') ||
           record.notes.startsWith('[IN PROGRESS]') ||
           record.notes.startsWith('[WAITING APPROVAL]')
         ))
       );
-      
+
       setEquipmentUpdates(prev => ({
         ...prev,
         [equipmentId]: updateRecords
@@ -200,7 +203,7 @@ export default function Equipment() {
 
   const handleStatusUpdate = async (equipmentId: string, newStatus: EquipmentStatus) => {
     try {
-      console.log('Sending status update for equipment:', equipmentId, newStatus)
+      // Status update being sent
       await kitchenService.updateEquipmentStatus(equipmentId, newStatus)
       enqueueSnackbar('Equipment status updated successfully', { variant: 'success' })
       loadEquipmentData()
@@ -303,12 +306,7 @@ export default function Equipment() {
       const existingIssues = Array.isArray(currentStatus.issues) ? currentStatus.issues : []
       const updatedIssues = [...existingIssues, formattedIssue]
 
-      console.log('Updating equipment status with:', {
-        id: selectedEquipment,
-        category: selectedCategory,
-        status: 'repair',
-        issues: updatedIssues
-      })
+      // Updating equipment status with repair status and issues
 
       // Create a complete status object with all required fields
       const updatedStatus = {
@@ -459,7 +457,7 @@ export default function Equipment() {
         formattedNotes += `\nRepaired by: ${repairPerson}`
       }
 
-      console.log('Resolving issues for equipment:', selectedEquipment, currentStatus)
+      // Resolving issues for equipment
 
       // Create a complete status object with all required fields
       const updatedStatus = {
@@ -659,8 +657,8 @@ export default function Equipment() {
 
   const handleAddUpdateNote = async () => {
     if (!selectedEquipment || !updateNotes.trim()) {
-      enqueueSnackbar(!selectedEquipment ? 'No equipment selected' : 'Please enter update notes', { 
-        variant: 'error' 
+      enqueueSnackbar(!selectedEquipment ? 'No equipment selected' : 'Please enter update notes', {
+        variant: 'error'
       });
       return;
     }
@@ -689,9 +687,9 @@ export default function Equipment() {
 
       // Show feedback to user
       enqueueSnackbar('Sending update...', { variant: 'info' });
-      
+
       // Close dialog immediately to prevent multiple submissions
-      setUpdateDialog(false); 
+      setUpdateDialog(false);
 
       // Add update note with explicit type field
       await kitchenService.addMaintenanceNote(selectedEquipment, {
@@ -715,8 +713,8 @@ export default function Equipment() {
       enqueueSnackbar('Update added successfully', { variant: 'success' });
     } catch (error) {
       console.error('Error adding update:', error);
-      enqueueSnackbar(`Failed to add update: ${(error as any).message || 'Unknown error'}`, { 
-        variant: 'error' 
+      enqueueSnackbar(`Failed to add update: ${(error as any).message || 'Unknown error'}`, {
+        variant: 'error'
       });
     }
   };
@@ -815,122 +813,214 @@ export default function Equipment() {
                 return (
                   <div
                     key={equipment.id}
-                    className={`${status.status === 'repair' ? 'bg-red-50 border border-red-200 shadow-sm hover:shadow-md' : 'bg-white border border-gray-200 shadow-sm hover:shadow-md'} rounded-xl p-5 space-y-5 touch-manipulation transition-all relative overflow-hidden`}
+                    className={`${status.status === 'repair'
+                      ? 'bg-gradient-to-br from-red-50 to-red-50/70 border border-red-200 shadow-sm hover:shadow-lg'
+                      : 'bg-gradient-to-br from-white to-gray-50/30 border border-gray-200 shadow-sm hover:shadow-lg'
+                    } rounded-xl p-5 space-y-5 touch-manipulation transition-all duration-300 relative overflow-hidden`}
                   >
-                    {/* Equipment header with name and status */}
-                    <div className="flex items-start justify-between">
-                      <div className="flex flex-col gap-3">
-                        <h3 className={`text-xl font-bold ${status.status === 'repair' ? 'text-red-700' : 'text-gray-800'}`}>
-                          {equipment.name}
-                        </h3>
-                        <Badge
-                          variant="outline"
-                          className={cn(
-                            'w-fit h-8 px-4 text-sm font-medium capitalize flex items-center whitespace-nowrap rounded-full shadow-sm',
-                            status.status === 'operational'
-                              ? 'bg-green-50 text-green-600 border-green-200 ring-1 ring-green-100'
-                              : 'bg-red-100 text-red-600 border-red-200 ring-1 ring-red-100',
-                            status.status !== 'operational' ? 'animate-pulse' : ''
-                          )}
-                        >
-                          {status.status === 'operational' ?
-                            <CheckCircle2 className="h-4 w-4 mr-1.5" /> :
-                            <AlertCircle className="h-4 w-4 mr-1.5" />}
-                          <span>{status.status === 'operational' ? 'Operational' : 'Broken'}</span>
-                        </Badge>
-                      </div>
-
-                      {/* History icon for mobile */}
-                      <Button
-                        variant="outline"
-                        size="icon"
-                        className={`h-10 w-10 rounded-full sm:hidden hover:bg-gray-50 border shadow-sm absolute top-4 right-4 
-                          ${status.status === 'repair' 
-                            ? 'text-red-600 hover:text-red-800 hover:bg-red-50 border-red-200' 
-                            : 'text-gray-600 hover:text-gray-800 hover:bg-gray-50 border-gray-200'}`}
-                        onClick={() => {
-                          setSelectedEquipment(equipment.id)
-                          loadMaintenanceHistory(equipment.id)
-                          setMaintenanceHistoryDialog(true)
-                        }}
-                      >
-                        <History className="h-5 w-5" />
-                      </Button>
+                    {/* Equipment icon watermark */}
+                    <div className="absolute right-0 bottom-0 opacity-5 transform translate-x-6 translate-y-6">
+                      <EquipmentIcon equipmentId={equipment.id} size={120} className={`${status.status === 'repair' ? 'text-red-900' : 'text-gray-900'}`} />
                     </div>
 
-                    {/* Issues section */}
+                    {/* Equipment header with modern, clean design */}
+                    <div className="relative">
+                      {/* Side accent bar with status indicator */}
+                      <div className={`absolute top-0 left-0 bottom-0 w-1 rounded-full ${
+                        status.status === 'operational' ? 'bg-green-500' : 'bg-red-500'
+                      }`}></div>
+
+                      <div className="pl-4 flex items-center justify-between">
+                        <div className="flex items-center">
+                          {/* Equipment name with status dot */}
+                          <div className="flex items-center">
+                            <div className={`w-3 h-3 rounded-full mr-2.5 ${
+                              status.status === 'operational' ? 'bg-green-500' : 'bg-red-500'
+                            }`}></div>
+                            <h3 className="text-lg font-medium text-gray-800">
+                              {equipment.name}
+                            </h3>
+                          </div>
+                        </div>
+
+                        {/* Right side with icon and status text */}
+                        <div className="flex items-center">
+                          {/* Equipment icon */}
+                          <div className={`h-8 w-8 rounded-full flex items-center justify-center mr-2 ${
+                            status.status === 'repair'
+                              ? 'bg-red-50 text-red-500'
+                              : 'bg-blue-50 text-blue-500'
+                          }`}>
+                            <EquipmentIcon equipmentId={equipment.id} size={16} />
+                          </div>
+
+                          {/* Status text */}
+                          <div className="flex flex-col items-end">
+                            <span className={`text-xs font-medium ${
+                              status.status === 'operational' ? 'text-green-600' : 'text-red-600'
+                            }`}>
+                              {status.status === 'operational' ? 'Operational' : 'Broken'}
+                            </span>
+                            {status.lastMaintenance && (
+                              <span className="text-xs text-gray-400">
+                                Last cleaned {formatDistanceToNow(new Date(status.lastMaintenance), { addSuffix: true })}
+                              </span>
+                            )}
+                          </div>
+
+                          {/* History icon */}
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            className="ml-2 h-8 w-8 p-0 rounded-full"
+                            onClick={() => {
+                              setSelectedEquipment(equipment.id)
+                              loadMaintenanceHistory(equipment.id)
+                              setMaintenanceHistoryDialog(true)
+                            }}
+                          >
+                            <History className="h-4 w-4" />
+                          </Button>
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Spacer to separate header from content */}
+                    <div className="h-4"></div>
+
+                    {/* Issues section with improved styling */}
                     {status.issues?.length > 0 && (
-                      <div className={`text-sm ${status.status === 'repair' ? 'text-red-700 bg-red-100' : 'text-red-600 bg-red-50'} rounded-lg p-4 border ${status.status === 'repair' ? 'border-red-300' : 'border-red-100'} shadow-sm ${status.status === 'repair' ? 'ring-1 ring-red-200' : 'ring-1 ring-red-50'}`}>
-                        <div className="flex items-center gap-2 mb-3">
-                          <div className={`${status.status === 'repair' ? 'bg-red-200' : 'bg-red-100'} h-8 w-8 rounded-full flex items-center justify-center flex-shrink-0`}>
+                      <div className={`text-sm relative overflow-hidden ${status.status === 'repair' ? 'text-red-700 bg-gradient-to-br from-red-100 to-red-50' : 'text-red-600 bg-gradient-to-br from-red-50 to-red-50/70'} rounded-lg p-4 border ${status.status === 'repair' ? 'border-red-300' : 'border-red-100'} shadow-sm ${status.status === 'repair' ? 'ring-1 ring-red-200' : 'ring-1 ring-red-50'}`}>
+                        {/* Background pattern */}
+                        <div className="absolute inset-0 opacity-5 bg-[linear-gradient(45deg,#000_25%,transparent_25%,transparent_50%,#000_50%,#000_75%,transparent_75%,transparent)] bg-[length:6px_6px]"></div>
+
+                        <div className="flex items-center gap-2 mb-3 relative">
+                          <div className={`${status.status === 'repair' ? 'bg-red-200' : 'bg-red-100'} h-8 w-8 rounded-full flex items-center justify-center flex-shrink-0 shadow-sm`}>
                             <AlertCircle className={`h-5 w-5 ${status.status === 'repair' ? 'text-red-700' : 'text-red-600'}`} />
                           </div>
                           <strong className="font-semibold text-base">Issues ({status.issues.length})</strong>
                         </div>
-                        <ul className="list-disc list-outside space-y-2 ml-5">
-                          {status.issues.map((issue, index) => (
-                            <li key={index} className={`${status.status === 'repair' ? 'text-red-800' : 'text-red-700'} leading-relaxed font-medium`}>{issue}</li>
-                          ))}
-                        </ul>
+
+                        <div className="space-y-2">
+                          {status.issues.map((issue, index) => {
+                            // Extract severity level if present
+                            const severityMatch = issue.match(/^\[(LOW|MEDIUM|HIGH)\]\s*/i);
+                            const severity = severityMatch ? severityMatch[1].toLowerCase() : 'medium';
+                            const cleanIssue = severityMatch ? issue.replace(severityMatch[0], '') : issue;
+
+                            // Determine badge color based on severity
+                            const badgeColor =
+                              severity === 'high' ? 'bg-red-100 text-red-700 border-red-200' :
+                              severity === 'medium' ? 'bg-orange-100 text-orange-700 border-orange-200' :
+                              'bg-yellow-100 text-yellow-700 border-yellow-200';
+
+                            return (
+                              <div key={index} className="bg-white/50 rounded-md p-3 border border-red-200 shadow-sm">
+                                <div className="flex justify-between items-start mb-1.5">
+                                  <Badge className={`px-2 py-0.5 text-xs font-medium capitalize ${badgeColor}`}>
+                                    {severity} Priority
+                                  </Badge>
+                                </div>
+                                <p className={`${status.status === 'repair' ? 'text-red-800' : 'text-red-700'} leading-relaxed font-medium`}>
+                                  {cleanIssue}
+                                </p>
+                              </div>
+                            );
+                          })}
+                        </div>
                       </div>
                     )}
 
-                    {/* Recent Updates (only for broken equipment) */}
+                    {/* Recent Updates (only for broken equipment) with improved styling */}
                     {status.status === 'repair' && equipmentUpdates[equipment.id]?.length > 0 && (
-                      <div className="text-sm bg-white rounded-lg p-4 border border-gray-200 shadow-sm mt-4">
-                        <div className="flex items-center gap-2 mb-3">
-                          <div className="bg-gray-100 h-8 w-8 rounded-full flex items-center justify-center flex-shrink-0">
-                            <Clock className="h-5 w-5 text-gray-700" />
+                      <div className="text-sm relative overflow-hidden bg-gradient-to-br from-gray-50 to-white rounded-lg p-4 border border-gray-200 shadow-sm mt-4">
+                        {/* Background pattern */}
+                        <div className="absolute inset-0 opacity-5 bg-[radial-gradient(#000_1px,transparent_1px)] bg-[length:16px_16px]"></div>
+
+                        <div className="flex items-center gap-2 mb-3 relative">
+                          <div className="bg-blue-100 h-8 w-8 rounded-full flex items-center justify-center flex-shrink-0 shadow-sm">
+                            <Clock className="h-5 w-5 text-blue-700" />
                           </div>
                           <strong className="font-semibold text-base text-gray-800">Recent Updates</strong>
                         </div>
-                        
-                        <div className="space-y-3">
+
+                        <div className="space-y-3 relative">
+                          {/* Timeline connector */}
+                          <div className="absolute left-4 top-1 bottom-10 w-0.5 bg-gray-200"></div>
+
                           {equipmentUpdates[equipment.id]
                             .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())
                             .slice(0, 2) // Show only the 2 most recent updates
                             .map((record, index) => {
                               // Extract status type from note
                               let statusType = 'Update';
-                              let badgeClass = 'bg-blue-100 text-blue-700';
-                              
+                              let badgeClass = 'bg-blue-100 text-blue-700 border-blue-200';
+                              let iconBg = 'bg-blue-100';
+                              let iconColor = 'text-blue-700';
+                              let icon = <Clock className="h-4 w-4" />;
+
                               if (record.notes?.startsWith('[PARTS ORDERED]')) {
                                 statusType = 'Parts Ordered';
-                                badgeClass = 'bg-purple-100 text-purple-700';
+                                badgeClass = 'bg-purple-100 text-purple-700 border-purple-200';
+                                iconBg = 'bg-purple-100';
+                                iconColor = 'text-purple-700';
+                                icon = <Wrench className="h-4 w-4" />;
                               } else if (record.notes?.startsWith('[REPAIR SCHEDULED]')) {
                                 statusType = 'Repair Scheduled';
-                                badgeClass = 'bg-amber-100 text-amber-700';
+                                badgeClass = 'bg-amber-100 text-amber-700 border-amber-200';
+                                iconBg = 'bg-amber-100';
+                                iconColor = 'text-amber-700';
+                                icon = <CalendarClock className="h-4 w-4" />;
                               } else if (record.notes?.startsWith('[IN PROGRESS]')) {
                                 statusType = 'In Progress';
-                                badgeClass = 'bg-blue-100 text-blue-700';
+                                badgeClass = 'bg-blue-100 text-blue-700 border-blue-200';
+                                iconBg = 'bg-blue-100';
+                                iconColor = 'text-blue-700';
+                                icon = <Clock className="h-4 w-4" />;
                               } else if (record.notes?.startsWith('[WAITING APPROVAL]')) {
                                 statusType = 'Waiting Approval';
-                                badgeClass = 'bg-orange-100 text-orange-700';
+                                badgeClass = 'bg-orange-100 text-orange-700 border-orange-200';
+                                iconBg = 'bg-orange-100';
+                                iconColor = 'text-orange-700';
+                                icon = <AlertTriangle className="h-4 w-4" />;
                               }
-                              
+
                               // Clean up notes to remove status prefix
                               const cleanNotes = record.notes
                                 ?.replace(/^\[.*?\]\s*/i, '')
                                 .trim();
-                              
+
                               return (
-                                <div key={index} className="p-3 rounded-md bg-gray-50 border border-gray-200 shadow-sm">
-                                  <div className="flex items-center justify-between mb-2">
-                                    <Badge className={`px-3 py-1 rounded-full text-xs font-medium ${badgeClass}`}>
-                                      {statusType}
-                                    </Badge>
-                                    <span className="text-xs text-gray-500">
-                                      {format(new Date(record.date), 'MMM d, h:mm a')}
-                                    </span>
+                                <div key={index} className="pl-8 relative">
+                                  {/* Timeline dot */}
+                                  <div className={`absolute left-2 top-2 transform -translate-x-1/2 h-5 w-5 rounded-full ${iconBg} flex items-center justify-center z-10 border-2 border-white shadow-sm`}>
+                                    <div className={`h-2 w-2 rounded-full bg-${iconColor.split('-')[1]}-600`}></div>
                                   </div>
-                                  <p className="text-sm text-gray-800 whitespace-pre-wrap font-medium">
-                                    {cleanNotes || "No details provided"}
-                                  </p>
-                                  {record.performedBy && (
-                                    <p className="text-xs text-gray-500 mt-2">
-                                      By: {record.performedBy.name}
+
+                                  <div className="p-3 rounded-md bg-white border border-gray-200 shadow-sm hover:shadow-md transition-shadow">
+                                    <div className="flex items-center justify-between mb-2">
+                                      <div className="flex items-center gap-1.5">
+                                        <div className={`h-5 w-5 rounded-full ${iconBg} flex items-center justify-center`}>
+                                          {icon}
+                                        </div>
+                                        <Badge className={`px-2 py-0.5 rounded-full text-xs font-medium ${badgeClass}`}>
+                                          {statusType}
+                                        </Badge>
+                                      </div>
+                                      <span className="text-xs text-gray-500">
+                                        {format(new Date(record.date), 'MMM d, h:mm a')}
+                                      </span>
+                                    </div>
+                                    <p className="text-sm text-gray-800 whitespace-pre-wrap font-medium">
+                                      {cleanNotes || "No details provided"}
                                     </p>
-                                  )}
+                                    {record.performedBy && (
+                                      <p className="text-xs text-gray-500 mt-2 flex items-center gap-1">
+                                        <User className="h-3 w-3" />
+                                        {record.performedBy.name}
+                                      </p>
+                                    )}
+                                  </div>
                                 </div>
                               );
                             })
@@ -938,70 +1028,83 @@ export default function Equipment() {
                           <Button
                             variant="outline"
                             size="sm"
-                            className="w-full mt-2 text-gray-600 hover:text-gray-800 hover:bg-gray-50 border border-gray-300 font-medium"
+                            className="w-full mt-2 text-blue-600 hover:text-blue-800 hover:bg-blue-50 border border-blue-200 font-medium rounded-full shadow-sm"
                             onClick={() => {
                               setSelectedEquipment(equipment.id);
                               loadMaintenanceHistory(equipment.id);
                             }}
                           >
+                            <History className="h-4 w-4 mr-1.5" />
                             View All Updates
                           </Button>
                         </div>
                       </div>
                     )}
 
-                    {/* Cleaning Schedules */}
+                    {/* Cleaning Schedules with improved styling */}
                     {status.cleaningSchedules && status.cleaningSchedules.length > 0 && (
-                      <div className="bg-blue-50 rounded-lg p-4 border border-blue-100 shadow-sm ring-1 ring-blue-50">
-                        <div className="flex items-center justify-between mb-3">
+                      <div className="relative overflow-hidden bg-gradient-to-br from-blue-50 to-blue-50/70 rounded-lg p-4 border border-blue-100 shadow-sm ring-1 ring-blue-50">
+                        {/* Background pattern */}
+                        <div className="absolute inset-0 opacity-5 bg-[linear-gradient(to_right,#000_1px,transparent_1px),linear-gradient(to_bottom,#000_1px,transparent_1px)] bg-[size:20px_20px]"></div>
+
+                        <div className="flex items-center justify-between mb-3 relative">
                           <div className="flex items-center gap-2 text-blue-600">
-                            <div className="bg-blue-100 h-8 w-8 rounded-full flex items-center justify-center flex-shrink-0">
+                            <div className="bg-blue-100 h-8 w-8 rounded-full flex items-center justify-center flex-shrink-0 shadow-sm">
                               <Brush className="h-5 w-5" />
                             </div>
                             <span className="font-semibold text-base">Cleaning Schedules</span>
                           </div>
-                          <Badge variant="secondary" className="bg-blue-100 text-blue-700 border-0 rounded-full px-3 py-1 font-medium">
+                          <Badge variant="secondary" className="bg-blue-100 text-blue-700 border border-blue-200 rounded-full px-3 py-1 font-medium shadow-sm">
                             {status.cleaningSchedules.length}
                           </Badge>
                         </div>
+
                         <div className="space-y-2.5">
                           {status.cleaningSchedules.slice(0, 2).map((schedule, index) => {
                             const isOverdue = schedule.nextDue && new Date(schedule.nextDue) < new Date();
                             const isDueSoon = schedule.nextDue && !isOverdue &&
                               new Date(schedule.nextDue).getTime() - new Date().getTime() < 3 * 24 * 60 * 60 * 1000; // 3 days
 
+                            // Determine status badge
+                            let statusBadge = "Upcoming";
+                            let statusBadgeClass = "bg-green-100 text-green-700 border-green-200";
+
+                            if (isOverdue) {
+                              statusBadge = "Overdue";
+                              statusBadgeClass = "bg-red-100 text-red-700 border-red-200";
+                            } else if (isDueSoon) {
+                              statusBadge = "Due Soon";
+                              statusBadgeClass = "bg-yellow-100 text-yellow-700 border-yellow-200";
+                            }
+
                             return (
                               <div
                                 key={index}
-                                className="flex items-center justify-between py-3 px-4 rounded-md bg-white border border-blue-100 shadow-sm hover:shadow hover:bg-blue-50 transition-all"
+                                className="flex items-center justify-between py-3 px-4 rounded-md bg-white border border-blue-100 shadow-sm hover:shadow-md transition-all"
                               >
                                 <div className="flex-1 min-w-0">
-                                  <div className="flex items-center gap-2">
-                                    <div className={cn(
-                                      "w-3 h-3 rounded-full",
-                                      isOverdue ? "bg-red-500 ring-2 ring-red-200" :
-                                      isDueSoon ? "bg-yellow-500 ring-2 ring-yellow-200" :
-                                      "bg-green-500 ring-2 ring-green-200"
-                                    )} />
+                                  <div className="flex items-center justify-between mb-1">
                                     <span className="font-medium text-sm truncate">{schedule.name}</span>
+                                    <Badge className={`px-2 py-0.5 text-xs font-medium ${statusBadgeClass} ml-2`}>
+                                      {statusBadge}
+                                    </Badge>
                                   </div>
-                                  <div className="text-xs text-gray-500 ml-5 mt-1">
+                                  <div className="flex items-center gap-3 text-xs text-gray-500 mt-1">
                                     <span className="inline-flex items-center gap-1">
                                       <Clock className="h-3.5 w-3.5" />
                                       {schedule.frequency.charAt(0).toUpperCase() + schedule.frequency.slice(1)}
                                     </span>
-                                    <span className="mx-1.5">•</span>
                                     <span className="inline-flex items-center gap-1">
                                       <Calendar className="h-3.5 w-3.5" />
                                       {schedule.nextDue ? format(new Date(schedule.nextDue), 'MMM d') : 'Not scheduled'}
                                     </span>
                                   </div>
                                 </div>
-                                <div className="flex items-center gap-2">
+                                <div className="flex items-center gap-2 ml-3">
                                   <Button
                                     variant="ghost"
                                     size="sm"
-                                    className="h-8 w-8 p-0 text-blue-600 hover:text-blue-800 hover:bg-blue-100"
+                                    className="h-8 w-8 p-0 text-blue-600 hover:text-blue-800 hover:bg-blue-100 rounded-full"
                                     onClick={(e) => {
                                       e.stopPropagation();
                                       setSelectedEquipment(equipment.id);
@@ -1014,7 +1117,7 @@ export default function Equipment() {
                                   <Button
                                     variant="ghost"
                                     size="sm"
-                                    className="h-8 w-8 p-0 text-green-600 hover:text-green-800 hover:bg-green-100"
+                                    className="h-8 w-8 p-0 text-green-600 hover:text-green-800 hover:bg-green-100 rounded-full"
                                     onClick={(e) => {
                                       e.stopPropagation();
                                       setSelectedEquipment(equipment.id);
@@ -1039,6 +1142,7 @@ export default function Equipment() {
                                   setMaintenanceHistoryDialog(true)
                                 }}
                               >
+                                <Brush className="h-4 w-4 mr-1.5" />
                                 View all {status.cleaningSchedules.length} schedules
                               </Button>
                             </div>
@@ -1054,7 +1158,7 @@ export default function Equipment() {
                         <Button
                           variant="outline"
                           className={`h-12 px-4 text-sm sm:text-base font-medium flex items-center justify-center gap-2 sm:gap-2.5 touch-manipulation border rounded-lg shadow-sm hover:bg-gray-50 transition-all w-full hover:scale-[1.01] ${
-                            status.status === 'repair' 
+                            status.status === 'repair'
                               ? 'border-red-200 text-red-700 hover:bg-red-50'
                               : 'border-gray-200 text-gray-700 hover:bg-gray-50'
                           }`}
@@ -1071,11 +1175,11 @@ export default function Equipment() {
                         </Button>
                       </div>
 
-                      {/* Add Cleaning and Mark as Broken/Operational buttons */}
+                      {/* Action buttons with improved styling */}
                       <div className="grid grid-cols-2 gap-4">
                         <Button
                           variant="outline"
-                          className={`h-14 sm:h-12 px-2 sm:px-4 text-xs sm:text-base font-medium flex items-center justify-center gap-1 sm:gap-2.5 touch-manipulation rounded-lg shadow-sm transition-all w-full hover:scale-[1.01] ${
+                          className={`relative overflow-hidden h-14 sm:h-12 px-2 sm:px-4 text-xs sm:text-base font-medium flex items-center justify-center gap-1 sm:gap-2.5 touch-manipulation rounded-lg shadow-sm transition-all w-full hover:scale-[1.01] ${
                             status.status === 'repair'
                               ? 'bg-red-50 text-red-600 border-red-200 hover:bg-red-100'
                               : 'bg-blue-50 text-blue-600 border-blue-200 hover:bg-blue-100'
@@ -1086,7 +1190,10 @@ export default function Equipment() {
                             setCleaningScheduleDialog(true)
                           }}
                         >
-                          <div className={`${status.status === 'repair' ? 'bg-red-100' : 'bg-blue-100'} h-5 w-5 sm:h-7 sm:w-7 rounded-full flex items-center justify-center`}>
+                          {/* Subtle background pattern */}
+                          <div className="absolute inset-0 opacity-10 bg-[radial-gradient(circle,_transparent_20%,_#000_20%,_#000_calc(20%_+_1px),_transparent_calc(20%_+_1px))] bg-[length:5px_5px]"></div>
+
+                          <div className={`${status.status === 'repair' ? 'bg-red-100' : 'bg-blue-100'} h-5 w-5 sm:h-7 sm:w-7 rounded-full flex items-center justify-center shadow-sm`}>
                             <Brush className="h-3 w-3 sm:h-4 sm:w-4" />
                           </div>
                           <span>Add Cleaning</span>
@@ -1095,13 +1202,16 @@ export default function Equipment() {
                         {status.status === 'operational' ? (
                           <Button
                             variant="outline"
-                            className="h-14 sm:h-12 px-2 sm:px-4 text-xs sm:text-base font-medium flex items-center justify-center gap-1 sm:gap-2.5 touch-manipulation bg-red-50 text-red-600 border-red-200 rounded-lg shadow-sm hover:bg-red-100 transition-all w-full hover:scale-[1.01]"
+                            className="relative overflow-hidden h-14 sm:h-12 px-2 sm:px-4 text-xs sm:text-base font-medium flex items-center justify-center gap-1 sm:gap-2.5 touch-manipulation bg-red-50 text-red-600 border-red-200 rounded-lg shadow-sm hover:bg-red-100 transition-all w-full hover:scale-[1.01]"
                             onClick={() => {
                               setSelectedEquipment(equipment.id)
                               setIssueDialog(true)
                             }}
                           >
-                            <div className="bg-red-100 h-5 w-5 sm:h-7 sm:w-7 rounded-full flex items-center justify-center">
+                            {/* Subtle background pattern */}
+                            <div className="absolute inset-0 opacity-10 bg-[radial-gradient(circle,_transparent_20%,_#000_20%,_#000_calc(20%_+_1px),_transparent_calc(20%_+_1px))] bg-[length:5px_5px]"></div>
+
+                            <div className="bg-red-100 h-5 w-5 sm:h-7 sm:w-7 rounded-full flex items-center justify-center shadow-sm">
                               <AlertCircle className="h-3 w-3 sm:h-4 sm:w-4" />
                             </div>
                             <span>Mark as Broken</span>
@@ -1109,13 +1219,16 @@ export default function Equipment() {
                         ) : (
                           <Button
                             variant="outline"
-                            className="h-14 sm:h-12 px-2 sm:px-4 text-xs sm:text-base font-medium flex items-center justify-center gap-1 sm:gap-2.5 touch-manipulation bg-green-50 text-green-600 border-green-200 rounded-lg shadow-sm hover:bg-green-100 transition-all w-full hover:scale-[1.01]"
+                            className="relative overflow-hidden h-14 sm:h-12 px-2 sm:px-4 text-xs sm:text-base font-medium flex items-center justify-center gap-1 sm:gap-2.5 touch-manipulation bg-green-50 text-green-600 border-green-200 rounded-lg shadow-sm hover:bg-green-100 transition-all w-full hover:scale-[1.01]"
                             onClick={() => {
                               setSelectedEquipment(equipment.id)
                               setResolveDialog(true)
                             }}
                           >
-                            <div className="bg-green-100 h-5 w-5 sm:h-7 sm:w-7 rounded-full flex items-center justify-center">
+                            {/* Subtle background pattern */}
+                            <div className="absolute inset-0 opacity-10 bg-[radial-gradient(circle,_transparent_20%,_#000_20%,_#000_calc(20%_+_1px),_transparent_calc(20%_+_1px))] bg-[length:5px_5px]"></div>
+
+                            <div className="bg-green-100 h-5 w-5 sm:h-7 sm:w-7 rounded-full flex items-center justify-center shadow-sm">
                               <CheckCircle2 className="h-3 w-3 sm:h-4 sm:w-4" />
                             </div>
                             <span>Mark as Fixed</span>
@@ -1268,7 +1381,7 @@ export default function Equipment() {
                 </div>
               </div>
             </div>
-            
+
             <div className="bg-amber-50 border border-amber-200 rounded-lg p-3 text-sm text-amber-700">
               <div className="flex items-start gap-2">
                 <AlertCircle className="h-5 w-5 flex-shrink-0 mt-0.5" />
@@ -1493,7 +1606,7 @@ export default function Equipment() {
                     groups[dateKey].push(record);
                     return groups;
                   }, {});
-                  
+
                   // Convert the grouped records object to an array of incidents
                   return Object.entries(groupedRecords).map(([dateKey, records]) => {
                     // Sort records by date (newest first in each group)
@@ -1510,25 +1623,25 @@ export default function Equipment() {
                     const repairRecord = sortedRecords.find(r =>
                       r.previousStatus !== 'operational' && r.newStatus === 'operational'
                     );
-                    
+
                     // Find any update notes - look for type='note' and specific prefixes
                     const updateRecords = sortedRecords.filter(r => {
                       // First check if it has type='note'
                       if (r.type === 'note') {
                         return true;
                       }
-                      
+
                       // If not typed, check if the notes start with our prefixes
                       if (r.notes && (
-                        r.notes.startsWith('[UPDATE]') || 
-                        r.notes.startsWith('[PARTS ORDERED]') || 
-                        r.notes.startsWith('[REPAIR SCHEDULED]') || 
+                        r.notes.startsWith('[UPDATE]') ||
+                        r.notes.startsWith('[PARTS ORDERED]') ||
+                        r.notes.startsWith('[REPAIR SCHEDULED]') ||
                         r.notes.startsWith('[IN PROGRESS]') ||
                         r.notes.startsWith('[WAITING APPROVAL]')
                       )) {
                         return true;
                       }
-                      
+
                       return false;
                     });
 
@@ -1643,14 +1756,14 @@ export default function Equipment() {
                               </div>
                             </div>
                           )}
-                          
+
                           {/* Update records */}
                           {updateRecords.map((record, index) => {
                             // Extract status type from note
                             let statusType = 'Update';
                             let badgeClass = 'bg-blue-100 text-blue-700';
                             let iconClass = 'bg-blue-500';
-                            
+
                             if (record.notes.startsWith('[PARTS ORDERED]')) {
                               statusType = 'Parts Ordered';
                               badgeClass = 'bg-purple-100 text-purple-700';
@@ -1668,12 +1781,12 @@ export default function Equipment() {
                               badgeClass = 'bg-orange-100 text-orange-700';
                               iconClass = 'bg-orange-500';
                             }
-                            
+
                             // Clean up notes to remove status prefix
                             const cleanNotes = record.notes
                               .replace(/^\[.*?\]\s*/i, '')
                               .trim();
-                              
+
                             return (
                               <div className="relative" key={index}>
                                 <div className={`absolute -left-[21px] top-0 w-4 h-4 rounded-full ${iconClass} border-2 border-white`}></div>
@@ -1757,7 +1870,7 @@ export default function Equipment() {
                             <Plus className="h-3.5 w-3.5 mr-1" />
                             Add Update
                           </Button>
-                          
+
                           {!isResolved && (
                             <Button
                               variant="outline"
