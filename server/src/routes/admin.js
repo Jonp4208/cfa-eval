@@ -6,7 +6,9 @@ import {
   addStore,
   updateStoreStatus,
   getStoreUsers,
-  addStoreUser
+  addStoreUser,
+  updateUserEmail,
+  resetUserPassword
 } from '../controllers/admin.js';
 
 const router = express.Router();
@@ -29,5 +31,11 @@ router.get('/stores/:storeId/users', getStoreUsers);
 
 // Add a user to a store
 router.post('/stores/:storeId/users', addStoreUser);
+
+// Update user email
+router.put('/stores/:storeId/users/:userId/email', updateUserEmail);
+
+// Reset user password
+router.post('/stores/:storeId/users/:userId/reset-password', resetUserPassword);
 
 export default router;

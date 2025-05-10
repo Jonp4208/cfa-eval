@@ -1,5 +1,6 @@
 import { Store, User, StoreSubscription } from '../models/index.js';
 import bcrypt from 'bcrypt';
+import { sendEmail } from '../utils/email.js';
 
 /**
  * Get all stores in the system
@@ -330,6 +331,147 @@ export const addStoreUser = async (req, res) => {
     console.error('Error adding store user:', error);
     res.status(500).json({
       message: 'Error adding user to store',
+      error: error.message
+    });
+  }
+};
+
+/**
+ * Update user email
+ */
+export const updateUserEmail = async (req, res) => {
+  try {
+    const { storeId, userId } = req.params;
+    const { email } = req.body;
+
+    // Validate required fields
+    if (!storeId || !userId || !email) {
+      return res.status(400).json({
+        message: 'Store ID, user ID, and email are required'
+      });
+    }
+
+    // Check if store exists
+    const store = await Store.findById(storeId);
+    if (!store) {
+      return res.status(404).json({ message: 'Store not found' });
+    }
+
+    // Check if user exists and belongs to the store
+    const user = await User.findOne({ _id: userId, store: storeId });
+    if (!user) {
+      return res.status(404).json({ message: 'User not found in this store' });
+    }
+
+    // Check if email is already in use by another user
+    const existingUser = await User.findOne({
+      email,
+      _id: { $ne: userId } // Exclude the current user
+    });
+
+    if (existingUser) {
+      return res.status(400).json({
+        message: `Email ${email} is already in use by another user`
+      });
+    }
+
+    // Update user's email
+    user.email = email;
+    await user.save();
+
+    res.json({
+      message: 'User email updated successfully',
+      user: {
+        _id: user._id,
+        name: user.name,
+        email: user.email
+      }
+    });
+  } catch (error) {
+    console.error('Error updating user email:', error);
+    res.status(500).json({
+      message: 'Error updating user email',
+      error: error.message
+    });
+  }
+};
+
+/**
+ * Reset user password
+ */
+export const resetUserPassword = async (req, res) => {
+  try {
+    const { storeId, userId } = req.params;
+
+    // Validate required fields
+    if (!storeId || !userId) {
+      return res.status(400).json({
+        message: 'Store ID and user ID are required'
+      });
+    }
+
+    // Check if store exists
+    const store = await Store.findById(storeId);
+    if (!store) {
+      return res.status(404).json({ message: 'Store not found' });
+    }
+
+    // Check if user exists and belongs to the store
+    const user = await User.findOne({ _id: userId, store: storeId });
+    if (!user) {
+      return res.status(404).json({ message: 'User not found in this store' });
+    }
+
+    // Generate a new password
+    const newPassword = User.generateRandomPassword();
+
+    // Update user's password
+    user.password = newPassword;
+    await user.save();
+
+    // Send email with new password
+    await sendEmail({
+      to: user.email,
+      subject: 'Password Reset - LD Growth',
+      html: `
+        <div style="font-family: Arial, sans-serif; max-width: 800px; margin: 0 auto; padding: 20px;">
+          <div style="background-color: #E4002B; padding: 20px; border-radius: 8px; margin-bottom: 30px;">
+            <h1 style="color: white; margin: 0;">Password Reset</h1>
+          </div>
+
+          <div style="background-color: #f8f8f8; padding: 20px; border-radius: 8px; margin-bottom: 30px;">
+            <p>Hello ${user.name},</p>
+
+            <p>Your password has been reset by an administrator. Here are your new login credentials:</p>
+
+            <div style="background-color: #fff; padding: 15px; border-radius: 4px; margin: 20px 0;">
+              <p style="margin: 5px 0;"><strong>Access the site here:</strong> <a href="https://www.ld-growth.com" style="color: #E4002B;">www.ld-growth.com</a></p>
+              <p style="margin: 5px 0;"><strong>Email:</strong> ${user.email}</p>
+              <p style="margin: 5px 0;"><strong>New Password:</strong> ${newPassword}</p>
+            </div>
+
+            <p>For security reasons, please change your password after logging in.</p>
+          </div>
+
+          <div style="text-align: center; color: #666; font-size: 12px; margin-top: 30px;">
+            <p>This is an automated message, please do not reply to this email.</p>
+          </div>
+        </div>
+      `
+    });
+
+    res.json({
+      message: 'User password reset successfully',
+      user: {
+        _id: user._id,
+        name: user.name,
+        email: user.email
+      }
+    });
+  } catch (error) {
+    console.error('Error resetting user password:', error);
+    res.status(500).json({
+      message: 'Error resetting user password',
       error: error.message
     });
   }

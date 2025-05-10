@@ -16,7 +16,10 @@ import {
   ShieldCheck,
   Mail,
   Copy,
-  Eye
+  Eye,
+  Edit,
+  KeyRound,
+  MoreHorizontal
 } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import adminService, { Store, NewStoreData, StoreUser, NewUserData } from '@/services/adminService';
@@ -41,6 +44,22 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Checkbox } from "@/components/ui/checkbox";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 
 export default function AdminPage() {
   const { user } = useAuth();
@@ -74,6 +93,12 @@ export default function AdminPage() {
     password: ''
   });
   const [generatedPassword, setGeneratedPassword] = useState<string | null>(null);
+
+  // Email and password reset state
+  const [selectedUser, setSelectedUser] = useState<StoreUser | null>(null);
+  const [showChangeEmailDialog, setShowChangeEmailDialog] = useState(false);
+  const [showResetPasswordDialog, setShowResetPasswordDialog] = useState(false);
+  const [newEmail, setNewEmail] = useState('');
 
   // Check if user is Jonathon Pope
   const isJonathonPope = user?.email === 'jonp4208@gmail.com';
@@ -195,6 +220,54 @@ export default function AdminPage() {
     }
   });
 
+  // Update user email mutation
+  const updateEmailMutation = useMutation({
+    mutationFn: ({ storeId, userId, email }: { storeId: string, userId: string, email: string }) =>
+      adminService.updateUserEmail(storeId, userId, email),
+    onSuccess: (data) => {
+      toast({
+        title: 'Email Updated',
+        description: `${data.user.name}'s email has been updated successfully.`,
+        variant: 'default'
+      });
+      setShowChangeEmailDialog(false);
+      setNewEmail('');
+      setSelectedUser(null);
+
+      // Refresh the users list
+      queryClient.invalidateQueries({ queryKey: ['store-users', selectedStoreId] });
+    },
+    onError: (error: any) => {
+      toast({
+        title: 'Error',
+        description: `Failed to update email: ${error.response?.data?.message || error.message}`,
+        variant: 'destructive'
+      });
+    }
+  });
+
+  // Reset user password mutation
+  const resetPasswordMutation = useMutation({
+    mutationFn: ({ storeId, userId }: { storeId: string, userId: string }) =>
+      adminService.resetUserPassword(storeId, userId),
+    onSuccess: (data) => {
+      toast({
+        title: 'Password Reset',
+        description: `${data.user.name}'s password has been reset and emailed successfully.`,
+        variant: 'default'
+      });
+      setShowResetPasswordDialog(false);
+      setSelectedUser(null);
+    },
+    onError: (error: any) => {
+      toast({
+        title: 'Error',
+        description: `Failed to reset password: ${error.response?.data?.message || error.message}`,
+        variant: 'destructive'
+      });
+    }
+  });
+
   // Handle store form input changes
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
@@ -290,6 +363,41 @@ export default function AdminPage() {
       generatePassword: true,
       password: ''
     });
+  };
+
+  // Handle opening the change email dialog
+  const handleChangeEmail = (user: StoreUser) => {
+    setSelectedUser(user);
+    setNewEmail(user.email);
+    setShowChangeEmailDialog(true);
+  };
+
+  // Handle opening the reset password dialog
+  const handleResetPassword = (user: StoreUser) => {
+    setSelectedUser(user);
+    setShowResetPasswordDialog(true);
+  };
+
+  // Handle email change submission
+  const handleEmailChangeSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (selectedUser && selectedStoreId) {
+      updateEmailMutation.mutate({
+        storeId: selectedStoreId,
+        userId: selectedUser._id,
+        email: newEmail
+      });
+    }
+  };
+
+  // Handle password reset confirmation
+  const handlePasswordResetConfirm = () => {
+    if (selectedUser && selectedStoreId) {
+      resetPasswordMutation.mutate({
+        storeId: selectedStoreId,
+        userId: selectedUser._id
+      });
+    }
   };
 
   // If user is not Jonathon Pope, show access denied
@@ -647,6 +755,7 @@ export default function AdminPage() {
                             <th className="text-left p-2">Email</th>
                             <th className="text-left p-2">Position</th>
                             <th className="text-center p-2">Status</th>
+                            <th className="text-right p-2">Actions</th>
                           </tr>
                         </thead>
                         <tbody>
@@ -661,6 +770,25 @@ export default function AdminPage() {
                                 >
                                   {admin.status}
                                 </Badge>
+                              </td>
+                              <td className="p-2 text-right">
+                                <DropdownMenu>
+                                  <DropdownMenuTrigger asChild>
+                                    <Button variant="ghost" size="icon">
+                                      <MoreHorizontal className="h-4 w-4" />
+                                    </Button>
+                                  </DropdownMenuTrigger>
+                                  <DropdownMenuContent align="end">
+                                    <DropdownMenuItem onClick={() => handleChangeEmail(admin)}>
+                                      <Edit className="h-4 w-4 mr-2" />
+                                      Change Email
+                                    </DropdownMenuItem>
+                                    <DropdownMenuItem onClick={() => handleResetPassword(admin)}>
+                                      <KeyRound className="h-4 w-4 mr-2" />
+                                      Reset Password
+                                    </DropdownMenuItem>
+                                  </DropdownMenuContent>
+                                </DropdownMenu>
                               </td>
                             </tr>
                           ))}
@@ -678,11 +806,31 @@ export default function AdminPage() {
                               <p className="text-sm text-muted-foreground">{admin.email}</p>
                               <p className="text-sm mt-1">{admin.position}</p>
                             </div>
-                            <Badge
-                              variant={admin.status === 'active' ? 'success' : 'destructive'}
-                            >
-                              {admin.status}
-                            </Badge>
+                            <div className="flex flex-col items-end gap-2">
+                              <Badge
+                                variant={admin.status === 'active' ? 'success' : 'destructive'}
+                              >
+                                {admin.status}
+                              </Badge>
+                              <div className="flex gap-1 mt-1">
+                                <Button
+                                  variant="ghost"
+                                  size="icon"
+                                  className="h-8 w-8"
+                                  onClick={() => handleChangeEmail(admin)}
+                                >
+                                  <Edit className="h-4 w-4" />
+                                </Button>
+                                <Button
+                                  variant="ghost"
+                                  size="icon"
+                                  className="h-8 w-8"
+                                  onClick={() => handleResetPassword(admin)}
+                                >
+                                  <KeyRound className="h-4 w-4" />
+                                </Button>
+                              </div>
+                            </div>
                           </div>
                         </div>
                       ))}
@@ -708,6 +856,7 @@ export default function AdminPage() {
                             <th className="text-left p-2">Position</th>
                             <th className="text-left p-2">Departments</th>
                             <th className="text-center p-2">Status</th>
+                            <th className="text-right p-2">Actions</th>
                           </tr>
                         </thead>
                         <tbody>
@@ -723,6 +872,25 @@ export default function AdminPage() {
                                 >
                                   {user.status}
                                 </Badge>
+                              </td>
+                              <td className="p-2 text-right">
+                                <DropdownMenu>
+                                  <DropdownMenuTrigger asChild>
+                                    <Button variant="ghost" size="icon">
+                                      <MoreHorizontal className="h-4 w-4" />
+                                    </Button>
+                                  </DropdownMenuTrigger>
+                                  <DropdownMenuContent align="end">
+                                    <DropdownMenuItem onClick={() => handleChangeEmail(user)}>
+                                      <Edit className="h-4 w-4 mr-2" />
+                                      Change Email
+                                    </DropdownMenuItem>
+                                    <DropdownMenuItem onClick={() => handleResetPassword(user)}>
+                                      <KeyRound className="h-4 w-4 mr-2" />
+                                      Reset Password
+                                    </DropdownMenuItem>
+                                  </DropdownMenuContent>
+                                </DropdownMenu>
                               </td>
                             </tr>
                           ))}
@@ -740,11 +908,31 @@ export default function AdminPage() {
                               <p className="text-sm text-muted-foreground">{user.email}</p>
                               <p className="text-sm mt-1">{user.position}</p>
                             </div>
-                            <Badge
-                              variant={user.status === 'active' ? 'success' : 'destructive'}
-                            >
-                              {user.status}
-                            </Badge>
+                            <div className="flex flex-col items-end gap-2">
+                              <Badge
+                                variant={user.status === 'active' ? 'success' : 'destructive'}
+                              >
+                                {user.status}
+                              </Badge>
+                              <div className="flex gap-1 mt-1">
+                                <Button
+                                  variant="ghost"
+                                  size="icon"
+                                  className="h-8 w-8"
+                                  onClick={() => handleChangeEmail(user)}
+                                >
+                                  <Edit className="h-4 w-4" />
+                                </Button>
+                                <Button
+                                  variant="ghost"
+                                  size="icon"
+                                  className="h-8 w-8"
+                                  onClick={() => handleResetPassword(user)}
+                                >
+                                  <KeyRound className="h-4 w-4" />
+                                </Button>
+                              </div>
+                            </div>
                           </div>
                           <div className="mt-2 text-sm">
                             <span className="text-muted-foreground">Departments:</span> {user.departments.join(', ')}
@@ -968,6 +1156,62 @@ export default function AdminPage() {
           )}
         </DialogContent>
       </Dialog>
+
+      {/* Change Email Dialog */}
+      <Dialog open={showChangeEmailDialog} onOpenChange={setShowChangeEmailDialog}>
+        <DialogContent className="sm:max-w-[400px]">
+          <DialogHeader>
+            <DialogTitle>Change Email</DialogTitle>
+            <DialogDescription>
+              Update the email address for {selectedUser?.name}.
+            </DialogDescription>
+          </DialogHeader>
+          <form onSubmit={handleEmailChangeSubmit}>
+            <div className="grid gap-4 py-4">
+              <div className="space-y-2">
+                <Label htmlFor="newEmail">New Email</Label>
+                <Input
+                  id="newEmail"
+                  type="email"
+                  value={newEmail}
+                  onChange={(e) => setNewEmail(e.target.value)}
+                  required
+                />
+              </div>
+            </div>
+            <DialogFooter>
+              <Button type="button" variant="outline" onClick={() => setShowChangeEmailDialog(false)}>
+                Cancel
+              </Button>
+              <Button type="submit" disabled={updateEmailMutation.isPending}>
+                {updateEmailMutation.isPending ? 'Updating...' : 'Update Email'}
+              </Button>
+            </DialogFooter>
+          </form>
+        </DialogContent>
+      </Dialog>
+
+      {/* Reset Password Alert Dialog */}
+      <AlertDialog open={showResetPasswordDialog} onOpenChange={setShowResetPasswordDialog}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Reset Password</AlertDialogTitle>
+            <AlertDialogDescription>
+              This will generate a new password for {selectedUser?.name} and send it to their email address ({selectedUser?.email}).
+              Are you sure you want to continue?
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={handlePasswordResetConfirm}
+              disabled={resetPasswordMutation.isPending}
+            >
+              {resetPasswordMutation.isPending ? 'Resetting...' : 'Reset Password'}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }
