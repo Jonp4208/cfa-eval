@@ -45,10 +45,10 @@ const upload = multer({
         file.mimetype === 'application/msword' ||
         file.mimetype === 'application/vnd.openxmlformats-officedocument.wordprocessingml.document') {
       cb(null, true);
-    } 
+    }
     // For CSV files - Add specific handling for bulk imports
     else if (
-      file.mimetype === 'text/csv' || 
+      file.mimetype === 'text/csv' ||
       file.originalname.endsWith('.csv') ||
       file.mimetype === 'application/vnd.ms-excel' ||
       file.mimetype === 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
@@ -64,6 +64,12 @@ const upload = multer({
 // Helper function to normalize user data
 const normalizeUserData = (data) => {
   console.log('Normalizing user data:', data);
+
+  // Normalize email to lowercase
+  if (data.email) {
+    data.email = data.email.toLowerCase();
+    console.log('Normalized email:', data.email);
+  }
 
   // Normalize departments - ensure proper case
   if (data.departments) {
@@ -371,20 +377,20 @@ router.delete('/:id', auth, async (req, res) => {
 // Bulk import users from CSV
 router.post('/bulk-import', auth, upload.single('file'), async (req, res) => {
   console.log('Received bulk import request');
-  
+
   if (!req.file) {
     return res.status(400).json({ error: 'No file uploaded' });
   }
 
   console.log(`Processing file of type: ${req.file.mimetype}, size: ${req.file.size} bytes`);
-  
+
   try {
     // Ensure we have a buffer to work with
     if (!req.file.buffer) {
       console.error('Missing file buffer');
       return res.status(400).json({ error: 'Invalid file upload - missing data' });
     }
-    
+
     // Check if store ID is available
     if (!req.user?.store?._id) {
       console.error('Missing store ID in user object');
@@ -393,16 +399,16 @@ router.post('/bulk-import', auth, upload.single('file'), async (req, res) => {
 
     // Get file content
     let fileContent = req.file.buffer.toString();
-    
+
     // Check if the file has headers by looking for the "name" header
     const hasHeaders = fileContent.toLowerCase().startsWith('name,email');
-    
+
     // If no headers, add them
     if (!hasHeaders) {
       console.log('CSV file has no headers, adding them...');
       fileContent = 'name,email,departments,position,role,status\n' + fileContent;
     }
-    
+
     // Log the file content sample
     console.log('File content sample:', fileContent.substring(0, 200) + '...');
 
@@ -417,10 +423,10 @@ router.post('/bulk-import', auth, upload.single('file'), async (req, res) => {
     // Process the CSV data
     let streamFinished = false;
     let streamError = null;
-    
+
     // Create a readable stream from the buffer with headers
     const stream = Readable.from(fileContent);
-    
+
     // Process the CSV data with error handling
     stream.pipe(parser)
       .on('data', (data) => {
@@ -433,21 +439,21 @@ router.post('/bulk-import', auth, upload.single('file'), async (req, res) => {
       })
       .on('end', async () => {
         streamFinished = true;
-        
+
         // If there was an error during parsing, return that error
         if (streamError) {
-          return res.status(400).json({ 
-            error: 'Failed to parse CSV file', 
-            details: streamError.message 
+          return res.status(400).json({
+            error: 'Failed to parse CSV file',
+            details: streamError.message
           });
         }
-        
+
         console.log(`Successfully parsed ${results.length} rows from CSV`);
-        
+
         if (results.length === 0) {
           return res.status(400).json({ error: 'CSV file contains no data' });
         }
-        
+
         let imported = 0;
         const errors = [];
 
@@ -458,17 +464,17 @@ router.post('/bulk-import', auth, upload.single('file'), async (req, res) => {
               console.log('Skipping comment line:', row.name);
               continue;
             }
-            
+
             // Basic validation
             if (!row.name || !row.email) {
               errors.push(`Missing required fields (name or email) in row: ${JSON.stringify(row)}`);
               continue;
             }
 
-            // Check if user already exists
-            const existingUser = await User.findOne({ email: row.email });
+            // Check if user already exists (case-insensitive)
+            const existingUser = await User.findOne({ email: row.email.toLowerCase() });
             if (existingUser) {
-              errors.push(`User with email ${row.email} already exists`);
+              errors.push(`User with email ${row.email.toLowerCase()} already exists`);
               continue;
             }
 
@@ -525,7 +531,7 @@ router.post('/bulk-import', auth, upload.single('file'), async (req, res) => {
             // Create user data with validated fields
             const userData = {
               name: row.name,
-              email: row.email,
+              email: row.email.toLowerCase(), // Convert email to lowercase
               departments: departments,
               position: position,
               role: role,
@@ -534,9 +540,9 @@ router.post('/bulk-import', auth, upload.single('file'), async (req, res) => {
               password,
               store: req.user.store._id // Associate with current user's store
             };
-            
+
             console.log(`Creating user: ${userData.name} (${userData.email})`);
-            
+
             // Create new user
             const user = new User(userData);
             await user.save();
@@ -545,7 +551,7 @@ router.post('/bulk-import', auth, upload.single('file'), async (req, res) => {
             // Send welcome email
             try {
               await sendEmail({
-                to: row.email,
+                to: userData.email, // Use the normalized lowercase email
                 subject: 'Welcome to LD Growth',
                 html: `
                   <div style="font-family: Arial, sans-serif; max-width: 800px; margin: 0 auto; padding: 20px;">
@@ -560,7 +566,7 @@ router.post('/bulk-import', auth, upload.single('file'), async (req, res) => {
 
                       <div style="background-color: #fff; padding: 15px; border-radius: 4px; margin: 20px 0;">
                         <p style="margin: 5px 0;"><strong>Access the site here:</strong> <a href="https://www.ld-growth.com" style="color: #E4002B;">www.ld-growth.com</a></p>
-                        <p style="margin: 5px 0;"><strong>Email:</strong> ${row.email}</p>
+                        <p style="margin: 5px 0;"><strong>Email:</strong> ${userData.email}</p>
                         <p style="margin: 5px 0;"><strong>Temporary Password:</strong> ${password}</p>
                       </div>
 
@@ -578,13 +584,13 @@ router.post('/bulk-import', auth, upload.single('file'), async (req, res) => {
               });
             } catch (emailError) {
               console.error('Failed to send welcome email:', emailError);
-              errors.push(`User ${row.email} created but failed to send welcome email`);
+              errors.push(`User ${userData.email} created but failed to send welcome email`);
             }
 
             imported++;
           } catch (error) {
             console.error('Error importing user:', error);
-            errors.push(`Failed to import user ${row.email || 'unknown'}: ${error.message}`);
+            errors.push(`Failed to import user ${row.email ? row.email.toLowerCase() : 'unknown'}: ${error.message}`);
           }
         }
 
@@ -594,7 +600,7 @@ router.post('/bulk-import', auth, upload.single('file'), async (req, res) => {
           message: `Successfully imported ${imported} users${errors.length > 0 ? ` with ${errors.length} errors` : ''}`
         });
       });
-      
+
     // Add a safety timeout in case the stream never completes
     setTimeout(() => {
       if (!streamFinished) {
@@ -602,10 +608,10 @@ router.post('/bulk-import', auth, upload.single('file'), async (req, res) => {
         return res.status(500).json({ error: 'CSV processing timeout' });
       }
     }, 30000); // 30 second timeout
-    
+
   } catch (error) {
     console.error('Error processing CSV:', error);
-    res.status(500).json({ 
+    res.status(500).json({
       error: 'Failed to process CSV file',
       details: error.message
     });
