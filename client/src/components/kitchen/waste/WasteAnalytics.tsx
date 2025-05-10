@@ -120,6 +120,7 @@ export default function WasteAnalytics() {
   const {
     dailyChartData,
     dayOfWeekChartData,
+    hourOfDayChartData,
     mealPeriodChartData,
     topWastedItems,
     summaryMetrics
@@ -135,7 +136,7 @@ export default function WasteAnalytics() {
       return acc
     }, {} as Record<string, { date: string; totalCost: number; count: number }>)
 
-    const dailyChartData = Object.values(dailyData).sort((a, b) => 
+    const dailyChartData = Object.values(dailyData).sort((a, b) =>
       parseISO(a.date).getTime() - parseISO(b.date).getTime()
     )
 
@@ -171,6 +172,28 @@ export default function WasteAnalytics() {
       ...mealPeriodData[period] || { totalCost: 0, count: 0 }
     }))
 
+    // Process data for hour of day analysis
+    const hourOfDayData = entries.reduce((acc, entry) => {
+      const entryDate = parseISO(entry.date)
+      const hour = entryDate.getHours()
+      const hourLabel = format(entryDate, 'h a') // Format as "1 AM", "2 PM", etc.
+
+      if (!acc[hour]) {
+        acc[hour] = { hour, hourLabel, totalCost: 0, count: 0 }
+      }
+      acc[hour].totalCost += entry.cost
+      acc[hour].count += 1
+      return acc
+    }, {} as Record<number, { hour: number; hourLabel: string; totalCost: number; count: number }>)
+
+    // Create array with all 24 hours, sorted by hour
+    const hourOfDayChartData = Array.from({ length: 24 }, (_, i) => {
+      const date = new Date()
+      date.setHours(i, 0, 0, 0)
+      const hourLabel = format(date, 'h a')
+      return hourOfDayData[i] || { hour: i, hourLabel, totalCost: 0, count: 0 }
+    })
+
     // Calculate top wasted items
     const itemData = entries.reduce((acc, entry) => {
       if (!acc[entry.itemName]) {
@@ -187,18 +210,18 @@ export default function WasteAnalytics() {
 
     // Calculate summary metrics
     const today = new Date()
-    const todayEntries = entries.filter(entry => 
+    const todayEntries = entries.filter(entry =>
       isSameDay(parseISO(entry.date), today)
     )
-    const yesterdayEntries = entries.filter(entry => 
+    const yesterdayEntries = entries.filter(entry =>
       isSameDay(parseISO(entry.date), subDays(today, 1))
     )
 
     const todayTotal = todayEntries.reduce((sum, entry) => sum + entry.cost, 0)
     const yesterdayTotal = yesterdayEntries.reduce((sum, entry) => sum + entry.cost, 0)
     const totalItems = entries.length
-    const avgCostPerItem = totalItems > 0 
-      ? entries.reduce((sum, entry) => sum + entry.cost, 0) / totalItems 
+    const avgCostPerItem = totalItems > 0
+      ? entries.reduce((sum, entry) => sum + entry.cost, 0) / totalItems
       : 0
 
     const summaryMetrics = {
@@ -212,6 +235,7 @@ export default function WasteAnalytics() {
     return {
       dailyChartData,
       dayOfWeekChartData,
+      hourOfDayChartData,
       mealPeriodChartData,
       topWastedItems,
       summaryMetrics
@@ -220,23 +244,6 @@ export default function WasteAnalytics() {
 
   return (
     <div className="space-y-4 sm:space-y-6">
-      <div className="bg-white rounded-[20px] p-3 sm:p-6 flex flex-col md:flex-row md:justify-between md:items-center gap-3 sm:gap-4 hover:shadow-xl transition-all duration-300">
-        <div className="text-center md:text-left w-full">
-          <h2 className="text-xl sm:text-[28px] font-bold text-[#27251F]">Waste Analytics</h2>
-          <p className="text-[#27251F]/60 text-sm sm:text-base mt-0.5 sm:mt-1">Track and analyze kitchen waste data</p>
-        </div>
-        <Select value={timeRange} onValueChange={setTimeRange}>
-          <SelectTrigger className="w-full md:w-[140px] h-9 sm:h-[40px] bg-white border-2 border-gray-200 rounded-[32px] px-3 sm:px-4 text-xs sm:text-[14px] font-medium text-[#27251F] hover:border-gray-300 focus:border-[#E51636] focus:ring-0 transition-colors">
-            <SelectValue placeholder="Last 30 Days" />
-          </SelectTrigger>
-          <SelectContent className="bg-white border-2 border-gray-200 rounded-2xl shadow-lg min-w-[140px]">
-            <SelectItem value="last30" className="text-xs sm:text-[14px] font-medium text-[#27251F] focus:bg-[#E51636]/5 focus:text-[#E51636]">Last 30 Days</SelectItem>
-            <SelectItem value="last90" className="text-xs sm:text-[14px] font-medium text-[#27251F] focus:bg-[#E51636]/5 focus:text-[#E51636]">Last 90 Days</SelectItem>
-            <SelectItem value="lastMonth" className="text-xs sm:text-[14px] font-medium text-[#27251F] focus:bg-[#E51636]/5 focus:text-[#E51636]">Last Month</SelectItem>
-          </SelectContent>
-        </Select>
-      </div>
-
       {/* Summary Cards */}
       <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
         <Card className="bg-white rounded-[20px] hover:shadow-xl transition-all duration-300">
@@ -323,33 +330,51 @@ export default function WasteAnalytics() {
       </div>
 
       <Tabs value={selectedTab} onValueChange={setSelectedTab} className="space-y-3 sm:space-y-4">
-        <div className="bg-white rounded-[32px] p-1.5 hover:shadow-sm transition-all duration-300 overflow-x-auto hide-scrollbar">
-          <TabsList className="w-full grid grid-cols-4 gap-1.5 sm:gap-2 bg-transparent min-w-[500px]">
+        <div className="bg-white rounded-[20px] p-3 sm:p-6 flex flex-col md:flex-row md:justify-between md:items-center gap-3 sm:gap-4 shadow-sm transition-all duration-300">
+          <div className="bg-white rounded-[32px] p-1.5 overflow-x-auto hide-scrollbar flex-grow">
+            <TabsList className="w-full grid grid-cols-5 gap-1.5 sm:gap-2 bg-transparent min-w-[600px]">
             <TabsTrigger
               value="overview"
-              className="py-1.5 sm:py-2 px-4 sm:px-6 rounded-[24px] text-xs sm:text-sm font-medium text-center data-[state=active]:bg-[#E51636]/5 data-[state=active]:text-[#E51636] data-[state=active]:border data-[state=active]:border-[#E51636]/20 text-[#27251F]/60 hover:bg-gray-50 transition-all relative after:absolute after:inset-0 after:rounded-[24px] after:border after:border-transparent data-[state=active]:after:border-[#E51636]/20"
+              className="py-1.5 sm:py-2 px-4 sm:px-6 rounded-[24px] text-xs sm:text-sm font-medium text-center flex items-center justify-center data-[state=active]:bg-[#E51636]/5 data-[state=active]:text-[#E51636] data-[state=active]:border data-[state=active]:border-[#E51636]/20 text-[#27251F]/60 hover:bg-gray-50 transition-all relative after:absolute after:inset-0 after:rounded-[24px] after:border after:border-gray-200 data-[state=active]:after:border-[#E51636]/20"
             >
               Overview
             </TabsTrigger>
             <TabsTrigger
               value="dayOfWeek"
-              className="py-1.5 sm:py-2 px-4 sm:px-6 rounded-[24px] text-xs sm:text-sm font-medium text-center data-[state=active]:bg-[#E51636]/5 data-[state=active]:text-[#E51636] data-[state=active]:border data-[state=active]:border-[#E51636]/20 text-[#27251F]/60 hover:bg-gray-50 transition-all relative after:absolute after:inset-0 after:rounded-[24px] after:border after:border-transparent data-[state=active]:after:border-[#E51636]/20"
+              className="py-1.5 sm:py-2 px-4 sm:px-6 rounded-[24px] text-xs sm:text-sm font-medium text-center flex items-center justify-center data-[state=active]:bg-[#E51636]/5 data-[state=active]:text-[#E51636] data-[state=active]:border data-[state=active]:border-[#E51636]/20 text-[#27251F]/60 hover:bg-gray-50 transition-all relative after:absolute after:inset-0 after:rounded-[24px] after:border after:border-gray-200 data-[state=active]:after:border-[#E51636]/20"
             >
               By Day
             </TabsTrigger>
             <TabsTrigger
               value="mealPeriod"
-              className="py-1.5 sm:py-2 px-4 sm:px-6 rounded-[24px] text-xs sm:text-sm font-medium text-center data-[state=active]:bg-[#E51636]/5 data-[state=active]:text-[#E51636] data-[state=active]:border data-[state=active]:border-[#E51636]/20 text-[#27251F]/60 hover:bg-gray-50 transition-all relative after:absolute after:inset-0 after:rounded-[24px] after:border after:border-transparent data-[state=active]:after:border-[#E51636]/20"
+              className="py-1.5 sm:py-2 px-4 sm:px-6 rounded-[24px] text-xs sm:text-sm font-medium text-center flex items-center justify-center data-[state=active]:bg-[#E51636]/5 data-[state=active]:text-[#E51636] data-[state=active]:border data-[state=active]:border-[#E51636]/20 text-[#27251F]/60 hover:bg-gray-50 transition-all relative after:absolute after:inset-0 after:rounded-[24px] after:border after:border-gray-200 data-[state=active]:after:border-[#E51636]/20"
             >
               By Meal
             </TabsTrigger>
             <TabsTrigger
+              value="hourOfDay"
+              className="py-1.5 sm:py-2 px-4 sm:px-6 rounded-[24px] text-xs sm:text-sm font-medium text-center flex items-center justify-center data-[state=active]:bg-[#E51636]/5 data-[state=active]:text-[#E51636] data-[state=active]:border data-[state=active]:border-[#E51636]/20 text-[#27251F]/60 hover:bg-gray-50 transition-all relative after:absolute after:inset-0 after:rounded-[24px] after:border after:border-gray-200 data-[state=active]:after:border-[#E51636]/20"
+            >
+              By Hour
+            </TabsTrigger>
+            <TabsTrigger
               value="topItems"
-              className="py-1.5 sm:py-2 px-4 sm:px-6 rounded-[24px] text-xs sm:text-sm font-medium text-center data-[state=active]:bg-[#E51636]/5 data-[state=active]:text-[#E51636] data-[state=active]:border data-[state=active]:border-[#E51636]/20 text-[#27251F]/60 hover:bg-gray-50 transition-all relative after:absolute after:inset-0 after:rounded-[24px] after:border after:border-transparent data-[state=active]:after:border-[#E51636]/20"
+              className="py-1.5 sm:py-2 px-4 sm:px-6 rounded-[24px] text-xs sm:text-sm font-medium text-center flex items-center justify-center data-[state=active]:bg-[#E51636]/5 data-[state=active]:text-[#E51636] data-[state=active]:border data-[state=active]:border-[#E51636]/20 text-[#27251F]/60 hover:bg-gray-50 transition-all relative after:absolute after:inset-0 after:rounded-[24px] after:border after:border-gray-200 data-[state=active]:after:border-[#E51636]/20"
             >
               Top Items
             </TabsTrigger>
           </TabsList>
+          </div>
+          <Select value={timeRange} onValueChange={setTimeRange}>
+            <SelectTrigger className="w-full md:w-[140px] h-9 sm:h-[40px] bg-white border-2 border-gray-200 rounded-[32px] px-3 sm:px-4 text-xs sm:text-[14px] font-medium text-[#27251F] hover:border-gray-300 focus:border-[#E51636] focus:ring-0 transition-colors">
+              <SelectValue placeholder="Last 30 Days" />
+            </SelectTrigger>
+            <SelectContent className="bg-white border-2 border-gray-200 rounded-2xl shadow-lg min-w-[140px]">
+              <SelectItem value="last30" className="text-xs sm:text-[14px] font-medium text-[#27251F] focus:bg-[#E51636]/5 focus:text-[#E51636]">Last 30 Days</SelectItem>
+              <SelectItem value="last90" className="text-xs sm:text-[14px] font-medium text-[#27251F] focus:bg-[#E51636]/5 focus:text-[#E51636]">Last 90 Days</SelectItem>
+              <SelectItem value="lastMonth" className="text-xs sm:text-[14px] font-medium text-[#27251F] focus:bg-[#E51636]/5 focus:text-[#E51636]">Last Month</SelectItem>
+            </SelectContent>
+          </Select>
         </div>
 
         <TabsContent value="overview">
@@ -363,13 +388,13 @@ export default function WasteAnalytics() {
                   <ResponsiveContainer width="100%" height="100%">
                     <LineChart data={dailyChartData}>
                       <CartesianGrid strokeDasharray="3 3" stroke="#E5E7EB" />
-                      <XAxis 
-                        dataKey="date" 
+                      <XAxis
+                        dataKey="date"
                         tickFormatter={(date) => format(parseISO(date), 'MMM d')}
                         tick={{ fontSize: 12 }}
                         stroke="#27251F"
                       />
-                      <YAxis 
+                      <YAxis
                         tickFormatter={(value) => `$${value}`}
                         tick={{ fontSize: 12 }}
                         stroke="#27251F"
@@ -407,7 +432,7 @@ export default function WasteAnalytics() {
                   {topWastedItems.map((item, index) => (
                     <div key={item.name} className="flex items-center justify-between p-2 sm:p-3 bg-gray-50 rounded-lg">
                       <div className="flex items-center gap-2 sm:gap-3">
-                        <div 
+                        <div
                           className="w-2 h-2 sm:w-3 sm:h-3 rounded-full"
                           style={{ backgroundColor: COLORS[index % COLORS.length] }}
                         />
@@ -440,12 +465,12 @@ export default function WasteAnalytics() {
                 <ResponsiveContainer width="100%" height="100%">
                   <BarChart data={dayOfWeekChartData}>
                     <CartesianGrid strokeDasharray="3 3" stroke="#E5E7EB" />
-                    <XAxis 
-                      dataKey="day" 
+                    <XAxis
+                      dataKey="day"
                       tick={{ fontSize: 12 }}
                       stroke="#27251F"
                     />
-                    <YAxis 
+                    <YAxis
                       tickFormatter={(value) => `$${value}`}
                       tick={{ fontSize: 12 }}
                       stroke="#27251F"
@@ -533,7 +558,7 @@ export default function WasteAnalytics() {
                   {mealPeriodChartData.map((data, index) => (
                     <div key={data.period} className="flex items-center justify-between p-2 sm:p-3 bg-gray-50 rounded-lg">
                       <div className="flex items-center gap-2 sm:gap-3">
-                        <div 
+                        <div
                           className="w-2 h-2 sm:w-3 sm:h-3 rounded-full"
                           style={{ backgroundColor: COLORS[index % COLORS.length] }}
                         />
@@ -556,6 +581,56 @@ export default function WasteAnalytics() {
           </div>
         </TabsContent>
 
+        <TabsContent value="hourOfDay">
+          <Card className="bg-white rounded-[20px] hover:shadow-xl transition-all duration-300">
+            <CardHeader className="p-3 sm:p-6 pb-0">
+              <CardTitle className="text-base sm:text-xl font-bold text-[#27251F]">Waste by Hour of Day</CardTitle>
+            </CardHeader>
+            <CardContent className="p-3 sm:p-6">
+              <div className="h-[200px] sm:h-[300px]">
+                <ResponsiveContainer width="100%" height="100%">
+                  <BarChart data={hourOfDayChartData}>
+                    <CartesianGrid strokeDasharray="3 3" stroke="#E5E7EB" />
+                    <XAxis
+                      dataKey="hourLabel"
+                      tick={{ fontSize: 12 }}
+                      stroke="#27251F"
+                    />
+                    <YAxis
+                      tickFormatter={(value) => `$${value}`}
+                      tick={{ fontSize: 12 }}
+                      stroke="#27251F"
+                    />
+                    <Tooltip
+                      contentStyle={{
+                        backgroundColor: 'white',
+                        border: '1px solid #E5E7EB',
+                        borderRadius: '8px',
+                        fontSize: '12px'
+                      }}
+                      formatter={(value: any) => [`$${value}`, 'Total Cost']}
+                    />
+                    <Bar dataKey="totalCost" fill="#E51636" radius={[4, 4, 0, 0]} />
+                  </BarChart>
+                </ResponsiveContainer>
+              </div>
+              <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-2 sm:gap-3 mt-4">
+                {hourOfDayChartData
+                  .filter(data => data.count > 0) // Only show hours with waste
+                  .sort((a, b) => b.totalCost - a.totalCost) // Sort by highest cost first
+                  .slice(0, 12) // Show top 12 hours
+                  .map((data) => (
+                    <div key={data.hour} className="p-2 sm:p-3 bg-gray-50 rounded-lg">
+                      <p className="text-xs sm:text-sm font-medium text-[#27251F]">{data.hourLabel}</p>
+                      <p className="text-[10px] sm:text-xs text-[#27251F]/60 mt-0.5">{data.count} items</p>
+                      <p className="text-xs sm:text-sm font-medium text-[#27251F] mt-1">{formatCurrency(data.totalCost)}</p>
+                    </div>
+                  ))}
+              </div>
+            </CardContent>
+          </Card>
+        </TabsContent>
+
         <TabsContent value="topItems">
           <Card className="bg-white rounded-[20px] hover:shadow-xl transition-all duration-300">
             <CardHeader className="p-3 sm:p-6 pb-0">
@@ -566,7 +641,7 @@ export default function WasteAnalytics() {
                 {topWastedItems.map((item, index) => (
                   <div key={item.name} className="p-3 sm:p-4 bg-gray-50 rounded-lg">
                     <div className="flex items-center gap-2 sm:gap-3 mb-2">
-                      <div 
+                      <div
                         className="w-2 h-2 sm:w-3 sm:h-3 rounded-full"
                         style={{ backgroundColor: COLORS[index % COLORS.length] }}
                       />
@@ -615,4 +690,4 @@ export default function WasteAnalytics() {
       `}</style>
     </div>
   )
-} 
+}
