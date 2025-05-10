@@ -302,7 +302,7 @@ export default function Layout({ children }: { children: React.ReactNode }) {
         {
           icon: FileText,
           label: 'My Documentation',
-          href: '/documentation',
+          href: `/documentation?employee=${user?._id}`,
           badge: null
         },
         {

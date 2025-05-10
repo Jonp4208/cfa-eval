@@ -65,7 +65,9 @@ export default function DocumentDetail() {
   }, [id]);
 
   useEffect(() => {
-    if (!isManager && activeTab !== 'details') {
+    // Only restrict access to followUps tab for non-managers
+    // Allow access to details and documents tabs for all users
+    if (!isManager && activeTab === 'followUps') {
       setActiveTab('details');
     }
   }, [isManager, activeTab]);
@@ -74,7 +76,7 @@ export default function DocumentDetail() {
     try {
       setLoading(true);
       const data = await documentationService.getDocumentById(id as string);
-      
+
       // Check that we received valid data
       if (!data || typeof data !== 'object') {
         console.error('Invalid document data received:', data);
@@ -82,57 +84,57 @@ export default function DocumentDetail() {
         setDocument(null);
         return;
       }
-      
+
       // Log the raw data
       console.log('RAW API RESPONSE:', JSON.stringify(data, null, 2));
-      
+
       // Check if key properties are ObjectIds instead of populated objects
       const isObjectId = (val) => val && typeof val === 'string' && /^[0-9a-fA-F]{24}$/.test(val);
-      
+
       // Normalize references that might be ObjectIds instead of populated objects
       let normalizedData = { ...data };
-      
+
       // Handle employee field
       if (isObjectId(normalizedData.employee) || (normalizedData.employee && !normalizedData.employee.name)) {
-        const employeeId = typeof normalizedData.employee === 'string' 
-          ? normalizedData.employee 
+        const employeeId = typeof normalizedData.employee === 'string'
+          ? normalizedData.employee
           : normalizedData.employee?._id || normalizedData.employee;
-        normalizedData.employee = { 
-          _id: employeeId, 
-          name: `Employee ID: ${employeeId}`, 
+        normalizedData.employee = {
+          _id: employeeId,
+          name: `Employee ID: ${employeeId}`,
           position: 'Unknown',
           department: 'Unknown'
         };
       }
-      
+
       // Handle supervisor field
       if (isObjectId(normalizedData.supervisor) || (normalizedData.supervisor && !normalizedData.supervisor.name)) {
-        const supervisorId = typeof normalizedData.supervisor === 'string' 
-          ? normalizedData.supervisor 
+        const supervisorId = typeof normalizedData.supervisor === 'string'
+          ? normalizedData.supervisor
           : normalizedData.supervisor?._id || normalizedData.supervisor;
-        normalizedData.supervisor = { 
-          _id: supervisorId, 
+        normalizedData.supervisor = {
+          _id: supervisorId,
           name: `Supervisor ID: ${supervisorId}`
         };
       }
-      
+
       // Handle createdBy field
       if (isObjectId(normalizedData.createdBy) || (normalizedData.createdBy && !normalizedData.createdBy.name)) {
-        const createdById = typeof normalizedData.createdBy === 'string' 
-          ? normalizedData.createdBy 
+        const createdById = typeof normalizedData.createdBy === 'string'
+          ? normalizedData.createdBy
           : normalizedData.createdBy?._id || normalizedData.createdBy;
-        normalizedData.createdBy = { 
-          _id: createdById, 
+        normalizedData.createdBy = {
+          _id: createdById,
           name: `Created by ID: ${createdById}`
         };
       }
-      
+
       // Handle followUps array
       if (Array.isArray(normalizedData.followUps)) {
         normalizedData.followUps = normalizedData.followUps.map(followUp => {
           if (isObjectId(followUp.by) || (followUp.by && !followUp.by.name)) {
-            const byId = typeof followUp.by === 'string' 
-              ? followUp.by 
+            const byId = typeof followUp.by === 'string'
+              ? followUp.by
               : followUp.by?._id || followUp.by;
             return {
               ...followUp,
@@ -144,13 +146,13 @@ export default function DocumentDetail() {
       } else {
         normalizedData.followUps = [];
       }
-      
+
       // Handle documents array
       if (Array.isArray(normalizedData.documents)) {
         normalizedData.documents = normalizedData.documents.map(doc => {
           if (isObjectId(doc.uploadedBy) || (doc.uploadedBy && !doc.uploadedBy.name)) {
-            const uploadedById = typeof doc.uploadedBy === 'string' 
-              ? doc.uploadedBy 
+            const uploadedById = typeof doc.uploadedBy === 'string'
+              ? doc.uploadedBy
               : doc.uploadedBy?._id || doc.uploadedBy;
             return {
               ...doc,
@@ -162,7 +164,7 @@ export default function DocumentDetail() {
       } else {
         normalizedData.documents = [];
       }
-      
+
       console.log('NORMALIZED DATA:', normalizedData);
       setDocument(normalizedData);
     } catch (error) {
@@ -294,14 +296,14 @@ export default function DocumentDetail() {
     try {
       const parts = path.split('.');
       let current = obj;
-      
+
       for (const part of parts) {
         if (current === undefined || current === null) {
           return defaultValue;
         }
         current = current[part];
       }
-      
+
       return current === undefined || current === null ? defaultValue : current;
     } catch (e) {
       console.error(`Error accessing path ${path}:`, e);
@@ -413,29 +415,27 @@ export default function DocumentDetail() {
                     Details
                   </button>
                   {isManager && (
-                    <>
-                      <button
-                        className={`flex-1 px-4 py-3 font-medium text-sm transition-colors ${
-                          activeTab === 'followUps'
-                            ? 'text-[#E51636] border-b-2 border-[#E51636] bg-[#FEE4E2]/30'
-                            : 'text-gray-500 hover:text-[#E51636] hover:bg-gray-50'
-                        }`}
-                        onClick={() => setActiveTab('followUps')}
-                      >
-                        Follow-ups
-                      </button>
-                      <button
-                        className={`flex-1 px-4 py-3 font-medium text-sm transition-colors ${
-                          activeTab === 'documents'
-                            ? 'text-[#E51636] border-b-2 border-[#E51636] bg-[#FEE4E2]/30'
-                            : 'text-gray-500 hover:text-[#E51636] hover:bg-gray-50'
-                        }`}
-                        onClick={() => setActiveTab('documents')}
-                      >
-                        Documents
-                      </button>
-                    </>
+                    <button
+                      className={`flex-1 px-4 py-3 font-medium text-sm transition-colors ${
+                        activeTab === 'followUps'
+                          ? 'text-[#E51636] border-b-2 border-[#E51636] bg-[#FEE4E2]/30'
+                          : 'text-gray-500 hover:text-[#E51636] hover:bg-gray-50'
+                      }`}
+                      onClick={() => setActiveTab('followUps')}
+                    >
+                      Follow-ups
+                    </button>
                   )}
+                  <button
+                    className={`flex-1 px-4 py-3 font-medium text-sm transition-colors ${
+                      activeTab === 'documents'
+                        ? 'text-[#E51636] border-b-2 border-[#E51636] bg-[#FEE4E2]/30'
+                        : 'text-gray-500 hover:text-[#E51636] hover:bg-gray-50'
+                    }`}
+                    onClick={() => setActiveTab('documents')}
+                  >
+                    Documents
+                  </button>
                 </div>
               </CardContent>
             </Card>
@@ -657,13 +657,16 @@ export default function DocumentDetail() {
                 <CardContent className="p-8">
                   <div className="flex justify-between items-center mb-4">
                     <h2 className="text-lg font-semibold">Related Documents</h2>
-                    <Button
-                      className="bg-[#E51636] hover:bg-[#E51636]/90 text-white flex items-center gap-1.5 px-4"
-                      onClick={handleUploadDocument}
-                    >
-                      <Upload className="w-4 h-4" />
-                      Upload Document
-                    </Button>
+                    {/* Allow both managers and the employee who owns the document to upload */}
+                    {(isManager || isEmployee) && (
+                      <Button
+                        className="bg-[#E51636] hover:bg-[#E51636]/90 text-white flex items-center gap-1.5 px-4"
+                        onClick={handleUploadDocument}
+                      >
+                        <Upload className="w-4 h-4" />
+                        Upload Document
+                      </Button>
+                    )}
                   </div>
                   <div className="space-y-2">
                     {document.documents.map((doc) => (
@@ -688,15 +691,17 @@ export default function DocumentDetail() {
                             <Eye className="w-4 h-4" />
                             View
                           </Button>
-                          <Button
-                            variant="ghost"
-                            size="sm"
-                            onClick={() => handleDeleteAttachment(doc._id, doc.name)}
-                            className="text-red-500 hover:bg-red-50 hover:text-red-700 flex items-center gap-1.5"
-                          >
-                            <Trash2 className="w-4 h-4" />
-                            Delete
-                          </Button>
+                          {isManager && (
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              onClick={() => handleDeleteAttachment(doc._id, doc.name)}
+                              className="text-red-500 hover:bg-red-50 hover:text-red-700 flex items-center gap-1.5"
+                            >
+                              <Trash2 className="w-4 h-4" />
+                              Delete
+                            </Button>
+                          )}
                         </div>
                       </div>
                     ))}

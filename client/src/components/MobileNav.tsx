@@ -44,7 +44,7 @@ const ALL_NAV_ITEMS = {
   documentation: {
     icon: FileText,
     getLabel: (user: any, t: any) => user?.position === 'Team Member' ? 'My Documentation' : 'Documentation',
-    href: '/documentation',
+    href: (user: any) => user?.position === 'Team Member' ? `/documentation?employee=${user?._id}` : '/documentation',
     defaultShow: true
   },
   kitchen: {
