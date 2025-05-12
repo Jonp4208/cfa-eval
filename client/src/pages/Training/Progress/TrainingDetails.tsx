@@ -398,7 +398,7 @@ export default function TrainingDetails() {
                     <div className="space-y-2 flex-1 w-full">
                       <h3 className="font-medium text-[#27251F] break-words">{task.name}</h3>
                       {task.description && (
-                        <p className="text-sm text-[#27251F]/60 break-words">{task.description}</p>
+                        <p className="text-sm text-[#27251F]/60 break-words whitespace-pre-wrap">{task.description}</p>
                       )}
                       {task.duration && (
                         <p className="text-sm text-[#27251F]/60 flex items-center gap-1">

@@ -69,6 +69,7 @@ interface TraineeProgress {
     _id: string
     name: string
     progress: number
+    startDate?: string
   }
   status: 'not_started' | 'in_progress' | 'completed'
 }
@@ -120,6 +121,7 @@ interface TrainingProgressResponse {
     _id: string
     name: string
     progress: number
+    startDate?: string
   }
   status: string
 }
@@ -185,7 +187,8 @@ export default function TrainingProgress() {
             _id: trainee.currentPlan._id,
             name: trainee.currentPlan.name,
             tasks: trainee.currentPlan.tasks || [],
-            progress: progress
+            progress: progress,
+            startDate: trainee.currentPlan.startDate
           } : undefined,
           progress: progress,
           status: trainee.status?.toLowerCase() || 'not_started'
@@ -324,14 +327,21 @@ export default function TrainingProgress() {
     }
   }
 
-  const filteredTrainees = trainees.filter(trainee => {
-    const matchesSearch = trainee.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      trainee.position.toLowerCase().includes(searchQuery.toLowerCase())
-    const matchesTab = activeTab === 'active'
-      ? trainee.status !== 'completed'
-      : trainee.status === 'completed'
-    return matchesSearch && matchesTab
-  })
+  const filteredTrainees = trainees
+    .filter(trainee => {
+      const matchesSearch = trainee.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        trainee.position.toLowerCase().includes(searchQuery.toLowerCase())
+      const matchesTab = activeTab === 'active'
+        ? trainee.status !== 'completed'
+        : trainee.status === 'completed'
+      return matchesSearch && matchesTab
+    })
+    .sort((a, b) => {
+      // Sort by assigned date (newest first)
+      const dateA = a.currentPlan?.startDate ? new Date(a.currentPlan.startDate).getTime() : 0
+      const dateB = b.currentPlan?.startDate ? new Date(b.currentPlan.startDate).getTime() : 0
+      return dateB - dateA // Descending order (newest first)
+    })
 
   const getStatusColor = (status: string) => {
     switch (status.toLowerCase()) {
@@ -546,8 +556,8 @@ export default function TrainingProgress() {
               <TableHead className="text-gray-600 w-1/5">Trainee</TableHead>
               <TableHead className="text-gray-600 w-1/6">Position</TableHead>
               <TableHead className="text-gray-600 w-1/5">Current Plan</TableHead>
+              <TableHead className="text-gray-600 w-1/6">Assigned Date</TableHead>
               <TableHead className="text-gray-600 w-1/4">Progress</TableHead>
-              <TableHead className="text-gray-600 w-1/8">Status</TableHead>
               <TableHead className="text-gray-600 w-1/8">Actions</TableHead>
             </TableRow>
           </TableHeader>
@@ -563,6 +573,13 @@ export default function TrainingProgress() {
                   <TableCell>{trainee.position}</TableCell>
                   <TableCell>{trainee.currentPlan?.name || 'No Plan'}</TableCell>
                   <TableCell>
+                    {trainee.currentPlan?.startDate ? (
+                      new Date(trainee.currentPlan.startDate).toLocaleDateString()
+                    ) : (
+                      '-'
+                    )}
+                  </TableCell>
+                  <TableCell>
                     <div className="flex items-center gap-2">
                       <div className="w-full max-w-[300px] h-2 bg-gray-100 rounded-full overflow-hidden">
                         <div
@@ -575,11 +592,7 @@ export default function TrainingProgress() {
                       </span>
                     </div>
                   </TableCell>
-                  <TableCell>
-                    <span className={`inline-flex px-3 py-1 rounded-full text-xs font-medium ${getStatusStyles(trainee.status)}`}>
-                      {getStatusText(trainee.status)}
-                    </span>
-                  </TableCell>
+
                   <TableCell>
                     <div className="flex items-center gap-2">
                       <Button
@@ -635,15 +648,17 @@ export default function TrainingProgress() {
                       <CardDescription>{trainee.position}</CardDescription>
                     </div>
                   </div>
-                  <Badge className={cn(getStatusStyles(trainee.status))}>
-                    {getStatusText(trainee.status)}
-                  </Badge>
                 </div>
               </CardHeader>
               <CardContent className="p-4 pt-0">
                 {trainee.currentPlan ? (
                   <div className="flex flex-col gap-1">
                     <div className="font-medium">{trainee.currentPlan.name}</div>
+                    {trainee.currentPlan.startDate && (
+                      <div className="text-xs text-gray-500 mb-1">
+                        Assigned: {new Date(trainee.currentPlan.startDate).toLocaleDateString()}
+                      </div>
+                    )}
                     <div className="flex w-full items-center gap-2">
                       <Progress
                         value={displayProgress}

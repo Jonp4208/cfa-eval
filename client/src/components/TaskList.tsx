@@ -127,7 +127,7 @@ export function TaskList({
 
                   {task.description && (
                     <p className={cn(
-                      "text-sm text-[#27251F]/60 mt-1",
+                      "text-sm text-[#27251F]/60 mt-1 whitespace-pre-wrap",
                       instanceTask?.status === 'completed' && "line-through"
                     )}>
                       {task.description}

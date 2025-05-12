@@ -693,7 +693,7 @@ export default function PlanTasks() {
 
                   {/* Task content - full width on all devices */}
                   <div className="w-full space-y-3 pl-0 sm:pl-10">
-                    <p className={`text-gray-600 ${task.completed ? 'text-gray-400' : ''}`}>
+                    <p className={`text-gray-600 ${task.completed ? 'text-gray-400' : ''} whitespace-pre-wrap`}>
                       {task.description}
                     </p>
 
@@ -718,7 +718,7 @@ export default function PlanTasks() {
                           <FileCheck className="h-4 w-4 flex-shrink-0 text-green-600" />
                           <span>{getCompletionTitle(task.type)}</span>
                         </div>
-                        <p className="text-sm text-gray-600">{task.evidence}</p>
+                        <p className="text-sm text-gray-600 whitespace-pre-wrap">{task.evidence}</p>
                       </div>
                     )}
 
@@ -728,7 +728,7 @@ export default function PlanTasks() {
                           <PenTool className="h-4 w-4 flex-shrink-0 text-blue-600" />
                           <span>Notes</span>
                         </div>
-                        <p className="text-sm text-gray-600">{task.notes}</p>
+                        <p className="text-sm text-gray-600 whitespace-pre-wrap">{task.notes}</p>
                       </div>
                     )}
 

@@ -372,7 +372,8 @@ router.get('/employees/training-progress', auth, async (req, res) => {
           currentPlan: progress.trainingPlan ? {
             _id: progress._id, // Use the training progress ID for navigation
             name: progress.trainingPlan.name,
-            progress: progressPercentage
+            progress: progressPercentage,
+            startDate: progress.startDate // Include the start date
           } : undefined,
           status: progress.status?.toLowerCase() || 'not_started'
         };

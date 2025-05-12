@@ -176,7 +176,7 @@ export default function PlanDetails() {
                 <div className="space-y-2">
                   <h1 className="text-2xl font-semibold text-[#27251F] break-words">{plan.name}</h1>
                   {plan.description && (
-                    <p className="text-[#27251F]/60 text-base break-words">{plan.description}</p>
+                    <p className="text-[#27251F]/60 text-base break-words whitespace-pre-wrap">{plan.description}</p>
                   )}
                 </div>
 
@@ -228,7 +228,7 @@ export default function PlanDetails() {
                             </div>
 
                             {task.description && (
-                              <p className="text-sm text-[#27251F]/60 break-words mt-2">{task.description}</p>
+                              <p className="text-sm text-[#27251F]/60 break-words mt-2 whitespace-pre-wrap">{task.description}</p>
                             )}
 
                             {task.pathwayUrl && (
