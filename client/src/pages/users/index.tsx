@@ -384,7 +384,7 @@ export default function Users() {
         )}
 
         {/* Info Cards */}
-        <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-5 gap-2 sm:gap-3 md:gap-4">
+        <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-4 gap-2 sm:gap-3 md:gap-4">
           <Card className="bg-white rounded-[16px] sm:rounded-[20px] shadow-md hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1">
             <CardContent className="p-3 sm:p-4 md:p-6">
               <div className="flex items-center justify-between">
@@ -447,25 +447,6 @@ export default function Users() {
                 </div>
                 <div className="h-10 w-10 sm:h-12 sm:w-12 md:h-14 md:w-14 bg-orange-50 rounded-xl sm:rounded-2xl flex items-center justify-center">
                   <User className="h-5 w-5 sm:h-6 sm:w-6 md:h-7 md:w-7 text-orange-600" />
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-
-          <Card className="bg-white rounded-[16px] sm:rounded-[20px] shadow-md hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1">
-            <CardContent className="p-3 sm:p-4 md:p-6">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-xs sm:text-sm font-medium text-[#27251F]/60">Managers</p>
-                  <h3 className="text-xl sm:text-2xl md:text-3xl font-bold mt-1 sm:mt-2 text-[#27251F]">
-                    {users?.filter(user =>
-                      user.position === 'Director' ||
-                      user.position === 'Leader'
-                    ).length || 0}
-                  </h3>
-                </div>
-                <div className="h-10 w-10 sm:h-12 sm:w-12 md:h-14 md:w-14 bg-red-50 rounded-xl sm:rounded-2xl flex items-center justify-center">
-                  <Shield className="h-5 w-5 sm:h-6 sm:w-6 md:h-7 md:w-7 text-red-600" />
                 </div>
               </div>
             </CardContent>
