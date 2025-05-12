@@ -1343,101 +1343,81 @@ const FoodSafety: React.FC = () => {
         </DialogContent>
       </Dialog>
 
-      {/* Info Cards - 2x2 Grid Layout */}
-      <div className="grid grid-cols-2 gap-3 sm:gap-4 mb-6">
+      {/* Info Cards - Row on desktop, 2x2 on mobile */}
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-3 sm:gap-4 mb-6">
         {/* Completion Rate Card */}
-        <Card className="bg-white rounded-xl shadow-sm hover:shadow-md transition-all duration-300">
-          <CardContent className="p-0">
-            <div className="flex items-center">
-              <div className="p-3 sm:p-5 flex-1">
-                <div className="flex items-center gap-1 sm:gap-2 mb-1 sm:mb-2">
-                  <div className="w-8 h-8 sm:w-10 sm:h-10 rounded-full bg-red-100 flex items-center justify-center">
-                    <ClipboardCheck className="h-4 w-4 sm:h-5 sm:w-5 text-red-500" />
-                  </div>
-                  <h3 className="text-xs sm:text-sm font-medium text-[#27251F]/80">Completion Rate</h3>
-                </div>
-                <div className="flex items-baseline gap-1">
-                  <p className="text-xl sm:text-3xl font-bold text-[#27251F]">{getCompletionRate()}%</p>
-                  <p className="text-[10px] sm:text-xs text-[#27251F]/60">of tasks</p>
-                </div>
-                <p className="text-[10px] sm:text-xs text-[#27251F]/60 mt-1">
+        <Card className="bg-white rounded-[20px] hover:shadow-xl transition-all duration-300">
+          <CardContent className="p-4 md:p-6">
+            <div className="flex items-start justify-between">
+              <div>
+                <p className="text-[#27251F]/60 text-sm md:text-base font-medium">Completion Rate</p>
+                <h3 className="text-2xl md:text-3xl font-bold mt-1 md:mt-2 text-[#27251F]">{getCompletionRate()}%</h3>
+                <p className="text-[#27251F]/60 text-xs md:text-sm mt-1">
                   {Object.values(dailyChecklistItems).flat().filter(item => item.isCompleted).length} completed today
                 </p>
+              </div>
+              <div className="h-12 w-12 md:h-14 md:w-14 bg-[#E51636]/10 text-[#E51636] rounded-2xl flex items-center justify-center">
+                <ClipboardCheck strokeWidth={2} size={20} className="md:h-6 md:w-6 h-5 w-5" />
               </div>
             </div>
           </CardContent>
         </Card>
 
         {/* Temperature Checks Card */}
-        <Card className="bg-white rounded-xl shadow-sm hover:shadow-md transition-all duration-300">
-          <CardContent className="p-0">
-            <div className="flex items-center">
-              <div className="p-3 sm:p-5 flex-1">
-                <div className="flex items-center gap-1 sm:gap-2 mb-1 sm:mb-2">
-                  <div className="w-8 h-8 sm:w-10 sm:h-10 rounded-full bg-blue-100 flex items-center justify-center">
-                    <ThermometerSun className="h-4 w-4 sm:h-5 sm:w-5 text-blue-500" />
-                  </div>
-                  <h3 className="text-xs sm:text-sm font-medium text-[#27251F]/80">Temperature Checks</h3>
-                </div>
-                <div className="flex items-baseline gap-1">
-                  <p className="text-xl sm:text-3xl font-bold text-[#27251F]">
-                    {Object.keys(temperatures).filter(location =>
-                      temperatures[location]?.value !== null &&
-                      temperatures[location]?.timestamp &&
-                      new Date(temperatures[location]?.timestamp as string).toDateString() === new Date().toDateString()
-                    ).length}
-                  </p>
-                  <p className="text-[10px] sm:text-xs text-[#27251F]/60">today</p>
-                </div>
-                <p className="text-[10px] sm:text-xs text-[#27251F]/60 mt-1">
+        <Card className="bg-white rounded-[20px] hover:shadow-xl transition-all duration-300">
+          <CardContent className="p-4 md:p-6">
+            <div className="flex items-start justify-between">
+              <div>
+                <p className="text-[#27251F]/60 text-sm md:text-base font-medium">Temperature Checks</p>
+                <h3 className="text-2xl md:text-3xl font-bold mt-1 md:mt-2 text-[#27251F]">
+                  {Object.keys(temperatures).filter(location =>
+                    temperatures[location]?.value !== null &&
+                    temperatures[location]?.timestamp &&
+                    new Date(temperatures[location]?.timestamp as string).toDateString() === new Date().toDateString()
+                  ).length}
+                </h3>
+                <p className="text-[#27251F]/60 text-xs md:text-sm mt-1">
                   {Object.keys(CFA_TEMP_RANGES).length} total monitoring points
                 </p>
+              </div>
+              <div className="h-12 w-12 md:h-14 md:w-14 bg-blue-100 text-blue-600 rounded-2xl flex items-center justify-center">
+                <ThermometerSun strokeWidth={2} size={20} className="md:h-6 md:w-6 h-5 w-5" />
               </div>
             </div>
           </CardContent>
         </Card>
 
         {/* Overdue Tasks Card */}
-        <Card className="bg-white rounded-xl shadow-sm hover:shadow-md transition-all duration-300">
-          <CardContent className="p-0">
-            <div className="flex items-center">
-              <div className="p-3 sm:p-5 flex-1">
-                <div className="flex items-center gap-1 sm:gap-2 mb-1 sm:mb-2">
-                  <div className="w-8 h-8 sm:w-10 sm:h-10 rounded-full bg-amber-100 flex items-center justify-center">
-                    <CalendarClock className="h-4 w-4 sm:h-5 sm:w-5 text-amber-500" />
-                  </div>
-                  <h3 className="text-xs sm:text-sm font-medium text-[#27251F]/80">Overdue Tasks</h3>
-                </div>
-                <div className="flex items-baseline gap-1">
-                  <p className="text-xl sm:text-3xl font-bold text-[#27251F]">{getOverdueCount()}</p>
-                  <p className="text-[10px] sm:text-xs text-[#27251F]/60">need attention</p>
-                </div>
-                <p className="text-[10px] sm:text-xs text-[#27251F]/60 mt-1">
+        <Card className="bg-white rounded-[20px] hover:shadow-xl transition-all duration-300">
+          <CardContent className="p-4 md:p-6">
+            <div className="flex items-start justify-between">
+              <div>
+                <p className="text-[#27251F]/60 text-sm md:text-base font-medium">Overdue Tasks</p>
+                <h3 className="text-2xl md:text-3xl font-bold mt-1 md:mt-2 text-[#27251F]">{getOverdueCount()}</h3>
+                <p className="text-[#27251F]/60 text-xs md:text-sm mt-1">
                   {getOverdueTimeframe() === 'morning' ? 'Morning' : getOverdueTimeframe() === 'lunch' ? 'Lunch' : 'Dinner'} tasks pending
                 </p>
+              </div>
+              <div className="h-12 w-12 md:h-14 md:w-14 bg-amber-100 text-amber-600 rounded-2xl flex items-center justify-center">
+                <CalendarClock strokeWidth={2} size={20} className="md:h-6 md:w-6 h-5 w-5" />
               </div>
             </div>
           </CardContent>
         </Card>
 
         {/* Critical Tasks Card */}
-        <Card className="bg-white rounded-xl shadow-sm hover:shadow-md transition-all duration-300">
-          <CardContent className="p-0">
-            <div className="flex items-center">
-              <div className="p-3 sm:p-5 flex-1">
-                <div className="flex items-center gap-1 sm:gap-2 mb-1 sm:mb-2">
-                  <div className="w-8 h-8 sm:w-10 sm:h-10 rounded-full bg-green-100 flex items-center justify-center">
-                    <AlertTriangle className="h-4 w-4 sm:h-5 sm:w-5 text-green-500" />
-                  </div>
-                  <h3 className="text-xs sm:text-sm font-medium text-[#27251F]/80">Critical Tasks</h3>
-                </div>
-                <div className="flex items-baseline gap-1">
-                  <p className="text-xl sm:text-3xl font-bold text-[#27251F]">{getCriticalTasks()}</p>
-                  <p className="text-[10px] sm:text-xs text-[#27251F]/60">total</p>
-                </div>
-                <p className="text-[10px] sm:text-xs text-[#27251F]/60 mt-1">
+        <Card className="bg-white rounded-[20px] hover:shadow-xl transition-all duration-300">
+          <CardContent className="p-4 md:p-6">
+            <div className="flex items-start justify-between">
+              <div>
+                <p className="text-[#27251F]/60 text-sm md:text-base font-medium">Critical Tasks</p>
+                <h3 className="text-2xl md:text-3xl font-bold mt-1 md:mt-2 text-[#27251F]">{getCriticalTasks()}</h3>
+                <p className="text-[#27251F]/60 text-xs md:text-sm mt-1">
                   {Object.values(dailyChecklistItems).flat().filter(item => item.isCompleted && ['sanitizer', 'hygiene', 'food_prep'].includes(item.category || '')).length} completed today
                 </p>
+              </div>
+              <div className="h-12 w-12 md:h-14 md:w-14 bg-green-100 text-green-600 rounded-2xl flex items-center justify-center">
+                <AlertTriangle strokeWidth={2} size={20} className="md:h-6 md:w-6 h-5 w-5" />
               </div>
             </div>
           </CardContent>
