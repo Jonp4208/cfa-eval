@@ -476,9 +476,12 @@ export default function Equipment() {
       await handleStatusUpdate(selectedEquipment, updatedStatus)
 
       // Add a maintenance record with the repair information
+      // Use type 'repair' to indicate this is a repair completion record
       await kitchenService.addMaintenanceNote(selectedEquipment, {
         notes: formattedNotes || 'Issue resolved',
-        type: 'maintenance'
+        type: 'repair',
+        previousStatus: 'repair', // Explicitly set previous status
+        newStatus: 'operational'  // Explicitly set new status to ensure proper grouping
       })
 
       // Reset the form and close the dialog
@@ -486,7 +489,17 @@ export default function Equipment() {
       setRepairNotes('')
       setRepairCost('')
       setRepairPerson('')
-      setSelectedEquipment(null)
+
+      // Refresh the maintenance history if the dialog is open
+      if (maintenanceHistoryDialog && selectedEquipment) {
+        const history = await kitchenService.getEquipmentHistory(selectedEquipment)
+        setMaintenanceHistory(history)
+      }
+
+      // Don't clear selectedEquipment if the maintenance history dialog is open
+      if (!maintenanceHistoryDialog) {
+        setSelectedEquipment(null)
+      }
 
       enqueueSnackbar('Equipment marked as operational', { variant: 'success' })
     } catch (error) {
@@ -540,9 +553,11 @@ export default function Equipment() {
           notes: newNote.trim()
         })
       } else {
-        // Create new standalone note
+        // Create new standalone note associated with current issue
         await kitchenService.addMaintenanceNote(selectedEquipment, {
-          notes: newNote.trim()
+          notes: newNote.trim(),
+          type: 'note',
+          associatedWithCurrentIssue: true
         })
       }
 
@@ -691,10 +706,14 @@ export default function Equipment() {
       // Close dialog immediately to prevent multiple submissions
       setUpdateDialog(false);
 
-      // Add update note with explicit type field
+      // Add update note with explicit type field and status information
+      // This ensures it will be properly grouped with the current issue
       await kitchenService.addMaintenanceNote(selectedEquipment, {
         notes: formattedNote,
-        type: 'note' // Explicitly pass 'note' type
+        type: 'note', // Explicitly pass 'note' type
+        // Don't include status change information to ensure it's treated as an update
+        // to the current issue rather than a new issue or resolution
+        associatedWithCurrentIssue: true
       });
 
       // Reset state
@@ -1592,18 +1611,66 @@ export default function Equipment() {
               <div className="space-y-4">
                 {/* Group records by incident */}
                 {(() => {
-                  // Group records by date (simplified approach to group related events)
+                  // Group records by issue/incident rather than by date
                   const groupedRecords = maintenanceHistory.reduce((groups, record) => {
-                    // Create a key based on the date (ignoring time) to group related events
-                    const dateKey = new Date(record.date).toDateString();
+                    // First, identify if this is a status change record
+                    const isStatusChange = record.previousStatus !== undefined && record.newStatus !== undefined;
 
-                    // If we don't have this group yet, create it
-                    if (!groups[dateKey]) {
-                      groups[dateKey] = [];
+                    // If this is a status change from operational to non-operational, it's the start of a new incident
+                    if (isStatusChange && record.previousStatus === 'operational' && record.newStatus !== 'operational') {
+                      // Create a new incident group with this record's ID as the key
+                      const incidentKey = record.id || record.date;
+                      groups[incidentKey] = [record];
+                      return groups;
                     }
 
-                    // Add the record to its group
-                    groups[dateKey].push(record);
+                    // For all other records, we need to find which incident they belong to
+                    // First, check if this is a resolution record (status change back to operational)
+                    if (isStatusChange && record.previousStatus !== 'operational' && record.newStatus === 'operational') {
+                      // Find the most recent incident that doesn't have a resolution yet
+                      const openIncidentKeys = Object.keys(groups).filter(key => {
+                        const incidentRecords = groups[key];
+                        // Check if this incident has a resolution record
+                        return !incidentRecords.some(r =>
+                          r.previousStatus !== 'operational' && r.newStatus === 'operational'
+                        );
+                      });
+
+                      // Sort by date to get the most recent open incident
+                      openIncidentKeys.sort((a, b) => {
+                        const dateA = new Date(groups[a][0].date).getTime();
+                        const dateB = new Date(groups[b][0].date).getTime();
+                        return dateB - dateA; // Sort descending (newest first)
+                      });
+
+                      // Add to the most recent open incident, or create a new one if none found
+                      if (openIncidentKeys.length > 0) {
+                        groups[openIncidentKeys[0]].push(record);
+                      } else {
+                        // If no open incident found, create a new one
+                        const incidentKey = record.id || record.date;
+                        groups[incidentKey] = [record];
+                      }
+                      return groups;
+                    }
+
+                    // For update notes and other records, add to the most recent incident
+                    // Sort all incidents by date (newest first)
+                    const sortedKeys = Object.keys(groups).sort((a, b) => {
+                      const dateA = new Date(groups[a][0].date).getTime();
+                      const dateB = new Date(groups[b][0].date).getTime();
+                      return dateB - dateA; // Sort descending (newest first)
+                    });
+
+                    // If we have incidents, add to the most recent one
+                    if (sortedKeys.length > 0) {
+                      groups[sortedKeys[0]].push(record);
+                    } else {
+                      // If no incidents yet, create a new one
+                      const incidentKey = record.id || record.date;
+                      groups[incidentKey] = [record];
+                    }
+
                     return groups;
                   }, {});
 
@@ -1691,12 +1758,12 @@ export default function Equipment() {
                         key={dateKey}
                         className={`p-4 border rounded-xl hover:shadow-md transition-all duration-200 relative ${isResolved ? 'border-green-200 bg-green-50/30' : 'border-red-200 bg-red-50/30'}`}
                       >
-                        {/* Header with date and status */}
+                        {/* Header with issue date, latest update, and status */}
                         <div className="flex items-start justify-between">
                           <div>
                             <div className="flex items-center gap-2">
                               <p className="font-medium text-gray-900">
-                                {format(new Date(latestRecord.date), 'PPP')}
+                                {issueRecord ? format(new Date(issueRecord.date), 'PPP') : format(new Date(latestRecord.date), 'PPP')}
                               </p>
                               <Badge
                                 variant="secondary"
@@ -1708,9 +1775,16 @@ export default function Equipment() {
                                 }
                               </Badge>
                             </div>
+
+                            {/* Show last update information */}
                             {latestRecord.performedBy && (
                               <p className="text-sm text-gray-600 mt-1">
                                 <span className="font-medium">Last update by:</span> {latestRecord.performedBy.name}
+                                {latestRecord !== issueRecord && (
+                                  <span className="ml-1 text-xs text-gray-500">
+                                    ({format(new Date(latestRecord.date), 'MMM d, h:mm a')})
+                                  </span>
+                                )}
                               </p>
                             )}
                           </div>
@@ -1732,128 +1806,132 @@ export default function Equipment() {
                           </Badge>
                         </div>
 
-                        {/* Timeline section */}
+                        {/* Timeline section - All in one card */}
                         <div className="mt-4 border-l-2 border-gray-200 pl-4 space-y-3">
-                          {/* Issue reported */}
-                          {issueRecord && (
-                            <div className="relative">
-                              <div className="absolute -left-[21px] top-0 w-4 h-4 rounded-full bg-red-500 border-2 border-white"></div>
-                              <div className="flex flex-col">
-                                <p className="text-sm font-medium text-gray-900">
-                                  Issue Reported
-                                  <span className="text-xs font-normal text-gray-500 ml-2">
-                                    {format(new Date(issueRecord.date), 'MMM d, h:mm a')}
-                                  </span>
-                                </p>
-                                {issueRecord.notes && (
-                                  <p className="text-sm text-gray-600 mt-1 bg-white/80 p-2 rounded-lg">
-                                    {issueRecord.notes}
-                                  </p>
-                                )}
-                                <p className="text-xs text-gray-500 mt-1">
-                                  Reported by: {issueRecord.performedBy.name}
-                                </p>
-                              </div>
-                            </div>
-                          )}
+                          {/* All status updates in a single timeline */}
+                          {/* Combine all records and sort by date */}
+                          {(() => {
+                            // Create an array of all records with their types
+                            const allRecords = [];
 
-                          {/* Update records */}
-                          {updateRecords.map((record, index) => {
-                            // Extract status type from note
-                            let statusType = 'Update';
-                            let badgeClass = 'bg-blue-100 text-blue-700';
-                            let iconClass = 'bg-blue-500';
-
-                            if (record.notes.startsWith('[PARTS ORDERED]')) {
-                              statusType = 'Parts Ordered';
-                              badgeClass = 'bg-purple-100 text-purple-700';
-                              iconClass = 'bg-purple-500';
-                            } else if (record.notes.startsWith('[REPAIR SCHEDULED]')) {
-                              statusType = 'Repair Scheduled';
-                              badgeClass = 'bg-amber-100 text-amber-700';
-                              iconClass = 'bg-amber-500';
-                            } else if (record.notes.startsWith('[IN PROGRESS]')) {
-                              statusType = 'In Progress';
-                              badgeClass = 'bg-blue-100 text-blue-700';
-                              iconClass = 'bg-blue-500';
-                            } else if (record.notes.startsWith('[WAITING APPROVAL]')) {
-                              statusType = 'Waiting Approval';
-                              badgeClass = 'bg-orange-100 text-orange-700';
-                              iconClass = 'bg-orange-500';
+                            // Add issue record if it exists
+                            if (issueRecord) {
+                              allRecords.push({
+                                ...issueRecord,
+                                recordType: 'issue',
+                                displayType: 'Issue Reported',
+                                iconClass: 'bg-red-500',
+                                badgeClass: 'bg-red-100 text-red-700'
+                              });
                             }
 
-                            // Clean up notes to remove status prefix
-                            const cleanNotes = record.notes
-                              .replace(/^\[.*?\]\s*/i, '')
-                              .trim();
+                            // Add all update records
+                            updateRecords.forEach(record => {
+                              let statusType = 'Update';
+                              let badgeClass = 'bg-blue-100 text-blue-700';
+                              let iconClass = 'bg-blue-500';
 
-                            return (
-                              <div className="relative" key={index}>
-                                <div className={`absolute -left-[21px] top-0 w-4 h-4 rounded-full ${iconClass} border-2 border-white`}></div>
-                                <div className="flex flex-col">
-                                  <div className="flex items-center gap-2">
-                                    <p className="text-sm font-medium text-gray-900">
-                                      {statusType}
+                              if (record.notes?.startsWith('[PARTS ORDERED]')) {
+                                statusType = 'Parts Ordered';
+                                badgeClass = 'bg-purple-100 text-purple-700';
+                                iconClass = 'bg-purple-500';
+                              } else if (record.notes?.startsWith('[REPAIR SCHEDULED]')) {
+                                statusType = 'Repair Scheduled';
+                                badgeClass = 'bg-amber-100 text-amber-700';
+                                iconClass = 'bg-amber-500';
+                              } else if (record.notes?.startsWith('[IN PROGRESS]')) {
+                                statusType = 'In Progress';
+                                badgeClass = 'bg-blue-100 text-blue-700';
+                                iconClass = 'bg-blue-500';
+                              } else if (record.notes?.startsWith('[WAITING APPROVAL]')) {
+                                statusType = 'Waiting Approval';
+                                badgeClass = 'bg-orange-100 text-orange-700';
+                                iconClass = 'bg-orange-500';
+                              }
+
+                              allRecords.push({
+                                ...record,
+                                recordType: 'update',
+                                displayType: statusType,
+                                iconClass,
+                                badgeClass
+                              });
+                            });
+
+                            // Add repair record if it exists
+                            if (repairRecord) {
+                              allRecords.push({
+                                ...repairRecord,
+                                recordType: 'repair',
+                                displayType: 'Repair Completed',
+                                iconClass: 'bg-green-500',
+                                badgeClass: 'bg-green-100 text-green-700'
+                              });
+                            }
+
+                            // Sort all records by date (oldest first for chronological display)
+                            allRecords.sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
+
+                            // Render all records in the timeline
+                            return allRecords.map((record, index) => {
+                              // Clean up notes to remove status prefix for update records
+                              let displayNotes = record.notes || '';
+                              if (record.recordType === 'update') {
+                                displayNotes = displayNotes.replace(/^\[.*?\]\s*/i, '').trim();
+                              } else if (record.recordType === 'repair') {
+                                // Use the cleaned repair notes
+                                displayNotes = repairNotes;
+                              }
+
+                              return (
+                                <div className="relative" key={index}>
+                                  <div className={`absolute -left-[21px] top-0 w-4 h-4 rounded-full ${record.iconClass} border-2 border-white`}></div>
+                                  <div className="flex flex-col">
+                                    <div className="flex items-center gap-2">
+                                      <p className="text-sm font-medium text-gray-900">
+                                        {record.displayType}
+                                      </p>
+                                      <Badge variant="secondary" className={`px-2 py-0.5 rounded-full text-xs ${record.badgeClass}`}>
+                                        {record.displayType}
+                                      </Badge>
+                                      <span className="text-xs font-normal text-gray-500">
+                                        {format(new Date(record.date), 'MMM d, h:mm a')}
+                                      </span>
+                                    </div>
+
+                                    {displayNotes && (
+                                      <p className="text-sm text-gray-600 mt-1 bg-white/80 p-2 rounded-lg whitespace-pre-line">
+                                        {displayNotes}
+                                      </p>
+                                    )}
+
+                                    {/* Show cost and repair person info for repair records */}
+                                    {record.recordType === 'repair' && (
+                                      <div className="flex flex-wrap gap-2 mt-2">
+                                        {costInfo && (
+                                          <div className="bg-green-100 text-green-700 px-3 py-1 rounded-full text-xs font-medium flex items-center">
+                                            <span className="mr-1">💰</span>
+                                            Cost: ${costInfo}
+                                          </div>
+                                        )}
+                                        {repairedBy && (
+                                          <div className="bg-blue-100 text-blue-700 px-3 py-1 rounded-full text-xs font-medium flex items-center">
+                                            <span className="mr-1">👤</span>
+                                            Repaired by: {repairedBy}
+                                          </div>
+                                        )}
+                                      </div>
+                                    )}
+
+                                    <p className="text-xs text-gray-500 mt-1">
+                                      {record.recordType === 'issue' ? 'Reported' :
+                                       record.recordType === 'repair' ? 'Fixed' : 'Updated'} by: {record.performedBy.name}
                                     </p>
-                                    <Badge variant="secondary" className={`px-2 py-0.5 rounded-full text-xs ${badgeClass}`}>
-                                      {statusType}
-                                    </Badge>
-                                    <span className="text-xs font-normal text-gray-500">
-                                      {format(new Date(record.date), 'MMM d, h:mm a')}
-                                    </span>
                                   </div>
-                                  {cleanNotes && (
-                                    <p className="text-sm text-gray-600 mt-1 bg-white/80 p-2 rounded-lg">
-                                      {cleanNotes}
-                                    </p>
-                                  )}
-                                  <p className="text-xs text-gray-500 mt-1">
-                                    Updated by: {record.performedBy.name}
-                                  </p>
                                 </div>
-                              </div>
-                            );
-                          })}
-
-                          {/* Repair completed */}
-                          {repairRecord && (
-                            <div className="relative">
-                              <div className="absolute -left-[21px] top-0 w-4 h-4 rounded-full bg-green-500 border-2 border-white"></div>
-                              <div className="flex flex-col">
-                                <p className="text-sm font-medium text-gray-900">
-                                  Repair Completed
-                                  <span className="text-xs font-normal text-gray-500 ml-2">
-                                    {format(new Date(repairRecord.date), 'MMM d, h:mm a')}
-                                  </span>
-                                </p>
-                                {repairNotes && (
-                                  <p className="text-sm text-gray-600 mt-1 bg-white/80 p-2 rounded-lg whitespace-pre-line">
-                                    {repairNotes}
-                                  </p>
-                                )}
-
-                                {/* Cost and repair person info */}
-                                <div className="flex flex-wrap gap-2 mt-2">
-                                  {costInfo && (
-                                    <div className="bg-green-100 text-green-700 px-3 py-1 rounded-full text-xs font-medium flex items-center">
-                                      <span className="mr-1">💰</span>
-                                      Cost: ${costInfo}
-                                    </div>
-                                  )}
-                                  {repairedBy && (
-                                    <div className="bg-blue-100 text-blue-700 px-3 py-1 rounded-full text-xs font-medium flex items-center">
-                                      <span className="mr-1">👤</span>
-                                      Repaired by: {repairedBy}
-                                    </div>
-                                  )}
-                                </div>
-
-                                <p className="text-xs text-gray-500 mt-1">
-                                  Fixed by: {repairRecord.performedBy.name}
-                                </p>
-                              </div>
-                            </div>
-                          )}
+                              );
+                            });
+                          })()}
                         </div>
 
                         {/* Action buttons */}
@@ -1878,6 +1956,8 @@ export default function Equipment() {
                               onClick={() => {
                                 // Don't change the selected equipment ID here
                                 setResolveDialog(true)
+                                // Keep the maintenance history dialog open when fixing
+                                // The handleResolveIssues function will refresh the history
                               }}
                               className="h-8 text-xs bg-green-50 text-green-600 border-green-200"
                             >
