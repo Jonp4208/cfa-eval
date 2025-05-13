@@ -18,6 +18,7 @@ export interface EquipmentItem {
   id: string;
   name: string;
   maintenanceInterval: number;
+  displayOrder?: number;
 }
 
 export interface EquipmentConfig {
@@ -404,23 +405,23 @@ export const kitchenService = {
       // Get the checklist items
       const itemsResponse = await api.get(`/api/kitchen/checklists/shift/${type}`);
       const items = itemsResponse.data;
-  
+
       // Get today's completions
       const today = new Date();
       today.setHours(0, 0, 0, 0);
       const todayStr = today.toISOString();
-  
+
       try {
         const completionsResponse = await api.get(`/api/kitchen/checklists/shift/${type}/completions`, {
           params: { startDate: todayStr }
         });
         const completions = completionsResponse.data;
-  
+
         // If we have completions for today, mark the items as completed
         if (completions && completions.length > 0) {
           // Get the latest completion
           const latestCompletion = completions[0];
-  
+
           // Mark items as completed based on the latest completion
           return items.map(item => {
             const completedItem = latestCompletion.items.find(i => i.id === item.id);
@@ -439,7 +440,7 @@ export const kitchenService = {
           throw completionError;
         }
       }
-  
+
       // If no completions found, return items as is
       return items;
     } catch (error: any) {

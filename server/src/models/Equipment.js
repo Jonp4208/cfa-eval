@@ -65,8 +65,8 @@ const cleaningScheduleSchema = new mongoose.Schema({
 const equipmentSchema = new mongoose.Schema({
   id: {
     type: String,
-    required: true,
-    unique: true
+    required: true
+    // Removed unique constraint here, using compound index instead
   },
   name: {
     type: String,
@@ -76,6 +76,10 @@ const equipmentSchema = new mongoose.Schema({
     type: String,
     required: true,
     enum: ['cooking', 'refrigeration', 'preparation', 'cleaning']
+  },
+  displayOrder: {
+    type: Number,
+    default: 0
   },
   maintenanceInterval: {
     type: Number,

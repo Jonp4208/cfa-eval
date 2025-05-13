@@ -37,7 +37,10 @@ import {
   Calendar,
   MessageSquare,
   Timer,
-  BarChart
+  BarChart,
+  ChevronUp,
+  ChevronDown,
+  User
 } from 'lucide-react'
 import { EquipmentIcon } from './components/EquipmentIcon'
 import { useSnackbar } from 'notistack'
@@ -370,6 +373,17 @@ export default function Equipment() {
       isNew: true
     }
     setEditingItems(prevItems => [...prevItems, newItem])
+
+    // Add a small delay to ensure the new item is rendered before focusing
+    setTimeout(() => {
+      // Find the last input element in the dialog (which should be the new item)
+      const inputs = document.querySelectorAll('.equipment-name-input')
+      const lastInput = inputs[inputs.length - 1] as HTMLInputElement
+      if (lastInput) {
+        lastInput.focus()
+        lastInput.scrollIntoView({ behavior: 'smooth', block: 'center' })
+      }
+    }, 100)
   }
 
   const handleRemoveItem = (index: number) => {
@@ -380,6 +394,61 @@ export default function Equipment() {
       newItems[index].isDeleted = true
     }
     setEditingItems(newItems)
+  }
+
+  // Function to move an item up in the list
+  const handleMoveItemUp = (index: number) => {
+    if (index <= 0) return // Can't move up if it's the first item
+
+    const newItems = [...editingItems]
+    // Swap the item with the one above it
+    const temp = newItems[index]
+    newItems[index] = newItems[index - 1]
+    newItems[index - 1] = temp
+
+    setEditingItems(newItems)
+
+    // Focus on the moved item's input after reordering
+    setTimeout(() => {
+      const inputs = document.querySelectorAll('.equipment-name-input')
+      const input = inputs[index - 1] as HTMLInputElement
+      if (input) {
+        input.focus()
+        input.scrollIntoView({ behavior: 'smooth', block: 'center' })
+      }
+    }, 100)
+  }
+
+  // Function to move an item down in the list
+  const handleMoveItemDown = (index: number) => {
+    const visibleItems = editingItems.filter(item => !item.isDeleted)
+    if (index >= visibleItems.length - 1) return // Can't move down if it's the last item
+
+    const newItems = [...editingItems]
+    // Find the next non-deleted item
+    let nextIndex = index + 1
+    while (nextIndex < newItems.length && newItems[nextIndex].isDeleted) {
+      nextIndex++
+    }
+
+    if (nextIndex < newItems.length) {
+      // Swap the item with the one below it
+      const temp = newItems[index]
+      newItems[index] = newItems[nextIndex]
+      newItems[nextIndex] = temp
+
+      setEditingItems(newItems)
+
+      // Focus on the moved item's input after reordering
+      setTimeout(() => {
+        const inputs = document.querySelectorAll('.equipment-name-input')
+        const input = inputs[nextIndex] as HTMLInputElement
+        if (input) {
+          input.focus()
+          input.scrollIntoView({ behavior: 'smooth', block: 'center' })
+        }
+      }, 100)
+    }
   }
 
   const handleUpdateItem = (index: number, field: keyof EquipmentItem, value: string | number) => {
@@ -393,6 +462,12 @@ export default function Equipment() {
 
   const handleSaveConfig = async () => {
     try {
+      // Show saving notification
+      enqueueSnackbar('Saving equipment configuration...', {
+        variant: 'info',
+        autoHideDuration: 2000
+      })
+
       // Validate items before saving
       const itemsToSave = editingItems
         .filter(item => !item.isDeleted)
@@ -406,7 +481,10 @@ export default function Equipment() {
 
       // Check if any items are missing names
       if (itemsToSave.some(item => !item.name)) {
-        enqueueSnackbar('Please provide names for all equipment items', { variant: 'error' })
+        enqueueSnackbar('Please provide names for all equipment items', {
+          variant: 'error',
+          preventDuplicate: true
+        })
         return
       }
 
@@ -414,10 +492,18 @@ export default function Equipment() {
       await loadEquipmentConfig()
       await loadEquipmentData()
       setEditConfigDialog(false)
-      enqueueSnackbar('Equipment configuration updated successfully', { variant: 'success' })
+
+      // Show success notification with longer duration
+      enqueueSnackbar(`${selectedCategory.charAt(0).toUpperCase() + selectedCategory.slice(1)} equipment saved successfully!`, {
+        variant: 'success',
+        autoHideDuration: 4000
+      })
     } catch (error) {
       console.error('Error updating equipment config:', error)
-      enqueueSnackbar('Failed to update equipment configuration', { variant: 'error' })
+      enqueueSnackbar('Failed to update equipment configuration', {
+        variant: 'error',
+        autoHideDuration: 5000
+      })
     }
   }
 
@@ -1540,14 +1626,42 @@ export default function Equipment() {
                           </Badge>
                         )}
                       </div>
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        onClick={() => handleRemoveItem(index)}
-                        className="h-8 w-8 p-0 text-red-600 hover:text-red-700 hover:bg-red-50 rounded-lg transition-colors"
-                      >
-                        <Trash2 className="w-4 h-4" />
-                      </Button>
+                      <div className="flex items-center gap-1">
+                        {/* Move Up Button */}
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => handleMoveItemUp(index)}
+                          disabled={index === 0}
+                          className="h-8 w-8 p-0 text-blue-600 hover:text-blue-700 hover:bg-blue-50 rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                          title="Move Up"
+                        >
+                          <ChevronUp className="w-4 h-4" />
+                        </Button>
+
+                        {/* Move Down Button */}
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => handleMoveItemDown(index)}
+                          disabled={index === editingItems.filter(item => !item.isDeleted).length - 1}
+                          className="h-8 w-8 p-0 text-blue-600 hover:text-blue-700 hover:bg-blue-50 rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                          title="Move Down"
+                        >
+                          <ChevronDown className="w-4 h-4" />
+                        </Button>
+
+                        {/* Delete Button */}
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => handleRemoveItem(index)}
+                          className="h-8 w-8 p-0 text-red-600 hover:text-red-700 hover:bg-red-50 rounded-lg transition-colors"
+                          title="Remove Item"
+                        >
+                          <Trash2 className="w-4 h-4" />
+                        </Button>
+                      </div>
                     </div>
 
                     <div className="space-y-2">
@@ -1556,7 +1670,7 @@ export default function Equipment() {
                         value={item.name}
                         onChange={(e) => handleUpdateItem(index, 'name', e.target.value)}
                         placeholder="Enter equipment name"
-                        className="h-10 border border-gray-200 rounded-lg focus:border-blue-300 focus:ring-blue-200 transition-all duration-200"
+                        className="equipment-name-input h-10 border border-gray-200 rounded-lg focus:border-blue-300 focus:ring-blue-200 transition-all duration-200"
                       />
                       <p className="text-xs text-gray-500">Enter a descriptive name for this equipment</p>
                     </div>

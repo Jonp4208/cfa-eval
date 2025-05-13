@@ -572,16 +572,16 @@ router.patch('/equipment/:id/status', auth, async (req, res) => {
       try {
         // Import notification service
         const { NotificationService } = await import('../services/notificationService.js')
-        
+
         // Get the latest issue details
-        const latestIssue = Array.isArray(issues) && issues.length > 0 
-          ? issues[issues.length - 1] 
+        const latestIssue = Array.isArray(issues) && issues.length > 0
+          ? issues[issues.length - 1]
           : 'Equipment marked as broken'
-          
+
         // Send notifications to directors
         await NotificationService.notifyEquipmentBroken(
-          equipment, 
-          req.user, 
+          equipment,
+          req.user,
           latestIssue
         )
       } catch (notificationError) {
@@ -649,7 +649,7 @@ router.post('/equipment/:id/history', auth, async (req, res) => {
     });
 
     await equipment.save();
-    
+
     // Return the updated maintenance history
     res.json(equipment.maintenanceHistory);
   } catch (error) {
@@ -913,7 +913,7 @@ router.get('/equipment/config', auth, async (req, res) => {
   try {
     const equipment = await Equipment.find({
       store: req.user.store._id
-    }).select('id category name maintenanceInterval')
+    }).select('id category name maintenanceInterval displayOrder')
 
     // Group by category
     const config = equipment.reduce((acc, item) => {
@@ -923,10 +923,16 @@ router.get('/equipment/config', auth, async (req, res) => {
       acc[item.category].push({
         id: item.id,
         name: item.name,
-        maintenanceInterval: item.maintenanceInterval
+        maintenanceInterval: item.maintenanceInterval,
+        displayOrder: item.displayOrder || 0
       })
       return acc
     }, {})
+
+    // Sort each category by displayOrder
+    Object.keys(config).forEach(category => {
+      config[category].sort((a, b) => a.displayOrder - b.displayOrder)
+    })
 
     res.json(config)
   } catch (error) {
@@ -939,29 +945,100 @@ router.post('/equipment/config', auth, async (req, res) => {
   try {
     const { category, items } = req.body
 
-    // Remove existing equipment in this category
-    await Equipment.deleteMany({
-      store: req.user.store._id,
-      category
-    })
+    // Validate required fields
+    if (!category) {
+      return res.status(400).json({
+        message: 'Missing required field: category',
+        details: 'The category field is required for equipment configuration'
+      })
+    }
 
-    // Add new equipment
-    const equipment = await Equipment.insertMany(
-      items.map(item => ({
+    if (!items || !Array.isArray(items)) {
+      return res.status(400).json({
+        message: 'Missing or invalid required field: items',
+        details: 'The items field must be an array of equipment items'
+      })
+    }
+
+    // Validate each item has required fields
+    for (const item of items) {
+      if (!item.id || !item.name) {
+        return res.status(400).json({
+          message: 'Missing required fields in equipment item',
+          details: 'Each equipment item must have id and name fields',
+          item
+        })
+      }
+    }
+
+    // Ensure store ID is available
+    if (!req.user.store || !req.user.store._id) {
+      return res.status(400).json({
+        message: 'Store information not available',
+        details: 'User must be associated with a store to configure equipment'
+      })
+    }
+
+    console.log(`Updating equipment config for store ${req.user.store._id}, category: ${category}, items count: ${items.length}`)
+
+    // Use a transaction to ensure data consistency
+    const session = await mongoose.startSession()
+    session.startTransaction()
+
+    try {
+      // Remove existing equipment in this category for this store
+      await Equipment.deleteMany({
+        store: req.user.store._id,
+        category
+      }, { session })
+
+      // Create new equipment items for this store
+      const equipmentItems = items.map((item, index) => ({
         id: item.id,
         name: item.name,
         category,
-        maintenanceInterval: item.maintenanceInterval,
+        displayOrder: index, // Set display order based on the order in the array
+        maintenanceInterval: item.maintenanceInterval || 30, // Default to 30 days if not provided
         store: req.user.store._id,
         status: 'operational',
         lastMaintenance: new Date(),
-        nextMaintenance: new Date(Date.now() + item.maintenanceInterval * 24 * 60 * 60 * 1000)
+        nextMaintenance: new Date(Date.now() + (item.maintenanceInterval || 30) * 24 * 60 * 60 * 1000)
       }))
-    )
 
-    res.status(201).json(equipment)
+      // Use bulkWrite with ordered: false to continue even if some operations fail
+      const result = await Equipment.insertMany(equipmentItems, {
+        session,
+        ordered: false // Continue processing even if some documents fail
+      })
+
+      await session.commitTransaction()
+      session.endSession()
+
+      console.log(`Successfully created ${result.length} equipment items for store ${req.user.store._id}`)
+      res.status(201).json(result)
+    } catch (txError) {
+      // If transaction fails, abort it and handle the error
+      await session.abortTransaction()
+      session.endSession()
+      throw txError
+    }
   } catch (error) {
-    res.status(400).json({ message: error.message })
+    console.error('Error updating equipment configuration:', error)
+
+    // Check for duplicate key error
+    if (error.code === 11000) {
+      return res.status(400).json({
+        message: 'Duplicate equipment ID detected',
+        details: 'Equipment IDs must be unique within a store. Try using different IDs for your equipment.',
+        error: error.message
+      })
+    }
+
+    res.status(400).json({
+      message: 'Failed to update equipment configuration',
+      error: error.message,
+      stack: process.env.NODE_ENV === 'development' ? error.stack : undefined
+    })
   }
 })
 
