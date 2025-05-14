@@ -19,6 +19,7 @@ import {
 import { cn } from '@/lib/utils'
 import { ManageItemPrices } from '@/components/kitchen/waste/ManageItemPrices'
 import { ManageCustomItems } from '@/components/kitchen/waste/ManageCustomItems'
+import { BulkEntryDialog } from '@/components/kitchen/waste/BulkEntryDialog'
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogTrigger } from '@/components/ui/dialog'
 import { ItemPricesProvider, useItemPrices } from '@/contexts/ItemPricesContext'
 import { CustomWasteItemsProvider, useCustomWasteItems } from '@/contexts/CustomWasteItemsContext'
@@ -102,6 +103,7 @@ function WasteTrackerContent() {
   const [selectedEntryToDelete, setSelectedEntryToDelete] = useState<string | null>(null)
   const [showPricesDialog, setShowPricesDialog] = useState(false)
   const [showCustomItemsDialog, setShowCustomItemsDialog] = useState(false)
+  const [showBulkEntryDialog, setShowBulkEntryDialog] = useState(false)
 
   const { entries, metrics, createWasteEntry, deleteWasteEntry, fetchWasteEntries, fetchWasteMetrics, isLoading } = useWasteStore()
   const { getItemPrice } = useItemPrices()
@@ -183,6 +185,38 @@ function WasteTrackerContent() {
       setReason('')
     } catch (error) {
       console.error('Failed to add custom waste entry:', error)
+    }
+  }
+
+  const handleBulkAdd = async (entry: {
+    itemName: string
+    quantity: number
+    unit: string
+    cost: number
+    reason: string
+  }) => {
+    try {
+      await createWasteEntry({
+        date: new Date().toISOString(),
+        category: 'food',
+        itemName: entry.itemName,
+        quantity: entry.quantity,
+        unit: entry.unit,
+        cost: entry.cost,
+        reason: entry.reason
+      })
+
+      // Refresh metrics immediately after adding new entry
+      const today = format(new Date(), 'yyyy-MM-dd')
+      const startOfDay = `${today}T00:00:00.000Z`
+      const endOfDay = `${today}T23:59:59.999Z`
+
+      fetchWasteMetrics({
+        startDate: startOfDay,
+        endDate: endOfDay
+      })
+    } catch (error) {
+      console.error('Failed to add bulk waste entry:', error)
     }
   }
 
@@ -295,7 +329,16 @@ function WasteTrackerContent() {
             <div className="p-3 sm:p-6">
               {/* Meal Period Selector */}
               <div className="flex flex-col space-y-3 sm:space-y-4 mb-4 sm:mb-6">
-                <h2 className="text-base sm:text-lg font-semibold text-[#27251F]">Quick Add Waste</h2>
+                <div className="flex justify-between items-center">
+                  <h2 className="text-base sm:text-lg font-semibold text-[#27251F]">Quick Add Waste</h2>
+                  <Button
+                    onClick={() => setShowBulkEntryDialog(true)}
+                    size="sm"
+                    className="bg-[#E51636] text-white hover:bg-[#E51636]/90 h-8 sm:h-9 text-xs sm:text-sm rounded-full"
+                  >
+                    Bulk Entry
+                  </Button>
+                </div>
                 <div className="flex flex-wrap gap-1.5 sm:gap-2">
                   <Button
                     onClick={() => setActiveMealPeriod('breakfast')}
@@ -523,6 +566,15 @@ function WasteTrackerContent() {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+
+      {/* Bulk Entry Dialog */}
+      <BulkEntryDialog
+        open={showBulkEntryDialog}
+        onOpenChange={setShowBulkEntryDialog}
+        onSubmit={handleBulkAdd}
+        defaultItems={WASTE_ITEMS}
+        isLoading={isLoading}
+      />
     </div>
   )
 }
