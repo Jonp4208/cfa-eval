@@ -168,20 +168,26 @@ function WasteTrackerContent() {
     }
   }
 
+  const [customPrice, setCustomPrice] = useState('')
+
   const handleCustomAdd = async () => {
     if (!selectedItem || !quantity) return
     try {
+      const price = parseFloat(customPrice) || 1.00
+      const qty = parseInt(quantity) || 1
+
       await createWasteEntry({
         date: new Date().toISOString(),
         category: 'food',
         itemName: selectedItem,
-        quantity: parseInt(quantity),
+        quantity: qty,
         unit: 'pieces',
-        cost: 1.00,
+        cost: price * qty,
         reason: reason || 'Other'
       })
       setSelectedItem('')
       setQuantity('')
+      setCustomPrice('')
       setReason('')
     } catch (error) {
       console.error('Failed to add custom waste entry:', error)
@@ -448,18 +454,18 @@ function WasteTrackerContent() {
 
           {/* Reason Selection - Grid layout adjusted for mobile */}
           <Card className="bg-white rounded-[20px] hover:shadow-xl transition-all duration-300">
-            <div className="p-4 md:p-6">
-              <h3 className="text-lg md:text-xl font-bold text-[#27251F] mb-4">Select Reason</h3>
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            <div className="p-3 sm:p-6">
+              <h3 className="text-base sm:text-lg font-semibold text-[#27251F] mb-3 sm:mb-4">Select Reason</h3>
+              <div className="grid grid-cols-2 gap-2 sm:gap-3">
                 {WASTE_REASONS.map((wasteReason) => (
                   <Button
                     key={wasteReason.label}
                     variant="outline"
-                    className={`h-14 md:h-16 text-base md:text-lg border ${
+                    className={`h-auto py-4 sm:py-6 px-2 sm:px-4 text-sm sm:text-base border ${
                       reason === wasteReason.label
-                        ? `${wasteReason.color} border-2`
-                        : 'border-gray-200 hover:border-gray-300 hover:bg-gray-50'
-                    } rounded-xl transition-all duration-200`}
+                        ? `bg-[#E51636]/10 text-[#E51636] border-[#E51636]/20 hover:bg-[#E51636]/20`
+                        : 'border-gray-100 hover:bg-[#E51636]/5 hover:text-[#E51636] hover:border-[#E51636]/20'
+                    } rounded-xl sm:rounded-[20px] transition-all duration-200 font-medium`}
                     onClick={() => setReason(wasteReason.label)}
                     disabled={isLoading}
                   >
@@ -526,27 +532,43 @@ function WasteTrackerContent() {
         <div className="p-3 sm:p-6">
           <div className="flex flex-col space-y-3 sm:space-y-4">
             <h2 className="text-base sm:text-lg font-semibold text-[#27251F]">Custom Entry</h2>
-            <div className="flex flex-col sm:flex-row gap-2 sm:gap-3">
-              <Input
-                placeholder="Item name"
-                value={selectedItem}
-                onChange={(e) => setSelectedItem(e.target.value)}
-                className="flex-1 h-8 sm:h-10 text-xs sm:text-sm rounded-lg"
-              />
-              <Input
-                type="number"
-                placeholder="Quantity"
-                value={quantity}
-                onChange={(e) => setQuantity(e.target.value)}
-                className="flex-1 h-8 sm:h-10 text-xs sm:text-sm rounded-lg"
-              />
-              <Button
-                onClick={handleCustomAdd}
-                disabled={!selectedItem || !quantity}
-                className="h-8 sm:h-10 text-xs sm:text-sm bg-[#E51636] text-white hover:bg-[#E51636]/90 rounded-lg"
-              >
-                Add Entry
-              </Button>
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 sm:gap-3">
+              <div className="col-span-2 sm:col-span-1">
+                <Input
+                  placeholder="Item name"
+                  value={selectedItem}
+                  onChange={(e) => setSelectedItem(e.target.value)}
+                  className="w-full h-8 sm:h-10 text-xs sm:text-sm rounded-lg"
+                />
+              </div>
+              <div className="col-span-1">
+                <Input
+                  type="number"
+                  placeholder="Quantity"
+                  value={quantity}
+                  onChange={(e) => setQuantity(e.target.value)}
+                  className="w-full h-8 sm:h-10 text-xs sm:text-sm rounded-lg"
+                />
+              </div>
+              <div className="col-span-1">
+                <Input
+                  type="number"
+                  step="0.01"
+                  placeholder="Unit Price ($)"
+                  value={customPrice}
+                  onChange={(e) => setCustomPrice(e.target.value)}
+                  className="w-full h-8 sm:h-10 text-xs sm:text-sm rounded-lg"
+                />
+              </div>
+              <div className="col-span-2 sm:col-span-1">
+                <Button
+                  onClick={handleCustomAdd}
+                  disabled={!selectedItem || !quantity}
+                  className="w-full h-8 sm:h-10 text-xs sm:text-sm bg-[#E51636] text-white hover:bg-[#E51636]/90 rounded-lg"
+                >
+                  Add Entry
+                </Button>
+              </div>
             </div>
           </div>
         </div>
