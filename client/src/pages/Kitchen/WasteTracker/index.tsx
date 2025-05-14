@@ -243,48 +243,7 @@ function WasteTrackerContent() {
 
   return (
     <div className="space-y-4 px-4 md:px-6 pb-6">
-      <div className="flex justify-between items-center mb-2">
-        <h1 className="text-2xl font-bold">Waste Tracker</h1>
-        <div className="flex gap-2">
-          <Dialog open={showCustomItemsDialog} onOpenChange={setShowCustomItemsDialog}>
-            <DialogTrigger asChild>
-              <Button variant="outline" onClick={() => setShowCustomItemsDialog(true)}>
-                Custom Items
-              </Button>
-            </DialogTrigger>
-            <DialogContent className="max-w-xl w-full max-h-[80vh] overflow-y-auto p-0">
-              <DialogHeader className="sticky top-0 z-10 bg-white p-4 border-b">
-                <DialogTitle>Custom Items</DialogTitle>
-                <DialogDescription>
-                  Add, edit, or remove custom waste items for your store.
-                </DialogDescription>
-              </DialogHeader>
-              <div className="p-6">
-                <ManageCustomItems />
-              </div>
-            </DialogContent>
-          </Dialog>
 
-          <Dialog open={showPricesDialog} onOpenChange={setShowPricesDialog}>
-            <DialogTrigger asChild>
-              <Button variant="outline" onClick={() => setShowPricesDialog(true)}>
-                Manage Prices
-              </Button>
-            </DialogTrigger>
-            <DialogContent className="max-w-xl w-full max-h-[80vh] overflow-y-auto p-0">
-              <DialogHeader className="sticky top-0 z-10 bg-white p-4 border-b">
-                <DialogTitle>Manage Item Prices</DialogTitle>
-                <DialogDescription>
-                  Customize the prices of waste items for your store.
-                </DialogDescription>
-              </DialogHeader>
-              <div className="p-6">
-                <ManageItemPrices itemsByMeal={WASTE_ITEMS} />
-              </div>
-            </DialogContent>
-          </Dialog>
-        </div>
-      </div>
       {/* Stats Row - Made more compact on mobile */}
       <div className="grid grid-cols-2 gap-3 sm:gap-4">
         <Card className="bg-white rounded-[20px] hover:shadow-xl transition-all duration-300">
@@ -320,6 +279,55 @@ function WasteTrackerContent() {
             </div>
           </div>
         </Card>
+      </div>
+
+      {/* Management Buttons */}
+      <div className="grid grid-cols-2 gap-3 sm:gap-4">
+        <Dialog open={showCustomItemsDialog} onOpenChange={setShowCustomItemsDialog}>
+          <DialogTrigger asChild>
+            <Button
+              variant="outline"
+              onClick={() => setShowCustomItemsDialog(true)}
+              className="w-full bg-[#E51636]/5 text-[#E51636] border-[#E51636]/20 hover:bg-[#E51636]/10 hover:border-[#E51636]/30"
+            >
+              Custom Items
+            </Button>
+          </DialogTrigger>
+          <DialogContent className="max-w-xl w-full max-h-[80vh] overflow-y-auto p-0">
+            <DialogHeader className="sticky top-0 z-10 bg-white p-4 border-b">
+              <DialogTitle>Custom Items</DialogTitle>
+              <DialogDescription>
+                Add, edit, or remove custom waste items for your store.
+              </DialogDescription>
+            </DialogHeader>
+            <div className="p-6">
+              <ManageCustomItems />
+            </div>
+          </DialogContent>
+        </Dialog>
+
+        <Dialog open={showPricesDialog} onOpenChange={setShowPricesDialog}>
+          <DialogTrigger asChild>
+            <Button
+              variant="outline"
+              onClick={() => setShowPricesDialog(true)}
+              className="w-full bg-[#E51636]/5 text-[#E51636] border-[#E51636]/20 hover:bg-[#E51636]/10 hover:border-[#E51636]/30"
+            >
+              Manage Prices
+            </Button>
+          </DialogTrigger>
+          <DialogContent className="max-w-xl w-full max-h-[80vh] overflow-y-auto p-0">
+            <DialogHeader className="sticky top-0 z-10 bg-white p-4 border-b">
+              <DialogTitle>Manage Item Prices</DialogTitle>
+              <DialogDescription>
+                Customize the prices of waste items for your store.
+              </DialogDescription>
+            </DialogHeader>
+            <div className="p-6">
+              <ManageItemPrices itemsByMeal={WASTE_ITEMS} />
+            </div>
+          </DialogContent>
+        </Dialog>
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-5 gap-3 sm:gap-4">
