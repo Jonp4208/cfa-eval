@@ -54,6 +54,7 @@ import { MobileNav } from './MobileNav';
 import { useNotification } from '@/contexts/NotificationContext';
 import { NotificationList } from './NotificationList';
 import { requestNotificationPermission } from '@/utils/notificationPermission';
+import StoreSelector from './StoreSelector';
 
 interface MenuItem {
   icon: LucideIcon;
@@ -657,6 +658,8 @@ export default function Layout({ children }: { children: React.ReactNode }) {
                     <DropdownMenuLabel className="font-medium text-xs text-gray-500 mt-1">
                       Admin
                     </DropdownMenuLabel>
+                    {/* Store Selector */}
+                    <StoreSelector />
                     <DropdownMenuItem
                       onClick={() => navigate('/admin/stores')}
                       className="flex items-center gap-2 min-h-[44px] cursor-pointer"
@@ -866,6 +869,10 @@ export default function Layout({ children }: { children: React.ReactNode }) {
                 <>
                   <div className="mt-2 mb-1 px-3">
                     <div className="text-xs font-medium text-gray-500">Admin</div>
+                  </div>
+                  {/* Mobile Store Selector */}
+                  <div className="px-3 mb-1">
+                    <StoreSelector />
                   </div>
                   <button
                     onClick={() => {

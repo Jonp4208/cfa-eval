@@ -44,6 +44,7 @@ import breaksRouter from './routes/breaks.js';
 import userPreferencesRouter from './routes/userPreferences.js';
 import invoicesRouter from './routes/invoices.js';
 import adminRouter from './routes/admin.js';
+import userStoreRouter from './routes/userStore.js';
 
 // Services
 import { initCronJobs } from './services/cronService.js';
@@ -162,6 +163,7 @@ apiRouter.use('/breaks', breaksRouter);
 apiRouter.use('/user-preferences', userPreferencesRouter);
 apiRouter.use('/invoices', invoicesRouter);
 apiRouter.use('/admin', adminRouter);
+apiRouter.use('/user-store', userStoreRouter);
 
 // Test Email Configuration
 apiRouter.post('/test-email', async (req, res) => {

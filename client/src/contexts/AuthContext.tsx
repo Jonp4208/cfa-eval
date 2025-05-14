@@ -2,12 +2,14 @@ import React from 'react';
 import { createContext, useContext, useState, useEffect } from 'react';
 import api from '@/lib/axios';
 import { User } from '@/types/user';
+import userStoreService from '@/services/userStoreService';
 
 interface AuthContextType {
   user: User | null;
   token: string | null;
   login: (email: string, password: string) => Promise<void>;
   logout: () => void;
+  switchStore: (storeId: string) => Promise<void>;
   isLoading: boolean;
 }
 
@@ -22,23 +24,23 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     const initAuth = async () => {
       const token = localStorage.getItem('token');
       const refreshToken = localStorage.getItem('refreshToken');
-      
+
       if (token) {
         try {
           const response = await api.get('/api/auth/profile');
           setUser(response.data.user);
         } catch (error) {
           console.error('Failed to fetch user profile:', error);
-          
+
           // If we have a refresh token, try to refresh the access token
           if (refreshToken) {
             try {
               const refreshResponse = await api.post('/api/auth/refresh', { refreshToken });
               const newToken = refreshResponse.data.token;
-              
+
               localStorage.setItem('token', newToken);
               setToken(newToken);
-              
+
               // Try to fetch the profile again with the new token
               const profileResponse = await api.get('/api/auth/profile');
               setUser(profileResponse.data.user);
@@ -75,18 +77,18 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
     try {
       const response = await api.post('/api/auth/login', { email, password });
-      
+
       if (!response.data.token || !response.data.user) {
         throw new Error('Invalid login response from server');
       }
 
       const { token, refreshToken, user } = response.data;
-      
+
       localStorage.setItem('token', token);
       if (refreshToken) {
         localStorage.setItem('refreshToken', refreshToken);
       }
-      
+
       setToken(token);
       setUser(user);
       return response.data;
@@ -105,13 +107,34 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     localStorage.removeItem('refreshToken');
     setToken(null);
     setUser(null);
-    
+
     // Redirect to login page after logout
     window.location.href = '/login';
   };
 
+  // Switch store function - only for Jonathon Pope
+  const switchStore = async (storeId: string) => {
+    try {
+      const response = await userStoreService.switchStore(storeId);
+
+      // Update token and user in local storage and state
+      localStorage.setItem('token', response.token);
+      if (response.refreshToken) {
+        localStorage.setItem('refreshToken', response.refreshToken);
+      }
+
+      setToken(response.token);
+      setUser(response.user);
+
+      return response;
+    } catch (error: any) {
+      console.error('Failed to switch store:', error);
+      throw error;
+    }
+  };
+
   return (
-    <AuthContext.Provider value={{ user, token, login, logout, isLoading }}>
+    <AuthContext.Provider value={{ user, token, login, logout, switchStore, isLoading }}>
       {children}
     </AuthContext.Provider>
   );
