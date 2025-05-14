@@ -171,20 +171,6 @@ export default function MyPlans() {
 
   return (
     <div className="space-y-6">
-      <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
-        <div>
-          <h1 className="text-2xl font-bold text-[#27251F]">My Development Plans</h1>
-          <p className="text-gray-500">Track your progress on leadership development plans</p>
-        </div>
-        <Button
-          variant="outline"
-          onClick={() => navigate('/leadership/developmental-plan')}
-          className="flex items-center gap-2"
-        >
-          <ArrowLeft className="h-4 w-4" />
-          Back to Plans
-        </Button>
-      </div>
 
       {loading ? (
         <div className="flex justify-center items-center h-64">

@@ -122,25 +122,6 @@ export default function Evaluations360() {
 
   return (
     <div className="space-y-6 px-4 md:px-6 pb-6">
-      <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
-        <div>
-          <h2 className="text-2xl font-bold tracking-tight">360° Leadership Evaluations</h2>
-          <p className="text-muted-foreground">
-            Comprehensive feedback from managers, peers, and direct reports
-          </p>
-        </div>
-        {isManagerOrDirector && (
-          <div className="flex gap-2">
-            <Button
-              onClick={() => navigate('/leadership/360-evaluations/new')}
-              className="bg-[#E51636] hover:bg-[#C41230] text-white"
-            >
-              <Plus className="mr-2 h-4 w-4" /> New 360° Evaluation
-            </Button>
-          </div>
-        )}
-      </div>
-
       {/* Filters */}
       <div className="flex flex-col sm:flex-row gap-4">
         <div className="relative flex-1">
@@ -152,7 +133,7 @@ export default function Evaluations360() {
             onChange={(e) => setSearchTerm(e.target.value)}
           />
         </div>
-        <div className="flex gap-2">
+        <div className="flex items-center gap-2">
           <Button
             variant={statusFilter === null ? "default" : "outline"}
             size="sm"
@@ -177,6 +158,14 @@ export default function Evaluations360() {
           >
             Completed
           </Button>
+          {isManagerOrDirector && (
+            <Button
+              onClick={() => navigate('/leadership/360-evaluations/new')}
+              className="bg-[#E51636] hover:bg-[#C41230] text-white ml-2"
+            >
+              <Plus className="mr-2 h-4 w-4" /> New 360°
+            </Button>
+          )}
         </div>
       </div>
 
