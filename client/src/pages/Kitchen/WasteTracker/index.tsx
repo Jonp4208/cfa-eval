@@ -18,8 +18,11 @@ import {
 } from '@/components/ui/alert-dialog'
 import { cn } from '@/lib/utils'
 import { ManageItemPrices } from '@/components/kitchen/waste/ManageItemPrices'
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog'
+import { ManageCustomItems } from '@/components/kitchen/waste/ManageCustomItems'
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogTrigger } from '@/components/ui/dialog'
 import { ItemPricesProvider, useItemPrices } from '@/contexts/ItemPricesContext'
+import { CustomWasteItemsProvider, useCustomWasteItems } from '@/contexts/CustomWasteItemsContext'
+import { WasteItem as CustomWasteItem } from '@/lib/services/settings'
 
 interface WasteItem {
   name: string
@@ -98,15 +101,17 @@ function WasteTrackerContent() {
   const [activeMealPeriod, setActiveMealPeriod] = useState('lunch')
   const [selectedEntryToDelete, setSelectedEntryToDelete] = useState<string | null>(null)
   const [showPricesDialog, setShowPricesDialog] = useState(false)
-  
+  const [showCustomItemsDialog, setShowCustomItemsDialog] = useState(false)
+
   const { entries, metrics, createWasteEntry, deleteWasteEntry, fetchWasteEntries, fetchWasteMetrics, isLoading } = useWasteStore()
   const { getItemPrice } = useItemPrices()
+  const { customItems } = useCustomWasteItems()
 
   // Filter entries to only show today's entries
   const todaysEntries = useMemo(() => {
     const today = new Date()
     today.setHours(0, 0, 0, 0)
-    
+
     return entries.filter(entry => {
       const entryDate = new Date(entry.date)
       entryDate.setHours(0, 0, 0, 0)
@@ -120,7 +125,7 @@ function WasteTrackerContent() {
     const startOfDay = `${today}T00:00:00.000Z`
     const endOfDay = `${today}T23:59:59.999Z`
 
-    fetchWasteEntries({ 
+    fetchWasteEntries({
       startDate: startOfDay,
       endDate: endOfDay
     })
@@ -134,7 +139,7 @@ function WasteTrackerContent() {
     try {
       // Use the custom price if available
       const itemPrice = getItemPrice(item.name, item.defaultCost)
-      
+
       await createWasteEntry({
         date: new Date().toISOString(),
         category: 'food',
@@ -149,12 +154,12 @@ function WasteTrackerContent() {
       const today = format(new Date(), 'yyyy-MM-dd')
       const startOfDay = `${today}T00:00:00.000Z`
       const endOfDay = `${today}T23:59:59.999Z`
-      
+
       fetchWasteMetrics({
         startDate: startOfDay,
         endDate: endOfDay
       })
-      
+
       setReason('')
     } catch (error) {
       console.error('Failed to add waste entry:', error)
@@ -185,12 +190,12 @@ function WasteTrackerContent() {
     if (!selectedEntryToDelete) return
     try {
       await deleteWasteEntry(selectedEntryToDelete)
-      
+
       // Refresh metrics after deletion
       const today = format(new Date(), 'yyyy-MM-dd')
       const startOfDay = `${today}T00:00:00.000Z`
       const endOfDay = `${today}T23:59:59.999Z`
-      
+
       fetchWasteMetrics({
         startDate: startOfDay,
         endDate: endOfDay
@@ -206,21 +211,45 @@ function WasteTrackerContent() {
     <div className="space-y-4 px-4 md:px-6 pb-6">
       <div className="flex justify-between items-center mb-2">
         <h1 className="text-2xl font-bold">Waste Tracker</h1>
-        <Dialog open={showPricesDialog} onOpenChange={setShowPricesDialog}>
-          <DialogTrigger asChild>
-            <Button variant="outline" onClick={() => setShowPricesDialog(true)}>
-              Manage Item Prices
-            </Button>
-          </DialogTrigger>
-          <DialogContent className="max-w-xl w-full max-h-[80vh] overflow-y-auto p-0">
-            <DialogHeader className="sticky top-0 z-10 bg-white p-4 border-b">
-              <DialogTitle>Manage Item Prices</DialogTitle>
-            </DialogHeader>
-            <div className="p-6">
-              <ManageItemPrices itemsByMeal={WASTE_ITEMS} />
-            </div>
-          </DialogContent>
-        </Dialog>
+        <div className="flex gap-2">
+          <Dialog open={showCustomItemsDialog} onOpenChange={setShowCustomItemsDialog}>
+            <DialogTrigger asChild>
+              <Button variant="outline" onClick={() => setShowCustomItemsDialog(true)}>
+                Custom Items
+              </Button>
+            </DialogTrigger>
+            <DialogContent className="max-w-xl w-full max-h-[80vh] overflow-y-auto p-0">
+              <DialogHeader className="sticky top-0 z-10 bg-white p-4 border-b">
+                <DialogTitle>Custom Items</DialogTitle>
+                <DialogDescription>
+                  Add, edit, or remove custom waste items for your store.
+                </DialogDescription>
+              </DialogHeader>
+              <div className="p-6">
+                <ManageCustomItems />
+              </div>
+            </DialogContent>
+          </Dialog>
+
+          <Dialog open={showPricesDialog} onOpenChange={setShowPricesDialog}>
+            <DialogTrigger asChild>
+              <Button variant="outline" onClick={() => setShowPricesDialog(true)}>
+                Manage Prices
+              </Button>
+            </DialogTrigger>
+            <DialogContent className="max-w-xl w-full max-h-[80vh] overflow-y-auto p-0">
+              <DialogHeader className="sticky top-0 z-10 bg-white p-4 border-b">
+                <DialogTitle>Manage Item Prices</DialogTitle>
+                <DialogDescription>
+                  Customize the prices of waste items for your store.
+                </DialogDescription>
+              </DialogHeader>
+              <div className="p-6">
+                <ManageItemPrices itemsByMeal={WASTE_ITEMS} />
+              </div>
+            </DialogContent>
+          </Dialog>
+        </div>
       </div>
       {/* Stats Row - Made more compact on mobile */}
       <div className="grid grid-cols-2 gap-3 sm:gap-4">
@@ -315,10 +344,11 @@ function WasteTrackerContent() {
 
               {/* Quick Add Items Grid */}
               <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 sm:gap-3">
+                {/* Default items */}
                 {WASTE_ITEMS[activeMealPeriod as keyof WasteItems].map((item) => {
                   // Get the custom price (or default if no custom price)
                   const itemPrice = getItemPrice(item.name, item.defaultCost)
-                  
+
                   return (
                     <Button
                       key={item.name}
@@ -333,6 +363,34 @@ function WasteTrackerContent() {
                     </Button>
                   )
                 })}
+
+                {/* Custom items */}
+                {customItems
+                  .filter(item => item.mealPeriod === activeMealPeriod)
+                  .map((item) => {
+                    // Get the custom price (or default if no custom price)
+                    const itemPrice = getItemPrice(item.name, item.defaultCost)
+
+                    return (
+                      <Button
+                        key={item._id}
+                        variant="outline"
+                        size="sm"
+                        onClick={() => handleQuickAdd({
+                          name: item.name,
+                          unit: item.unit,
+                          defaultCost: item.defaultCost,
+                          icon: item.icon
+                        })}
+                        className="h-auto py-2 sm:py-3 px-2 sm:px-4 flex flex-col items-center gap-1 sm:gap-2 text-[#27251F] hover:bg-[#E51636]/5 hover:text-[#E51636] border border-gray-100 rounded-xl sm:rounded-[20px] hover:border-[#E51636]/20 bg-blue-50/30"
+                      >
+                        <span className="text-base sm:text-lg">{item.icon}</span>
+                        <span className="text-xs sm:text-sm text-center line-clamp-1">{item.name}</span>
+                        <span className="text-[10px] sm:text-xs text-[#27251F]/60">${itemPrice.toFixed(2)}</span>
+                      </Button>
+                    )
+                  })
+                }
               </div>
             </div>
           </Card>
@@ -347,7 +405,7 @@ function WasteTrackerContent() {
                     key={wasteReason.label}
                     variant="outline"
                     className={`h-14 md:h-16 text-base md:text-lg border ${
-                      reason === wasteReason.label 
+                      reason === wasteReason.label
                         ? `${wasteReason.color} border-2`
                         : 'border-gray-200 hover:border-gray-300 hover:bg-gray-50'
                     } rounded-xl transition-all duration-200`}
@@ -443,8 +501,8 @@ function WasteTrackerContent() {
         </div>
       </Card>
 
-      <AlertDialog 
-        open={!!selectedEntryToDelete} 
+      <AlertDialog
+        open={!!selectedEntryToDelete}
         onOpenChange={() => setSelectedEntryToDelete(null)}
       >
         <AlertDialogContent>
@@ -473,7 +531,9 @@ function WasteTrackerContent() {
 export default function WasteTracker() {
   return (
     <ItemPricesProvider>
-      <WasteTrackerContent />
+      <CustomWasteItemsProvider>
+        <WasteTrackerContent />
+      </CustomWasteItemsProvider>
     </ItemPricesProvider>
   )
-} 
+}

@@ -76,6 +76,16 @@ export interface SchedulingResults {
   errors: number;
 }
 
+export interface WasteItem {
+  _id?: string;
+  name: string;
+  unit: string;
+  defaultCost: number;
+  icon: string;
+  mealPeriod: 'breakfast' | 'lunch' | 'dinner';
+  isCustom?: boolean;
+}
+
 export interface SettingsUpdateResponse extends StoreSettings {
   schedulingResults?: SchedulingResults;
 }
@@ -144,6 +154,40 @@ export const settingsService = {
   updateWasteItemPrices: async (prices: Record<string, number>): Promise<Record<string, number>> => {
     try {
       const response = await api.patch('/api/settings/waste-item-prices', { prices })
+      return response.data
+    } catch (error) {
+      throw error
+    }
+  },
+
+  // Custom waste items
+  getCustomWasteItems: async (): Promise<WasteItem[]> => {
+    try {
+      const response = await api.get('/api/settings/custom-waste-items')
+      return response.data
+    } catch (error) {
+      throw error
+    }
+  },
+  addCustomWasteItem: async (item: Omit<WasteItem, '_id'>): Promise<WasteItem> => {
+    try {
+      const response = await api.post('/api/settings/custom-waste-items', item)
+      return response.data
+    } catch (error) {
+      throw error
+    }
+  },
+  updateCustomWasteItem: async (itemId: string, item: Partial<WasteItem>): Promise<WasteItem> => {
+    try {
+      const response = await api.patch(`/api/settings/custom-waste-items/${itemId}`, item)
+      return response.data
+    } catch (error) {
+      throw error
+    }
+  },
+  deleteCustomWasteItem: async (itemId: string): Promise<{ message: string }> => {
+    try {
+      const response = await api.delete(`/api/settings/custom-waste-items/${itemId}`)
       return response.data
     } catch (error) {
       throw error

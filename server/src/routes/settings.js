@@ -1,13 +1,17 @@
 import express from 'express';
 import { auth } from '../middleware/auth.js';
-import { 
+import {
   getSettings,
   updateSettings,
   resetSettings,
   getStoreInfo,
   updateStoreInfo,
   getWasteItemPrices,
-  updateWasteItemPrices
+  updateWasteItemPrices,
+  getCustomWasteItems,
+  addCustomWasteItem,
+  updateCustomWasteItem,
+  deleteCustomWasteItem
 } from '../controllers/settings.js';
 
 const router = express.Router();
@@ -32,4 +36,10 @@ router.patch('/store', updateStoreInfo);
 router.get('/waste-item-prices', getWasteItemPrices);
 router.patch('/waste-item-prices', updateWasteItemPrices);
 
-export default router; 
+// Custom waste items routes
+router.get('/custom-waste-items', getCustomWasteItems);
+router.post('/custom-waste-items', addCustomWasteItem);
+router.patch('/custom-waste-items/:itemId', updateCustomWasteItem);
+router.delete('/custom-waste-items/:itemId', deleteCustomWasteItem);
+
+export default router;

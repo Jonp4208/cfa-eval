@@ -84,6 +84,21 @@ const settingsSchema = new mongoose.Schema({
     type: Map,
     of: Number,
     default: {}
+  },
+  customWasteItems: {
+    type: [{
+      name: { type: String, required: true },
+      unit: { type: String, required: true, default: 'pieces' },
+      defaultCost: { type: Number, required: true, default: 1.0 },
+      icon: { type: String, default: '🍽️' },
+      mealPeriod: {
+        type: String,
+        enum: ['breakfast', 'lunch', 'dinner'],
+        required: true
+      },
+      isCustom: { type: Boolean, default: true }
+    }],
+    default: []
   }
 }, {
   timestamps: true,
