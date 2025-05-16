@@ -149,7 +149,7 @@ export function BulkEntryDialog({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-md">
+      <DialogContent className="max-w-md max-h-[90vh] overflow-y-auto sm:max-h-[80vh]">
         <DialogHeader>
           <DialogTitle>Bulk Waste Entry</DialogTitle>
           <DialogDescription>
