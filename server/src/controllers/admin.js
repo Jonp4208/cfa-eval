@@ -120,6 +120,34 @@ export const addStore = async (req, res) => {
     store.admins = [adminUser._id];
     await store.save();
 
+    // Send welcome email to admin
+    try {
+      await sendEmail({
+        to: adminUser.email,
+        subject: 'Welcome to LD Growth - Your Admin Account',
+        html: `
+          <div style="font-family: Arial, sans-serif; max-width: 800px; margin: 0 auto; padding: 20px;">
+            <div style="background-color: #E4002B; padding: 20px; border-radius: 8px; margin-bottom: 30px;">
+              <h1 style="color: white; margin: 0;">Welcome to LD Growth!</h1>
+            </div>
+            <div style="background-color: #f8f8f8; padding: 20px; border-radius: 8px; margin-bottom: 30px;">
+              <h2 style="color: #333; margin-top: 0;">Hi ${adminUser.name},</h2>
+              <p>Your admin account for <strong>${store.name}</strong> has been created.</p>
+              <p><strong>Email:</strong> ${adminUser.email}</p>
+              <p>You can now log in and start managing your store and team.</p>
+              <div style="margin: 30px 0;">
+                <a href="https://www.ld-growth.com" style="display: inline-block; background-color: #E4002B; color: white; padding: 12px 24px; text-decoration: none; border-radius: 8px; font-weight: 500;">Log In to LD Growth</a>
+              </div>
+              <p>If you have any questions, reply to this email or contact support.</p>
+            </div>
+            <p style="color: #666; font-size: 14px;">This is an automated message. Please do not reply to this email.</p>
+          </div>
+        `
+      })
+    } catch (emailError) {
+      console.error('Failed to send admin welcome email:', emailError)
+    }
+
     res.status(201).json({
       message: 'Store and admin user created successfully',
       store: {
