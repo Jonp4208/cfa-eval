@@ -476,3 +476,53 @@ export const resetUserPassword = async (req, res) => {
     });
   }
 };
+
+/**
+ * Update store subscription status (active/expired/trial/none)
+ */
+export const updateStoreSubscriptionStatus = async (req, res) => {
+  try {
+    const { storeId, subscriptionStatus } = req.body
+
+    if (!storeId || !subscriptionStatus) {
+      return res.status(400).json({
+        message: 'Store ID and subscription status are required'
+      })
+    }
+
+    if (!['active', 'expired', 'trial', 'none'].includes(subscriptionStatus)) {
+      return res.status(400).json({
+        message: 'Invalid subscription status'
+      })
+    }
+
+    let subscription = await StoreSubscription.findOne({ store: storeId })
+    if (!subscription) {
+      // Optionally, create a new subscription if not found
+      subscription = new StoreSubscription({
+        store: storeId,
+        subscriptionStatus,
+        features: { leadershipPlans: subscriptionStatus === 'active' || subscriptionStatus === 'trial' }
+      })
+    } else {
+      subscription.subscriptionStatus = subscriptionStatus
+      // Optionally, update features based on status
+      subscription.features.leadershipPlans = subscriptionStatus === 'active' || subscriptionStatus === 'trial'
+    }
+    await subscription.save()
+
+    res.json({
+      message: `Subscription status updated to ${subscriptionStatus}`,
+      subscription: {
+        status: subscription.subscriptionStatus,
+        features: subscription.features
+      }
+    })
+  } catch (error) {
+    console.error('Error updating subscription status:', error)
+    res.status(500).json({
+      message: 'Error updating subscription status',
+      error: error.message
+    })
+  }
+}

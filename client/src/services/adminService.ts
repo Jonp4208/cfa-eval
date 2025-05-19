@@ -118,6 +118,14 @@ const adminService = {
   resetUserPassword: async (storeId: string, userId: string) => {
     const response = await api.post(`/api/admin/stores/${storeId}/users/${userId}/reset-password`);
     return response.data;
+  },
+
+  /**
+   * Update store subscription status (active/expired/trial/none)
+   */
+  updateStoreSubscriptionStatus: async (storeId: string, subscriptionStatus: 'active' | 'expired' | 'trial' | 'none') => {
+    const response = await api.put('/api/admin/stores/subscription-status', { storeId, subscriptionStatus })
+    return response.data
   }
 };
 

@@ -100,6 +100,11 @@ export default function AdminPage() {
   const [showResetPasswordDialog, setShowResetPasswordDialog] = useState(false);
   const [newEmail, setNewEmail] = useState('');
 
+  // Subscription status dialog state
+  const [showSubscriptionDialog, setShowSubscriptionDialog] = useState(false)
+  const [selectedSubscriptionStore, setSelectedSubscriptionStore] = useState<Store | null>(null)
+  const [newSubscriptionStatus, setNewSubscriptionStatus] = useState<'active' | 'expired' | 'trial' | 'none' | ''>('')
+
   // Check if user is Jonathon Pope
   const isJonathonPope = user?.email === 'jonp4208@gmail.com';
 
@@ -268,6 +273,30 @@ export default function AdminPage() {
     }
   });
 
+  // Update subscription status mutation
+  const updateSubscriptionStatusMutation = useMutation({
+    mutationFn: ({ storeId, subscriptionStatus }: { storeId: string, subscriptionStatus: 'active' | 'expired' | 'trial' | 'none' }) =>
+      adminService.updateStoreSubscriptionStatus(storeId, subscriptionStatus),
+    onSuccess: () => {
+      toast({
+        title: 'Subscription Status Updated',
+        description: 'The subscription status has been updated successfully.',
+        variant: 'default'
+      })
+      setShowSubscriptionDialog(false)
+      setSelectedSubscriptionStore(null)
+      setNewSubscriptionStatus('')
+      queryClient.invalidateQueries({ queryKey: ['admin-stores'] })
+    },
+    onError: (error: any) => {
+      toast({
+        title: 'Error',
+        description: `Failed to update subscription status: ${error.response?.data?.message || error.message}`,
+        variant: 'destructive'
+      })
+    }
+  })
+
   // Handle store form input changes
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
@@ -400,6 +429,21 @@ export default function AdminPage() {
     }
   };
 
+  function handleOpenSubscriptionDialog(store: Store) {
+    setSelectedSubscriptionStore(store)
+    setNewSubscriptionStatus(store.subscription?.status || 'none')
+    setShowSubscriptionDialog(true)
+  }
+
+  function handleConfirmSubscriptionStatus() {
+    if (selectedSubscriptionStore && newSubscriptionStatus) {
+      updateSubscriptionStatusMutation.mutate({
+        storeId: selectedSubscriptionStore._id,
+        subscriptionStatus: newSubscriptionStatus
+      })
+    }
+  }
+
   // If user is not Jonathon Pope, show access denied
   if (!isJonathonPope) {
     return (
@@ -478,11 +522,13 @@ export default function AdminPage() {
                                 store.subscription.status === 'trial' ? 'secondary' :
                                 'outline'
                               }
+                              className="cursor-pointer"
+                              onClick={() => handleOpenSubscriptionDialog(store)}
                             >
                               {store.subscription.status}
                             </Badge>
                           ) : (
-                            <Badge variant="outline">none</Badge>
+                            <Badge variant="outline" className="cursor-pointer" onClick={() => handleOpenSubscriptionDialog(store)}>none</Badge>
                           )}
                         </td>
                         <td className="p-2 text-center">
@@ -580,11 +626,13 @@ export default function AdminPage() {
                               store.subscription.status === 'trial' ? 'secondary' :
                               'outline'
                             }
+                            className="cursor-pointer"
+                            onClick={() => handleOpenSubscriptionDialog(store)}
                           >
                             {store.subscription.status}
                           </Badge>
                         ) : (
-                          <Badge variant="outline">none</Badge>
+                          <Badge variant="outline" className="cursor-pointer" onClick={() => handleOpenSubscriptionDialog(store)}>none</Badge>
                         )}
                       </div>
                       <div>
@@ -1212,6 +1260,47 @@ export default function AdminPage() {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+
+      {/* Subscription Status Dialog */}
+      <Dialog open={showSubscriptionDialog} onOpenChange={setShowSubscriptionDialog}>
+        <DialogContent className="sm:max-w-[400px]">
+          <DialogHeader>
+            <DialogTitle>Update Subscription Status</DialogTitle>
+            <DialogDescription>
+              Select the new subscription status for {selectedSubscriptionStore?.name}.
+            </DialogDescription>
+          </DialogHeader>
+          <form onSubmit={handleConfirmSubscriptionStatus}>
+            <div className="grid gap-4 py-4">
+              <div className="space-y-2">
+                <Label htmlFor="newSubscriptionStatus">New Subscription Status</Label>
+                <Select
+                  value={newSubscriptionStatus}
+                  onValueChange={(value) => setNewSubscriptionStatus(value as 'active' | 'expired' | 'trial' | 'none' | '')}
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="Select subscription status" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="active">Active</SelectItem>
+                    <SelectItem value="expired">Expired</SelectItem>
+                    <SelectItem value="trial">Trial</SelectItem>
+                    <SelectItem value="none">None</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
+            <DialogFooter>
+              <Button type="button" variant="outline" onClick={() => setShowSubscriptionDialog(false)}>
+                Cancel
+              </Button>
+              <Button type="submit" disabled={updateSubscriptionStatusMutation.isPending}>
+                {updateSubscriptionStatusMutation.isPending ? 'Updating...' : 'Update Subscription Status'}
+              </Button>
+            </DialogFooter>
+          </form>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

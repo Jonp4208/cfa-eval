@@ -8,7 +8,8 @@ import {
   getStoreUsers,
   addStoreUser,
   updateUserEmail,
-  resetUserPassword
+  resetUserPassword,
+  updateStoreSubscriptionStatus
 } from '../controllers/admin.js';
 
 const router = express.Router();
@@ -37,5 +38,8 @@ router.put('/stores/:storeId/users/:userId/email', updateUserEmail);
 
 // Reset user password
 router.post('/stores/:storeId/users/:userId/reset-password', resetUserPassword);
+
+// Update store subscription status
+router.put('/stores/subscription-status', updateStoreSubscriptionStatus);
 
 export default router;
