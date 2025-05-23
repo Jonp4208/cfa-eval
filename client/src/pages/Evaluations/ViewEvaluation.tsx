@@ -872,20 +872,7 @@ export default function ViewEvaluation() {
     return <div className="text-center py-4">Evaluation not found</div>;
   }
 
-  console.log('Evaluation data:', {
-    employee: evaluation.employee,
-    evaluator: evaluation.evaluator,
-    status: evaluation.status
-  });
 
-  // Add debug logging
-  console.log('Debug - Evaluation Display Conditions:', {
-    isManager,
-    status: evaluation.status,
-    showScheduleReview,
-    userId: user?._id,
-    evaluatorId: evaluation.evaluator._id
-  });
 
   return (
     <div className="min-h-screen p-4 md:p-6">

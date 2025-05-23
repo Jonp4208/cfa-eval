@@ -245,19 +245,25 @@ export const createEvaluation = async (req, res) => {
 export const getEvaluations = async (req, res) => {
     try {
         const isDirector = req.user.position === 'Director';
+        const { employeeId, limit } = req.query;
 
         // Base query - always filter by store
         let query = { store: req.user.store._id };
 
-        // If not a director, only show evaluations where user is employee or evaluator
-        if (!isDirector) {
+        // If employeeId is provided, filter by employee
+        if (employeeId) {
+            query.employee = employeeId;
+        }
+        // If not a director and no employeeId specified, only show evaluations where user is employee or evaluator
+        else if (!isDirector) {
             query.$or = [
                 { employee: req.user._id },
                 { evaluator: req.user._id }
             ];
         }
 
-        let evaluations = await Evaluation.find(query)
+        // Create the query
+        let evaluationsQuery = Evaluation.find(query)
             .populate({
                 path: 'employee',
                 select: 'name position manager',
@@ -269,6 +275,27 @@ export const getEvaluations = async (req, res) => {
             .populate('evaluator', 'name position')
             .populate('template')
             .sort('-createdAt');
+
+        // Apply limit if specified
+        if (limit) {
+            evaluationsQuery = evaluationsQuery.limit(parseInt(limit));
+        }
+
+        // Execute the query
+        let evaluations = await evaluationsQuery;
+
+        // Log the evaluation dates for debugging
+        if (employeeId) {
+            console.log(`Evaluations for employee ${employeeId}:`,
+                evaluations.map(evaluation => ({
+                    id: evaluation._id.toString(),
+                    status: evaluation.status,
+                    scheduledDate: evaluation.scheduledDate,
+                    completedDate: evaluation.completedDate,
+                    createdAt: evaluation.createdAt
+                }))
+            );
+        }
 
         res.json({ evaluations });
 

@@ -2,7 +2,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Plus, GripVertical, Trash2, Save, ArrowLeft } from 'lucide-react';
+import { Plus, GripVertical, Trash2, Save, ArrowLeft, FileText } from 'lucide-react';
 import { useToast } from '@/components/ui/use-toast';
 import {
   DndContext,
@@ -30,7 +30,7 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
 import { useQuery } from '@tanstack/react-query';
-// Removed PageHeader import
+import PageHeader, { headerButtonClass } from '@/components/PageHeader';
 
 
 interface Section {
@@ -114,21 +114,7 @@ export default function TemplateBuilder() {
     name: '',
     description: '',
     tags: ['General'],
-    sections: [{
-      id: Date.now().toString(),
-      title: 'Customer Service',
-      description: 'Evaluate employee performance in customer service and interaction',
-      order: 0,
-      criteria: [
-        {
-          id: `${Date.now()}-1`,
-          name: 'Communication Skills',
-          description: 'Ability to communicate clearly and effectively with customers',
-          gradingScale: defaultScale?._id || '1-5',
-          required: true
-        }
-      ]
-    }],
+    sections: [],
     store: '',
     isActive: true
   });
@@ -280,15 +266,15 @@ export default function TemplateBuilder() {
         ...prev.sections,
         {
           id: newSectionId,
-          title: 'Customer Service',
-          description: 'Evaluate employee performance in customer service and interaction',
+          title: '',
+          description: '',
           order: prev.sections.length,
           criteria: [
             {
               id: newCriterionId,
-              name: 'Communication Skills',
-              description: 'Ability to communicate clearly and effectively with customers',
-              gradingScale: '1-5',
+              name: '',
+              description: '',
+              gradingScale: defaultScale?._id || '1-5',
               required: true
             }
           ]
@@ -586,14 +572,20 @@ export default function TemplateBuilder() {
 
   const renderCriterionForm = useCallback((criterion: Criterion, sectionId: string, index: number) => {
     return (
-      <div className="space-y-4 p-4 border rounded-lg">
+      <div className="space-y-4">
         <div className="flex items-center justify-between">
-          <h4 className="font-medium">Criterion {index + 1}</h4>
+          <div className="flex items-center">
+            <div className="w-7 h-7 rounded-full bg-[#E51636]/10 flex items-center justify-center text-[#E51636] font-medium text-sm mr-3">
+              {index + 1}
+            </div>
+            <h4 className="font-medium text-[#27251F]">Evaluation Criterion</h4>
+          </div>
           <Button
             variant="ghost"
             size="sm"
-            className="text-red-600 hover:text-red-700 hover:bg-red-50"
+            className="text-red-600 hover:text-red-700 hover:bg-red-50 h-8 w-8 rounded-full"
             onClick={() => handleRemoveCriterion(sectionId, criterion.id)}
+            title="Remove criterion"
           >
             <Trash2 className="h-4 w-4" />
           </Button>
@@ -601,50 +593,71 @@ export default function TemplateBuilder() {
 
         <div className="space-y-4">
           <div>
-            <Label htmlFor={`criterion-${criterion.id}-name`}>Name</Label>
+            <Label htmlFor={`criterion-${criterion.id}-name`} className="flex items-center">
+              Question/Criterion
+              <span className="ml-1 text-red-500">*</span>
+            </Label>
             <Input
               id={`criterion-${criterion.id}-name`}
               value={criterion.name}
               onChange={(e) => handleCriterionChange(sectionId, criterion.id, 'name', e.target.value)}
-              className="mt-1"
+              className="mt-1.5"
+              placeholder="E.g., How effectively does the employee communicate with customers?"
             />
+            <p className="mt-1 text-xs text-gray-500">This is what evaluators will be asked to rate</p>
           </div>
 
           <div>
-            <Label htmlFor={`criterion-${criterion.id}-description`}>Description</Label>
+            <Label htmlFor={`criterion-${criterion.id}-description`}>Description/Guidance</Label>
             <Textarea
               id={`criterion-${criterion.id}-description`}
               value={criterion.description}
               onChange={(e) => handleCriterionChange(sectionId, criterion.id, 'description', e.target.value)}
-              className="mt-1"
+              className="mt-1.5"
+              placeholder="E.g., Consider clarity, tone, listening skills, and ability to handle difficult conversations."
             />
+            <p className="mt-1 text-xs text-gray-500">Provide guidance on how to evaluate this criterion</p>
           </div>
 
-          <div>
-            <Label htmlFor={`criterion-${criterion.id}-scale`}>Grading Scale</Label>
-            <select
-              id={`criterion-${criterion.id}-scale`}
-              value={criterion.gradingScale}
-              onChange={(e) => handleCriterionChange(sectionId, criterion.id, 'gradingScale', e.target.value)}
-              className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
-            >
-              {gradingScales?.map((scale: GradingScale) => (
-                <option key={scale._id} value={scale._id}>
-                  {scale.name} {scale.isDefault && '(Default)'}
-                </option>
-              ))}
-            </select>
-          </div>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div>
+              <Label htmlFor={`criterion-${criterion.id}-scale`} className="flex items-center">
+                Grading Scale
+                <span className="ml-1 text-red-500">*</span>
+              </Label>
+              <select
+                id={`criterion-${criterion.id}-scale`}
+                value={criterion.gradingScale}
+                onChange={(e) => handleCriterionChange(sectionId, criterion.id, 'gradingScale', e.target.value)}
+                className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm mt-1.5 h-10"
+              >
+                {gradingScales?.map((scale: GradingScale) => (
+                  <option key={scale._id} value={scale._id}>
+                    {scale.name} {scale.isDefault && '(Default)'}
+                  </option>
+                ))}
+              </select>
+              <p className="mt-1 text-xs text-gray-500">How this criterion will be scored</p>
+            </div>
 
-          <div className="flex items-center space-x-2">
-            <Checkbox
-              id={`criterion-${criterion.id}-required`}
-              checked={criterion.required}
-              onCheckedChange={(checked) =>
-                handleCriterionChange(sectionId, criterion.id, 'required', checked)
-              }
-            />
-            <Label htmlFor={`criterion-${criterion.id}-required`}>Required</Label>
+            <div className="flex flex-col justify-end">
+              <div className="bg-blue-50 p-3 rounded-lg border border-blue-100 flex items-start">
+                <div className="flex items-center space-x-2 mt-1">
+                  <Checkbox
+                    id={`criterion-${criterion.id}-required`}
+                    checked={criterion.required}
+                    onCheckedChange={(checked) =>
+                      handleCriterionChange(sectionId, criterion.id, 'required', checked)
+                    }
+                    className="data-[state=checked]:bg-[#E51636] data-[state=checked]:border-[#E51636]"
+                  />
+                  <div>
+                    <Label htmlFor={`criterion-${criterion.id}-required`} className="font-medium">Required Response</Label>
+                    <p className="text-xs text-blue-700">Evaluators must provide a rating for this criterion</p>
+                  </div>
+                </div>
+              </div>
+            </div>
           </div>
         </div>
       </div>
@@ -654,23 +667,47 @@ export default function TemplateBuilder() {
   return (
     <div className="min-h-screen p-4 md:p-6">
       <div className="max-w-7xl mx-auto space-y-6">
-        {/* Header Section */}
-        <div className="bg-gradient-to-r from-[#E51636] to-[#DD0031] rounded-[20px] p-4 sm:p-8 text-white shadow-xl relative overflow-hidden">
-          <div className="absolute inset-0 bg-[url('/pattern.png')] opacity-10" />
-          <div className="relative">
-            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 sm:gap-6">
-              <div>
-                <h1 className="text-2xl sm:text-3xl md:text-4xl font-bold">{isEditMode ? 'Edit Template' : 'Create Template'}</h1>
-                <p className="text-white/80 mt-1 sm:mt-2 text-base sm:text-lg">Design evaluation templates for your team</p>
+        {/* PageHeader */}
+        <PageHeader
+          title={isEditMode ? 'Edit Template' : 'Create Template'}
+          subtitle="Design evaluation templates for your team"
+          icon={<FileText className="h-5 w-5" />}
+          showBackButton={true}
+          actions={
+            <Button
+              className={headerButtonClass}
+              onClick={() => navigate('/templates')}
+            >
+              <ArrowLeft className="w-4 h-4 mr-2" />
+              Back to Templates
+            </Button>
+          }
+        />
+
+        {/* Step-by-Step Guide */}
+        <div className="bg-white rounded-[20px] shadow-md p-6 mb-6">
+          <h2 className="text-lg font-semibold text-[#27251F] mb-4">How to Create an Evaluation Template</h2>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <div className="bg-[#E51636]/5 p-4 rounded-xl border border-[#E51636]/20">
+              <div className="flex items-center mb-2">
+                <div className="w-8 h-8 rounded-full bg-[#E51636]/10 flex items-center justify-center text-[#E51636] font-bold mr-2">1</div>
+                <h3 className="font-medium text-[#27251F]">Basic Information</h3>
               </div>
-              <Button
-                variant="secondary"
-                className="bg-white/10 hover:bg-white/20 text-white border-0 h-10 sm:h-12 px-4 sm:px-6 flex-none"
-                onClick={() => navigate('/templates')}
-              >
-                <ArrowLeft className="w-4 h-4 sm:w-5 sm:h-5 mr-2" />
-                Back
-              </Button>
+              <p className="text-sm text-[#27251F]/70">Start by naming your template and adding a description to help others understand its purpose.</p>
+            </div>
+            <div className="bg-[#E51636]/5 p-4 rounded-xl border border-[#E51636]/20">
+              <div className="flex items-center mb-2">
+                <div className="w-8 h-8 rounded-full bg-[#E51636]/10 flex items-center justify-center text-[#E51636] font-bold mr-2">2</div>
+                <h3 className="font-medium text-[#27251F]">Create Sections</h3>
+              </div>
+              <p className="text-sm text-[#27251F]/70">Divide your evaluation into logical sections (e.g., Customer Service, Leadership Skills).</p>
+            </div>
+            <div className="bg-[#E51636]/5 p-4 rounded-xl border border-[#E51636]/20">
+              <div className="flex items-center mb-2">
+                <div className="w-8 h-8 rounded-full bg-[#E51636]/10 flex items-center justify-center text-[#E51636] font-bold mr-2">3</div>
+                <h3 className="font-medium text-[#27251F]">Add Criteria</h3>
+              </div>
+              <p className="text-sm text-[#27251F]/70">For each section, add specific criteria that will be evaluated and select appropriate grading scales.</p>
             </div>
           </div>
         </div>
@@ -681,17 +718,32 @@ export default function TemplateBuilder() {
             <div className="space-y-6">
               {/* Template Details */}
               <div className="space-y-4">
+                <div className="bg-blue-50 p-4 rounded-xl mb-6">
+                  <h2 className="text-lg font-semibold text-blue-800 mb-2 flex items-center">
+                    <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                    </svg>
+                    Template Information
+                  </h2>
+                  <p className="text-sm text-blue-700">This information helps users understand the purpose and scope of your evaluation template.</p>
+                </div>
+
                 <div>
-                  <Label htmlFor="name" className="text-base font-medium text-[#27251F]">Template Name</Label>
+                  <Label htmlFor="name" className="text-base font-medium text-[#27251F] flex items-center">
+                    Template Name
+                    <span className="ml-1 text-red-500">*</span>
+                    <span className="ml-2 text-xs text-gray-500">(Required)</span>
+                  </Label>
                   <Input
                     id="name"
                     name="name"
                     value={formData.name}
                     onChange={handleInputChange}
                     className="mt-1.5 h-12 rounded-xl border-gray-200"
-                    placeholder="Enter template name"
+                    placeholder="E.g., Team Member Performance Review"
                   />
                   {errors.name && <p className="mt-1 text-sm text-red-500">{errors.name}</p>}
+                  <p className="mt-1 text-xs text-gray-500">Choose a clear, descriptive name that indicates the template's purpose.</p>
                 </div>
 
                 <div>
@@ -702,15 +754,17 @@ export default function TemplateBuilder() {
                     value={formData.description}
                     onChange={handleInputChange}
                     className="mt-1.5 min-h-[100px] rounded-xl border-gray-200 resize-none"
-                    placeholder="Enter template description"
+                    placeholder="E.g., This template is used for quarterly performance reviews of team members, focusing on customer service, productivity, and teamwork."
                   />
+                  <p className="mt-1 text-xs text-gray-500">Provide context about when and how this template should be used.</p>
                 </div>
 
                 <div>
-                  <Label className="text-base font-medium text-[#27251F]">Tags</Label>
-                  <div className="mt-1.5 flex flex-wrap gap-2">
+                  <Label className="text-base font-medium text-[#27251F]">Categories</Label>
+                  <p className="text-xs text-gray-500 mb-2">Select all that apply to help with template organization.</p>
+                  <div className="mt-1.5 flex flex-wrap gap-3 bg-gray-50 p-3 rounded-xl">
                     {availableTags.map((tag) => (
-                      <div key={tag} className="flex items-center space-x-2">
+                      <div key={tag} className="flex items-center space-x-2 bg-white px-3 py-2 rounded-lg border border-gray-200">
                         <Checkbox
                           id={tag}
                           checked={formData.tags.includes(tag)}
@@ -731,8 +785,24 @@ export default function TemplateBuilder() {
 
               {/* Sections */}
               <div className="space-y-4">
+                <div className="bg-green-50 p-4 rounded-xl mb-6">
+                  <h2 className="text-lg font-semibold text-green-800 mb-2 flex items-center">
+                    <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
+                    </svg>
+                    Template Sections
+                  </h2>
+                  <p className="text-sm text-green-700">Divide your evaluation into logical sections. Each section should focus on a specific area of performance or skill set.</p>
+                  <div className="mt-3 flex items-center text-xs text-green-700">
+                    <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
+                    </svg>
+                    <span>Tip: You can drag and drop sections to reorder them.</span>
+                  </div>
+                </div>
+
                 <div className="flex items-center justify-between">
-                  <h2 className="text-lg font-medium text-[#27251F]">Sections</h2>
+                  <h2 className="text-lg font-medium text-[#27251F]">Sections ({formData.sections.length})</h2>
                   <Button
                     onClick={addSection}
                     className="bg-[#E51636] hover:bg-[#E51636]/90 text-white h-10 px-4 rounded-xl"
@@ -742,54 +812,141 @@ export default function TemplateBuilder() {
                   </Button>
                 </div>
 
-                <DndContext
-                  sensors={sensors}
-                  collisionDetection={closestCenter}
-                  onDragEnd={handleDragEnd}
-                >
-                  <SortableContext
-                    items={formData.sections.map(section => section.id)}
-                    strategy={verticalListSortingStrategy}
+                {formData.sections.length === 0 ? (
+                  <div className="border-2 border-dashed border-gray-300 rounded-xl p-8 text-center bg-gray-50">
+                    <div className="mx-auto w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mb-4">
+                      <svg xmlns="http://www.w3.org/2000/svg" className="h-8 w-8 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 13h6m-3-3v6m-9 1V7a2 2 0 012-2h6l2 2h6a2 2 0 012 2v8a2 2 0 01-2 2H5a2 2 0 01-2-2z" />
+                      </svg>
+                    </div>
+                    <h3 className="text-lg font-medium text-gray-600 mb-2">No Sections Added Yet</h3>
+                    <p className="text-gray-500 mb-4 max-w-md mx-auto">Sections help organize your evaluation criteria into logical groups. For example, "Customer Service", "Technical Skills", or "Leadership".</p>
+                    <Button
+                      onClick={addSection}
+                      className="bg-[#E51636] hover:bg-[#E51636]/90 text-white"
+                    >
+                      <Plus className="w-4 h-4 mr-2" />
+                      Add Your First Section
+                    </Button>
+                  </div>
+                ) : (
+                  <DndContext
+                    sensors={sensors}
+                    collisionDetection={closestCenter}
+                    onDragEnd={handleDragEnd}
                   >
-                    <div className="space-y-4">
+                    <SortableContext
+                      items={formData.sections.map(section => section.id)}
+                      strategy={verticalListSortingStrategy}
+                    >
+                      <div className="space-y-4">
+                        {formData.sections.map((section, index) => (
+                          <DraggableSection
+                            key={section.id}
+                            section={section}
+                            index={index}
+                            errors={errors.sections[section.id] || {}}
+                            onUpdateSection={updateSection}
+                            onUpdateCriterion={updateCriterion}
+                            onAddCriterion={() => addCriterion(section.id)}
+                            onRemoveSection={() => removeSection(section.id)}
+                            onRemoveCriterion={(criterionId) => removeCriterion(section.id, criterionId)}
+                            renderCriterionForm={renderCriterionForm}
+                          />
+                        ))}
+                      </div>
+                    </SortableContext>
+                  </DndContext>
+                )}
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* Template Preview */}
+        <Card className="bg-white rounded-[20px] shadow-md overflow-hidden">
+          <div className="bg-gradient-to-r from-purple-600 to-indigo-600 p-4 text-white">
+            <h2 className="text-lg font-semibold flex items-center">
+              <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+              </svg>
+              Template Preview
+            </h2>
+          </div>
+          <CardContent className="p-6">
+            <div className="space-y-6">
+              <div className="border rounded-lg overflow-hidden">
+                <div className="bg-gray-50 p-4 border-b">
+                  <h3 className="font-semibold text-lg">{formData.name || "Template Name"}</h3>
+                  <p className="text-gray-500 text-sm">{formData.description || "Template description will appear here"}</p>
+                </div>
+                <div className="p-4">
+                  {formData.sections.length === 0 ? (
+                    <p className="text-gray-400 italic text-center py-4">Add sections to see a preview of your template</p>
+                  ) : (
+                    <div className="space-y-6">
                       {formData.sections.map((section, index) => (
-                        <DraggableSection
-                          key={section.id}
-                          section={section}
-                          index={index}
-                          errors={errors.sections[section.id] || {}}
-                          onUpdateSection={updateSection}
-                          onUpdateCriterion={updateCriterion}
-                          onAddCriterion={() => addCriterion(section.id)}
-                          onRemoveSection={() => removeSection(section.id)}
-                          onRemoveCriterion={(criterionId) => removeCriterion(section.id, criterionId)}
-                          renderCriterionForm={renderCriterionForm}
-                        />
+                        <div key={section.id} className="space-y-4">
+                          <div className="border-b pb-2">
+                            <h4 className="font-medium text-[#27251F]">{index + 1}. {section.title}</h4>
+                            {section.description && <p className="text-sm text-gray-500">{section.description}</p>}
+                          </div>
+                          {section.criteria.length === 0 ? (
+                            <p className="text-gray-400 italic text-sm">No criteria added to this section</p>
+                          ) : (
+                            <div className="space-y-4 pl-4">
+                              {section.criteria.map((criterion, cIndex) => (
+                                <div key={criterion.id} className="space-y-1">
+                                  <p className="text-[#27251F]">{cIndex + 1}. {criterion.name}</p>
+                                  {criterion.description && <p className="text-sm text-gray-500">{criterion.description}</p>}
+                                  <div className="flex items-center gap-2 mt-1">
+                                    <span className="text-xs bg-blue-100 text-blue-700 px-2 py-0.5 rounded">
+                                      Scale: {getScaleName(criterion.gradingScale)}
+                                    </span>
+                                    {criterion.required && (
+                                      <span className="text-xs bg-red-100 text-red-700 px-2 py-0.5 rounded">Required</span>
+                                    )}
+                                  </div>
+                                </div>
+                              ))}
+                            </div>
+                          )}
+                        </div>
                       ))}
                     </div>
-                  </SortableContext>
-                </DndContext>
+                  )}
+                </div>
+              </div>
+              <div className="text-center text-sm text-gray-500">
+                <p>This is how your template will appear to evaluators. Continue adding sections and criteria to complete your template.</p>
               </div>
             </div>
           </CardContent>
         </Card>
 
         {/* Action Buttons */}
-        <div className="flex justify-start gap-4">
-          <Button
-            onClick={handleSave}
-            className="bg-[#E51636] hover:bg-[#E51636]/90 text-white h-12 px-6 rounded-xl"
-          >
-            <Save className="w-5 h-5 mr-2" />
-            {isEditMode ? 'Save Changes' : 'Create Template'}
-          </Button>
+        <div className="sticky bottom-0 bg-white p-4 border-t border-gray-200 flex justify-between items-center">
           <Button
             variant="outline"
             onClick={() => navigate('/templates')}
-            className="h-12 px-6 rounded-xl border-gray-200 hover:bg-gray-50 text-[#27251F]"
+            className="h-12 px-6 rounded-xl border-gray-300 hover:bg-gray-50 text-[#27251F]"
           >
             Cancel
           </Button>
+          <div className="flex items-center gap-4">
+            <p className="text-sm text-gray-500 hidden md:block">
+              {formData.sections.length} {formData.sections.length === 1 ? 'section' : 'sections'} with
+              {' '}{formData.sections.reduce((total, section) => total + section.criteria.length, 0)} criteria
+            </p>
+            <Button
+              onClick={handleSave}
+              className="bg-[#E51636] hover:bg-[#E51636]/90 text-white h-12 px-8 rounded-xl font-medium"
+            >
+              <Save className="w-5 h-5 mr-2" />
+              {isEditMode ? 'Save Changes' : 'Create Template'}
+            </Button>
+          </div>
         </div>
       </div>
     </div>

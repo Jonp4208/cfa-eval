@@ -35,6 +35,7 @@ import { handleError } from '@/lib/utils/error-handler';
 import { toast } from '@/components/ui/use-toast';
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import PageHeader from '@/components/PageHeader';
+import MyTeamDialog from './components/MyTeamDialog';
 
 interface Evaluation {
   _id: string;
@@ -73,6 +74,7 @@ export default function Evaluations() {
   const navigate = useNavigate();
   const { user } = useAuth();
   const { showNotification } = useNotification();
+  const [showMyTeamDialog, setShowMyTeamDialog] = useState(false);
 
   // Add debug logging
   console.log('User data:', {
@@ -235,15 +237,7 @@ export default function Evaluations() {
     })
     .sort(sortEvaluations);
 
-  // Debug log for final filtered results
-  console.log('Final filtered evaluations:', {
-    total: evaluations?.length || 0,
-    filtered: filteredEvaluations?.length || 0,
-    view,
-    viewScope,
-    departmentFilter,
-    searchQuery
-  });
+
 
   const getStatusBadgeColor = (status: string) => {
     switch (status) {
@@ -326,7 +320,6 @@ export default function Evaluations() {
         'Evaluation has been sent to the store email.'
       );
     } catch (error: any) {
-      console.error('Error sending evaluation email:', error);
       showNotification(
         'error',
         'Email Failed',
@@ -380,6 +373,16 @@ export default function Evaluations() {
                 </div>
               </div>
               <div className="flex items-center gap-2">
+                {/* Only show My Team button for managers, leaders, and directors */}
+                {user?.position && ['Manager', 'Leader', 'Director'].includes(user.position) && (
+                  <button
+                    onClick={() => setShowMyTeamDialog(true)}
+                    className="flex-1 sm:flex-none bg-white hover:bg-white/90 text-[#E51636] flex items-center justify-center gap-2 py-2 px-3 sm:px-4 rounded-xl transition-all duration-300 text-sm font-medium shadow-sm border border-white/20"
+                  >
+                    <Users className="w-4 h-4" />
+                    <span>My Team</span>
+                  </button>
+                )}
                 <button
                   onClick={() => navigate('/templates')}
                   className="flex-1 sm:flex-none bg-white hover:bg-white/90 text-[#E51636] flex items-center justify-center gap-2 py-2 px-3 sm:px-4 rounded-xl transition-all duration-300 text-sm font-medium shadow-sm border border-white/20"
@@ -546,8 +549,19 @@ export default function Evaluations() {
               <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[#E51636]" />
             </div>
           ) : filteredEvaluations?.length === 0 ? (
-            <div className="col-span-full text-center py-12">
-              <p className="text-[#27251F]/60">No evaluations found</p>
+            <div className="col-span-full text-center py-8">
+              <p className="text-[#27251F]/60 mb-4">
+                {view === 'pending' ? 'No pending evaluations found' :
+                 view === 'completed' ? 'No completed evaluations found' :
+                 'No evaluations found'}
+              </p>
+              <Button
+                onClick={() => navigate('/evaluations/new')}
+                className="bg-[#E51636] hover:bg-[#E51636]/90 text-white"
+              >
+                <Plus className="w-4 h-4 mr-2" />
+                Start New Evaluation
+              </Button>
             </div>
           ) : (
             filteredEvaluations?.sort(sortEvaluations).map((evaluation: Evaluation) => (
@@ -662,6 +676,12 @@ export default function Evaluations() {
             </DialogFooter>
           </DialogContent>
         </Dialog>
+
+        {/* My Team Dialog */}
+        <MyTeamDialog
+          open={showMyTeamDialog}
+          onOpenChange={setShowMyTeamDialog}
+        />
       </div>
     </div>
   );

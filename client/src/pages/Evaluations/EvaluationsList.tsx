@@ -69,7 +69,7 @@ export default function EvaluationsList() {
         const response = await api.get(`/api/evaluations?${params}`);
         return response.data;
       } catch (error) {
-        console.error('Error fetching evaluations:', error);
+        // Return empty array if there's an error fetching evaluations
         return [];
       }
     }

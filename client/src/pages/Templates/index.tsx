@@ -301,7 +301,39 @@ export default function Templates() {
                 </CardContent>
               </Card>
             ) : (
-              filteredTemplates?.map((template: Template) => (
+              <>
+                {/* Template Skeleton Card */}
+                <Card
+                  className="bg-white rounded-[20px] shadow-md hover:shadow-lg transition-shadow cursor-pointer border-2 border-dashed border-[#E51636]/30 bg-[#E51636]/5"
+                  onClick={() => navigate('/templates/new')}
+                >
+                  <CardContent className="p-6">
+                    <div className="flex flex-col items-center justify-center text-center h-full py-8">
+                      <div className="h-16 w-16 bg-[#E51636]/10 rounded-full flex items-center justify-center mb-4">
+                        <Plus className="w-8 h-8 text-[#E51636]" />
+                      </div>
+                      <h3 className="text-xl font-semibold mb-2 text-[#27251F]">New Template</h3>
+                      <p className="text-[#27251F]/60 mb-6 max-w-xs">Create a custom evaluation template for your team</p>
+
+                      {/* Skeleton outline */}
+                      <div className="w-full max-w-xs mb-6">
+                        <div className="h-4 w-3/4 bg-gray-200 rounded mb-3 mx-auto"></div>
+                        <div className="h-3 w-5/6 bg-gray-100 rounded mb-4 mx-auto"></div>
+                        <div className="h-2 w-full bg-gray-100 rounded mb-2"></div>
+                        <div className="h-2 w-full bg-gray-100 rounded mb-2"></div>
+                        <div className="h-2 w-4/5 bg-gray-100 rounded mb-4"></div>
+                        <div className="h-3 w-5/6 bg-gray-100 rounded mb-2 mx-auto"></div>
+                      </div>
+
+                      <Button className="bg-[#E51636] text-white hover:bg-[#E51636]/90 px-6 rounded-xl flex items-center gap-2 font-medium justify-center">
+                        <Plus className="w-4 h-4" />
+                        New Template
+                      </Button>
+                    </div>
+                  </CardContent>
+                </Card>
+
+                {filteredTemplates?.map((template: Template) => (
                 <Card
                   key={template.id}
                   className="bg-white rounded-[20px] shadow-md hover:shadow-lg transition-shadow cursor-pointer"
@@ -406,7 +438,8 @@ export default function Templates() {
                     </div>
                   </CardContent>
                 </Card>
-              ))
+              ))}
+              </>
             )}
           </div>
         </div>
