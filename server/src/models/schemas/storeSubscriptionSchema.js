@@ -13,11 +13,84 @@ const storeSubscriptionSchema = new mongoose.Schema({
     default: 'none'
   },
   features: {
+    // The 7 subscription sections
+    fohTasks: {
+      type: Boolean,
+      default: true
+    },
+    setups: {
+      type: Boolean,
+      default: true
+    },
+    kitchen: {
+      type: Boolean,
+      default: true
+    },
+    documentation: {
+      type: Boolean,
+      default: true
+    },
+    training: {
+      type: Boolean,
+      default: true
+    },
+    evaluations: {
+      type: Boolean,
+      default: true
+    },
+    leadership: {
+      type: Boolean,
+      default: true
+    },
+    // Legacy feature - keeping for backward compatibility
     leadershipPlans: {
+      type: Boolean,
+      default: true
+    }
+  },
+  pendingChanges: {
+    hasChanges: {
       type: Boolean,
       default: false
     },
-    // Add other premium features here as needed
+    features: {
+      fohTasks: Boolean,
+      setups: Boolean,
+      kitchen: Boolean,
+      documentation: Boolean,
+      training: Boolean,
+      evaluations: Boolean,
+      leadership: Boolean,
+      leadershipPlans: Boolean
+    },
+    effectiveDate: {
+      type: Date
+    },
+    submittedAt: {
+      type: Date
+    }
+  },
+  pricing: {
+    sectionPrice: {
+      type: Number,
+      default: 50 // $50 per section
+    },
+    maxPrice: {
+      type: Number,
+      default: 200 // $200 maximum
+    }
+  },
+  trialInfo: {
+    isInTrial: {
+      type: Boolean,
+      default: false
+    },
+    trialStartDate: {
+      type: Date
+    },
+    trialEndDate: {
+      type: Date
+    }
   },
   paymentHistory: [{
     amount: {

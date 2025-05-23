@@ -3,6 +3,7 @@ import { UpdateNotification } from '@/components/UpdateNotification';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
 import { useTranslation } from '@/contexts/TranslationContext';
+import { useSubscription } from '@/contexts/SubscriptionContext';
 import { User } from '../types/user';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -78,6 +79,7 @@ export default function Layout({ children }: { children: React.ReactNode }) {
   const { user, logout } = useAuth() as { user: User | null, logout: () => void };
   const { t } = useTranslation();
   const { showNotification } = useNotification();
+  const { isFeatureEnabled } = useSubscription();
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [hasNotifications, setHasNotifications] = useState(false);
   const [pendingEvaluations, setPendingEvaluations] = useState(0);
@@ -196,17 +198,19 @@ export default function Layout({ children }: { children: React.ReactNode }) {
       icon: Home,
       label: t('navigation.dashboard'),
       href: '/',
-      show: true,
+      show: true, // Home is always shown
       badge: null
     },
-    {
+    // Only include FOH Tasks if the feature is enabled
+    ...(isFeatureEnabled('fohTasks') ? [{
       icon: CheckSquare,
       label: 'FOH Tasks',
       href: '/foh',
       show: true,
       badge: null
-    },
-    {
+    }] : []),
+    // Only include Setup Sheet if the feature is enabled
+    ...(isFeatureEnabled('setups') ? [{
       icon: CalendarDays,
       label: 'Setup Sheet',
       href: '/setup-sheet-templates',
@@ -232,12 +236,13 @@ export default function Layout({ children }: { children: React.ReactNode }) {
           badge: null
         }
       ]
-    },
-    {
+    }] : []),
+    // Only include Kitchen if the feature is enabled and user is in Kitchen department
+    ...(isFeatureEnabled('kitchen') && Boolean(user?.departments?.includes('Kitchen')) ? [{
       icon: ChefHat,
       label: t('navigation.kitchen'),
       href: '/kitchen',
-      show: Boolean(user?.departments?.includes('Kitchen')),
+      show: true,
       badge: null,
       submenu: [
         {
@@ -277,12 +282,12 @@ export default function Layout({ children }: { children: React.ReactNode }) {
           badge: null
         }
       ]
-    },
+    }] : []),
     {
       icon: Users,
       label: user?.position === 'Team Member' ? t('navigation.me') : t('navigation.teamMembers'),
       href: user?.position === 'Team Member' ? `/users/${user?._id}` : '/users',
-      show: true,
+      show: true, // Users section is always shown
       badge: null,
       submenu: user?.position === 'Team Member' ? [
         {
@@ -292,26 +297,21 @@ export default function Layout({ children }: { children: React.ReactNode }) {
           badge: null
         },
 
-        // Disciplinary moved to Documentation
-        // {
-        //   icon: AlertTriangle,
-        //   label: 'My Disciplinary',
-        //   href: '/disciplinary',
-        //   badge: newDisciplinaryItems > 0 ? newDisciplinaryItems.toString() : null,
-        //   color: newDisciplinaryItems > 0 ? 'text-red-600' : undefined
-        // },
-        {
+        // Only show Documentation if the feature is enabled
+        ...(isFeatureEnabled('documentation') ? [{
           icon: FileText,
           label: 'My Documentation',
           href: `/documentation?employee=${user?._id}`,
           badge: null
-        },
-        {
+        }] : []),
+
+        // Only show Training if the feature is enabled
+        ...(isFeatureEnabled('training') ? [{
           icon: GraduationCap,
           label: 'My Training',
           href: '/training',
           badge: null
-        }
+        }] : [])
       ] : [
         {
           icon: Users,
@@ -320,63 +320,80 @@ export default function Layout({ children }: { children: React.ReactNode }) {
           badge: null
         },
 
-        // Disciplinary moved to Documentation
-        // {
-        //   icon: AlertTriangle,
-        //   label: 'Disciplinary',
-        //   href: '/disciplinary',
-        //   badge: newDisciplinaryItems > 0 ? newDisciplinaryItems.toString() : null,
-        //   color: newDisciplinaryItems > 0 ? 'text-red-600' : undefined
-        // },
-        {
+        // Only show Documentation if the feature is enabled
+        ...(isFeatureEnabled('documentation') ? [{
           icon: FileText,
           label: 'Documentation',
           href: '/documentation',
           badge: null
-        },
-        {
+        }] : []),
+
+        // Only show Training if the feature is enabled
+        ...(isFeatureEnabled('training') ? [{
           icon: GraduationCap,
           label: 'Training',
           href: '/training',
           badge: null
-        }
+        }] : [])
       ]
     },
     {
       icon: ClipboardList,
       label: 'Development',
       href: '#',
-      show: true,
+      // Only show the Development menu if at least one of its submenu items is enabled
+      show: isFeatureEnabled('evaluations') || isFeatureEnabled('leadership') || isFeatureEnabled('documentation'),
       badge: null,
       submenu: user?.position === 'Team Member' ? [
-        {
+        // Only include Evaluations if the feature is enabled
+        ...(isFeatureEnabled('evaluations') ? [{
           icon: ClipboardList,
           label: 'My Evaluations',
           href: '/evaluations',
           badge: pendingEvaluations > 0 ? pendingEvaluations.toString() : null,
           color: pendingEvaluations > 0 ? 'text-red-600' : undefined
-        },
+        }] : []),
 
+        // Only include Documentation if the feature is enabled
+        ...(isFeatureEnabled('documentation') ? [{
+          icon: FileText,
+          label: 'My Documentation',
+          href: `/documentation?employee=${user?._id}`,
+          badge: null
+        }] : [])
       ] : [
-        {
+        // Only include Evaluations if the feature is enabled
+        ...(isFeatureEnabled('evaluations') ? [{
           icon: ClipboardList,
           label: 'Evaluations',
           href: '/evaluations',
           badge: pendingEvaluations > 0 ? pendingEvaluations.toString() : null,
           color: pendingEvaluations > 0 ? 'text-red-600' : undefined
-        },
+        }] : []),
 
-        {
+        // Only include Documentation if the feature is enabled
+        ...(isFeatureEnabled('documentation') ? [{
+          icon: FileText,
+          label: 'Documentation',
+          href: '/documentation',
+          badge: null
+        }] : []),
+
+        // Only include Leadership if the feature is enabled
+        ...(isFeatureEnabled('leadership') ? [{
           icon: TrendingUp,
           label: 'Leadership',
           href: '/leadership',
           badge: null
-        },
+        }] : []),
+
+        // Analytics is always shown
         {
           icon: BarChart,
           label: 'Analytics',
           href: '/analytics',
-          badge: null
+          badge: null,
+          show: true
         }
       ]
     }

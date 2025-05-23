@@ -2,23 +2,38 @@ import React from 'react';
 import { createContext, useContext, useState, useEffect } from 'react';
 import api from '@/lib/axios';
 import { User } from '@/types/user';
+import { Store } from '@/types/store';
 import userStoreService from '@/services/userStoreService';
+import ExpiredSubscriptionOverlay from '@/components/ExpiredSubscriptionOverlay';
 
 interface AuthContextType {
   user: User | null;
+  store: Store | null;
   token: string | null;
   login: (email: string, password: string) => Promise<void>;
   logout: () => void;
   switchStore: (storeId: string) => Promise<void>;
   isLoading: boolean;
+  subscriptionStatus: 'active' | 'expired' | 'trial' | 'none' | null;
+  dismissExpiredOverlay: () => void;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
+  const [store, setStore] = useState<Store | null>(null);
   const [token, setToken] = useState<string | null>(localStorage.getItem('token'));
   const [isLoading, setIsLoading] = useState(true);
+  const [subscriptionStatus, setSubscriptionStatus] = useState<'active' | 'expired' | 'trial' | 'none' | null>(null);
+  const [showExpiredOverlay, setShowExpiredOverlay] = useState(false);
+
+  // Function to dismiss the expired subscription overlay
+  // This is kept for API compatibility but not used anymore
+  const dismissExpiredOverlay = () => {
+    // We no longer allow dismissing the overlay without requesting reactivation
+    // setShowExpiredOverlay(false);
+  };
 
   useEffect(() => {
     const initAuth = async () => {
@@ -29,6 +44,20 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         try {
           const response = await api.get('/api/auth/profile');
           setUser(response.data.user);
+          setStore(response.data.store);
+
+          // Fetch subscription status
+          try {
+            const subscriptionResponse = await api.get('/api/subscriptions/status');
+            setSubscriptionStatus(subscriptionResponse.data.subscriptionStatus);
+
+            // Check if subscription is expired
+            if (subscriptionResponse.data.subscriptionStatus === 'expired') {
+              setShowExpiredOverlay(true);
+            }
+          } catch (subscriptionError) {
+            console.error('Failed to fetch subscription status:', subscriptionError);
+          }
         } catch (error) {
           console.error('Failed to fetch user profile:', error);
 
@@ -91,6 +120,21 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
       setToken(token);
       setUser(user);
+      setStore(response.data.store);
+
+      // Fetch subscription status after login
+      try {
+        const subscriptionResponse = await api.get('/api/subscriptions/status');
+        setSubscriptionStatus(subscriptionResponse.data.subscriptionStatus);
+
+        // Check if subscription is expired
+        if (subscriptionResponse.data.subscriptionStatus === 'expired') {
+          setShowExpiredOverlay(true);
+        }
+      } catch (subscriptionError) {
+        console.error('Failed to fetch subscription status after login:', subscriptionError);
+      }
+
       return response.data;
     } catch (error: any) {
       // Ensure auth state is cleared on login error
@@ -125,6 +169,20 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
       setToken(response.token);
       setUser(response.user);
+      setStore(response.store);
+
+      // Fetch subscription status after switching store
+      try {
+        const subscriptionResponse = await api.get('/api/subscriptions/status');
+        setSubscriptionStatus(subscriptionResponse.data.subscriptionStatus);
+
+        // Check if subscription is expired
+        if (subscriptionResponse.data.subscriptionStatus === 'expired') {
+          setShowExpiredOverlay(true);
+        }
+      } catch (subscriptionError) {
+        console.error('Failed to fetch subscription status after switching store:', subscriptionError);
+      }
 
       return response;
     } catch (error: any) {
@@ -134,8 +192,21 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   };
 
   return (
-    <AuthContext.Provider value={{ user, token, login, logout, switchStore, isLoading }}>
+    <AuthContext.Provider
+      value={{
+        user,
+        store,
+        token,
+        login,
+        logout,
+        switchStore,
+        isLoading,
+        subscriptionStatus,
+        dismissExpiredOverlay
+      }}
+    >
       {children}
+      {showExpiredOverlay && <ExpiredSubscriptionOverlay onClose={dismissExpiredOverlay} />}
     </AuthContext.Provider>
   );
 }

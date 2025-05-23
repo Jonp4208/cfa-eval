@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
 import { useTranslation } from '@/contexts/TranslationContext';
+import { useSubscription } from '@/contexts/SubscriptionContext';
 import { cn } from '@/lib/utils';
 import { useQuery } from '@tanstack/react-query';
 import { userPreferencesService, MobileNavigationItem } from '@/lib/services/userPreferences';
@@ -39,45 +40,52 @@ const ALL_NAV_ITEMS = {
     icon: CheckSquare,
     label: 'FOH Tasks',
     href: '/foh',
-    defaultShow: true
+    defaultShow: true,
+    requiresFeature: 'fohTasks'
   },
   documentation: {
     icon: FileText,
     getLabel: (user: any, t: any) => user?.position === 'Team Member' ? 'My Documentation' : 'Documentation',
     href: (user: any) => user?.position === 'Team Member' ? `/documentation?employee=${user?._id}` : '/documentation',
-    defaultShow: true
+    defaultShow: true,
+    requiresFeature: 'documentation'
   },
   kitchen: {
     icon: ChefHat,
     getLabel: (user: any, t: any) => t('navigation.kitchen'),
     href: '/kitchen',
     showIf: (user: any) => user?.departments?.includes('Kitchen') || ['Director', 'Leader'].includes(user?.position || ''),
-    defaultShow: true
+    defaultShow: true,
+    requiresFeature: 'kitchen'
   },
   training: {
     icon: GraduationCap,
     getLabel: (user: any, t: any) => t('navigation.training'),
     href: '/training',
-    defaultShow: true
+    defaultShow: true,
+    requiresFeature: 'training'
   },
   setupSheet: {
     icon: CalendarDays,
     label: 'Setup Sheet',
     href: '/saved-setups',
-    defaultShow: true
+    defaultShow: true,
+    requiresFeature: 'setups'
   },
   evaluations: {
     icon: ClipboardList,
     label: 'Evaluations',
     href: '/evaluations',
-    defaultShow: false
+    defaultShow: false,
+    requiresFeature: 'evaluations'
   },
   leadership: {
     icon: TrendingUp,
     label: 'Leadership',
     href: '/leadership',
     showIf: (user: any) => user?.position !== 'Team Member',
-    defaultShow: false
+    defaultShow: false,
+    requiresFeature: 'leadership'
   },
   analytics: {
     icon: BarChart,
@@ -99,6 +107,7 @@ export function MobileNav() {
   const navigate = useNavigate();
   const { user } = useAuth();
   const { t } = useTranslation();
+  const { isFeatureEnabled } = useSubscription();
   const [navItems, setNavItems] = useState<any[]>([]);
 
   // Fetch user preferences to get navigation preferences
@@ -126,10 +135,15 @@ export function MobileNav() {
           const navConfig = ALL_NAV_ITEMS[item.key];
           if (!navConfig) return null;
 
-          // Check if this item should be shown based on user role/department
+          // Check if this item should be shown based on user role/department and subscription
           let shouldShow = item.show;
           if (navConfig.showIf && typeof navConfig.showIf === 'function') {
             shouldShow = shouldShow && navConfig.showIf(user);
+          }
+
+          // Check if this item requires a specific feature
+          if (navConfig.requiresFeature) {
+            shouldShow = shouldShow && isFeatureEnabled(navConfig.requiresFeature);
           }
 
           // Get the label (static or dynamic)
@@ -170,10 +184,15 @@ export function MobileNav() {
           const navConfig = ALL_NAV_ITEMS[item.key];
           if (!navConfig) return null;
 
-          // Check if this item should be shown based on user role/department
+          // Check if this item should be shown based on user role/department and subscription
           let shouldShow = item.show;
           if (navConfig.showIf && typeof navConfig.showIf === 'function') {
             shouldShow = shouldShow && navConfig.showIf(user);
+          }
+
+          // Check if this item requires a specific feature
+          if (navConfig.requiresFeature) {
+            shouldShow = shouldShow && isFeatureEnabled(navConfig.requiresFeature);
           }
 
           // Get the label (static or dynamic)

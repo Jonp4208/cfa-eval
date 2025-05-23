@@ -526,16 +526,23 @@ export const updateStoreSubscriptionStatus = async (req, res) => {
 
     let subscription = await StoreSubscription.findOne({ store: storeId })
     if (!subscription) {
-      // Optionally, create a new subscription if not found
+      // Create a new subscription if not found with all features enabled
       subscription = new StoreSubscription({
         store: storeId,
         subscriptionStatus,
-        features: { leadershipPlans: subscriptionStatus === 'active' || subscriptionStatus === 'trial' }
+        features: {
+          fohTasks: true,
+          setups: true,
+          kitchen: true,
+          documentation: true,
+          training: true,
+          evaluations: true,
+          leadership: true,
+          leadershipPlans: true
+        }
       })
     } else {
       subscription.subscriptionStatus = subscriptionStatus
-      // Optionally, update features based on status
-      subscription.features.leadershipPlans = subscriptionStatus === 'active' || subscriptionStatus === 'trial'
     }
     await subscription.save()
 
@@ -554,3 +561,202 @@ export const updateStoreSubscriptionStatus = async (req, res) => {
     })
   }
 }
+
+/**
+ * Get store subscription details
+ */
+export const getStoreSubscription = async (req, res) => {
+  try {
+    const { storeId } = req.params;
+
+    if (!storeId) {
+      return res.status(400).json({ message: 'Store ID is required' });
+    }
+
+    // Check if store exists
+    const store = await Store.findById(storeId);
+    if (!store) {
+      return res.status(404).json({ message: 'Store not found' });
+    }
+
+    // Get subscription details
+    let subscription = await StoreSubscription.findOne({ store: storeId });
+    if (!subscription) {
+      // Create a new subscription with all features enabled
+      subscription = new StoreSubscription({
+        store: storeId,
+        subscriptionStatus: 'active',
+        features: {
+          fohTasks: true,
+          setups: true,
+          kitchen: true,
+          documentation: true,
+          training: true,
+          evaluations: true,
+          leadership: true,
+          leadershipPlans: true
+        }
+      });
+      await subscription.save();
+    }
+
+    // Calculate the current subscription cost
+    const enabledSections = Object.entries(subscription.features)
+      .filter(([key, value]) => value === true && key !== 'leadershipPlans')
+      .length;
+
+    const currentCost = Math.min(
+      enabledSections * (subscription.pricing?.sectionPrice || 50),
+      subscription.pricing?.maxPrice || 200
+    );
+
+    // Calculate pending cost if there are pending changes
+    let pendingCost = null;
+    if (subscription.pendingChanges && subscription.pendingChanges.hasChanges) {
+      const pendingEnabledSections = Object.entries(subscription.pendingChanges.features)
+        .filter(([key, value]) => value === true && key !== 'leadershipPlans')
+        .length;
+
+      pendingCost = Math.min(
+        pendingEnabledSections * (subscription.pricing?.sectionPrice || 50),
+        subscription.pricing?.maxPrice || 200
+      );
+    }
+
+    // Format response
+    const response = {
+      store: {
+        _id: store._id,
+        storeNumber: store.storeNumber,
+        name: store.name
+      },
+      subscription: subscription.toObject(),
+      calculatedCost: currentCost
+    };
+
+    if (pendingCost !== null) {
+      response.pendingCost = pendingCost;
+    }
+
+    res.json(response);
+  } catch (error) {
+    console.error('Error getting store subscription:', error);
+    res.status(500).json({
+      message: 'Error retrieving store subscription',
+      error: error.message
+    });
+  }
+};
+
+/**
+ * Update store subscription features
+ */
+export const updateStoreSubscriptionFeatures = async (req, res) => {
+  try {
+    const { storeId } = req.params;
+    const { features, applyImmediately = false } = req.body;
+
+    if (!storeId || !features) {
+      return res.status(400).json({
+        message: 'Store ID and features are required'
+      });
+    }
+
+    // Check if store exists
+    const store = await Store.findById(storeId);
+    if (!store) {
+      return res.status(404).json({ message: 'Store not found' });
+    }
+
+    // Find or create subscription
+    let subscription = await StoreSubscription.findOne({ store: storeId });
+    if (!subscription) {
+      // Create a new subscription with all features enabled
+      subscription = new StoreSubscription({
+        store: storeId,
+        subscriptionStatus: 'active',
+        features: {
+          fohTasks: true,
+          setups: true,
+          kitchen: true,
+          documentation: true,
+          training: true,
+          evaluations: true,
+          leadership: true,
+          leadershipPlans: true
+        }
+      });
+      await subscription.save();
+    }
+
+    if (applyImmediately) {
+      // Apply changes immediately
+      subscription.features = {
+        ...subscription.features,
+        ...features
+      };
+
+      // Clear any pending changes
+      if (subscription.pendingChanges) {
+        subscription.pendingChanges.hasChanges = false;
+      }
+    } else {
+      // Set as pending changes
+      const effectiveDate = subscription.currentPeriod?.endDate || new Date(Date.now() + 30 * 24 * 60 * 60 * 1000);
+
+      // Make sure we're sending the complete features object, not just the changed features
+      const completeFeatures = {
+        ...subscription.features,  // Start with current features
+        ...features                // Apply the changes
+      };
+
+      subscription.pendingChanges = {
+        hasChanges: true,
+        features: completeFeatures,
+        effectiveDate: effectiveDate,
+        submittedAt: new Date()
+      };
+    }
+
+    await subscription.save();
+
+    // Calculate the current subscription cost
+    const enabledSections = Object.entries(subscription.features)
+      .filter(([key, value]) => value === true && key !== 'leadershipPlans')
+      .length;
+
+    const currentCost = Math.min(
+      enabledSections * (subscription.pricing?.sectionPrice || 50),
+      subscription.pricing?.maxPrice || 200
+    );
+
+    // Calculate pending cost if there are pending changes
+    let pendingCost = null;
+    if (subscription.pendingChanges && subscription.pendingChanges.hasChanges) {
+      const pendingEnabledSections = Object.entries(subscription.pendingChanges.features)
+        .filter(([key, value]) => value === true && key !== 'leadershipPlans')
+        .length;
+
+      pendingCost = Math.min(
+        pendingEnabledSections * (subscription.pricing?.sectionPrice || 50),
+        subscription.pricing?.maxPrice || 200
+      );
+    }
+
+    // Format response
+    const response = subscription.toObject();
+    response.calculatedCost = currentCost;
+
+    if (pendingCost !== null) {
+      response.pendingCost = pendingCost;
+    }
+
+    res.json(response);
+  } catch (error) {
+    console.error('Error updating subscription features:', error);
+    res.status(500).json({
+      message: 'Error updating subscription features',
+      error: error.message
+    });
+  }
+};

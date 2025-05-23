@@ -1,0 +1,386 @@
+// client/src/pages/Dashboard.tsx
+import React, { useMemo, useCallback, useEffect } from 'react';
+import { useNavigate, useLocation } from 'react-router-dom';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
+import { useQueryClient } from '@tanstack/react-query';
+import {
+  ClipboardList,
+  Users,
+  FileText,
+  Calendar,
+  AlertCircle,
+  TrendingUp,
+  ChevronRight,
+  Clock,
+  Target,
+  Award,
+  LucideIcon,
+  CheckSquare,
+  ListChecks,
+  RefreshCw,
+  Wrench,
+  Thermometer,
+  Sun,
+  Sunrise,
+  Sunset,
+  Trash2
+} from 'lucide-react';
+import { useAuth } from '@/contexts/AuthContext';
+import { useTranslation } from '@/contexts/TranslationContext';
+import { useSubscription } from '@/contexts/SubscriptionContext';
+import TeamMemberDashboard from '../TeamMemberDashboard';
+import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
+import { Progress } from '@/components/ui/progress';
+import { useNotification } from '@/contexts/NotificationContext';
+import PageHeader, { headerButtonClass } from '@/components/PageHeader';
+import { useDashboardStats } from '@/hooks/useDashboardStats';
+import { useKitchenDashboardStats } from '@/hooks/useKitchenDashboardStats';
+
+interface StatCardProps {
+  title: string;
+  value: number | string;
+  subtitle: string;
+  icon: LucideIcon;
+  color: string;
+  progress?: number;
+  onClick: () => void;
+  className?: string;
+  alert?: {
+    count: number,
+    text: string,
+    color: string
+  };
+}
+
+interface Evaluation {
+  _id: string;
+  employeeName?: string;
+  employee?: {
+    _id: string;
+    name: string;
+  };
+  templateName?: string;
+  template?: {
+    _id: string;
+    name: string;
+  };
+  scheduledDate: string;
+}
+
+interface Incident {
+  id: string;
+  name: string;
+  type: string;
+  severity: string;
+  date: string;
+  source?: 'documentation' | 'disciplinary';
+}
+
+interface DashboardStats {
+  pendingEvaluations: number;
+  completedEvaluations: number;
+  totalEmployees: number;
+  activeTemplates: number;
+  completedReviewsLast30Days: number;
+  openDisciplinaryIncidents: number;
+  resolvedDisciplinaryThisMonth: number;
+  newHiresCount: number;
+  upcomingEvaluations: Array<Evaluation>;
+  disciplinary?: {
+    active: number;
+    followUps: number;
+    recent: Array<Incident>;
+    last30Days: number;
+  };
+  team?: {
+    inTraining: number;
+    performance: {
+      foh: number;
+      boh: number;
+      average: number;
+      change: number;
+    };
+    newHiresLast30Days: number;
+  };
+}
+
+// Memoized card components for better performance
+const StatCard = React.memo<StatCardProps>(({ title, value, subtitle, icon: Icon, color, progress, onClick, alert }) => (
+  <Card
+    className="bg-white shadow-sm hover:shadow-md transition-all duration-300 cursor-pointer rounded-lg border border-gray-100"
+    onClick={onClick}
+  >
+    <CardContent className="p-4">
+      <div className="flex items-center gap-3 mb-2">
+        <div className={`shrink-0 h-10 w-10 ${color} rounded-xl flex items-center justify-center`}>
+          <Icon strokeWidth={1.5} size={20} />
+        </div>
+        <div className="flex-1">
+          <p className="text-sm font-medium text-[#27251F]">{title}</p>
+          <h3 className="text-xl font-bold text-[#27251F] mt-0.5">{value}</h3>
+        </div>
+      </div>
+
+      {alert && alert.count > 0 ? (
+        <div className={`mt-1 mb-2 py-1 px-2 ${alert.color} rounded-md flex items-center justify-between`}>
+          <span className="text-xs font-medium">{alert.text}</span>
+          <span className="text-xs font-bold px-1.5 py-0.5 bg-white/30 rounded-full">{alert.count}</span>
+        </div>
+      ) : (
+        <p className="text-xs text-[#27251F]/60">{subtitle}</p>
+      )}
+
+      {progress !== undefined && progress > 0 && (
+        <div className="mt-2">
+          <Progress value={progress} className="h-1.5" />
+        </div>
+      )}
+    </CardContent>
+  </Card>
+));
+
+interface PerformanceChartProps {
+  data: Array<{
+    date: string;
+    FOH: number;
+    BOH: number;
+    evaluationCount?: number;
+    fohCount?: number;
+    bohCount?: number;
+  }>;
+}
+
+const PerformanceChart = React.memo<PerformanceChartProps>(({ data }) => {
+  const { t } = useTranslation();
+
+  // Custom tooltip to show more context
+  const CustomTooltip = ({ active, payload, label }: any) => {
+    if (active && payload && payload.length) {
+      const dataPoint = payload[0].payload;
+      return (
+        <div className="bg-white p-3 rounded-lg shadow-lg border border-gray-200">
+          <p className="font-semibold text-sm mb-1">{label}</p>
+          <div className="space-y-1">
+            {payload.map((entry: any, index: number) => (
+              <p key={index} className="text-sm" style={{ color: entry.color }}>
+                {entry.name}: {entry.value}%
+              </p>
+            ))}
+            {dataPoint.evaluationCount && (
+              <p className="text-xs text-gray-600 mt-2">
+                {t('dashboard.evaluationCount', { count: dataPoint.evaluationCount })}
+                <br />
+                {t('dashboard.fohEvaluations', { count: dataPoint.fohCount })} •
+                {t('dashboard.bohEvaluations', { count: dataPoint.bohCount })}
+              </p>
+            )}
+          </div>
+        </div>
+      );
+    }
+    return null;
+  };
+
+  return (
+    <div className="h-[300px]">
+      <ResponsiveContainer width="100%" height="100%">
+        <LineChart data={data}>
+          <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" />
+          <XAxis
+            dataKey="date"
+            stroke="#27251F"
+            tickLine={false}
+            axisLine={false}
+            fontSize={12}
+            interval="preserveStartEnd"
+            minTickGap={30}
+          />
+          <YAxis
+            stroke="#27251F"
+            tickLine={false}
+            axisLine={false}
+            fontSize={12}
+            tickFormatter={(value) => `${value}%`}
+            domain={[0, 100]}
+          />
+          <Tooltip content={<CustomTooltip />} />
+          <Line
+            type="monotone"
+            dataKey="FOH"
+            name="FOH"
+            stroke="#E51636"
+            strokeWidth={2}
+            dot={{ r: 3, strokeWidth: 1 }}
+            activeDot={{ r: 5 }}
+          />
+          <Line
+            type="monotone"
+            dataKey="BOH"
+            name="BOH"
+            stroke="#2563eb"
+            strokeWidth={2}
+            dot={{ r: 3, strokeWidth: 1 }}
+            activeDot={{ r: 5 }}
+          />
+        </LineChart>
+      </ResponsiveContainer>
+    </div>
+  );
+});
+
+export default function Dashboard() {
+  const { user } = useAuth();
+  const navigate = useNavigate();
+  const location = useLocation();
+  const { showNotification } = useNotification();
+  const { t } = useTranslation();
+  const { isFeatureEnabled } = useSubscription();
+
+  // Check for mobile app - we want to ensure consistent buttons on all platforms
+  const isMobileApp = location.search.includes('mobile=true') || window.navigator.userAgent.includes('CFA-Eval-App');
+
+  // Use our custom hooks for all dashboard data and calculations
+  const {
+    stats,
+    chartData,
+    upcomingEvaluations,
+    recentIncidents,
+    totalDocumentationRecords,
+    totalDocumentationsThisMonth,
+    totalDocumentationsThisWeek,
+    performanceMetrics,
+    trainingMetrics,
+    fohTaskMetrics,
+    isLoading,
+    fohTasksLoading
+  } = useDashboardStats();
+
+  // Get kitchen stats
+  const {
+    kitchenStats,
+    isLoading: kitchenStatsLoading,
+    refetchKitchenStats
+  } = useKitchenDashboardStats();
+
+  const queryClient = useQueryClient();
+
+  // Explicitly type the stats as DashboardStats
+  const typedStats = stats as DashboardStats;
+
+  // Calculate recent documentation count (last 30 days)
+  const recentDocumentationCount = recentIncidents.filter(incident => {
+    const incidentDate = new Date(incident.date);
+    const thirtyDaysAgo = new Date();
+    thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
+    return incidentDate >= thirtyDaysAgo;
+  }).length;
+
+  // Log the recent incidents data for debugging
+  console.log('Recent incidents data:', recentIncidents);
+
+  // Add a useEffect to log when the data changes
+  useEffect(() => {
+    console.log('Recent incidents updated:', recentIncidents);
+  }, [recentIncidents]);
+
+  // Show Team Member dashboard for Team Members and Trainers
+  if (user?.position === 'Team Member' || user?.position === 'Trainer') {
+    return <TeamMemberDashboard />;
+  }
+
+  // Memoize navigation handlers
+  const handleNavigate = useCallback((path: string) => () => navigate(path), [navigate]);
+
+  if (isLoading || kitchenStatsLoading) {
+    return (
+      <div className="flex items-center justify-center h-96">
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[#E51636]" />
+      </div>
+    );
+  }
+
+  // Function to render detail cards based on enabled features
+  function renderDetailCards() {
+    const enabledFeatures = [];
+    if (isFeatureEnabled('fohTasks')) enabledFeatures.push('fohTasks');
+    if (isFeatureEnabled('kitchen')) enabledFeatures.push('kitchen');
+    if (isFeatureEnabled('documentation')) enabledFeatures.push('documentation');
+    if (isFeatureEnabled('evaluations')) enabledFeatures.push('evaluations');
+    if (isFeatureEnabled('training')) enabledFeatures.push('training');
+    if (isFeatureEnabled('leadership')) enabledFeatures.push('leadership');
+
+    // Define feature priority (most important first)
+    const featurePriority = ['fohTasks', 'evaluations', 'kitchen', 'documentation', 'training', 'leadership'];
+
+    // Sort enabled features by priority
+    const prioritizedFeatures = [...enabledFeatures].sort((a, b) => {
+      return featurePriority.indexOf(a) - featurePriority.indexOf(b);
+    });
+
+    // Determine how many detail cards to show for each feature
+    let detailCardsPerFeature = {};
+
+    if (prioritizedFeatures.length === 0) {
+      // No features enabled - show no detail cards
+      return null;
+    } else if (prioritizedFeatures.length === 1) {
+      // 1 feature enabled - show all detail cards for that feature
+      const feature = prioritizedFeatures[0];
+      detailCardsPerFeature[feature] = 4; // Show all available detail cards
+    } else if (prioritizedFeatures.length === 2) {
+      // 2 features enabled - show 2 detail cards for each feature
+      prioritizedFeatures.forEach(feature => {
+        detailCardsPerFeature[feature] = 2;
+      });
+    } else {
+      // 3+ features enabled - show 1 detail card for each of the most important features
+      prioritizedFeatures.slice(0, 4).forEach(feature => {
+        detailCardsPerFeature[feature] = 1;
+      });
+    }
+
+    // Generate detail cards based on the calculated distribution
+    const detailCards = [];
+
+    // Return the detail cards
+    return detailCards;
+  }
+
+  return (
+    <div className="min-h-screen p-4 md:p-6">
+      <div className="max-w-7xl mx-auto space-y-4 sm:space-y-6">
+        {/* Hero Section with PageHeader */}
+        <PageHeader
+          title={t('dashboard.welcomeBack', `Welcome back, ${user?.name}!`, { name: user?.name })}
+          subtitle={new Date().toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}
+          actions={
+            <div className="flex flex-col md:flex-row gap-2">
+              <Button
+                onClick={handleNavigate('/evaluations/new')}
+                className={headerButtonClass}
+              >
+                <ClipboardList className="w-4 h-4" />
+                <span>{t('evaluations.create')}</span>
+              </Button>
+              <Button
+                onClick={handleNavigate('/disciplinary/new')}
+                className={headerButtonClass}
+              >
+                <AlertCircle className="w-4 h-4" />
+                <span>{t('dashboard.newIncident')}</span>
+              </Button>
+            </div>
+          }
+          showBackButton={false}
+        />
+
+        {/* Lists Grid */}
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          {/* Determine which detail cards to show based on enabled features */}
+          {renderDetailCards()}
+        </div>
+      </div>
+    </div>
+  );
+}

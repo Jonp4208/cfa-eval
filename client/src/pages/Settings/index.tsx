@@ -10,21 +10,31 @@ import { Input } from "@/components/ui/input";
 import { Switch } from "@/components/ui/switch";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Settings as SettingsIcon, FileText, Bell, BarChart, Save, RotateCcw, Scale, Mail, LayoutDashboard } from 'lucide-react';
+import { Settings as SettingsIcon, FileText, Bell, BarChart, Save, RotateCcw, Scale, Mail, LayoutDashboard, CreditCard } from 'lucide-react';
 import { cn } from "@/lib/utils";
 import ChangePasswordForm from './components/ChangePasswordForm';
 import MobileNavigationSettings from './components/MobileNavigationSettings';
+import SubscriptionSettings from './components/SubscriptionSettings';
 import { settingsService } from '@/lib/services/settings';
 import { userPreferencesService } from '@/lib/services/userPreferences';
 import api from '@/lib/axios';
 import { handleError } from '@/lib/utils/error-handler';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import PageHeader, { headerButtonClass } from '@/components/PageHeader';
 import GradingScales from './components/GradingScales';
 
 const SettingsPage = () => {
+  // Get the tab from URL query parameter
+  const location = useLocation();
+  const queryParams = new URLSearchParams(location.search);
+  const tabParam = queryParams.get('tab');
+
   // State to track active tab for keyboard navigation
-  const [activeTab, setActiveTab] = useState('general');
+  const [activeTab, setActiveTab] = useState(
+    tabParam && ['general', 'subscription', 'password', 'mobile-navigation', 'grading-scales'].includes(tabParam)
+      ? tabParam
+      : 'general'
+  );
   const navigate = useNavigate();
   const queryClient = useQueryClient();
   const { user } = useAuth();
@@ -77,6 +87,7 @@ const SettingsPage = () => {
   // Define available tabs based on user role
   const availableTabs = [
     'general',
+    'subscription',
     'password',
     'mobile-navigation',
     ...(isAdmin ? ['grading-scales'] : [])
@@ -326,6 +337,17 @@ const SettingsPage = () => {
               {t('settings.general')}
             </TabsTrigger>
             <TabsTrigger
+              value="subscription"
+              className="data-[state=active]:bg-[#E51636] data-[state=active]:text-white rounded-[14px] h-10 focus:ring-2 focus:ring-[#E51636] focus:ring-offset-2"
+              role="tab"
+              aria-selected={activeTab === 'subscription'}
+              tabIndex={activeTab === 'subscription' ? 0 : -1}
+              aria-controls="subscription-tab"
+              title="Subscription Settings (Alt+2)"
+            >
+              Subscription
+            </TabsTrigger>
+            <TabsTrigger
               value="password"
               className="data-[state=active]:bg-[#E51636] data-[state=active]:text-white rounded-[14px] h-10 focus:ring-2 focus:ring-[#E51636] focus:ring-offset-2"
               role="tab"
@@ -500,6 +522,10 @@ const SettingsPage = () => {
           </TabsContent>
 
 
+
+          <TabsContent value="subscription" id="subscription-tab" role="tabpanel" aria-labelledby="subscription-tab" tabIndex={0}>
+            <SubscriptionSettings />
+          </TabsContent>
 
           <TabsContent value="grading-scales" id="grading-scales-tab" role="tabpanel" aria-labelledby="grading-scales-tab" tabIndex={0}>
             <GradingScales />

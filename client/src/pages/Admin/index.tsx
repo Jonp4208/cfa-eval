@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -19,7 +20,8 @@ import {
   Eye,
   Edit,
   KeyRound,
-  MoreHorizontal
+  MoreHorizontal,
+  CreditCard
 } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import adminService, { Store, NewStoreData, StoreUser, NewUserData } from '@/services/adminService';
@@ -65,6 +67,7 @@ export default function AdminPage() {
   const { user } = useAuth();
   const { toast } = useToast();
   const queryClient = useQueryClient();
+  const navigate = useNavigate();
 
   // Store management state
   const [showAddStoreDialog, setShowAddStoreDialog] = useState(false);
@@ -553,6 +556,14 @@ export default function AdminPage() {
                             <Button
                               variant="ghost"
                               size="icon"
+                              title="Manage Subscription"
+                              onClick={() => navigate(`/admin/stores/${store._id}/subscription`)}
+                            >
+                              <CreditCard className="h-4 w-4 text-purple-500" />
+                            </Button>
+                            <Button
+                              variant="ghost"
+                              size="icon"
                               title={store.status === 'inactive' ? 'Activate Store' : 'Deactivate Store'}
                               onClick={() => handleStatusChange(store._id, store.status || 'active')}
                             >
@@ -587,6 +598,14 @@ export default function AdminPage() {
                           onClick={() => handleViewUsers(store._id)}
                         >
                           <Users className="h-4 w-4 text-blue-500" />
+                        </Button>
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          title="Manage Subscription"
+                          onClick={() => navigate(`/admin/stores/${store._id}/subscription`)}
+                        >
+                          <CreditCard className="h-4 w-4 text-purple-500" />
                         </Button>
                         <Button
                           variant="ghost"

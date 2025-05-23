@@ -2,6 +2,7 @@ import React from 'react';
 import { Routes, Route, Navigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import Layout from '../components/Layout';
+import { ProtectedRoute } from '@/utils/routeProtection';
 import Login from '../pages/Login';
 import Register from '../pages/Register';
 import Dashboard from '../pages/Dashboard/Dashboard';
@@ -89,25 +90,16 @@ import { SetupView } from '@/pages/SetupView';
 import { EditTemplate } from '@/pages/EditTemplate';
 import InvoicesPage from '@/pages/Invoices';
 import AdminPage from '@/pages/Admin';
+import SubscriptionManagementPage from '@/pages/Admin/SubscriptionManagement';
 
 interface PrivateRouteProps {
   children: React.ReactNode;
+  requiredFeature?: 'fohTasks' | 'setups' | 'kitchen' | 'documentation' | 'training' | 'evaluations' | 'leadership';
 }
 
-function PrivateRoute({ children }: PrivateRouteProps) {
-  const { user, isLoading } = useAuth();
-  const token = localStorage.getItem('token');
-  const location = useLocation();
-
-  if (isLoading) {
-    return <div>Loading...</div>;
-  }
-
-  if (!user || !token) {
-    return <Navigate to="/login" state={{ from: location }} replace />;
-  }
-
-  return <Layout>{children}</Layout>;
+function PrivateRoute({ children, requiredFeature }: PrivateRouteProps) {
+  // Use our new ProtectedRoute component
+  return <ProtectedRoute requiredFeature={requiredFeature}>{children}</ProtectedRoute>;
 }
 
 export const publicRoutes = [
@@ -157,23 +149,23 @@ export default function AppRoutes() {
 
       {/* Protected Routes */}
       <Route path="/dashboard" element={<PrivateRoute><Dashboard /></PrivateRoute>} />
-      <Route path="/foh" element={<PrivateRoute><FOH /></PrivateRoute>} />
-      <Route path="/foh/history" element={<PrivateRoute><FOHHistory /></PrivateRoute>} />
-      <Route path="/setup-sheet-templates" element={<PrivateRoute><SetupSheetTemplates /></PrivateRoute>} />
-      <Route path="/setup-sheet-builder" element={<PrivateRoute><SetupSheetBuilder /></PrivateRoute>} />
-      <Route path="/edit-template/:id" element={<PrivateRoute><EditTemplate /></PrivateRoute>} />
-      <Route path="/saved-setups" element={<PrivateRoute><SavedSetups /></PrivateRoute>} />
-      <Route path="/setup-view/:setupId" element={<PrivateRoute><SetupView /></PrivateRoute>} />
-      <Route path="/evaluations" element={<PrivateRoute><Evaluations /></PrivateRoute>} />
-      <Route path="/evaluations/new" element={<PrivateRoute><NewEvaluation /></PrivateRoute>} />
-      <Route path="/evaluations/:id/review" element={<PrivateRoute><EmployeeReview /></PrivateRoute>} />
-      <Route path="/evaluations/:id/acknowledge" element={<PrivateRoute><EnhancedEvaluationForm /></PrivateRoute>} />
-      <Route path="/evaluations/:id/history" element={<PrivateRoute><EvaluationHistory employeeId={''} /></PrivateRoute>} />
-      <Route path="/evaluations/:id/list" element={<PrivateRoute><EvaluationsList /></PrivateRoute>} />
-      <Route path="/evaluations/:id" element={<PrivateRoute><ViewEvaluation /></PrivateRoute>} />
+      <Route path="/foh" element={<PrivateRoute requiredFeature="fohTasks"><FOH /></PrivateRoute>} />
+      <Route path="/foh/history" element={<PrivateRoute requiredFeature="fohTasks"><FOHHistory /></PrivateRoute>} />
+      <Route path="/setup-sheet-templates" element={<PrivateRoute requiredFeature="setups"><SetupSheetTemplates /></PrivateRoute>} />
+      <Route path="/setup-sheet-builder" element={<PrivateRoute requiredFeature="setups"><SetupSheetBuilder /></PrivateRoute>} />
+      <Route path="/edit-template/:id" element={<PrivateRoute requiredFeature="setups"><EditTemplate /></PrivateRoute>} />
+      <Route path="/saved-setups" element={<PrivateRoute requiredFeature="setups"><SavedSetups /></PrivateRoute>} />
+      <Route path="/setup-view/:setupId" element={<PrivateRoute requiredFeature="setups"><SetupView /></PrivateRoute>} />
+      <Route path="/evaluations" element={<PrivateRoute requiredFeature="evaluations"><Evaluations /></PrivateRoute>} />
+      <Route path="/evaluations/new" element={<PrivateRoute requiredFeature="evaluations"><NewEvaluation /></PrivateRoute>} />
+      <Route path="/evaluations/:id/review" element={<PrivateRoute requiredFeature="evaluations"><EmployeeReview /></PrivateRoute>} />
+      <Route path="/evaluations/:id/acknowledge" element={<PrivateRoute requiredFeature="evaluations"><EnhancedEvaluationForm /></PrivateRoute>} />
+      <Route path="/evaluations/:id/history" element={<PrivateRoute requiredFeature="evaluations"><EvaluationHistory employeeId={''} /></PrivateRoute>} />
+      <Route path="/evaluations/:id/list" element={<PrivateRoute requiredFeature="evaluations"><EvaluationsList /></PrivateRoute>} />
+      <Route path="/evaluations/:id" element={<PrivateRoute requiredFeature="evaluations"><ViewEvaluation /></PrivateRoute>} />
 
 
-      <Route path="/kitchen" element={<PrivateRoute><Kitchen /></PrivateRoute>}>
+      <Route path="/kitchen" element={<PrivateRoute requiredFeature="kitchen"><Kitchen /></PrivateRoute>}>
         <Route index element={<KitchenHome />} />
         <Route path="waste-tracker" element={<WasteTracker />} />
         <Route path="waste-tracker/analytics" element={<WasteAnalytics />} />
@@ -207,10 +199,10 @@ export default function AppRoutes() {
       <Route path="/disciplinary" element={<Navigate to="/documentation" replace />} />
       <Route path="/disciplinary/new" element={<Navigate to="/documentation/new" replace />} />
       <Route path="/disciplinary/:id" element={<Navigate to="/documentation" replace />} />
-      <Route path="/documentation" element={<PrivateRoute><DocumentationPage /></PrivateRoute>} />
-      <Route path="/documentation/new" element={<PrivateRoute><NewDocument /></PrivateRoute>} />
-      <Route path="/documentation/:id" element={<PrivateRoute><DocumentDetail /></PrivateRoute>} />
-      <Route path="/documentation/:id/edit" element={<PrivateRoute><EditDocument /></PrivateRoute>} />
+      <Route path="/documentation" element={<PrivateRoute requiredFeature="documentation"><DocumentationPage /></PrivateRoute>} />
+      <Route path="/documentation/new" element={<PrivateRoute requiredFeature="documentation"><NewDocument /></PrivateRoute>} />
+      <Route path="/documentation/:id" element={<PrivateRoute requiredFeature="documentation"><DocumentDetail /></PrivateRoute>} />
+      <Route path="/documentation/:id/edit" element={<PrivateRoute requiredFeature="documentation"><EditDocument /></PrivateRoute>} />
       <Route path="/analytics" element={<PrivateRoute><AnalyticsHub /></PrivateRoute>}>
         <Route path="hearts-and-hands" element={<HeartsAndHands />} />
         <Route path="team-scores" element={<TeamScores />} />
@@ -218,7 +210,7 @@ export default function AppRoutes() {
         <Route path="evaluation-trends" element={<EvaluationTrends />} />
         <Route path="department-comparison" element={<DepartmentComparison />} />
       </Route>
-      <Route path="/training" element={<PrivateRoute><Training /></PrivateRoute>}>
+      <Route path="/training" element={<PrivateRoute requiredFeature="training"><Training /></PrivateRoute>}>
         <Route index element={<Navigate to="/training/progress" replace />} />
         <Route path="progress" element={<TrainingProgress />} />
         <Route path="progress/:id" element={<TrainingDetails />} />
@@ -229,7 +221,7 @@ export default function AppRoutes() {
       </Route>
       <Route path="/future" element={<PrivateRoute><FuturePage /></PrivateRoute>} />
 
-      <Route path="/leadership" element={<PrivateRoute><Leadership /></PrivateRoute>}>
+      <Route path="/leadership" element={<PrivateRoute requiredFeature="leadership"><Leadership /></PrivateRoute>}>
         <Route index element={<Navigate to="/leadership/my-plans" replace />} />
         <Route path="dashboard" element={<LeadershipDashboard />} />
         <Route path="goals" element={<Goals />} />
@@ -250,8 +242,8 @@ export default function AppRoutes() {
         <Route path="*" element={<Navigate to="/leadership/my-plans" replace />} />
       </Route>
 
-      <Route path="/foh" element={<PrivateRoute><FOH /></PrivateRoute>} />
-      <Route path="/foh/history" element={<PrivateRoute><FOHHistory /></PrivateRoute>} />
+      <Route path="/foh" element={<PrivateRoute requiredFeature="fohTasks"><FOH /></PrivateRoute>} />
+      <Route path="/foh/history" element={<PrivateRoute requiredFeature="fohTasks"><FOHHistory /></PrivateRoute>} />
 
       {/* Shifts functionality removed */}
 
@@ -261,6 +253,7 @@ export default function AppRoutes() {
       {/* Admin Pages - Restricted Access */}
       <Route path="/admin/invoices" element={<PrivateRoute><InvoicesPage /></PrivateRoute>} />
       <Route path="/admin/stores" element={<PrivateRoute><AdminPage /></PrivateRoute>} />
+      <Route path="/admin/stores/:storeId/subscription" element={<PrivateRoute><SubscriptionManagementPage /></PrivateRoute>} />
 
       <Route path="*" element={<Navigate to="/" replace />} />
     </Routes>

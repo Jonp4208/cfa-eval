@@ -13,6 +13,13 @@ export interface Store {
   subscription?: {
     status: 'active' | 'expired' | 'trial' | 'none';
     features: {
+      fohTasks: boolean;
+      setups: boolean;
+      kitchen: boolean;
+      documentation: boolean;
+      training: boolean;
+      evaluations: boolean;
+      leadership: boolean;
       leadershipPlans: boolean;
       [key: string]: boolean;
     };
@@ -61,6 +68,45 @@ export interface NewUserData {
   isAdmin?: boolean;
   generatePassword?: boolean;
   password?: string;
+}
+
+export interface SubscriptionFeatures {
+  fohTasks: boolean;
+  setups: boolean;
+  kitchen: boolean;
+  documentation: boolean;
+  training: boolean;
+  evaluations: boolean;
+  leadership: boolean;
+  leadershipPlans: boolean;
+  [key: string]: boolean;
+}
+
+export interface PendingChanges {
+  hasChanges: boolean;
+  features: SubscriptionFeatures;
+  effectiveDate: string;
+  submittedAt: string;
+}
+
+export interface SubscriptionPricing {
+  sectionPrice: number;
+  maxPrice: number;
+}
+
+export interface StoreSubscription {
+  _id: string;
+  store: string;
+  subscriptionStatus: 'active' | 'expired' | 'trial' | 'none';
+  features: SubscriptionFeatures;
+  pricing: SubscriptionPricing;
+  pendingChanges?: PendingChanges;
+  currentPeriod?: {
+    startDate: string;
+    endDate: string;
+  };
+  calculatedCost?: number;
+  pendingCost?: number;
 }
 
 const adminService = {
@@ -126,6 +172,34 @@ const adminService = {
   updateStoreSubscriptionStatus: async (storeId: string, subscriptionStatus: 'active' | 'expired' | 'trial' | 'none') => {
     const response = await api.put('/api/admin/stores/subscription-status', { storeId, subscriptionStatus })
     return response.data
+  },
+
+  /**
+   * Get store subscription details
+   */
+  getStoreSubscription: async (storeId: string): Promise<{
+    store: { _id: string; storeNumber: string; name: string };
+    subscription: StoreSubscription;
+    calculatedCost: number;
+    pendingCost?: number;
+  }> => {
+    const response = await api.get(`/api/admin/stores/${storeId}/subscription`);
+    return response.data;
+  },
+
+  /**
+   * Update store subscription features
+   */
+  updateStoreSubscriptionFeatures: async (
+    storeId: string,
+    features: SubscriptionFeatures,
+    applyImmediately: boolean = false
+  ): Promise<StoreSubscription> => {
+    const response = await api.put(`/api/admin/stores/${storeId}/subscription/features`, {
+      features,
+      applyImmediately
+    });
+    return response.data;
   }
 };
 

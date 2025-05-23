@@ -133,7 +133,8 @@ export const getProfile = async (req, res) => {
         role: user.role,
         store: user.store,
         departments: user.departments
-      }
+      },
+      store: user.store
     });
 
   } catch (error) {
