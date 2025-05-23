@@ -19,7 +19,7 @@ import {
   Trash2,
   Info,
   HelpCircle,
-  User,
+  User as UserIcon,
   Calendar,
   FileText,
   ClipboardList,
@@ -40,6 +40,7 @@ export default function NewDocument() {
   const [employees, setEmployees] = useState<User[]>([]);
   const [uploadedFile, setUploadedFile] = useState<File | null>(null);
   const [isUploading, setIsUploading] = useState(false);
+  const [validationError, setValidationError] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [formData, setFormData] = useState<CreateDocumentData>({
     employeeId: '',
@@ -79,20 +80,28 @@ export default function NewDocument() {
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
     const { name, value } = e.target;
     setFormData(prev => ({ ...prev, [name]: value }));
+    // Clear validation error when user makes changes
+    if (validationError) setValidationError(null);
   };
 
   const handleSelectChange = (name: string, value: string) => {
     setFormData(prev => ({ ...prev, [name]: value }));
+    // Clear validation error when user makes changes
+    if (validationError) setValidationError(null);
   };
 
   const handleCheckboxChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, checked } = e.target;
     setFormData(prev => ({ ...prev, [name]: checked }));
+    // Clear validation error when user makes changes
+    if (validationError) setValidationError(null);
   };
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files[0]) {
       setUploadedFile(e.target.files[0]);
+      // Clear validation error when user uploads a file
+      if (validationError) setValidationError(null);
     }
   };
 
@@ -106,24 +115,76 @@ export default function NewDocument() {
   const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();
 
+    // Clear any previous validation errors
+    setValidationError(null);
+
+    // Validate required fields with more visible error messages
     if (!formData.employeeId) {
-      toast.error('Please select an employee');
+      const errorMsg = 'Please select an employee';
+      setValidationError(errorMsg);
+      toast.error(errorMsg, {
+        duration: 3000,
+        position: 'top-center',
+        icon: <AlertTriangle className="h-5 w-5 text-red-500" />
+      });
+      // Scroll to the employee field
+      document.getElementById('employeeId')?.scrollIntoView({ behavior: 'smooth', block: 'center' });
       return;
     }
 
+    // Check if category is selected
+    if (!formData.category) {
+      const errorMsg = 'Please select a document category';
+      setValidationError(errorMsg);
+      toast.error(errorMsg, {
+        duration: 3000,
+        position: 'top-center',
+        icon: <AlertTriangle className="h-5 w-5 text-red-500" />
+      });
+      // Scroll to the category field
+      document.getElementById('category')?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      return;
+    }
+
+    // Check if document type is selected
     if (!formData.type) {
-      toast.error('Please select a document type');
+      const errorMsg = 'Please select a document type';
+      setValidationError(errorMsg);
+      toast.error(errorMsg, {
+        duration: 3000,
+        position: 'top-center',
+        icon: <AlertTriangle className="h-5 w-5 text-red-500" />
+      });
+      // Scroll to the type field and highlight it
+      document.getElementById('type')?.scrollIntoView({ behavior: 'smooth', block: 'center' });
       return;
     }
 
+    // Check if severity is selected for disciplinary documents
     if (formData.category === 'Disciplinary' && !formData.severity) {
-      toast.error('Please select a severity level');
+      const errorMsg = 'Please select a severity level';
+      setValidationError(errorMsg);
+      toast.error(errorMsg, {
+        duration: 3000,
+        position: 'top-center',
+        icon: <AlertTriangle className="h-5 w-5 text-red-500" />
+      });
+      // Scroll to the severity field
+      document.getElementById('severity')?.scrollIntoView({ behavior: 'smooth', block: 'center' });
       return;
     }
 
     // Check if file is required when documentationAttached is true
     if (formData.documentationAttached && !uploadedFile) {
-      toast.error('Please attach the document file');
+      const errorMsg = 'Please attach the document file';
+      setValidationError(errorMsg);
+      toast.error(errorMsg, {
+        duration: 3000,
+        position: 'top-center',
+        icon: <AlertTriangle className="h-5 w-5 text-red-500" />
+      });
+      // Scroll to the file upload section
+      document.getElementById('documentFile')?.scrollIntoView({ behavior: 'smooth', block: 'center' });
       return;
     }
 
@@ -271,10 +332,11 @@ export default function NewDocument() {
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                   <div>
                     <Label htmlFor="employeeId" className="flex items-center gap-1">
-                      <User className="h-4 w-4 text-gray-500" />
+                      <UserIcon className="h-4 w-4 text-gray-500" />
                       Employee <span className="text-red-500">*</span>
                     </Label>
                     <Select
+                      id="employeeId"
                       name="employeeId"
                       value={formData.employeeId}
                       onValueChange={(value) => handleSelectChange('employeeId', value)}
@@ -329,6 +391,7 @@ export default function NewDocument() {
                       </TooltipProvider>
                     </div>
                     <Select
+                      id="category"
                       name="category"
                       value={formData.category}
                       onValueChange={(value) => handleSelectChange('category', value)}
@@ -350,12 +413,15 @@ export default function NewDocument() {
                       Document Type <span className="text-red-500">*</span>
                     </Label>
                     <Select
+                      id="type"
                       name="type"
                       value={formData.type}
                       onValueChange={(value) => handleSelectChange('type', value)}
                     >
-                      <SelectTrigger className="mt-1.5">
-                        <SelectValue placeholder="Select type" />
+                      <SelectTrigger
+                        className={`mt-1.5 ${!formData.type && formData.category ? 'border-amber-500 ring-1 ring-amber-500' : ''}`}
+                      >
+                        <SelectValue placeholder="Select document type" />
                       </SelectTrigger>
                       <SelectContent>
                         {getDocumentTypeOptions().map(option => (
@@ -365,7 +431,11 @@ export default function NewDocument() {
                         ))}
                       </SelectContent>
                     </Select>
-                    <p className="text-xs text-gray-500 mt-1">The specific type of document</p>
+                    <p className={`text-xs mt-1 ${!formData.type && formData.category ? 'text-amber-600 font-medium' : 'text-gray-500'}`}>
+                      {!formData.type && formData.category
+                        ? "Please select a document type to continue"
+                        : "The specific type of document"}
+                    </p>
                   </div>
 
                   {formData.type && getDocumentTypeDescription() && (
@@ -402,6 +472,7 @@ export default function NewDocument() {
                         </TooltipProvider>
                       </div>
                       <Select
+                        id="severity"
                         name="severity"
                         value={formData.severity || ''}
                         onValueChange={(value) => handleSelectChange('severity', value)}
@@ -458,7 +529,7 @@ export default function NewDocument() {
                   <div>
                     <div className="flex items-center gap-1">
                       <Label htmlFor="witnesses" className="flex items-center gap-1">
-                        <User className="h-4 w-4 text-gray-500" />
+                        <UserIcon className="h-4 w-4 text-gray-500" />
                         Witnesses
                       </Label>
                       <TooltipProvider>
@@ -713,6 +784,17 @@ export default function NewDocument() {
                 </div>
               )}
 
+              {/* Validation Error Message */}
+              {validationError && (
+                <div className="bg-red-50 border border-red-200 rounded-lg p-4 flex items-start gap-3">
+                  <AlertTriangle className="h-5 w-5 text-red-500 flex-shrink-0 mt-0.5" />
+                  <div>
+                    <h4 className="font-medium text-red-800">Please fix the following error:</h4>
+                    <p className="text-red-700">{validationError}</p>
+                  </div>
+                </div>
+              )}
+
               {/* Submit Buttons */}
               <div className="flex flex-col-reverse sm:flex-row sm:justify-between sm:items-center gap-4 pt-4 border-t border-gray-200">
                 <Button
@@ -725,23 +807,31 @@ export default function NewDocument() {
                   Cancel
                 </Button>
 
-                <Button
-                  type="submit"
-                  className="bg-[#E51636] hover:bg-[#E51636]/90 text-white w-full sm:w-auto"
-                  disabled={loading || isUploading}
-                >
-                  {loading || isUploading ? (
-                    <>
-                      <Loader2 className="w-5 h-5 mr-2 animate-spin" />
-                      {isUploading ? 'Uploading File...' : 'Creating Document...'}
-                    </>
-                  ) : (
-                    <>
-                      <FilePlus className="w-5 h-5 mr-2" />
-                      Create Document
-                    </>
+                <div className="flex flex-col items-end gap-2">
+                  {validationError && (
+                    <p className="text-sm text-red-600 font-medium flex items-center">
+                      <AlertTriangle className="h-4 w-4 mr-1" />
+                      {validationError}
+                    </p>
                   )}
-                </Button>
+                  <Button
+                    type="submit"
+                    className="bg-[#E51636] hover:bg-[#E51636]/90 text-white w-full sm:w-auto"
+                    disabled={loading || isUploading}
+                  >
+                    {loading || isUploading ? (
+                      <>
+                        <Loader2 className="w-5 h-5 mr-2 animate-spin" />
+                        {isUploading ? 'Uploading File...' : 'Creating Document...'}
+                      </>
+                    ) : (
+                      <>
+                        <FilePlus className="w-5 h-5 mr-2" />
+                        Create Document
+                      </>
+                    )}
+                  </Button>
+                </div>
               </div>
             </form>
           </CardContent>
