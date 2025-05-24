@@ -1,35 +1,20 @@
 import { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { adjustToSundayToSaturdayRange, getShortDayOfWeekName } from '@/lib/dateUtils'
+import { adjustToSundayToSaturdayRange } from '@/lib/dateUtils'
 import { SaveSetupDialog } from '@/components/setup-sheet/SaveSetupDialog'
 import { useDropzone } from 'react-dropzone'
 import { DndProvider } from 'react-dnd'
 import { HTML5Backend } from 'react-dnd-html5-backend'
 import { Button } from '@/components/ui/button'
 import { Card } from '@/components/ui/card'
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { Alert, AlertDescription } from '@/components/ui/alert'
-import { AlertCircle, Search, Filter, Save } from 'lucide-react'
+import { AlertCircle, Search } from 'lucide-react'
 import * as XLSX from 'xlsx'
-import { TemplateBuilder } from '@/components/setup-sheet/TemplateBuilder'
-import { EmployeeAssignment } from '@/components/setup-sheet/EmployeeAssignment'
 import { DraggableEmployee } from '@/components/setup-sheet/DraggableEmployee'
 import { useSetupSheetStore } from '@/stores/setupSheetStore'
 import { useToast } from '@/components/ui/use-toast'
-import { Label } from '@/components/ui/label'
 import { Input } from '@/components/ui/input'
-import { Progress } from '@/components/ui/progress'
-import { Badge } from '@/components/ui/badge'
 import { format } from 'date-fns'
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-  DialogTrigger,
-} from "@/components/ui/dialog"
 import {
   Select,
   SelectContent,
@@ -45,14 +30,12 @@ export function SetupSheetBuilder() {
     weeklySetups,
     currentTemplate,
     currentWeeklySetup,
-    currentAssignments,
     setEmployees,
     setCurrentTemplate,
     setCurrentWeeklySetup,
     setCurrentAssignments,
     fetchTemplates,
     fetchWeeklySetups,
-    createTemplate,
     createWeeklySetup,
     isLoading,
     error: storeError
@@ -66,11 +49,9 @@ export function SetupSheetBuilder() {
   const [setupStartDate, setSetupStartDate] = useState('')
   const [setupEndDate, setSetupEndDate] = useState('')
   const [isShared, setIsShared] = useState(false)
-  const [isSaving, setIsSaving] = useState(false)
-  const [activeTab, setActiveTab] = useState<'upload' | 'assign'>('upload')
   const [isUploading, setIsUploading] = useState(false)
   const [previewData, setPreviewData] = useState<any[] | null>(null)
-  const [columnMappings, setColumnMappings] = useState({
+  const [columnMappings] = useState({
     name: 'Employee Name',
     startTime: 'Start Time',
     endTime: 'End Time',
@@ -1032,241 +1013,157 @@ export function SetupSheetBuilder() {
     return matchesSearch && matchesFilter
   })
 
-  // Calculate completion percentage
-  const calculateCompletionPercentage = () => {
-    if (!currentTemplate || !currentAssignments) return 0
-
-    let totalPositions = 0
-    let filledPositions = 0
-
-    Object.values(currentAssignments.weekSchedule).forEach(day => {
-      day.timeBlocks.forEach(block => {
-        block.positions.forEach(position => {
-          totalPositions++
-          if (position.employeeId) filledPositions++
-        })
-      })
-    })
-
-    return totalPositions > 0 ? Math.round((filledPositions / totalPositions) * 100) : 0
-  }
-
-  const completionPercentage = calculateCompletionPercentage()
-
   return (
     <DndProvider backend={HTML5Backend}>
-      <div className="container mx-auto p-4">
-        <h1 className="text-2xl font-bold mb-6">New Weekly Setup</h1>
+      <div className="container mx-auto p-4 max-w-6xl">
+        <div className="mb-8">
+          <h1 className="text-3xl font-bold mb-2">Weekly Schedule Setup</h1>
+          <p className="text-gray-600">Upload your HotSchedules weekly report to create employee assignments</p>
+        </div>
 
-        {/* Progress indicator */}
-        {activeTab === 'assign' && currentTemplate && (
-          <div className="mb-6">
-            <div className="flex justify-between items-center mb-2">
-              <span className="text-sm font-medium">Setup Completion</span>
-              <span className="text-sm">{completionPercentage}%</span>
+        {/* Instructions Section */}
+        <Card className="mb-8 p-6 bg-gradient-to-r from-blue-50 to-indigo-50 border-blue-200">
+          <div className="flex items-start gap-4">
+            <div className="bg-blue-100 p-3 rounded-full">
+              <svg className="w-6 h-6 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+              </svg>
             </div>
-            <Progress value={completionPercentage} className="h-2" />
-          </div>
-        )}
-
-        <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-          <TabsList>
-            <TabsTrigger value="upload">Upload Schedule</TabsTrigger>
-            {!employees.some(emp => emp.isWeeklyRoster) && (
-              <TabsTrigger value="assign">Assign Employees</TabsTrigger>
-            )}
-          </TabsList>
-
-          <TabsContent value="upload">
-            <Card className="p-6">
-              <div className="space-y-4">
-                {/* Upload header */}
-                <div className="flex justify-between items-center">
-                  <h3 className="text-lg font-semibold">Upload Schedule</h3>
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={() => {
-                      // Create a sample Excel file for download with various time formats
-                      const worksheet = XLSX.utils.json_to_sheet([
-                        {
-                          'Employee Name': 'John Smith',
-                          'Start Time': '08:00',
-                          'End Time': '16:00',
-                          'Area': 'Front Counter',
-                          'Day': 'Monday'
-                        },
-                        {
-                          'Employee Name': 'Jane Doe',
-                          'Start Time': '12:00 PM',  // 12-hour format with AM/PM
-                          'End Time': '8:00 PM',
-                          'Area': 'Drive Thru',
-                          'Day': 'Tuesday'
-                        },
-                        {
-                          'Employee Name': 'Bob Johnson',
-                          'Start Time': 0.4166666667,  // Excel decimal time (10:00 AM)
-                          'End Time': 0.75,           // Excel decimal time (6:00 PM)
-                          'Area': 'Kitchen',
-                          'Day': 'Wednesday'
-                        },
-                        {
-                          'Employee Name': 'Sarah Williams',
-                          'Start Time': '9a',         // Short format with AM/PM
-                          'End Time': '5p',
-                          'Area': 'Front Counter',
-                          'Day': 'Thursday'
-                        },
-                        {
-                          'Employee Name': 'Michael Brown',
-                          'Start Time': 0.3125,       // Excel decimal time (7:30 AM)
-                          'End Time': 0.6458333333,   // Excel decimal time (3:30 PM)
-                          'Area': 'BOH',
-                          'Day': 'Friday'
-                        }
-                      ])
-                      const workbook = XLSX.utils.book_new()
-                      XLSX.utils.book_append_sheet(workbook, worksheet, 'Schedule Template')
-                      XLSX.writeFile(workbook, 'schedule-template.xlsx')
-                    }}
-                  >
-                    Download Template
-                  </Button>
+            <div className="flex-1">
+              <h2 className="text-xl font-semibold text-blue-900 mb-3">How to Export from HotSchedules</h2>
+              <div className="grid md:grid-cols-2 gap-6">
+                <div>
+                  <h3 className="font-medium text-blue-800 mb-2">Steps 1-5: Export from HotSchedules</h3>
+                  <ol className="text-sm text-blue-700 space-y-1 list-decimal list-inside">
+                    <li>Log in to HotSchedules</li>
+                    <li>Click on scheduling to view the week's schedule</li>
+                    <li>Navigate to the week you want to upload</li>
+                    <li>Top right corner: click Reports → Weekly Report</li>
+                    <li>Click Download button (top right) to get PDF</li>
+                  </ol>
                 </div>
-
-                {/* File upload area */}
-                <div
-                  {...getRootProps()}
-                  className={`border-2 border-dashed rounded-lg p-8 text-center cursor-pointer
-                    ${isDragActive ? 'border-primary bg-primary/10' : isUploading ? 'border-gray-400 bg-gray-50' : 'border-gray-300'}`}
-                >
-                  <input {...getInputProps()} disabled={isUploading} />
-                  {isDragActive ? (
-                    <p>Drop the schedule file here...</p>
-                  ) : isUploading ? (
-                    <div className="flex flex-col items-center">
-                      <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mb-2"></div>
-                      <p>Processing file...</p>
-                    </div>
-                  ) : (
-                    <div>
-                      <p>Drag and drop your schedule export file here, or click to select</p>
-                      <p className="text-sm text-gray-500 mt-2">Supports .xlsx, .xls, and .pdf files</p>
-                      <p className="text-sm text-gray-500 mt-1">Supports various time formats including Excel decimal times</p>
-                    </div>
-                  )}
+                <div>
+                  <h3 className="font-medium text-blue-800 mb-2">Steps 6-9: Convert & Upload</h3>
+                  <ol className="text-sm text-blue-700 space-y-1 list-decimal list-inside" start={6}>
+                    <li>Go to <a href="https://www.ilovepdf.com/pdf_to_excel" target="_blank" rel="noopener noreferrer" className="underline hover:text-blue-800">ilovepdf.com/pdf_to_excel</a></li>
+                    <li>Convert PDF to Excel format and download</li>
+                    <li>Open Excel file and delete the first row</li>
+                    <li>Save and upload the file below</li>
+                  </ol>
                 </div>
-
-                {/* Column mapping section */}
-                <div className="p-4 border rounded-lg">
-                  <h4 className="font-medium mb-3">Column Mappings</h4>
-                  <p className="text-sm text-gray-500 mb-4">If your file uses different column names, you can adjust the mappings here:</p>
-
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <div>
-                      <Label htmlFor="nameColumn" className="text-sm">Employee Name Column</Label>
-                      <Input
-                        id="nameColumn"
-                        value={columnMappings.name}
-                        onChange={(e) => setColumnMappings({...columnMappings, name: e.target.value})}
-                        className="mt-1"
-                      />
-                    </div>
-
-                    <div>
-                      <Label htmlFor="areaColumn" className="text-sm">Area/Position Column</Label>
-                      <Input
-                        id="areaColumn"
-                        value={columnMappings.area}
-                        onChange={(e) => setColumnMappings({...columnMappings, area: e.target.value})}
-                        className="mt-1"
-                      />
-                    </div>
-
-                    <div>
-                      <Label htmlFor="startTimeColumn" className="text-sm">Start Time Column</Label>
-                      <Input
-                        id="startTimeColumn"
-                        value={columnMappings.startTime}
-                        onChange={(e) => setColumnMappings({...columnMappings, startTime: e.target.value})}
-                        className="mt-1"
-                      />
-                    </div>
-
-                    <div>
-                      <Label htmlFor="endTimeColumn" className="text-sm">End Time Column</Label>
-                      <Input
-                        id="endTimeColumn"
-                        value={columnMappings.endTime}
-                        onChange={(e) => setColumnMappings({...columnMappings, endTime: e.target.value})}
-                        className="mt-1"
-                      />
-                    </div>
-
-                    <div>
-                      <Label htmlFor="dayColumn" className="text-sm">Day Column <span className="text-xs text-gray-500">(Optional)</span></Label>
-                      <Input
-                        id="dayColumn"
-                        value={columnMappings.day}
-                        onChange={(e) => setColumnMappings({...columnMappings, day: e.target.value})}
-                        className="mt-1"
-                      />
-                    </div>
-                  </div>
-                </div>
-
-                {/* Load from saved setups */}
-                {weeklySetups.length > 0 && (
-                  <div className="mt-4 p-4 border rounded-lg">
-                    <h3 className="text-lg font-semibold mb-2">Or load from a saved setup</h3>
-                    <Select
-                      onValueChange={(value) => {
-                        const setup = weeklySetups.find(s => s._id === value)
-                        if (setup) {
-                          setCurrentWeeklySetup(setup)
-                          // Find the template that matches this setup's structure
-                          const matchingTemplate = templates.find(t =>
-                            t._id === setup._id || t.name === setup.name.replace(' Setup', ' Template')
-                          )
-                          if (matchingTemplate) setCurrentTemplate(matchingTemplate)
-                          setCurrentAssignments({ weekSchedule: setup.weekSchedule })
-                          setActiveTab('assign')
-                        }
-                      }}
-                    >
-                      <SelectTrigger className="w-full">
-                        <SelectValue placeholder="Select a saved setup" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {weeklySetups.map(setup => (
-                          <SelectItem key={setup._id} value={setup._id}>
-                            {setup.name} ({format(new Date(setup.startDate), 'MMM d')} - {format(new Date(setup.endDate), 'MMM d, yyyy')})
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                  </div>
-                )}
               </div>
+            </div>
+          </div>
+        </Card>
+        {/* Main Upload Section */}
+        <Card className="p-8">
+          <div className="space-y-6">
+            {/* Upload header */}
+            <div className="text-center">
+              <h2 className="text-2xl font-semibold mb-2">Upload Your Schedule File</h2>
+              <p className="text-gray-600">Drag and drop your converted Excel file or click to browse</p>
+            </div>
 
-              {/* Error message */}
-              {error && (
-                <Alert variant="destructive" className="mt-4">
-                  <AlertCircle className="h-4 w-4" />
-                  <AlertDescription>{error}</AlertDescription>
-                </Alert>
-              )}
-
-              {/* Preview data */}
-              {previewData && previewData.length > 0 && (
-                <div className="mt-4 border rounded-lg p-4">
-                  <div className="flex justify-between items-center mb-4">
-                    <h3 className="text-lg font-semibold">Preview Data</h3>
-                    <div className="flex gap-2">
-                      <Button variant="outline" onClick={() => setPreviewData(null)}>Cancel</Button>
-                      <Button onClick={confirmImport}>Confirm Import</Button>
-                    </div>
+            {/* File upload area */}
+            <div
+              {...getRootProps()}
+              className={`border-2 border-dashed rounded-xl p-12 text-center cursor-pointer transition-all duration-200
+                ${isDragActive
+                  ? 'border-blue-400 bg-blue-50 scale-105'
+                  : isUploading
+                    ? 'border-gray-400 bg-gray-50'
+                    : 'border-gray-300 hover:border-blue-300 hover:bg-blue-50/50'
+                }`}
+            >
+              <input {...getInputProps()} disabled={isUploading} />
+              {isDragActive ? (
+                <div className="flex flex-col items-center">
+                  <div className="bg-blue-100 p-4 rounded-full mb-4">
+                    <svg className="w-8 h-8 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" />
+                    </svg>
                   </div>
+                  <p className="text-lg font-medium text-blue-700">Drop your file here</p>
+                </div>
+              ) : isUploading ? (
+                <div className="flex flex-col items-center">
+                  <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mb-4"></div>
+                  <p className="text-lg font-medium">Processing file...</p>
+                  <p className="text-sm text-gray-500 mt-1">This may take a moment</p>
+                </div>
+              ) : (
+                <div className="flex flex-col items-center">
+                  <div className="bg-gray-100 p-4 rounded-full mb-4">
+                    <svg className="w-8 h-8 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" />
+                    </svg>
+                  </div>
+                  <p className="text-lg font-medium mb-2">Choose your Excel file</p>
+                  <p className="text-gray-500 mb-4">Drag and drop or click to browse</p>
+                  <div className="flex flex-wrap justify-center gap-2 text-sm text-gray-400">
+                    <span className="bg-gray-100 px-3 py-1 rounded-full">.xlsx</span>
+                    <span className="bg-gray-100 px-3 py-1 rounded-full">.xls</span>
+                    <span className="bg-gray-100 px-3 py-1 rounded-full">.pdf</span>
+                  </div>
+                </div>
+              )}
+            </div>
+
+
+
+            {/* Load from saved setups */}
+            {weeklySetups.length > 0 && (
+              <div className="p-6 border rounded-lg bg-gray-50">
+                <h3 className="text-lg font-semibold mb-3">Load from Previous Setup</h3>
+                <p className="text-sm text-gray-600 mb-4">You can also load a previously saved weekly setup</p>
+                <Select
+                  onValueChange={(value) => {
+                    const setup = weeklySetups.find(s => s._id === value)
+                    if (setup) {
+                      setCurrentWeeklySetup(setup)
+                      // Find the template that matches this setup's structure
+                      const matchingTemplate = templates.find(t =>
+                        t._id === setup._id || t.name === setup.name.replace(' Setup', ' Template')
+                      )
+                      if (matchingTemplate) setCurrentTemplate(matchingTemplate)
+                      setCurrentAssignments({ weekSchedule: setup.weekSchedule })
+                      // Navigate to daily view instead of assign tab
+                      navigate('/daily-view')
+                    }
+                  }}
+                >
+                  <SelectTrigger className="w-full">
+                    <SelectValue placeholder="Select a saved setup" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {weeklySetups.map(setup => (
+                      <SelectItem key={setup._id} value={setup._id}>
+                        {setup.name} ({format(new Date(setup.startDate), 'MMM d')} - {format(new Date(setup.endDate), 'MMM d, yyyy')})
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+            )}
+
+            {/* Error message */}
+            {error && (
+              <Alert variant="destructive">
+                <AlertCircle className="h-4 w-4" />
+                <AlertDescription>{error}</AlertDescription>
+              </Alert>
+            )}
+
+            {/* Preview data */}
+            {previewData && previewData.length > 0 && (
+              <div className="border rounded-lg p-6 bg-white">
+                <div className="flex justify-between items-center mb-4">
+                  <h3 className="text-lg font-semibold">Preview Data</h3>
+                  <div className="flex gap-2">
+                    <Button variant="outline" onClick={() => setPreviewData(null)}>Cancel</Button>
+                    <Button onClick={confirmImport}>Confirm Import</Button>
+                  </div>
+                </div>
 
                   {/* Parse Preview for Weekly Roster */}
                   {(() => {
@@ -1430,15 +1327,15 @@ export function SetupSheetBuilder() {
                     </table>
                   </div>
 
-                  <p className="text-sm text-gray-500 mt-4">Showing all {previewData.length} rows. All {previewData.length} employees will be imported when you confirm.</p>
-                </div>
-              )}
+                <p className="text-sm text-gray-500 mt-4">Showing all {previewData.length} rows. All {previewData.length} employees will be imported when you confirm.</p>
+              </div>
+            )}
 
-              {/* Uploaded employees */}
-              {employees.length > 0 && !employees.some(emp => emp.isWeeklyRoster) && (
-                <div className="mt-4">
-                  <div className="flex justify-between items-center mb-4">
-                    <h2 className="text-lg font-semibold">Uploaded Employees</h2>
+            {/* Uploaded employees */}
+            {employees.length > 0 && !employees.some(emp => emp.isWeeklyRoster) && (
+              <div className="border rounded-lg p-6 bg-white">
+                <div className="flex justify-between items-center mb-4">
+                  <h2 className="text-lg font-semibold">Uploaded Employees</h2>
                     <div className="flex items-center gap-2">
                       <div className="relative">
                         <Search className="absolute left-2 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
@@ -1477,113 +1374,39 @@ export function SetupSheetBuilder() {
                     )}
                   </div>
 
-                  <div className="mt-4 flex justify-between text-sm text-gray-500">
-                    <span>Total: {employees.length} employees</span>
-                    <span>Showing: {filteredEmployees.length} employees</span>
-                  </div>
+                <div className="mt-4 flex justify-between text-sm text-gray-500">
+                  <span>Total: {employees.length} employees</span>
+                  <span>Showing: {filteredEmployees.length} employees</span>
                 </div>
-              )}
-            </Card>
-          </TabsContent>
+              </div>
+            )}
+          </div>
+        </Card>
 
-
-
-          <TabsContent value="assign">
-            <Card className="p-6">
-              {employees.length === 0 ? (
-                <div className="text-center text-gray-500">
-                  <p>Please upload a schedule first</p>
-                </div>
-              ) : templates.length === 0 ? (
-                <div className="text-center text-gray-500">
-                  <p>Please create a template first</p>
-                </div>
-              ) : (
-                <div className="space-y-6">
-                  <div className="flex items-center gap-4">
-                    <Label htmlFor="template-select" className="text-sm font-medium">
-                      Select Template
-                    </Label>
-                    <Select
-                      value={currentTemplate?._id || ''}
-                      onValueChange={(value) => {
-                        const template = templates.find(t => t._id === value)
-                        setCurrentTemplate(template || null)
-                      }}
-                    >
-                      <SelectTrigger className="w-full" id="template-select">
-                        <SelectValue placeholder="Select a template..." />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {templates.map((template) => (
-                          <SelectItem key={template._id} value={template._id}>
-                            {template.name}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                  </div>
-
-                  {/* Template preview */}
-                  {currentTemplate && (
-                    <div className="p-4 border rounded-lg bg-gray-50">
-                      <h3 className="font-medium mb-2">Template Preview</h3>
-                      <div className="text-sm">
-                        <p><span className="font-medium">Name:</span> {currentTemplate.name}</p>
-                        <p className="mt-1"><span className="font-medium">Time Blocks:</span></p>
-                        <ul className="list-disc list-inside ml-2">
-                          {currentTemplate.weekSchedule?.monday?.timeBlocks?.map((block, index) => (
-                            <li key={index}>{block.start} - {block.end} ({block.positions?.length || 0} positions)</li>
-                          )) || <li>No time blocks defined</li>}
-                        </ul>
-                      </div>
-                    </div>
-                  )}
-
-                  {currentTemplate ? (
-                    <>
-                      <EmployeeAssignment
-                        employees={filteredEmployees.length > 0 ? filteredEmployees : employees}
-                        template={currentTemplate}
-                        onSave={handleAssignmentSave}
-                        showSaveButton={false}
-                      />
-
-
-                    </>
-                  ) : (
-                    <div className="text-center text-gray-500">
-                      <p>Please select a template</p>
-                    </div>
-                  )}
-                </div>
-              )}
-            </Card>
-          </TabsContent>
-        </Tabs>
-
-        {/* Save Weekly Setup Dialog - Available for both regular and weekly roster workflows */}
-        <SaveSetupDialog
-          showSaveDialog={showSaveDialog}
-          setShowSaveDialog={setShowSaveDialog}
-          setupName={setupName}
-          setSetupName={setSetupName}
-          setupStartDate={setupStartDate}
-          setSetupStartDate={setSetupStartDate}
-          setupEndDate={setupEndDate}
-          setSetupEndDate={setSetupEndDate}
-          isShared={isShared}
-          setIsShared={setIsShared}
-          handleSaveWeeklySetup={handleSaveWeeklySetup}
-          adjustToSundayToSaturdayRange={adjustToSundayToSaturdayRange}
-          completionPercentage={completionPercentage}
-          currentTemplateName={currentTemplate?.name || 'Weekly Roster Import'}
-          employeesCount={employees.length}
-          templates={templates}
-          currentTemplate={currentTemplate}
-          setCurrentTemplate={setCurrentTemplate}
-          showTemplateSelection={employees.some(emp => emp.isWeeklyRoster)}
-        />
+        {/* Save Weekly Setup Dialog - Only show when employees are uploaded */}
+        {employees.length > 0 && (
+          <SaveSetupDialog
+            showSaveDialog={showSaveDialog}
+            setShowSaveDialog={setShowSaveDialog}
+            setupName={setupName}
+            setSetupName={setSetupName}
+            setupStartDate={setupStartDate}
+            setSetupStartDate={setSetupStartDate}
+            setupEndDate={setupEndDate}
+            setSetupEndDate={setSetupEndDate}
+            isShared={isShared}
+            setIsShared={setIsShared}
+            handleSaveWeeklySetup={handleSaveWeeklySetup}
+            adjustToSundayToSaturdayRange={adjustToSundayToSaturdayRange}
+            completionPercentage={100} // Always 100% since we're auto-creating
+            currentTemplateName="Weekly Roster Import"
+            employeesCount={employees.length}
+            templates={templates}
+            currentTemplate={currentTemplate}
+            setCurrentTemplate={setCurrentTemplate}
+            showTemplateSelection={employees.some(emp => emp.isWeeklyRoster)}
+          />
+        )}
       </div>
     </DndProvider>
   )
