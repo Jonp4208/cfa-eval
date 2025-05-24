@@ -1,6 +1,68 @@
 import mongoose from 'mongoose';
 import WeeklySetup from '../models/weeklySetup.js';
 
+// Helper function to process weekly roster data
+const processWeeklyRosterEmployees = (uploadedSchedules) => {
+  const processedEmployees = [];
+
+  uploadedSchedules.forEach((emp) => {
+    if (!emp.isWeeklyRoster) {
+      // Not weekly roster data, keep as is
+      processedEmployees.push({
+        id: String(emp.id || ''),
+        name: String(emp.name || ''),
+        timeBlock: String(emp.timeBlock || ''),
+        area: String(emp.area || ''),
+        day: String(emp.day || ''),
+        breaks: emp.breaks || [],
+        hadBreak: emp.hadBreak || false,
+        breakDate: emp.breakDate || null
+      });
+      return;
+    }
+
+    // This is weekly roster data that has already been processed by the frontend
+    // Just sanitize and keep the data as-is since it's already been parsed correctly
+    processedEmployees.push({
+      id: String(emp.id || ''),
+      name: String(emp.name || ''),
+      timeBlock: String(emp.timeBlock || ''),
+      area: String(emp.area || ''),
+      day: String(emp.day || ''),
+      breaks: emp.breaks || [],
+      hadBreak: emp.hadBreak || false,
+      breakDate: emp.breakDate || null,
+      shiftStart: String(emp.shiftStart || ''),
+      shiftEnd: String(emp.shiftEnd || '')
+    });
+  });
+
+  return processedEmployees;
+};
+
+// Helper function to convert time to 24-hour format
+const convertTo24Hour = (timeStr) => {
+  if (!timeStr) return '00:00';
+
+  // If already in 24-hour format, return as is
+  if (!/AM|PM/i.test(timeStr)) {
+    return timeStr.padStart(5, '0');
+  }
+
+  const [time, period] = timeStr.split(/\s*(AM|PM)/i);
+  let [hours, minutes] = time.split(':');
+  hours = parseInt(hours);
+  minutes = minutes || '00';
+
+  if (period.toUpperCase() === 'PM' && hours !== 12) {
+    hours += 12;
+  } else if (period.toUpperCase() === 'AM' && hours === 12) {
+    hours = 0;
+  }
+
+  return `${hours.toString().padStart(2, '0')}:${minutes.padStart(2, '0')}`;
+};
+
 // Get all weekly setups
 export const getWeeklySetups = async (req, res) => {
   try {
@@ -67,36 +129,20 @@ export const getWeeklySetup = async (req, res) => {
 // Create a new weekly setup
 export const createWeeklySetup = async (req, res) => {
   try {
-    console.log('Creating weekly setup for user:', req.user?.userId || 'Unknown user');
-    console.log('Request body keys:', Object.keys(req.body));
-
     const { name, startDate, endDate, weekSchedule, uploadedSchedules, isShared } = req.body;
-
-    // Log detailed information about the request
-    console.log('Weekly setup request details:', {
-      name,
-      startDate: startDate ? new Date(startDate).toISOString() : null,
-      endDate: endDate ? new Date(endDate).toISOString() : null,
-      hasWeekSchedule: !!weekSchedule,
-      weekScheduleDays: weekSchedule ? Object.keys(weekSchedule) : [],
-      uploadedSchedulesCount: uploadedSchedules ? (Array.isArray(uploadedSchedules) ? uploadedSchedules.length : 'not an array') : 'none'
-    });
 
     // Validate required fields
     if (!name || !startDate || !endDate || !weekSchedule) {
-      console.error('Missing required fields:', { name, startDate, endDate, hasWeekSchedule: !!weekSchedule });
       return res.status(400).json({ message: 'Missing required fields' });
     }
 
     if (!req.user || !req.user.userId) {
-      console.error('No user ID found in request:', req.user);
       return res.status(401).json({ message: 'User not authenticated properly' });
     }
 
     // Check if a setup with the same name already exists for this user
     const existingSetup = await WeeklySetup.findOne({ name, user: req.user.userId });
     if (existingSetup) {
-      console.log('Duplicate setup name found:', name);
       return res.status(400).json({
         message: 'A setup with this name already exists',
         code: 'DUPLICATE_SETUP_NAME'
@@ -105,10 +151,7 @@ export const createWeeklySetup = async (req, res) => {
 
     // Check data size
     const dataSize = JSON.stringify(req.body).length;
-    console.log(`Weekly setup data size: ${dataSize} bytes`);
-
     if (dataSize > 15 * 1024 * 1024) { // 15MB limit
-      console.error('Weekly setup data too large:', dataSize, 'bytes');
       return res.status(413).json({
         message: 'Request entity too large. Please reduce the amount of data being sent.',
         error: 'PAYLOAD_TOO_LARGE'
@@ -118,21 +161,27 @@ export const createWeeklySetup = async (req, res) => {
     // Ensure uploadedSchedules is an array and sanitize it
     let sanitizedUploadedSchedules = [];
     if (Array.isArray(uploadedSchedules)) {
-      // Keep essential fields and ensure they're valid, including break information
-      sanitizedUploadedSchedules = uploadedSchedules.map(emp => ({
-        id: String(emp.id || ''),
-        name: String(emp.name || ''),
-        timeBlock: String(emp.timeBlock || ''),
-        area: String(emp.area || ''),
-        day: String(emp.day || ''),
-        // Include break information
-        breaks: emp.breaks || [],
-        hadBreak: emp.hadBreak || false,
-        breakDate: emp.breakDate || null
-      }));
-    }
+      // Check if this is weekly roster data that needs processing
+      const hasWeeklyRosterData = uploadedSchedules.some(emp => emp.isWeeklyRoster && emp.originalData);
 
-    console.log(`Sanitized ${sanitizedUploadedSchedules.length} employee records`);
+      if (hasWeeklyRosterData) {
+        // Process the weekly roster data
+        sanitizedUploadedSchedules = processWeeklyRosterEmployees(uploadedSchedules);
+      } else {
+        // Keep essential fields and ensure they're valid, including break information
+        sanitizedUploadedSchedules = uploadedSchedules.map(emp => ({
+          id: String(emp.id || ''),
+          name: String(emp.name || ''),
+          timeBlock: String(emp.timeBlock || ''),
+          area: String(emp.area || ''),
+          day: String(emp.day || ''),
+          // Include break information
+          breaks: emp.breaks || [],
+          hadBreak: emp.hadBreak || false,
+          breakDate: emp.breakDate || null
+        }));
+      }
+    }
 
     // Get the user's store ID
     const storeId = req.user?.store?._id || req.user?.store;
@@ -144,7 +193,6 @@ export const createWeeklySetup = async (req, res) => {
     // Create the new setup with a try-catch for validation errors
     let newWeeklySetup;
     try {
-
       newWeeklySetup = new WeeklySetup({
         name,
         startDate: new Date(startDate),
@@ -159,7 +207,6 @@ export const createWeeklySetup = async (req, res) => {
       // Validate the document before saving
       const validationError = newWeeklySetup.validateSync();
       if (validationError) {
-        console.error('Validation error:', validationError);
         return res.status(400).json({
           message: 'Invalid data format',
           error: validationError.message,
@@ -167,19 +214,15 @@ export const createWeeklySetup = async (req, res) => {
         });
       }
     } catch (modelError) {
-      console.error('Error creating WeeklySetup model:', modelError);
       return res.status(400).json({
         message: 'Error creating setup model',
         error: modelError.message
       });
     }
 
-    console.log(`Attempting to save weekly setup with ${sanitizedUploadedSchedules.length} uploaded employees`);
-
     try {
       // Try saving without the uploaded schedules first if there are many
       if (sanitizedUploadedSchedules.length > 100) {
-        console.log('Large number of employees detected, attempting to save without them first');
         const setupWithoutEmployees = new WeeklySetup({
           name,
           startDate: new Date(startDate),
@@ -193,7 +236,6 @@ export const createWeeklySetup = async (req, res) => {
 
         // Save the setup without employees
         await setupWithoutEmployees.save();
-        console.log('Setup saved without employees, now updating with employees');
 
         // Now try to update with employees in batches if needed
         if (sanitizedUploadedSchedules.length > 0) {
@@ -201,28 +243,20 @@ export const createWeeklySetup = async (req, res) => {
             setupWithoutEmployees._id,
             { uploadedSchedules: sanitizedUploadedSchedules }
           );
-          console.log('Successfully updated setup with employees');
         }
 
         // Return the complete setup
         const completeSetup = await WeeklySetup.findById(setupWithoutEmployees._id);
-        console.log('Weekly setup created successfully:', completeSetup._id);
         return res.status(201).json(completeSetup);
       } else {
         // For smaller setups, save directly
         await newWeeklySetup.save();
-        console.log('Weekly setup created successfully:', newWeeklySetup._id);
         return res.status(201).json(newWeeklySetup);
       }
     } catch (saveError) {
-      console.error('Error saving weekly setup to database:', saveError);
-      console.error('Error details:', JSON.stringify(saveError, null, 2));
-
       // Check for specific MongoDB errors
       if (saveError.name === 'MongoServerError') {
         if (saveError.code === 10334 || saveError.code === 16389) { // Document too large
-          console.log('Document too large error detected, trying to save without employees');
-
           // Try saving without employees as a fallback
           try {
             const setupWithoutEmployees = new WeeklySetup({
@@ -237,14 +271,12 @@ export const createWeeklySetup = async (req, res) => {
             });
 
             await setupWithoutEmployees.save();
-            console.log('Fallback: Setup saved without employees');
 
             return res.status(201).json({
               ...setupWithoutEmployees.toObject(),
               _warning: 'Employee data was too large and was not saved'
             });
           } catch (fallbackError) {
-            console.error('Fallback save also failed:', fallbackError);
             return res.status(413).json({
               message: 'Document too large to save even without employees. The setup structure may be too complex.',
               error: 'DOCUMENT_TOO_LARGE_CRITICAL'

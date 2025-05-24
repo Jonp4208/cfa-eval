@@ -27,6 +27,36 @@ export const AllEmployeesSection: React.FC<AllEmployeesSectionProps> = ({
   handleReplaceClick,
   endBreak
 }) => {
+  const getBreakEndTime = (employee: any) => {
+    // Get today's date string for filtering
+    const today = new Date().toISOString().split('T')[0];
+
+    // Find the employee's breaks for today
+    const employeeBreaks = employee.breaks || [];
+    const todaysBreaks = employeeBreaks.filter(b =>
+      b.breakDate === today && b.status === 'completed' && b.endTime
+    );
+
+    if (todaysBreaks.length === 0) {
+      return 'Had Break';
+    }
+
+    // Get the most recent completed break
+    const latestBreak = todaysBreaks.sort((a, b) =>
+      new Date(b.endTime).getTime() - new Date(a.endTime).getTime()
+    )[0];
+
+    // Format the end time
+    const endTime = new Date(latestBreak.endTime);
+    const timeString = endTime.toLocaleTimeString('en-US', {
+      hour: 'numeric',
+      minute: '2-digit',
+      hour12: true
+    });
+
+    return `Ended ${timeString}`;
+  };
+
   // Only show this section if we have scheduled employees but no unassigned or assigned employees
   if (!(filteredScheduledEmployees.length > 0 &&
         filteredUnassignedEmployees.length === 0 &&
@@ -83,10 +113,10 @@ export const AllEmployeesSection: React.FC<AllEmployeesSectionProps> = ({
                         {employee.area}
                       </Badge>
                     )}
-                    {hasHadBreak(employee.id) && (
+                    {hasHadBreak(employee.id) && getBreakStatus(employee.id) !== 'active' && (
                       <Badge variant="outline" className="bg-green-50 text-green-600 border-green-100">
                         <Check className="h-3 w-3 mr-1" />
-                        Had Break
+                        {getBreakEndTime(employee)}
                       </Badge>
                     )}
                   </div>

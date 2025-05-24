@@ -7,6 +7,7 @@ import fs from 'fs';
 import path from 'path';
 import { fileURLToPath } from 'url';
 
+
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
@@ -25,7 +26,25 @@ const storage = multer.diskStorage({
   }
 });
 
-export const upload = multer({ storage: storage });
+export const upload = multer({
+  storage: storage,
+  limits: {
+    fileSize: 1024 * 1024 * 5, // 5MB limit for Excel/CSV files
+  },
+  fileFilter: function (req, file, cb) {
+    // Accept Excel and CSV files only
+    if (
+      file.mimetype === 'application/vnd.ms-excel' ||
+      file.mimetype === 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' ||
+      file.mimetype === 'text/csv' ||
+      file.originalname.endsWith('.csv')
+    ) {
+      cb(null, true);
+    } else {
+      cb(new Error('Only Excel and CSV files are allowed'));
+    }
+  }
+});
 
 // Get all shift setups
 export const getShiftSetups = async (req, res) => {
@@ -371,7 +390,199 @@ export const createUpcomingWeekSetup = async (req, res) => {
   */
 };
 
-// Upload employees from Excel file
+// Helper function to parse time range (e.g., "5:00 AM - 2:00 PM")
+const parseTimeRange = (timeStr) => {
+  if (!timeStr) return null;
+
+  // Handle both "5:00a - 2:00p" and "5:00 AM - 2:00 PM" formats
+  const timeMatch = timeStr.match(/(\d{1,2}):(\d{2})\s*(AM|PM|a|p)\s*-\s*(\d{1,2}):(\d{2})\s*(AM|PM|a|p)/i);
+
+  if (!timeMatch) return null;
+
+  const [, startHour, startMin, startPeriod, endHour, endMin, endPeriod] = timeMatch;
+
+  // Convert to 24-hour format
+  let start24 = parseInt(startHour);
+  let end24 = parseInt(endHour);
+
+  const startIsAM = startPeriod.toLowerCase().startsWith('a');
+  const endIsAM = endPeriod.toLowerCase().startsWith('a');
+
+  if (!startIsAM && start24 !== 12) start24 += 12;
+  if (startIsAM && start24 === 12) start24 = 0;
+  if (!endIsAM && end24 !== 12) end24 += 12;
+  if (endIsAM && end24 === 12) end24 = 0;
+
+  const startTime = `${start24.toString().padStart(2, '0')}:${startMin}`;
+  const endTime = `${end24.toString().padStart(2, '0')}:${endMin}`;
+
+  return { startTime, endTime };
+};
+
+// Helper function to parse position info (e.g., "Leadership | FOH - Shift Leader")
+const parsePositionInfo = (positionStr) => {
+  if (!positionStr) return { department: 'FOH', position: 'Team Member', isLeadership: false };
+
+  const positionLower = positionStr.toLowerCase();
+
+  // Determine department
+  let department = 'FOH';
+  if (positionLower.includes('boh') || positionLower.includes('kitchen') || positionLower.includes('back of house')) {
+    department = 'BOH';
+  }
+
+  // Determine if leadership role
+  const isLeadership = positionLower.includes('leadership') || positionLower.includes('leader') || positionLower.includes('manager');
+
+  // Extract position name
+  let position = 'Team Member';
+  if (positionLower.includes('shift leader')) {
+    position = 'Shift Leader';
+  } else if (positionLower.includes('manager')) {
+    position = 'Manager';
+  } else if (positionLower.includes('general')) {
+    position = 'General';
+  }
+
+  return { department, position, isLeadership };
+};
+
+// Helper function to parse a single shift entry (e.g., "5:00 AM - 2:00 PM Leadership | FOH - Shift Leader")
+const parseShiftEntry = (shiftText) => {
+  if (!shiftText || typeof shiftText !== 'string') return null;
+
+  const trimmed = shiftText.trim();
+  if (!trimmed) return null;
+
+  // Split by newlines to handle multiple shifts in one cell
+  const lines = trimmed.split('\n').map(line => line.trim()).filter(line => line);
+  const shifts = [];
+
+  for (const line of lines) {
+    // Try to extract time range and position info
+    // Pattern: "5:00 AM - 2:00 PM Leadership | FOH - Shift Leader"
+    const timeMatch = line.match(/(\d{1,2}:\d{2}\s*(?:AM|PM))\s*-\s*(\d{1,2}:\d{2}\s*(?:AM|PM))/i);
+
+    if (timeMatch) {
+      const [, startTimeStr, endTimeStr] = timeMatch;
+      const timeRange = parseTimeRange(`${startTimeStr} - ${endTimeStr}`);
+
+      if (timeRange) {
+        // Extract position info (everything after the time range)
+        const positionText = line.replace(timeMatch[0], '').trim();
+        const positionInfo = parsePositionInfo(positionText);
+
+        shifts.push({
+          startTime: timeRange.startTime,
+          endTime: timeRange.endTime,
+          department: positionInfo.department,
+          position: positionInfo.position,
+          isLeadership: positionInfo.isLeadership,
+          originalText: line
+        });
+      }
+    }
+  }
+
+  return shifts.length > 0 ? shifts : null;
+};
+
+// Helper function to process weekly roster data
+const processWeeklyRosterData = (rawData) => {
+  const processedEmployees = [];
+  const shifts = [];
+
+  // Helper function to extract day name from column header
+  const extractDayFromColumn = (columnName) => {
+    if (!columnName) return null;
+
+    const dayMappings = {
+      'sun': 'Sunday',
+      'mon': 'Monday',
+      'tue': 'Tuesday',
+      'wed': 'Wednesday',
+      'thu': 'Thursday',
+      'fri': 'Friday',
+      'sat': 'Saturday'
+    };
+
+    // Check if column starts with a day abbreviation (like "Sun, 5/18/25")
+    const colStart = columnName.toLowerCase().substring(0, 3);
+    if (dayMappings[colStart]) {
+      return dayMappings[colStart];
+    }
+
+    // Check for exact matches
+    const colLower = columnName.toLowerCase();
+    for (const [abbr, fullDay] of Object.entries(dayMappings)) {
+      if (colLower === abbr || colLower === fullDay.toLowerCase()) {
+        return fullDay;
+      }
+    }
+
+    return null;
+  };
+
+  rawData.forEach((row, index) => {
+    // Get employee name from first column (try various possible names)
+    const employeeName = row.Employee || row.employee || row.Name || row.name ||
+                         row['Employee Name'] || row[Object.keys(row)[0]];
+
+    if (!employeeName || typeof employeeName !== 'string' || !employeeName.trim()) {
+      return;
+    }
+
+    const name = employeeName.trim();
+
+    // Process each day column
+    Object.keys(row).forEach(columnName => {
+      const dayName = extractDayFromColumn(columnName);
+
+      if (dayName && row[columnName]) {
+        const shiftData = row[columnName];
+        const dayShifts = parseShiftEntry(shiftData);
+
+        if (dayShifts) {
+          dayShifts.forEach(shift => {
+            const employee = {
+              id: nanoid(),
+              name: name,
+              day: dayName,
+              startTime: shift.startTime,
+              endTime: shift.endTime,
+              department: shift.department,
+              position: shift.position,
+              isLeadership: shift.isLeadership,
+              originalData: {
+                employeeName: name,
+                day: dayName,
+                shiftText: shift.originalText
+              }
+            };
+
+            processedEmployees.push(employee);
+
+            const shiftEntry = {
+              day: dayName,
+              startTime: shift.startTime,
+              endTime: shift.endTime,
+              department: shift.department,
+              position: shift.position,
+              employeeName: name,
+              employeeId: employee.id
+            };
+
+            shifts.push(shiftEntry);
+          });
+        }
+      }
+    });
+  });
+
+  return { employees: processedEmployees, shifts };
+};
+
+// Upload employees from Excel/CSV file
 export const uploadSchedule = async (req, res) => {
   try {
     if (!req.file) {
@@ -379,17 +590,34 @@ export const uploadSchedule = async (req, res) => {
     }
 
     const filePath = req.file.path;
+    let rawData = [];
+
+    // Process Excel/CSV file
     const workbook = xlsx.readFile(filePath);
     const sheetName = workbook.SheetNames[0];
     const worksheet = workbook.Sheets[sheetName];
-    const data = xlsx.utils.sheet_to_json(worksheet);
+    rawData = xlsx.utils.sheet_to_json(worksheet, { header: 1 });
 
     // Clean up the uploaded file
     fs.unlinkSync(filePath);
 
-    if (data.length === 0) {
+    if (rawData.length === 0) {
       return res.status(400).json({ message: 'No data found in the uploaded file' });
     }
+
+    // Convert array of arrays to array of objects
+    const headers = rawData[0];
+    const dataRows = rawData.slice(1).filter(row => row.some(cell => cell && cell.toString().trim()));
+
+    const jsonData = dataRows.map(row => {
+      const obj = {};
+      headers.forEach((header, index) => {
+        if (header && row[index] !== undefined) {
+          obj[header] = row[index];
+        }
+      });
+      return obj;
+    });
 
     // Get the shift setup ID from the request body
     const { setupId } = req.body;
@@ -404,19 +632,24 @@ export const uploadSchedule = async (req, res) => {
       return res.status(404).json({ message: 'Shift setup not found' });
     }
 
-    // Process the data and update the shift setup
-    shiftSetup.uploadedEmployees = data;
+    // Process the weekly roster data
+    const { employees, shifts } = processWeeklyRosterData(jsonData);
 
+    // Store the processed data
+    shiftSetup.uploadedEmployees = employees;
     await shiftSetup.save();
 
     res.status(200).json({
-      message: 'Schedule uploaded successfully',
-      employeeCount: data.length,
-      employees: data
+      message: 'Schedule uploaded and processed successfully',
+      employeeCount: employees.length,
+      shiftCount: shifts.length,
+      employees: employees,
+      shifts: shifts,
+      rawDataSample: jsonData.slice(0, 3) // Include sample for debugging
     });
   } catch (error) {
     console.error('Error uploading schedule:', error);
-    res.status(500).json({ message: 'Error uploading schedule' });
+    res.status(500).json({ message: `Error uploading schedule: ${error.message}` });
   }
 };
 

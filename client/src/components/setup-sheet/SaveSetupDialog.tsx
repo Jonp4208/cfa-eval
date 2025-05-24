@@ -15,6 +15,13 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 
 interface SaveSetupDialogProps {
   showSaveDialog: boolean;
@@ -33,6 +40,11 @@ interface SaveSetupDialogProps {
   currentTemplateName: string;
   employeesCount: number;
   isSaving?: boolean;
+  // Template selection props
+  templates?: any[];
+  currentTemplate?: any;
+  setCurrentTemplate?: (template: any) => void;
+  showTemplateSelection?: boolean;
 }
 
 export function SaveSetupDialog({
@@ -51,7 +63,11 @@ export function SaveSetupDialog({
   completionPercentage,
   currentTemplateName,
   employeesCount,
-  isSaving = false
+  isSaving = false,
+  templates = [],
+  currentTemplate,
+  setCurrentTemplate,
+  showTemplateSelection = false
 }: SaveSetupDialogProps) {
   // Run the test function when the component mounts
   useEffect(() => {
@@ -81,6 +97,36 @@ export function SaveSetupDialog({
               </DialogDescription>
             </DialogHeader>
             <div className="grid gap-4 py-4">
+              {/* Template Selection */}
+              {showTemplateSelection && (
+                <div className="grid gap-2">
+                  <Label htmlFor="template-select">Select Template</Label>
+                  <Select
+                    value={currentTemplate?._id || ''}
+                    onValueChange={(value) => {
+                      const template = templates.find(t => t._id === value);
+                      setCurrentTemplate?.(template || null);
+                    }}
+                  >
+                    <SelectTrigger>
+                      <SelectValue placeholder="Choose a template..." />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {templates.map((template) => (
+                        <SelectItem key={template._id} value={template._id}>
+                          {template.name}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                  {currentTemplate && (
+                    <div className="text-sm text-gray-500 mt-1">
+                      Template defines the position structure for your weekly roster
+                    </div>
+                  )}
+                </div>
+              )}
+
               <div className="grid gap-2">
                 <Label htmlFor="setupName">Setup Name</Label>
                 <Input

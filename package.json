@@ -37,6 +37,7 @@
     "lucide-react": "^0.485.0",
     "mongodb": "^6.3.0",
     "notistack": "^3.0.2",
+    "pdf2pic": "^3.1.4",
     "puppeteer": "^24.8.2",
     "react": "^18.3.1",
     "react-beautiful-dnd": "^13.1.1",
@@ -47,7 +48,8 @@
     "react-dom": "^18.3.1",
     "react-i18next": "^15.4.1",
     "recharts": "^2.15.0",
-    "tailwind-merge": "^3.0.2"
+    "tailwind-merge": "^3.0.2",
+    "tesseract.js": "^6.0.1"
   },
   "devDependencies": {
     "@types/next": "^8.0.7"

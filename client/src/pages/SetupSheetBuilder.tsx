@@ -94,44 +94,155 @@ export function SetupSheetBuilder() {
 
     try {
       const file = acceptedFiles[0]
-      const data = await file.arrayBuffer()
-      const workbook = XLSX.read(data)
-      const worksheet = workbook.Sheets[workbook.SheetNames[0]]
-      const jsonData = XLSX.utils.sheet_to_json(worksheet)
+      let jsonData: any[] = []
 
-      if (jsonData.length === 0) {
-        setError('The uploaded file contains no data. Please check the file and try again.')
-        setIsUploading(false)
-        return
+      // Check if it's a PDF file
+      if (file.type === 'application/pdf' || file.name.endsWith('.pdf')) {
+        // For PDF files, we'll handle processing on the server side
+        // Just set a placeholder for now to show the file was accepted
+        jsonData = [{
+          'File Type': 'PDF',
+          'Status': 'Ready for processing',
+          'Note': 'PDF will be processed when uploaded to setup'
+        }]
+      } else {
+        // Process Excel/CSV files as before
+        const data = await file.arrayBuffer()
+        console.log('File size:', data.byteLength, 'bytes')
+
+        const workbook = XLSX.read(data)
+        console.log('Workbook sheets:', workbook.SheetNames)
+
+        const worksheet = workbook.Sheets[workbook.SheetNames[0]]
+        console.log('Worksheet range:', worksheet['!ref'])
+
+        // Try different parsing options
+        jsonData = XLSX.utils.sheet_to_json(worksheet, {
+          header: 1,  // Use first row as header
+          defval: '',  // Default value for empty cells
+          raw: false   // Don't use raw values
+        })
+
+        console.log('Raw parsed data (first 3 rows):', jsonData.slice(0, 3))
+
+        // Convert array of arrays to array of objects
+        if (jsonData.length > 0) {
+          const headers = jsonData[0] as string[]
+          const dataRows = jsonData.slice(1)
+
+          jsonData = dataRows.map(row => {
+            const obj: any = {}
+            headers.forEach((header, index) => {
+              if (header && row[index] !== undefined) {
+                obj[header] = row[index]
+              }
+            })
+            return obj
+          }).filter(row => Object.values(row).some(val => val && val.toString().trim()))
+        }
+
+        console.log('Converted to objects (first 3 rows):', jsonData.slice(0, 3))
+
+        if (jsonData.length === 0) {
+          setError('The uploaded file contains no data. Please check the file and try again.')
+          setIsUploading(false)
+          return
+        }
       }
 
-      // Check if the file has the expected columns
+      // Check if this is a weekly roster format (has day columns like Sun, Mon, etc.)
       const firstRow = jsonData[0] as Record<string, any>
-      const requiredColumns = [columnMappings.name, columnMappings.startTime, columnMappings.endTime, columnMappings.area]
-      const optionalColumns = [columnMappings.day] // Day is optional but recommended
-      const missingRequiredColumns = requiredColumns.filter(col => !(col in firstRow))
-      const missingOptionalColumns = optionalColumns.filter(col => !(col in firstRow))
+      console.log('First row columns:', Object.keys(firstRow))
+      console.log('First row data:', firstRow)
 
-      // Warn about missing day column
-      if (missingOptionalColumns.length > 0) {
+      const dayColumns = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday']
+      const hasWeeklyFormat = dayColumns.some(day => day in firstRow)
+
+      // Also check for date-based columns that might indicate a weekly roster
+      const columnNames = Object.keys(firstRow)
+      const hasDateColumns = columnNames.some(col => {
+        const colLower = col.toLowerCase()
+        return colLower.includes('5/18') || colLower.includes('5/19') || colLower.includes('5/20') ||
+               colLower.includes('5/21') || colLower.includes('5/22') || colLower.includes('5/23') ||
+               colLower.includes('5/24') || colLower.includes('may') ||
+               /\d{1,2}\/\d{1,2}\/\d{2,4}/.test(col) || // Date pattern like 5/18/25
+               /\w+,\s*\d{1,2}\/\d{1,2}\/\d{2,4}/.test(col) // Day, date pattern
+      })
+
+      // Check for day names at the start of column headers (like "Sun, 5/18/25")
+      const hasDayHeaders = columnNames.some(col => {
+        const colStart = col.toLowerCase().substring(0, 3)
+        return ['sun', 'mon', 'tue', 'wed', 'thu', 'fri', 'sat'].includes(colStart)
+      })
+
+      // Check if this looks like a weekly roster based on multiple employees and time data
+      const hasMultipleEmployees = jsonData.length > 1
+      const hasTimeData = columnNames.some(col => {
+        const sampleData = firstRow[col]
+        return sampleData && typeof sampleData === 'string' &&
+               (sampleData.includes('AM') || sampleData.includes('PM') || sampleData.includes(':'))
+      })
+
+      const isWeeklyRoster = hasWeeklyFormat || hasDateColumns || hasDayHeaders || (hasMultipleEmployees && hasTimeData)
+
+      console.log('Weekly format detected:', hasWeeklyFormat)
+      console.log('Date columns detected:', hasDateColumns)
+      console.log('Time data detected:', hasTimeData)
+      console.log('Is weekly roster:', isWeeklyRoster)
+      console.log('Day columns found:', dayColumns.filter(day => day in firstRow))
+
+      if (isWeeklyRoster) {
+        // This is a weekly roster format - validate differently
+        const hasEmployeeColumn = Object.keys(firstRow).some(key =>
+          key.toLowerCase().includes('employee') ||
+          key.toLowerCase().includes('name') ||
+          key === 'Employee' ||
+          key === 'Name'
+        )
+
+        if (!hasEmployeeColumn) {
+          setError('Weekly roster format detected, but no employee name column found. Please ensure the first column contains employee names.')
+          setIsUploading(false)
+          return
+        }
+
+        // For weekly roster, we don't need to validate shift data in the first row
+        // since employees might not have shifts on all days
+        console.log('Weekly roster validation passed - skipping shift data validation')
+
         toast({
-          title: 'Warning',
-          description: `The day column (${columnMappings.day}) is missing. Employees will be available for all days.`,
+          title: 'Weekly Roster Detected',
+          description: 'Weekly roster format detected. The system will parse shifts from day columns.',
           variant: 'default'
         })
-      }
+      } else {
+        // Standard format validation
+        const requiredColumns = [columnMappings.name, columnMappings.startTime, columnMappings.endTime, columnMappings.area]
+        const optionalColumns = [columnMappings.day] // Day is optional but recommended
+        const missingRequiredColumns = requiredColumns.filter(col => !(col in firstRow))
+        const missingOptionalColumns = optionalColumns.filter(col => !(col in firstRow))
 
-      if (missingRequiredColumns.length > 0) {
-        setError(`Missing required columns: ${missingRequiredColumns.join(', ')}. Please check your file format.`)
-        setIsUploading(false)
-        return
+        // Warn about missing day column
+        if (missingOptionalColumns.length > 0) {
+          toast({
+            title: 'Warning',
+            description: `The day column (${columnMappings.day}) is missing. Employees will be available for all days.`,
+            variant: 'default'
+          })
+        }
+
+        if (missingRequiredColumns.length > 0) {
+          setError(`Missing required columns: ${missingRequiredColumns.join(', ')}. Please check your file format.`)
+          setIsUploading(false)
+          return
+        }
       }
 
       // Store the full data in a ref or state for later use
       window.fullImportData = jsonData;
 
-      // Set preview data for user to confirm (just show first 5 rows)
-      setPreviewData(jsonData.slice(0, 5))
+      // Set preview data for user to confirm (show all rows)
+      setPreviewData(jsonData)
       setIsUploading(false)
     } catch (err) {
       setError('Error parsing Excel file. Please ensure it is a valid schedule export.')
@@ -146,46 +257,210 @@ export function SetupSheetBuilder() {
     if (!fullData) return
 
     try {
-      // Log the first few rows for debugging
-      console.log('First few rows of import data:', fullData.slice(0, 3));
-
-      // Parse the data with the selected column mappings
-      const parsedEmployees = fullData.map((row: any) => {
-        const rawArea = row[columnMappings.area];
-        const determinedArea = determineArea(rawArea);
-        const shiftStart = formatTime(row[columnMappings.startTime]);
-        const shiftEnd = formatTime(row[columnMappings.endTime]);
-        const normalizedDay = row[columnMappings.day] ? normalizeDay(row[columnMappings.day]) : null;
-
-        // Log area determination for debugging
-        console.log(`Area determination: '${rawArea}' -> '${determinedArea}'`);
-        console.log(`Time: ${shiftStart} - ${shiftEnd}`);
-
-        return {
-          id: crypto.randomUUID(),
-          name: row[columnMappings.name] || 'Unknown',
-          shiftStart: shiftStart,
-          shiftEnd: shiftEnd,
-          area: determinedArea,
-          day: normalizedDay,
-          // Add timeBlock field for compatibility with the DailyView component
-          timeBlock: `${shiftStart} - ${shiftEnd}`
-        };
+      // Check if this is a weekly roster format
+      const firstRow = fullData[0] as Record<string, any>
+      const columnNames = Object.keys(firstRow)
+      const hasDayHeaders = columnNames.some(col => {
+        const colStart = col.toLowerCase().substring(0, 3)
+        return ['sun', 'mon', 'tue', 'wed', 'thu', 'fri', 'sat'].includes(colStart)
       })
 
-      setEmployees(parsedEmployees)
-      setPreviewData(null) // Clear preview after import
-      setError(null)
+      if (hasDayHeaders) {
+        // This is a weekly roster - process differently and save directly
 
-      toast({
-        title: 'Success',
-        description: `Imported ${parsedEmployees.length} employees from schedule`,
-      })
+        // For weekly roster, parse the actual shift data from the Excel file
+        const parsedEmployees = [];
+
+        fullData.forEach((row: any) => {
+          const rawEmployeeName = row.Employee || row.employee || row.Name || row.name ||
+                                  row['Employee Name'] || row[Object.keys(row)[0]];
+
+          if (!rawEmployeeName || typeof rawEmployeeName !== 'string' || !rawEmployeeName.trim()) {
+            return;
+          }
+
+          const employeeName = cleanEmployeeName(rawEmployeeName);
+
+          // Get all date columns (skip the employee name column)
+          const dateColumns = Object.keys(row).filter(key =>
+            key !== 'Employee' && key !== 'employee' && key !== 'Name' && key !== 'name' &&
+            key !== 'Employee Name' && (key.includes('/') || key.includes(','))
+          );
+
+          // Process each date column to extract shifts
+          dateColumns.forEach(dateCol => {
+            const cellValue = row[dateCol];
+            if (!cellValue || cellValue.toString().trim() === '') return;
+
+
+
+            // Parse the day from column header (e.g., "Sun, 5/18/25" -> "Sun")
+            let dayOfWeek = '';
+            if (dateCol.includes(',')) {
+              dayOfWeek = dateCol.split(',')[0].trim();
+            }
+
+            // Convert short day names to full day names for consistency with daily view
+            const dayMap: Record<string, string> = {
+              'Sun': 'sunday',
+              'Mon': 'monday',
+              'Tue': 'tuesday',
+              'Wed': 'wednesday',
+              'Thu': 'thursday',
+              'Fri': 'friday',
+              'Sat': 'saturday'
+            }
+            dayOfWeek = dayMap[dayOfWeek] || dayOfWeek.toLowerCase()
+
+            // Split cell value by newlines to handle multiple shifts
+            const shifts = cellValue.toString().split(/\r?\n/).filter(shift => shift.trim());
+
+            // Process the entire cell content to extract time and position info
+            const cellContent = shifts.join(' ').toLowerCase();
+
+            // Look for time patterns in any of the lines
+            let timeMatch = null;
+            let startTime = '';
+            let endTime = '';
+
+            for (const shift of shifts) {
+              const match = shift.match(/(\d{1,2}:\d{2}\s*(?:AM|PM)?)\s*-\s*(\d{1,2}:\d{2}\s*(?:AM|PM)?)/i);
+              if (match) {
+                timeMatch = match;
+                startTime = match[1].trim();
+                endTime = match[2].trim();
+                break;
+              }
+            }
+
+            if (timeMatch) {
+              // Convert to 24-hour format
+              startTime = convertTo24HourFormat(startTime);
+              endTime = convertTo24HourFormat(endTime);
+
+              // Determine department from the entire cell content (all lines combined)
+              let department = 'FOH'; // Default
+
+              if (cellContent.includes('back of house') ||
+                  cellContent.includes('boh') ||
+                  cellContent.includes('kitchen') ||
+                  cellContent.includes('prep') ||
+                  cellContent.includes('cook') ||
+                  cellContent.includes('grill')) {
+                department = 'BOH';
+              } else if (cellContent.includes('front of house') ||
+                        cellContent.includes('foh') ||
+                        cellContent.includes('cashier') ||
+                        cellContent.includes('front counter') ||
+                        cellContent.includes('drive thru') ||
+                        cellContent.includes('service')) {
+                department = 'FOH';
+              }
+
+              parsedEmployees.push({
+                id: crypto.randomUUID(),
+                name: employeeName.trim(),
+                shiftStart: startTime,
+                shiftEnd: endTime,
+                area: department,
+                day: dayOfWeek,
+                timeBlock: `${startTime} - ${endTime}`,
+                isWeeklyRoster: true,
+                originalData: row
+              });
+            }
+          });
+        });
+
+        setEmployees(parsedEmployees)
+        setPreviewData(null)
+        setError(null)
+
+        // Show the setup configuration dialog immediately
+        setShowSaveDialog(true);
+
+        toast({
+          title: 'Weekly Roster Imported',
+          description: `Imported ${parsedEmployees.length} shifts from weekly roster.`,
+        })
+      } else {
+        // Standard format processing
+        const parsedEmployees = fullData.map((row: any) => {
+          const rawArea = row[columnMappings.area];
+          const determinedArea = determineArea(rawArea);
+          const shiftStart = formatTime(row[columnMappings.startTime]);
+          const shiftEnd = formatTime(row[columnMappings.endTime]);
+          const normalizedDay = row[columnMappings.day] ? normalizeDay(row[columnMappings.day]) : null;
+
+          return {
+            id: crypto.randomUUID(),
+            name: cleanEmployeeName(row[columnMappings.name]) || 'Unknown',
+            shiftStart: shiftStart,
+            shiftEnd: shiftEnd,
+            area: determinedArea,
+            day: normalizedDay,
+            // Add timeBlock field for compatibility with the DailyView component
+            timeBlock: `${shiftStart} - ${shiftEnd}`
+          };
+        })
+
+        setEmployees(parsedEmployees)
+        setPreviewData(null) // Clear preview after import
+        setError(null)
+
+        toast({
+          title: 'Success',
+          description: `Imported ${parsedEmployees.length} employees from schedule`,
+        })
+      }
     } catch (err) {
       setError('Error processing employee data. Please check your column mappings.')
       console.error('Error processing data:', err)
     }
   }
+
+  // Helper function to clean employee names (remove phone numbers and brackets)
+  const cleanEmployeeName = (name: string): string => {
+    if (!name || typeof name !== 'string') return '';
+
+    // Remove phone numbers in various formats: (123) 456-7890, 123-456-7890, 123.456.7890, 878 -0672, etc.
+    let cleaned = name.replace(/\s*\(?\d{3}\)?\s*[-.\s]?\d{3}\s*[-.\s]?\d{4}\s*/g, '');
+
+    // Remove any remaining phone number fragments like "878 -0672" or "-0672"
+    cleaned = cleaned.replace(/\s*\d{3}\s*-\s*\d{4}\s*/g, '');
+    cleaned = cleaned.replace(/\s*-\s*\d{4}\s*/g, '');
+
+    // Remove brackets and their contents: [] () {}
+    cleaned = cleaned.replace(/\s*[\[\(\{][^\]\)\}]*[\]\)\}]\s*/g, '');
+
+    // Remove extra whitespace and trim
+    cleaned = cleaned.replace(/\s+/g, ' ').trim();
+
+    return cleaned;
+  };
+
+  // Helper function to convert time to 24-hour format for weekly roster
+  const convertTo24HourFormat = (timeStr: string): string => {
+    if (!timeStr) return '00:00';
+
+    // If already in 24-hour format, return as is
+    if (!/AM|PM/i.test(timeStr)) {
+      return timeStr.padStart(5, '0');
+    }
+
+    const [time, period] = timeStr.split(/\s*(AM|PM)/i);
+    let [hours, minutes] = time.split(':');
+    hours = parseInt(hours);
+    minutes = minutes || '00';
+
+    if (period.toUpperCase() === 'PM' && hours !== 12) {
+      hours += 12;
+    } else if (period.toUpperCase() === 'AM' && hours === 12) {
+      hours = 0;
+    }
+
+    return `${hours.toString().padStart(2, '0')}:${minutes.padStart(2, '0')}`;
+  };
 
   // Helper function to format time consistently
   const formatTime = (timeString: string | number): string => {
@@ -262,9 +537,6 @@ export function SetupSheetBuilder() {
       }
     }
 
-    // Log unrecognized formats for debugging
-    console.log('Unrecognized time format:', timeString);
-
     // If all else fails, return as is
     return timeString.toString()
   }
@@ -275,9 +547,6 @@ export function SetupSheetBuilder() {
 
     // Convert to string in case we get a number or other type
     const dayStr = String(dayString).toLowerCase().trim()
-
-    // Debug log to track day normalization
-    console.log(`Normalizing day: '${dayString}' (type: ${typeof dayString})`)
 
     // Map common day abbreviations and variations to standard format
     const dayMap: Record<string, string> = {
@@ -319,14 +588,12 @@ export function SetupSheetBuilder() {
 
     // Direct lookup in the map
     if (dayMap[dayStr]) {
-      console.log(`Day normalized via direct lookup: '${dayString}' -> '${dayMap[dayStr]}'`)
       return dayMap[dayStr]
     }
 
     // Check if the input starts with a day name
     for (const [abbr, fullDay] of Object.entries(dayMap)) {
       if (dayStr.startsWith(abbr) && abbr.length > 1) { // Only use abbr with length > 1 to avoid false matches
-        console.log(`Day normalized via prefix: '${dayString}' -> '${fullDay}'`)
         return fullDay
       }
     }
@@ -335,13 +602,11 @@ export function SetupSheetBuilder() {
     const dayNames = ['sunday', 'monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday']
     for (const day of dayNames) {
       if (dayStr.includes(day)) {
-        console.log(`Day normalized via substring: '${dayString}' -> '${day}'`)
         return day
       }
     }
 
-    // If we can't determine the day, log and return null
-    console.log(`Could not normalize day: '${dayString}'`)
+    // If we can't determine the day, return null
     return null
   }
 
@@ -369,9 +634,6 @@ export function SetupSheetBuilder() {
       return 'FOH'
     }
 
-    // If we can't determine, log the value for debugging
-    console.log('Could not determine area from:', areaString)
-
     // Default to the value as-is if it's BOH or FOH, otherwise default to FOH
     return areaString === 'BOH' ? 'BOH' : 'FOH'
   }
@@ -380,7 +642,8 @@ export function SetupSheetBuilder() {
     onDrop,
     accept: {
       'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet': ['.xlsx'],
-      'application/vnd.ms-excel': ['.xls']
+      'application/vnd.ms-excel': ['.xls'],
+      'application/pdf': ['.pdf']
     },
     maxFiles: 1
   })
@@ -461,8 +724,9 @@ export function SetupSheetBuilder() {
     setCurrentAssignments(assignments)
   }
 
+
+
   const handleSaveWeeklySetup = async () => {
-    console.log('Save Weekly Setup button clicked');
     if (!setupName.trim()) {
       toast({
         title: "Error",
@@ -484,6 +748,9 @@ export function SetupSheetBuilder() {
       setIsSaving(false);
       return
     }
+
+    // Check if we have weekly roster employees
+    const hasWeeklyRosterEmployees = employees.some(emp => emp.isWeeklyRoster);
 
     if (!currentTemplate) {
       toast({
@@ -507,7 +774,13 @@ export function SetupSheetBuilder() {
       const weekSchedule = document.querySelector('.employee-assignment-component');
 
       // If we can't get the assignments directly, use the stored assignments or template as fallback
-      const finalWeekSchedule = currentAssignments?.weekSchedule || currentTemplate.weekSchedule;
+      let finalWeekSchedule;
+      if (hasWeeklyRosterEmployees) {
+        // For weekly roster imports, use the template structure but without employee assignments
+        finalWeekSchedule = currentTemplate.weekSchedule;
+      } else {
+        finalWeekSchedule = currentAssignments?.weekSchedule || currentTemplate.weekSchedule;
+      }
 
       // Adjust the date range to ensure it's Sunday to Saturday
       const { startDate: adjustedStartDate, endDate: adjustedEndDate } =
@@ -536,81 +809,119 @@ export function SetupSheetBuilder() {
         id: savingToast
       })
 
-      // Prepare employee data - only include essential fields to reduce payload size
-      // Process in batches to avoid UI freezing
-      const batchSize = 100;
+      // Prepare employee data - optimize for weekly roster imports
       let simplifiedEmployees = [];
 
-      // Filter out employees that don't have a day assigned (they're not scheduled)
-      const employeesWithDay = employees.filter(emp => emp.day);
+      console.log('Preparing employee data for save:', {
+        totalEmployees: employees.length,
+        hasWeeklyRosterEmployees,
+        sampleEmployee: employees[0]
+      });
 
-      for (let i = 0; i < employeesWithDay.length; i += batchSize) {
-        // Process a batch of employees
-        const batch = employeesWithDay.slice(i, i + batchSize);
-
-        // Update progress toast
-        if (employeesWithDay.length > batchSize) {
-          toast({
-            title: "Saving",
-            description: `Processing employees: ${Math.min(i + batchSize, employeesWithDay.length)}/${employeesWithDay.length}`,
-            id: savingToast
-          })
-        }
-
-        // Process this batch
-        const batchResult = batch.map(emp => ({
+      if (hasWeeklyRosterEmployees) {
+        // For weekly roster imports, use the data as-is (already processed)
+        simplifiedEmployees = employees.map(emp => ({
           id: emp.id,
           name: emp.name,
           timeBlock: emp.timeBlock,
           area: emp.area,
-          day: normalizeDay(emp.day) // Normalize day names for consistency
+          day: emp.day,
+          shiftStart: emp.shiftStart,
+          shiftEnd: emp.shiftEnd,
+          isWeeklyRoster: true,
+          originalData: emp.originalData
         }));
 
-        simplifiedEmployees = [...simplifiedEmployees, ...batchResult];
+        console.log('Simplified employees for weekly roster:', {
+          count: simplifiedEmployees.length,
+          sampleEmployee: simplifiedEmployees[0]
+        });
+      } else {
+        // For regular imports, process in batches to avoid UI freezing
+        const batchSize = 100;
+        const employeesWithDay = employees.filter(emp => emp.day);
 
-        // Add a small delay to keep UI responsive
-        if (employeesWithDay.length > batchSize) {
-          await new Promise(resolve => setTimeout(resolve, 10));
+        for (let i = 0; i < employeesWithDay.length; i += batchSize) {
+          const batch = employeesWithDay.slice(i, i + batchSize);
+
+          // Update progress toast
+          if (employeesWithDay.length > batchSize) {
+            toast({
+              title: "Saving",
+              description: `Processing employees: ${Math.min(i + batchSize, employeesWithDay.length)}/${employeesWithDay.length}`,
+              id: savingToast
+            })
+          }
+
+          // Process this batch
+          const batchResult = batch.map(emp => ({
+            id: emp.id,
+            name: emp.name,
+            timeBlock: emp.timeBlock,
+            area: emp.area,
+            day: normalizeDay(emp.day)
+          }));
+
+          simplifiedEmployees = [...simplifiedEmployees, ...batchResult];
+
+          // Add a small delay to keep UI responsive
+          if (employeesWithDay.length > batchSize) {
+            await new Promise(resolve => setTimeout(resolve, 10));
+          }
         }
       }
 
       // Update toast for next step
-      toast({
-        title: "Saving",
-        description: "Optimizing schedule data...",
-        id: savingToast
-      });
+      let optimizedWeekSchedule;
 
-      // Optimize weekSchedule by removing empty timeBlocks and positions
-      const optimizedWeekSchedule = Object.entries(finalWeekSchedule).reduce((acc, [day, daySchedule]) => {
-        // Skip days with no time blocks
-        if (!daySchedule.timeBlocks || daySchedule.timeBlocks.length === 0) {
+      if (hasWeeklyRosterEmployees) {
+        // For weekly roster imports, use the minimal schedule as-is (no optimization needed)
+        optimizedWeekSchedule = finalWeekSchedule;
+
+        toast({
+          title: "Saving",
+          description: "Preparing weekly roster setup...",
+          id: savingToast
+        });
+      } else {
+        // For regular imports, optimize the schedule
+        toast({
+          title: "Saving",
+          description: "Optimizing schedule data...",
+          id: savingToast
+        });
+
+        // Optimize weekSchedule by removing empty timeBlocks and positions
+        optimizedWeekSchedule = Object.entries(finalWeekSchedule).reduce((acc, [day, daySchedule]) => {
+          // Skip days with no time blocks
+          if (!daySchedule.timeBlocks || daySchedule.timeBlocks.length === 0) {
+            return acc;
+          }
+
+          // Filter out empty time blocks and optimize positions
+          const optimizedTimeBlocks = daySchedule.timeBlocks
+            .filter(block => block.positions && block.positions.length > 0)
+            .map(block => ({
+              ...block,
+              // Only keep essential position data
+              positions: block.positions.map(pos => ({
+                id: pos.id,
+                name: pos.name,
+                category: pos.category,
+                section: pos.section,
+                employeeId: pos.employeeId,
+                employeeName: pos.employeeName
+              }))
+            }));
+
+          // Only add days with time blocks
+          if (optimizedTimeBlocks.length > 0) {
+            acc[day] = { timeBlocks: optimizedTimeBlocks };
+          }
+
           return acc;
-        }
-
-        // Filter out empty time blocks and optimize positions
-        const optimizedTimeBlocks = daySchedule.timeBlocks
-          .filter(block => block.positions && block.positions.length > 0)
-          .map(block => ({
-            ...block,
-            // Only keep essential position data
-            positions: block.positions.map(pos => ({
-              id: pos.id,
-              name: pos.name,
-              category: pos.category,
-              section: pos.section,
-              employeeId: pos.employeeId,
-              employeeName: pos.employeeName
-            }))
-          }));
-
-        // Only add days with time blocks
-        if (optimizedTimeBlocks.length > 0) {
-          acc[day] = { timeBlocks: optimizedTimeBlocks };
-        }
-
-        return acc;
-      }, {});
+        }, {});
+      }
 
       const weeklySetup = {
         name: finalSetupName,
@@ -624,6 +935,12 @@ export function SetupSheetBuilder() {
       // Log the size of the data being sent
       const dataSize = JSON.stringify(weeklySetup).length;
       console.log(`Saving weekly setup: ${dataSize} bytes`);
+      console.log('Weekly setup data:', {
+        name: weeklySetup.name,
+        employeeCount: simplifiedEmployees.length,
+        weeklyRosterEmployees: simplifiedEmployees.filter(emp => emp.isWeeklyRoster).length,
+        sampleEmployee: simplifiedEmployees[0]
+      });
 
       // Check if data is too large
       if (dataSize > 10 * 1024 * 1024) { // 10MB limit
@@ -657,7 +974,6 @@ export function SetupSheetBuilder() {
       try {
         const savedSetup = await createWeeklySetup(weeklySetup);
         clearTimeout(timeoutId); // Clear the timeout
-        console.log('Setup saved successfully:', savedSetup);
 
         // Check if there was a warning about employee data
         if (savedSetup._warning) {
@@ -756,7 +1072,9 @@ export function SetupSheetBuilder() {
         <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
           <TabsList>
             <TabsTrigger value="upload">Upload Schedule</TabsTrigger>
-            <TabsTrigger value="assign">Assign Employees</TabsTrigger>
+            {!employees.some(emp => emp.isWeeklyRoster) && (
+              <TabsTrigger value="assign">Assign Employees</TabsTrigger>
+            )}
           </TabsList>
 
           <TabsContent value="upload">
@@ -833,7 +1151,7 @@ export function SetupSheetBuilder() {
                   ) : (
                     <div>
                       <p>Drag and drop your schedule export file here, or click to select</p>
-                      <p className="text-sm text-gray-500 mt-2">Supports .xlsx and .xls files</p>
+                      <p className="text-sm text-gray-500 mt-2">Supports .xlsx, .xls, and .pdf files</p>
                       <p className="text-sm text-gray-500 mt-1">Supports various time formats including Excel decimal times</p>
                     </div>
                   )}
@@ -950,35 +1268,174 @@ export function SetupSheetBuilder() {
                     </div>
                   </div>
 
-                  <div className="overflow-x-auto">
+                  {/* Parse Preview for Weekly Roster */}
+                  {(() => {
+                    const firstRow = previewData[0] as Record<string, any>
+                    const columnNames = Object.keys(firstRow)
+                    const hasDayHeaders = columnNames.some(col => {
+                      const colStart = col.toLowerCase().substring(0, 3)
+                      return ['sun', 'mon', 'tue', 'wed', 'thu', 'fri', 'sat'].includes(colStart)
+                    })
+
+                    if (hasDayHeaders) {
+                      // Show what will be parsed
+                      const parsePreview = []
+                      previewData.forEach((row, rowIndex) => {
+                        const rawEmployeeName = row[Object.keys(row)[0]] // First column is employee name
+                        if (!rawEmployeeName) return
+                        const employeeName = cleanEmployeeName(rawEmployeeName)
+
+                        const dateColumns = columnNames.filter(col => {
+                          const colStart = col.toLowerCase().substring(0, 3)
+                          return ['sun', 'mon', 'tue', 'wed', 'thu', 'fri', 'sat'].includes(colStart)
+                        })
+
+                        dateColumns.forEach(dateCol => {
+                          const cellValue = row[dateCol]
+                          if (!cellValue || cellValue.toString().trim() === '') return
+
+                          // Parse the day from column header
+                          let dayOfWeek = ''
+                          if (dateCol.includes(',')) {
+                            dayOfWeek = dateCol.split(',')[0].trim()
+                          }
+
+                          // Convert short day names to full day names for consistency
+                          const dayMap: Record<string, string> = {
+                            'Sun': 'sunday',
+                            'Mon': 'monday',
+                            'Tue': 'tuesday',
+                            'Wed': 'wednesday',
+                            'Thu': 'thursday',
+                            'Fri': 'friday',
+                            'Sat': 'saturday'
+                          }
+                          dayOfWeek = dayMap[dayOfWeek] || dayOfWeek.toLowerCase()
+
+                          // Split cell value by newlines to handle multiple shifts
+                          const shifts = cellValue.toString().split(/\r?\n/).filter(shift => shift.trim())
+
+                          shifts.forEach(shift => {
+                            // Look for time patterns
+                            const timeMatch = shift.match(/(\d{1,2}:\d{2}\s*(?:AM|PM)?)\s*-\s*(\d{1,2}:\d{2}\s*(?:AM|PM)?)/i)
+                            if (timeMatch) {
+                              let startTime = timeMatch[1].trim()
+                              let endTime = timeMatch[2].trim()
+
+                              // Determine department
+                              let department = 'FOH'
+                              if (shift.toLowerCase().includes('back of house') || shift.toLowerCase().includes('boh')) {
+                                department = 'BOH'
+                              } else if (shift.toLowerCase().includes('front of house') || shift.toLowerCase().includes('foh')) {
+                                department = 'FOH'
+                              }
+
+                              parsePreview.push({
+                                employee: employeeName,
+                                day: dayOfWeek,
+                                time: `${startTime} - ${endTime}`,
+                                area: department,
+                                originalText: shift
+                              })
+                            }
+                          })
+                        })
+                      })
+
+                      if (parsePreview.length > 0) {
+                        return (
+                          <div className="mb-4 p-4 bg-blue-50 border border-blue-200 rounded-lg">
+                            <h4 className="font-medium text-blue-900 mb-2">Parsed Shifts Preview</h4>
+                            <p className="text-sm text-blue-700 mb-3">This shows how your data will be interpreted:</p>
+                            <div className="max-h-40 overflow-y-auto">
+                              <div className="grid grid-cols-1 md:grid-cols-2 gap-2 text-sm">
+                                {parsePreview.slice(0, 10).map((shift, index) => (
+                                  <div key={index} className="bg-white p-2 rounded border">
+                                    <div className="font-medium">{shift.employee}</div>
+                                    <div className="text-gray-600">{shift.day} • {shift.time} • {shift.area}</div>
+                                  </div>
+                                ))}
+                              </div>
+                              {parsePreview.length > 10 && (
+                                <p className="text-xs text-blue-600 mt-2">
+                                  Showing first 10 of {parsePreview.length} total shifts
+                                </p>
+                              )}
+                            </div>
+                          </div>
+                        )
+                      }
+                    }
+                    return null
+                  })()}
+
+                  <div className="overflow-x-auto max-h-96 overflow-y-auto border rounded">
                     <table className="w-full border-collapse">
                       <thead>
                         <tr className="bg-gray-50">
-                          {Object.values(columnMappings).map((column, index) => (
-                            <th key={index} className="border p-2 text-left text-sm font-medium">{column}</th>
-                          ))}
+                          {(() => {
+                            // Check if this is weekly roster format
+                            const firstRow = previewData[0] as Record<string, any>
+                            const columnNames = Object.keys(firstRow)
+                            const hasDayHeaders = columnNames.some(col => {
+                              const colStart = col.toLowerCase().substring(0, 3)
+                              return ['sun', 'mon', 'tue', 'wed', 'thu', 'fri', 'sat'].includes(colStart)
+                            })
+
+                            if (hasDayHeaders) {
+                              // Show actual column headers for weekly roster
+                              return columnNames.map((column, index) => (
+                                <th key={index} className="border p-2 text-left text-sm font-medium">{column}</th>
+                              ))
+                            } else {
+                              // Show standard column mappings
+                              return Object.values(columnMappings).map((column, index) => (
+                                <th key={index} className="border p-2 text-left text-sm font-medium">{column}</th>
+                              ))
+                            }
+                          })()}
                         </tr>
                       </thead>
                       <tbody>
                         {previewData.map((row, rowIndex) => (
                           <tr key={rowIndex} className="border-b">
-                            {Object.values(columnMappings).map((column, colIndex) => (
-                              <td key={colIndex} className="border p-2 text-sm">
-                                {row[column] || '-'}
-                              </td>
-                            ))}
+                            {(() => {
+                              // Check if this is weekly roster format
+                              const firstRow = previewData[0] as Record<string, any>
+                              const columnNames = Object.keys(firstRow)
+                              const hasDayHeaders = columnNames.some(col => {
+                                const colStart = col.toLowerCase().substring(0, 3)
+                                return ['sun', 'mon', 'tue', 'wed', 'thu', 'fri', 'sat'].includes(colStart)
+                              })
+
+                              if (hasDayHeaders) {
+                                // Show actual data for weekly roster
+                                return columnNames.map((column, colIndex) => (
+                                  <td key={colIndex} className="border p-2 text-sm min-w-[150px] whitespace-pre-wrap" title={row[column] || ''}>
+                                    {row[column] || '-'}
+                                  </td>
+                                ))
+                              } else {
+                                // Show standard column data
+                                return Object.values(columnMappings).map((column, colIndex) => (
+                                  <td key={colIndex} className="border p-2 text-sm min-w-[120px] whitespace-pre-wrap">
+                                    {row[column] || '-'}
+                                  </td>
+                                ))
+                              }
+                            })()}
                           </tr>
                         ))}
                       </tbody>
                     </table>
                   </div>
 
-                  <p className="text-sm text-gray-500 mt-4">Showing {previewData.length} of {window.fullImportData?.length || previewData.length} rows. All {window.fullImportData?.length || previewData.length} employees will be imported when you confirm.</p>
+                  <p className="text-sm text-gray-500 mt-4">Showing all {previewData.length} rows. All {previewData.length} employees will be imported when you confirm.</p>
                 </div>
               )}
 
               {/* Uploaded employees */}
-              {employees.length > 0 && (
+              {employees.length > 0 && !employees.some(emp => emp.isWeeklyRoster) && (
                 <div className="mt-4">
                   <div className="flex justify-between items-center mb-4">
                     <h2 className="text-lg font-semibold">Uploaded Employees</h2>
@@ -1092,24 +1549,7 @@ export function SetupSheetBuilder() {
                         showSaveButton={false}
                       />
 
-                      {/* Save Weekly Setup Button */}
-                      <SaveSetupDialog
-                        showSaveDialog={showSaveDialog}
-                        setShowSaveDialog={setShowSaveDialog}
-                        setupName={setupName}
-                        setSetupName={setSetupName}
-                        setupStartDate={setupStartDate}
-                        setSetupStartDate={setSetupStartDate}
-                        setupEndDate={setupEndDate}
-                        setSetupEndDate={setSetupEndDate}
-                        isShared={isShared}
-                        setIsShared={setIsShared}
-                        handleSaveWeeklySetup={handleSaveWeeklySetup}
-                        adjustToSundayToSaturdayRange={adjustToSundayToSaturdayRange}
-                        completionPercentage={completionPercentage}
-                        currentTemplateName={currentTemplate.name}
-                        employeesCount={employees.length}
-                      />
+
                     </>
                   ) : (
                     <div className="text-center text-gray-500">
@@ -1121,6 +1561,29 @@ export function SetupSheetBuilder() {
             </Card>
           </TabsContent>
         </Tabs>
+
+        {/* Save Weekly Setup Dialog - Available for both regular and weekly roster workflows */}
+        <SaveSetupDialog
+          showSaveDialog={showSaveDialog}
+          setShowSaveDialog={setShowSaveDialog}
+          setupName={setupName}
+          setSetupName={setSetupName}
+          setupStartDate={setupStartDate}
+          setSetupStartDate={setSetupStartDate}
+          setupEndDate={setupEndDate}
+          setSetupEndDate={setSetupEndDate}
+          isShared={isShared}
+          setIsShared={setIsShared}
+          handleSaveWeeklySetup={handleSaveWeeklySetup}
+          adjustToSundayToSaturdayRange={adjustToSundayToSaturdayRange}
+          completionPercentage={completionPercentage}
+          currentTemplateName={currentTemplate?.name || 'Weekly Roster Import'}
+          employeesCount={employees.length}
+          templates={templates}
+          currentTemplate={currentTemplate}
+          setCurrentTemplate={setCurrentTemplate}
+          showTemplateSelection={employees.some(emp => emp.isWeeklyRoster)}
+        />
       </div>
     </DndProvider>
   )

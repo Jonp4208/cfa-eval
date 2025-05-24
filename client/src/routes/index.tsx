@@ -92,6 +92,7 @@ import InvoicesPage from '@/pages/Invoices';
 import AdminPage from '@/pages/Admin';
 import SubscriptionManagementPage from '@/pages/Admin/SubscriptionManagement';
 
+
 interface PrivateRouteProps {
   children: React.ReactNode;
   requiredFeature?: 'fohTasks' | 'setups' | 'kitchen' | 'documentation' | 'training' | 'evaluations' | 'leadership';
