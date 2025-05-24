@@ -154,7 +154,7 @@ export const SubscriptionProvider: React.FC<{ children: ReactNode }> = ({ childr
         calculatedCost: 200,
         pendingCost: null,
         loading: false,
-        error: 'Failed to fetch subscription status, using default settings'
+        error: null // Don't show error to prevent UI disruption
       });
 
       return null;
@@ -344,10 +344,10 @@ export const SubscriptionProvider: React.FC<{ children: ReactNode }> = ({ childr
     // Force refresh on initial load
     fetchSubscriptionStatus(true);
 
-    // Set up a refresh interval (every 30 seconds)
+    // Set up a refresh interval (every 5 minutes instead of 30 seconds)
     const intervalId = setInterval(() => {
       fetchSubscriptionStatus(true);
-    }, 30000);
+    }, 300000); // 5 minutes
 
     return () => clearInterval(intervalId);
   }, [user]); // Only depend on user, not isAuthenticated

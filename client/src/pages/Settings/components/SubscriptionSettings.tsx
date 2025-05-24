@@ -61,18 +61,20 @@ const SubscriptionSettings = () => {
   useEffect(() => {
     const queryParams = new URLSearchParams(location.search);
     const requiredFeature = queryParams.get('requiredFeature');
-    if (requiredFeature) {
+    if (requiredFeature && subscriptionStatus !== 'active') {
       setHighlightedFeature(requiredFeature);
 
       // Get the section name from the subscription sections
       const sectionName = subscriptionSections.find(s => s.key === requiredFeature)?.label || requiredFeature;
 
-      // Show notification about the required feature
-      showNotification(
-        'info',
-        'Subscription Required',
-        `The ${sectionName} feature requires a subscription. Please enable it to continue.`
-      );
+      // Only show notification if subscription is not active
+      if (subscriptionStatus !== 'active') {
+        showNotification(
+          'info',
+          'Subscription Required',
+          `The ${sectionName} feature requires a subscription. Please enable it to continue.`
+        );
+      }
 
       // Auto-enable the feature if we're in trial mode
       if (subscriptionStatus === 'trial') {

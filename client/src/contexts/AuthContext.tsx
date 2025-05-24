@@ -51,12 +51,14 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
             const subscriptionResponse = await api.get('/api/subscriptions/status');
             setSubscriptionStatus(subscriptionResponse.data.subscriptionStatus);
 
-            // Check if subscription is expired
-            if (subscriptionResponse.data.subscriptionStatus === 'expired') {
+            // Only show overlay if subscription is expired AND user is not Jonathon Pope
+            if (subscriptionResponse.data.subscriptionStatus === 'expired' &&
+                response.data.user?.email !== 'jonp4208@gmail.com') {
               setShowExpiredOverlay(true);
             }
           } catch (subscriptionError) {
             console.error('Failed to fetch subscription status:', subscriptionError);
+            // Don't show overlay on subscription fetch error
           }
         } catch (error) {
           console.error('Failed to fetch user profile:', error);
@@ -127,12 +129,14 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         const subscriptionResponse = await api.get('/api/subscriptions/status');
         setSubscriptionStatus(subscriptionResponse.data.subscriptionStatus);
 
-        // Check if subscription is expired
-        if (subscriptionResponse.data.subscriptionStatus === 'expired') {
+        // Only show overlay if subscription is expired AND user is not Jonathon Pope
+        if (subscriptionResponse.data.subscriptionStatus === 'expired' &&
+            user?.email !== 'jonp4208@gmail.com') {
           setShowExpiredOverlay(true);
         }
       } catch (subscriptionError) {
         console.error('Failed to fetch subscription status after login:', subscriptionError);
+        // Don't show overlay on subscription fetch error
       }
 
       return response.data;
@@ -176,12 +180,14 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         const subscriptionResponse = await api.get('/api/subscriptions/status');
         setSubscriptionStatus(subscriptionResponse.data.subscriptionStatus);
 
-        // Check if subscription is expired
-        if (subscriptionResponse.data.subscriptionStatus === 'expired') {
+        // Only show overlay if subscription is expired AND user is not Jonathon Pope
+        if (subscriptionResponse.data.subscriptionStatus === 'expired' &&
+            response.user?.email !== 'jonp4208@gmail.com') {
           setShowExpiredOverlay(true);
         }
       } catch (subscriptionError) {
         console.error('Failed to fetch subscription status after switching store:', subscriptionError);
+        // Don't show overlay on subscription fetch error
       }
 
       return response;
