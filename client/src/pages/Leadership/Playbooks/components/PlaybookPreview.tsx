@@ -57,7 +57,7 @@ export default function PlaybookPreview({ playbook }: PlaybookPreviewProps) {
                   yellow: 'bg-yellow-50 border-2 border-yellow-600 text-yellow-800',
                   gray: 'bg-gray-50 border-2 border-gray-600 text-gray-800'
                 };
-                
+
                 return (
                   <div key={i} className={`rounded-lg p-4 text-center ${colorClasses[quadrant.color as keyof typeof colorClasses] || colorClasses.gray}`}>
                     <h5 className="font-bold mb-1">{quadrant.title}</h5>
@@ -165,13 +165,13 @@ export default function PlaybookPreview({ playbook }: PlaybookPreviewProps) {
           <div className="bg-yellow-50 border-2 border-yellow-500 rounded-lg p-6 mb-6">
             <h3 className="text-yellow-800 font-bold mb-4">🎯 {block.content.title}</h3>
             <p className="font-semibold mb-4">{block.content.description}</p>
-            
+
             {block.content.exercises?.map((exercise: any, i: number) => (
               <div key={i} className="bg-white rounded-lg p-4 border border-yellow-200 mb-4">
-                <p className="font-semibold mb-3">{exercise.label}: _________________________________</p>
+                <p className="font-semibold mb-3">{exercise.title}: _________________________________</p>
                 <div className="ml-4 space-y-2 text-sm">
-                  {exercise.fields?.map((field: string, j: number) => (
-                    <p key={j}><strong>{field}:</strong> _________________________________</p>
+                  {exercise.fields?.map((field: any, j: number) => (
+                    <p key={j}><strong>{field.label}:</strong> _________________________________</p>
                   ))}
                 </div>
               </div>

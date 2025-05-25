@@ -49,14 +49,14 @@ export default function PlaybookViewer() {
   };
 
   const handleEdit = () => {
-    navigate(`/leadership/playbooks/${id}/edit`);
+    navigate(`/leadership/playbooks/${id}/simple-edit`);
   };
 
   const handleDuplicate = async () => {
     try {
       const duplicated = await playbookService.duplicatePlaybook(id!);
       toast.success('Playbook duplicated successfully');
-      navigate(`/leadership/playbooks/${duplicated._id}/edit`);
+      navigate(`/leadership/playbooks/${duplicated._id}/simple-edit`);
     } catch (error) {
       console.error('Error duplicating playbook:', error);
       toast.error('Failed to duplicate playbook');
@@ -101,58 +101,63 @@ export default function PlaybookViewer() {
 
   return (
     <div className="space-y-6">
-      <PageHeader
-        title={playbook.title}
-        subtitle={playbook.subtitle || `${playbook.category} • ${playbook.targetRole}`}
-        icon={<BookOpen className="h-5 w-5" />}
-        actions={
-          <div className="flex flex-col md:flex-row gap-2 w-full">
-            <Button
-              onClick={() => navigate('/leadership/playbooks')}
-              className="w-full md:w-auto bg-white hover:bg-white/90 text-[#E51636] flex items-center justify-center gap-2 py-2 px-4 rounded-xl transition-all duration-300 text-sm font-medium shadow-sm border border-gray-200"
-            >
-              <ChevronLeft className="w-4 h-4" />
-              <span>Back</span>
-            </Button>
+      {/* Action Buttons */}
+      <div className="flex flex-col sm:flex-row gap-3 justify-between items-start">
+        <Button
+          onClick={() => navigate('/leadership/playbooks')}
+          variant="outline"
+          className="flex items-center gap-2"
+        >
+          <ChevronLeft className="w-4 h-4" />
+          Back to Playbooks
+        </Button>
 
-            <Button
-              onClick={() => window.print()}
-              className="w-full md:w-auto bg-white hover:bg-white/90 text-[#E51636] flex items-center justify-center gap-2 py-2 px-4 rounded-xl transition-all duration-300 text-sm font-medium shadow-sm border border-gray-200"
-            >
-              <Printer className="w-4 h-4" />
-              <span>Print</span>
-            </Button>
+        <div className="flex flex-wrap gap-2">
+          <Button
+            onClick={() => window.print()}
+            variant="outline"
+            size="sm"
+            className="flex items-center gap-2"
+          >
+            <Printer className="w-4 h-4" />
+            Print
+          </Button>
 
-            {canManage && (
-              <>
-                <Button
-                  onClick={handleEdit}
-                  className={headerButtonClass}
-                >
-                  <Edit className="w-4 h-4" />
-                  <span>Edit</span>
-                </Button>
+          {canManage && (
+            <>
+              <Button
+                onClick={handleEdit}
+                variant="outline"
+                size="sm"
+                className="flex items-center gap-2"
+              >
+                <Edit className="w-4 h-4" />
+                Edit
+              </Button>
 
-                <Button
-                  onClick={handleDuplicate}
-                  className="w-full md:w-auto bg-white hover:bg-white/90 text-[#E51636] flex items-center justify-center gap-2 py-2 px-4 rounded-xl transition-all duration-300 text-sm font-medium shadow-sm border border-gray-200"
-                >
-                  <Copy className="w-4 h-4" />
-                  <span>Duplicate</span>
-                </Button>
-              </>
-            )}
+              <Button
+                onClick={handleDuplicate}
+                variant="outline"
+                size="sm"
+                className="flex items-center gap-2"
+              >
+                <Copy className="w-4 h-4" />
+                Duplicate
+              </Button>
+            </>
+          )}
 
-            <Button
-              onClick={handleExport}
-              className="w-full md:w-auto bg-white hover:bg-white/90 text-[#E51636] flex items-center justify-center gap-2 py-2 px-4 rounded-xl transition-all duration-300 text-sm font-medium shadow-sm border border-gray-200"
-            >
-              <Download className="w-4 h-4" />
-              <span>Export</span>
-            </Button>
-          </div>
-        }
-      />
+          <Button
+            onClick={handleExport}
+            variant="outline"
+            size="sm"
+            className="flex items-center gap-2"
+          >
+            <Download className="w-4 h-4" />
+            Export
+          </Button>
+        </div>
+      </div>
 
       {/* Playbook Metadata */}
       <Card className="bg-white rounded-[20px] shadow-sm">

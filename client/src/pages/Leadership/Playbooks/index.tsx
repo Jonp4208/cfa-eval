@@ -24,7 +24,7 @@ import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
 import { toast } from 'sonner';
 import playbookService, { Playbook } from '@/services/playbookService';
-import PageHeader, { headerButtonClass } from '@/components/PageHeader';
+import PlaybookPreview from './components/PlaybookPreview';
 import {
   Select,
   SelectContent,
@@ -55,6 +55,8 @@ export default function Playbooks() {
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [playbookToDelete, setPlaybookToDelete] = useState<Playbook | null>(null);
   const [demoPlaybookOpen, setDemoPlaybookOpen] = useState(false);
+  const [selectedPlaybook, setSelectedPlaybook] = useState<Playbook | null>(null);
+  const [playbookModalOpen, setPlaybookModalOpen] = useState(false);
 
   const categories = ['Leadership', 'Operations', 'Training', 'Safety', 'Customer Service', 'General'];
   const roles = ['Team Member', 'Trainer', 'Leader', 'Director', 'All'];
@@ -83,12 +85,13 @@ export default function Playbooks() {
     navigate('/leadership/playbooks/new');
   };
 
-  const handleViewPlaybook = (id: string) => {
-    navigate(`/leadership/playbooks/${id}`);
+  const handleViewPlaybook = (playbook: Playbook) => {
+    setSelectedPlaybook(playbook);
+    setPlaybookModalOpen(true);
   };
 
   const handleEditPlaybook = (id: string) => {
-    navigate(`/leadership/playbooks/${id}/edit`);
+    navigate(`/leadership/playbooks/${id}/simple-edit`);
   };
 
   const handleDuplicatePlaybook = async (playbook: Playbook) => {
@@ -211,53 +214,119 @@ export default function Playbooks() {
             <div className="flex items-center justify-center p-8">
               <Loader2 className="w-8 h-8 animate-spin text-[#E51636]" />
             </div>
-          ) : getFilteredPlaybooks().length === 0 ? (
+          ) : (searchQuery || categoryFilter !== 'all' || roleFilter !== 'all' || statusFilter !== 'all') && getFilteredPlaybooks().length === 0 ? (
+            // Show simple message when filtering and no results
+            <div className="text-center p-8">
+              <BookOpen className="w-12 h-12 mx-auto text-gray-300" />
+              <h3 className="mt-2 text-lg font-medium text-gray-900">No playbooks found</h3>
+              <p className="mt-1 text-sm text-gray-500">
+                No playbooks match your search criteria.
+              </p>
+            </div>
+          ) : (
+            // Always show book-style layout with demo + created playbooks
             <div className="p-6">
-              {searchQuery || categoryFilter !== 'all' || roleFilter !== 'all' || statusFilter !== 'all' ? (
-                // Show simple message when filtering
-                <div className="text-center p-8">
-                  <BookOpen className="w-12 h-12 mx-auto text-gray-300" />
-                  <h3 className="mt-2 text-lg font-medium text-gray-900">No playbooks found</h3>
-                  <p className="mt-1 text-sm text-gray-500">
-                    No playbooks match your search criteria.
-                  </p>
-                </div>
-              ) : (
-                // Show skeleton playbook card when no playbooks exist
-                <div className="space-y-6">
+              <div className="space-y-6">
+                {getFilteredPlaybooks().length === 0 && (
                   <div className="text-center mb-8">
                     <h3 className="text-lg font-medium text-gray-900">Get started by creating your first playbook</h3>
                     <p className="mt-1 text-sm text-gray-500">
                       Build comprehensive guides for your team with structured content blocks
                     </p>
                   </div>
+                )}
 
-                  <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                    {/* Demo Playbook Card - Book Style */}
-                    <div className="relative">
+                <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-6 items-stretch">
+                  {/* Demo Playbook Card - Always Show */}
+                  <div className="relative">
+                    {/* Book Cover */}
+                    <div
+                      className="bg-gradient-to-br from-[#E51636] to-[#B91429] rounded-lg p-6 shadow-lg transform rotate-1 hover:rotate-0 transition-transform duration-300 cursor-pointer hover:shadow-xl h-full"
+                      onClick={() => setDemoPlaybookOpen(true)}
+                    >
+                      <div className="bg-white/10 rounded-lg p-4 mb-4">
+                        <div className="flex items-center gap-2 mb-3">
+                          <BookOpen className="w-6 h-6 text-white" />
+                          <span className="text-white text-xs font-medium bg-white/20 px-2 py-1 rounded-full">
+                            LEADERSHIP PLAYBOOK
+                          </span>
+                        </div>
+
+                        <h3 className="text-xl font-bold text-white mb-2 leading-tight">
+                          Director of Facilities
+                        </h3>
+                        <h4 className="text-lg text-white/90 mb-4 leading-tight">
+                          How to Identify Priorities & Create SMART Goals
+                        </h4>
+
+                        <div className="border-t border-white/20 pt-3">
+                          <p className="text-white/80 text-sm">
+                            A comprehensive guide for facilities directors on prioritizing tasks and creating effective SMART goals.
+                          </p>
+                        </div>
+                      </div>
+
+                      {/* Book Spine Effect */}
+                      <div className="absolute left-0 top-0 bottom-0 w-2 bg-black/20 rounded-l-lg"></div>
+                      <div className="absolute left-2 top-0 bottom-0 w-1 bg-white/10"></div>
+
+                      {/* Book Pages Effect */}
+                      <div className="absolute -right-1 top-1 bottom-1 w-2 bg-gray-200 rounded-r-lg shadow-sm"></div>
+                      <div className="absolute -right-2 top-2 bottom-2 w-2 bg-gray-100 rounded-r-lg shadow-sm"></div>
+
+                      {/* Book Stats */}
+                      <div className="flex items-center justify-between text-white/70 text-xs mt-4">
+                        <div className="flex items-center gap-3">
+                          <span className="flex items-center gap-1">
+                            <Users className="w-3 h-3" />
+                            Director
+                          </span>
+                          <span className="flex items-center gap-1">
+                            <Eye className="w-3 h-3" />
+                            247 views
+                          </span>
+                        </div>
+                        <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-green-500 text-white">
+                          <Globe className="w-3 h-3 mr-1" />
+                          Published
+                        </span>
+                      </div>
+                    </div>
+
+                    {/* Demo Badge */}
+                    <div className="absolute -top-2 -right-2 bg-blue-500 text-white text-xs font-bold px-3 py-1 rounded-full shadow-lg transform rotate-12">
+                      📖 DEMO
+                    </div>
+                  </div>
+
+                  {/* Created Playbooks in Book Style */}
+                  {getFilteredPlaybooks().map((playbook) => (
+                    <div key={playbook._id} className="relative">
                       {/* Book Cover */}
                       <div
-                        className="bg-gradient-to-br from-[#E51636] to-[#B91429] rounded-lg p-6 shadow-lg transform rotate-1 hover:rotate-0 transition-transform duration-300 cursor-pointer hover:shadow-xl"
-                        onClick={() => setDemoPlaybookOpen(true)}
+                        className="bg-gradient-to-br from-[#E51636] to-[#B91429] rounded-lg p-6 shadow-lg transform rotate-1 hover:rotate-0 transition-transform duration-300 cursor-pointer hover:shadow-xl h-full"
+                        onClick={() => handleViewPlaybook(playbook)}
                       >
                         <div className="bg-white/10 rounded-lg p-4 mb-4">
                           <div className="flex items-center gap-2 mb-3">
                             <BookOpen className="w-6 h-6 text-white" />
                             <span className="text-white text-xs font-medium bg-white/20 px-2 py-1 rounded-full">
-                              LEADERSHIP PLAYBOOK
+                              {playbook.category.toUpperCase()} PLAYBOOK
                             </span>
                           </div>
 
                           <h3 className="text-xl font-bold text-white mb-2 leading-tight">
-                            Director of Facilities
+                            {playbook.title}
                           </h3>
-                          <h4 className="text-lg text-white/90 mb-4 leading-tight">
-                            How to Identify Priorities & Create SMART Goals
-                          </h4>
+                          {playbook.subtitle && (
+                            <h4 className="text-lg text-white/90 mb-4 leading-tight">
+                              {playbook.subtitle}
+                            </h4>
+                          )}
 
                           <div className="border-t border-white/20 pt-3">
-                            <p className="text-white/80 text-sm">
-                              A comprehensive guide for facilities directors on prioritizing tasks and creating effective SMART goals.
+                            <p className="text-white/80 text-sm line-clamp-2">
+                              {playbook.description || 'A comprehensive leadership guide for your team.'}
                             </p>
                           </div>
                         </div>
@@ -275,28 +344,86 @@ export default function Playbooks() {
                           <div className="flex items-center gap-3">
                             <span className="flex items-center gap-1">
                               <Users className="w-3 h-3" />
-                              Director
+                              {playbook.targetRole}
                             </span>
                             <span className="flex items-center gap-1">
                               <Eye className="w-3 h-3" />
-                              247 views
+                              {playbook.viewCount} views
                             </span>
                           </div>
-                          <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-green-500 text-white">
-                            <Globe className="w-3 h-3 mr-1" />
-                            Published
+                          <span className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium ${
+                            playbook.isPublished
+                              ? 'bg-green-500 text-white'
+                              : 'bg-gray-500 text-white'
+                          }`}>
+                            {playbook.isPublished ? (
+                              <>
+                                <Globe className="w-3 h-3 mr-1" />
+                                Published
+                              </>
+                            ) : (
+                              <>
+                                <Lock className="w-3 h-3 mr-1" />
+                                Draft
+                              </>
+                            )}
                           </span>
                         </div>
                       </div>
 
-                      {/* Demo Badge */}
-                      <div className="absolute -top-2 -right-2 bg-blue-500 text-white text-xs font-bold px-3 py-1 rounded-full shadow-lg transform rotate-12">
-                        📖 DEMO
+                      {/* Status Badge */}
+                      <div className={`absolute -top-2 -right-2 text-white text-xs font-bold px-3 py-1 rounded-full shadow-lg transform rotate-12 ${
+                        playbook.isPublished
+                          ? 'bg-green-500'
+                          : 'bg-orange-500'
+                      }`}>
+                        {playbook.isPublished ? '✅ LIVE' : '📝 DRAFT'}
                       </div>
-                    </div>
 
-                    {/* Skeleton Playbook Card */}
-                    <div className="border-2 border-dashed border-gray-300 rounded-lg p-6 hover:border-[#E51636] transition-colors bg-gray-50/50">
+                      {/* Action Buttons */}
+                      {canManagePlaybooks && (
+                        <div className="absolute top-2 left-2 flex gap-1">
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              handleEditPlaybook(playbook._id!);
+                            }}
+                            className="bg-white/20 hover:bg-white/30 text-white p-1 h-auto"
+                          >
+                            <Edit className="w-3 h-3" />
+                          </Button>
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              handleDuplicatePlaybook(playbook);
+                            }}
+                            className="bg-white/20 hover:bg-white/30 text-white p-1 h-auto"
+                          >
+                            <Copy className="w-3 h-3" />
+                          </Button>
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              openDeleteDialog(playbook);
+                            }}
+                            className="bg-red-500/70 hover:bg-red-600/80 text-white p-1 h-auto"
+                          >
+                            <Trash2 className="w-3 h-3" />
+                          </Button>
+                        </div>
+                      )}
+                    </div>
+                  ))}
+
+                  {/* Skeleton/Create Card - Only show when no playbooks exist */}
+                  {getFilteredPlaybooks().length === 0 && (
+                    <div className="border-2 border-dashed border-[#E51636] rounded-lg p-6 hover:border-[#E51636] transition-colors bg-gray-50/50 h-full">
                       <div className="flex items-start justify-between">
                         <div className="flex-1 min-w-0">
                           <div className="flex items-center gap-3 mb-2">
@@ -313,20 +440,12 @@ export default function Playbooks() {
 
                           <div className="flex items-center gap-4 text-xs text-gray-400">
                             <span className="flex items-center gap-1">
-                              <Tag className="w-3 h-3" />
-                              Leadership
-                            </span>
-                            <span className="flex items-center gap-1">
                               <Users className="w-3 h-3" />
                               All Roles
                             </span>
                             <span className="flex items-center gap-1">
                               <Eye className="w-3 h-3" />
                               0 views
-                            </span>
-                            <span className="flex items-center gap-1">
-                              <Calendar className="w-3 h-3" />
-                              Today
                             </span>
                           </div>
                         </div>
@@ -350,9 +469,59 @@ export default function Playbooks() {
                         </div>
                       )}
                     </div>
-                  </div>
+                  )}
 
-                  {/* Example Content Preview */}
+                  {/* Skeleton/Create Card - Always show for managers when playbooks exist */}
+                  {canManagePlaybooks && getFilteredPlaybooks().length > 0 && (
+                    <div className="border-2 border-dashed border-[#E51636] rounded-lg p-6 hover:border-[#E51636] transition-colors bg-gray-50/50 h-full">
+                      <div className="flex items-start justify-between">
+                        <div className="flex-1 min-w-0">
+                          <div className="flex items-center gap-3 mb-2">
+                            <div className="w-5 h-5 bg-gray-200 rounded animate-pulse"></div>
+                            <div className="h-6 bg-gray-200 rounded w-48 animate-pulse"></div>
+                            <div className="px-2 py-1 bg-gray-100 rounded-full">
+                              <span className="text-xs text-gray-500">Draft</span>
+                            </div>
+                          </div>
+
+                          <div className="h-4 bg-gray-200 rounded w-32 mb-2 animate-pulse"></div>
+                          <div className="h-4 bg-gray-200 rounded w-full mb-1 animate-pulse"></div>
+                          <div className="h-4 bg-gray-200 rounded w-3/4 mb-3 animate-pulse"></div>
+
+                          <div className="flex items-center gap-4 text-xs text-gray-400">
+                            <span className="flex items-center gap-1">
+                              <Users className="w-3 h-3" />
+                              All Roles
+                            </span>
+                            <span className="flex items-center gap-1">
+                              <Eye className="w-3 h-3" />
+                              0 views
+                            </span>
+                          </div>
+                        </div>
+
+                        <div className="flex items-center gap-2 ml-4">
+                          <div className="w-8 h-8 bg-gray-200 rounded animate-pulse"></div>
+                          <div className="w-8 h-8 bg-gray-200 rounded animate-pulse"></div>
+                          <div className="w-8 h-8 bg-gray-200 rounded animate-pulse"></div>
+                        </div>
+                      </div>
+
+                      <div className="mt-6 text-center">
+                        <Button
+                          onClick={handleCreatePlaybook}
+                          className="bg-[#E51636] hover:bg-[#E51636]/90 text-white px-6 py-2"
+                        >
+                          <Plus className="w-4 h-4 mr-2" />
+                          Create New Playbook
+                        </Button>
+                      </div>
+                    </div>
+                  )}
+                </div>
+
+                {/* Example Content Preview - Only show when no playbooks exist */}
+                {getFilteredPlaybooks().length === 0 && (
                   <div className="mt-8 p-6 bg-blue-50 rounded-lg border border-blue-200">
                     <h4 className="font-medium text-blue-900 mb-2">💡 What you can create:</h4>
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-3 text-sm text-blue-800">
@@ -362,7 +531,7 @@ export default function Playbooks() {
                       </div>
                       <div className="flex items-center gap-2">
                         <div className="w-2 h-2 bg-blue-400 rounded-full"></div>
-                        Priority meterics
+                        Priority matrices
                       </div>
                       <div className="flex items-center gap-2">
                         <div className="w-2 h-2 bg-blue-400 rounded-full"></div>
@@ -382,106 +551,8 @@ export default function Playbooks() {
                       </div>
                     </div>
                   </div>
-                </div>
-              )}
-            </div>
-          ) : (
-            <div className="divide-y divide-gray-200">
-              {getFilteredPlaybooks().map((playbook) => (
-                <div key={playbook._id} className="p-6 hover:bg-gray-50 transition-colors">
-                  <div className="flex items-start justify-between">
-                    <div className="flex-1 min-w-0">
-                      <div className="flex items-center gap-3 mb-2">
-                        <h3 className="text-lg font-semibold text-gray-900 truncate">
-                          {playbook.title}
-                        </h3>
-                        <div className="flex items-center gap-2">
-                          {playbook.isPublished ? (
-                            <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-green-100 text-green-800">
-                              <Globe className="w-3 h-3 mr-1" />
-                              Published
-                            </span>
-                          ) : (
-                            <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-gray-100 text-gray-800">
-                              <Lock className="w-3 h-3 mr-1" />
-                              Draft
-                            </span>
-                          )}
-                        </div>
-                      </div>
-
-                      {playbook.subtitle && (
-                        <p className="text-sm text-gray-600 mb-2">{playbook.subtitle}</p>
-                      )}
-
-                      {playbook.description && (
-                        <p className="text-sm text-gray-500 mb-3 line-clamp-2">{playbook.description}</p>
-                      )}
-
-                      <div className="flex items-center gap-4 text-xs text-gray-500">
-                        <span className="flex items-center gap-1">
-                          <Tag className="w-3 h-3" />
-                          {playbook.category}
-                        </span>
-                        <span className="flex items-center gap-1">
-                          <Users className="w-3 h-3" />
-                          {playbook.targetRole}
-                        </span>
-                        <span className="flex items-center gap-1">
-                          <Eye className="w-3 h-3" />
-                          {playbook.viewCount} views
-                        </span>
-                        <span className="flex items-center gap-1">
-                          <Calendar className="w-3 h-3" />
-                          {new Date(playbook.updatedAt).toLocaleDateString()}
-                        </span>
-                      </div>
-                    </div>
-
-                    <div className="flex items-center gap-2 ml-4">
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        onClick={() => handleViewPlaybook(playbook._id!)}
-                        className="text-gray-600 hover:text-gray-900"
-                      >
-                        <Eye className="w-4 h-4" />
-                      </Button>
-
-                      {canManagePlaybooks && (
-                        <>
-                          <Button
-                            variant="ghost"
-                            size="sm"
-                            onClick={() => handleEditPlaybook(playbook._id!)}
-                            className="text-gray-600 hover:text-gray-900"
-                          >
-                            <Edit className="w-4 h-4" />
-                          </Button>
-
-                          <Button
-                            variant="ghost"
-                            size="sm"
-                            onClick={() => handleDuplicatePlaybook(playbook)}
-                            className="text-gray-600 hover:text-gray-900"
-                          >
-                            <Copy className="w-4 h-4" />
-                          </Button>
-
-                          <Button
-                            variant="ghost"
-                            size="sm"
-                            onClick={() => openDeleteDialog(playbook)}
-                            className="text-red-600 hover:text-red-700"
-                          >
-                            <Trash2 className="w-4 h-4" />
-                          </Button>
-                        </>
-                      )}
-                    </div>
-                  </div>
-                </div>
-              ))}
+                )}
+              </div>
             </div>
           )}
         </CardContent>
@@ -489,19 +560,37 @@ export default function Playbooks() {
 
       {/* Demo Playbook Modal */}
       <AlertDialog open={demoPlaybookOpen} onOpenChange={setDemoPlaybookOpen}>
-        <AlertDialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
-          <AlertDialogHeader>
-            <AlertDialogTitle className="flex items-center gap-2">
-              <BookOpen className="w-5 h-5 text-[#E51636]" />
-              Director of Facilities Playbook
-              <span className="text-sm bg-blue-100 text-blue-800 px-2 py-1 rounded-full">Demo</span>
-            </AlertDialogTitle>
+        <AlertDialogContent className="max-w-4xl max-h-[90vh] flex flex-col">
+          <AlertDialogHeader className="flex-shrink-0">
+            <div className="flex items-center justify-between mb-4">
+              <div className="flex items-center gap-2">
+                <BookOpen className="w-5 h-5 text-[#E51636]" />
+                <AlertDialogTitle className="flex items-center gap-2 m-0">
+                  Director of Facilities Playbook
+                  <span className="text-sm bg-blue-100 text-blue-800 px-2 py-1 rounded-full">Demo</span>
+                </AlertDialogTitle>
+              </div>
+              <div className="flex items-center gap-2">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => window.print()}
+                  className="flex items-center gap-2"
+                >
+                  <Printer className="w-4 h-4" />
+                  Print
+                </Button>
+                <AlertDialogAction onClick={() => setDemoPlaybookOpen(false)} className="m-0">
+                  Close
+                </AlertDialogAction>
+              </div>
+            </div>
             <AlertDialogDescription>
               How to Identify Priorities & Create SMART Goals
             </AlertDialogDescription>
           </AlertDialogHeader>
 
-          <div className="playbook-content space-y-6">
+          <div className="playbook-content space-y-6 flex-1 overflow-y-auto">
             {/* Header */}
             <div className="text-center border-b-3 border-[#E51636] pb-5 mb-8">
               <h1 className="text-3xl font-bold text-[#E51636] mb-2">
@@ -841,19 +930,57 @@ export default function Playbooks() {
             </div>
           </div>
 
-          <AlertDialogFooter className="flex justify-between">
-            <Button
-              variant="outline"
-              onClick={() => window.print()}
-              className="flex items-center gap-2"
-            >
-              <Printer className="w-4 h-4" />
-              Print Playbook
-            </Button>
-            <AlertDialogAction onClick={() => setDemoPlaybookOpen(false)}>
-              Close Preview
-            </AlertDialogAction>
-          </AlertDialogFooter>
+
+        </AlertDialogContent>
+      </AlertDialog>
+
+      {/* Created Playbook Modal */}
+      <AlertDialog open={playbookModalOpen} onOpenChange={setPlaybookModalOpen}>
+        <AlertDialogContent className="max-w-4xl max-h-[90vh] flex flex-col">
+          {selectedPlaybook && (
+            <>
+              <AlertDialogHeader className="flex-shrink-0">
+                <div className="flex items-center justify-between mb-4">
+                  <div className="flex items-center gap-2">
+                    <BookOpen className="w-5 h-5 text-[#E51636]" />
+                    <AlertDialogTitle className="flex items-center gap-2 m-0">
+                      {selectedPlaybook.title}
+                      <span className={`text-sm px-2 py-1 rounded-full ${
+                        selectedPlaybook.isPublished
+                          ? 'bg-green-100 text-green-800'
+                          : 'bg-orange-100 text-orange-800'
+                      }`}>
+                        {selectedPlaybook.isPublished ? 'Published' : 'Draft'}
+                      </span>
+                    </AlertDialogTitle>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => window.print()}
+                      className="flex items-center gap-2"
+                    >
+                      <Printer className="w-4 h-4" />
+                      Print
+                    </Button>
+                    <AlertDialogAction onClick={() => setPlaybookModalOpen(false)} className="m-0">
+                      Close
+                    </AlertDialogAction>
+                  </div>
+                </div>
+                <AlertDialogDescription>
+                  {selectedPlaybook.subtitle || selectedPlaybook.description}
+                </AlertDialogDescription>
+              </AlertDialogHeader>
+
+              <div className="playbook-content flex-1 overflow-y-auto">
+                <PlaybookPreview playbook={selectedPlaybook} />
+              </div>
+
+
+            </>
+          )}
         </AlertDialogContent>
       </AlertDialog>
 

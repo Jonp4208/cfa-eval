@@ -265,6 +265,118 @@ export default function SimplePlaybookEditor() {
               }
             ]
           }
+        },
+        {
+          type: 'step-section',
+          order: 5,
+          content: {
+            stepNumber: 3,
+            title: 'Weekly Priority Assessment Process',
+            description: 'Follow this systematic approach every week:'
+          }
+        },
+        {
+          type: 'checklist',
+          order: 6,
+          content: {
+            title: '📅 Every Monday Morning (15 minutes):',
+            items: [
+              'Walk the entire facility - what do you see that needs attention?',
+              'Review customer complaints from last week - any facility-related issues?',
+              'Check equipment status - anything breaking down or needing service?',
+              'Ask team members - what problems are they seeing?',
+              'Review upcoming schedules - pest control, maintenance, inspections due?'
+            ]
+          }
+        },
+        {
+          type: 'checklist',
+          order: 7,
+          content: {
+            title: '📊 Then Categorize Each Issue:',
+            items: [
+              'Write each issue on the priority matrix',
+              'Focus on "Urgent + Important" first',
+              'Schedule "Important + Not Urgent" items',
+              'Delegate "Urgent + Not Important" to team',
+              'Eliminate or ignore "Not Urgent + Not Important"'
+            ]
+          }
+        },
+        {
+          type: 'step-section',
+          order: 8,
+          content: {
+            stepNumber: 4,
+            title: 'Monthly Priority Assessment Process',
+            description: 'Review and adjust your priorities monthly to stay aligned with organizational goals:'
+          }
+        },
+        {
+          type: 'checklist',
+          order: 9,
+          content: {
+            title: '📅 Every Month End (30 minutes):',
+            items: [
+              'Review completed goals from the past month',
+              'Assess which priorities shifted or changed',
+              'Identify new challenges or opportunities',
+              'Update your priority matrix with new information',
+              'Set 3-5 new SMART goals for the upcoming month'
+            ]
+          }
+        },
+        {
+          type: 'example-box',
+          order: 10,
+          content: {
+            type: 'bad',
+            content: '"Fix the problems"',
+            explanation: 'Problem: Too vague, no timeline, can\'t measure success'
+          }
+        },
+        {
+          type: 'example-box',
+          order: 11,
+          content: {
+            type: 'good',
+            content: '"Achieve 100% completion of daily maintenance checklists in all areas for 30 consecutive days by [specific date]"',
+            explanation: 'Why it works: Specific (checklists), Measurable (100%, 30 days), Achievable (daily tasks), Relevant (maintenance), Time-bound (specific date)'
+          }
+        },
+        {
+          type: 'step-section',
+          order: 12,
+          content: {
+            stepNumber: 5,
+            title: 'Implementation & Systems',
+            description: 'As a leader, you don\'t do all the work - you create systems that ensure consistent results.'
+          }
+        },
+        {
+          type: 'success-box',
+          order: 13,
+          content: {
+            title: 'Your Leadership Role',
+            items: [
+              '✅ LEADER LEVEL: Set standards, create processes, train team, monitor compliance, solve system problems',
+              '❌ NOT YOUR JOB: Doing all the individual tasks, micromanaging every detail, working in the business instead of on it'
+            ]
+          }
+        },
+        {
+          type: 'warning-box',
+          order: 14,
+          content: {
+            title: 'Common Mistakes to Avoid',
+            items: [
+              'Setting too many goals: Focus on 3-5 goals maximum at one time',
+              'Making goals too big: Break large projects into smaller 30-90 day goals',
+              'No clear deadline: "Soon" or "ASAP" are not deadlines',
+              'Can\'t measure success: If you can\'t count it or see it, rewrite the goal',
+              'Doing instead of managing: Your goals should be about creating systems, not doing tasks'
+            ]
+          }
         }
       ];
 
