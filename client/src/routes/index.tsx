@@ -59,6 +59,11 @@ import New360Evaluation from '@/pages/Leadership/Evaluations360/New360Evaluation
 import AddEvaluators from '@/pages/Leadership/Evaluations360/AddEvaluators';
 import View360Evaluation from '@/pages/Leadership/Evaluations360/View360Evaluation';
 import Evaluators from '@/pages/Leadership/Evaluations360/Evaluators';
+import Playbooks from '@/pages/Leadership/Playbooks';
+import NewPlaybook from '@/pages/Leadership/Playbooks/NewPlaybook';
+import PlaybookViewer from '@/pages/Leadership/Playbooks/PlaybookViewer';
+import PlaybookEditor from '@/pages/Leadership/Playbooks/PlaybookEditor';
+import SimplePlaybookEditor from '@/pages/Leadership/Playbooks/SimplePlaybookEditor';
 import Checklists from '@/pages/Kitchen/Checklists';
 import KitchenChecklistHistory from '@/pages/Kitchen/Checklists/History';
 import WasteTracker from '@/pages/Kitchen/WasteTracker';
@@ -239,6 +244,12 @@ export default function AppRoutes() {
         <Route path="360-evaluations/:evaluationId" element={<View360Evaluation />} />
         <Route path="360-evaluations/:evaluationId/evaluators" element={<Evaluators />} />
         <Route path="360-evaluations/:evaluationId/evaluators/add" element={<AddEvaluators />} />
+        <Route path="playbooks" element={<Playbooks />} />
+        <Route path="playbooks/new" element={<NewPlaybook />} />
+        <Route path="playbooks/new/simple-edit" element={<SimplePlaybookEditor />} />
+        <Route path="playbooks/:id" element={<PlaybookViewer />} />
+        <Route path="playbooks/:id/edit" element={<PlaybookEditor />} />
+        <Route path="playbooks/:id/simple-edit" element={<SimplePlaybookEditor />} />
         <Route path="subscription" element={<Subscription />} />
         <Route path="*" element={<Navigate to="/leadership/my-plans" replace />} />
       </Route>

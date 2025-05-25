@@ -4,6 +4,7 @@ import mongoose from 'mongoose'
 import { StoreSubscription } from '../models/index.js'
 import LeadershipPlan from '../models/LeadershipPlan.js'
 import LeadershipProgress from '../models/LeadershipProgress.js'
+import Playbook from '../models/Playbook.js'
 import User from '../models/User.js'
 import logger from '../utils/logger.js'
 import { isManager, isDirector } from '../middleware/roles.js'
@@ -1342,6 +1343,213 @@ router.get('/debug-store-id', auth, async (req, res) => {
       error: error.message,
       stack: process.env.NODE_ENV === 'development' ? error.stack : undefined
     });
+  }
+});
+
+// Playbook Routes
+// Get all playbooks for the store
+router.get('/playbooks', auth, checkSubscription, async (req, res) => {
+  try {
+    const storeId = extractStoreId(req.user);
+    const { category, targetRole, published } = req.query;
+
+    const filter = { store: storeId };
+    if (category) filter.category = category;
+    if (targetRole) filter.targetRole = targetRole;
+    if (published !== undefined) filter.isPublished = published === 'true';
+
+    const playbooks = await Playbook.find(filter)
+      .populate('createdBy', 'name email')
+      .populate('updatedBy', 'name email')
+      .sort({ updatedAt: -1 });
+
+    res.json(playbooks);
+  } catch (error) {
+    logger.error('Error fetching playbooks:', error);
+    res.status(500).json({ message: 'Server error' });
+  }
+});
+
+// Get a specific playbook
+router.get('/playbooks/:id', auth, checkSubscription, async (req, res) => {
+  try {
+    const storeId = extractStoreId(req.user);
+    const playbook = await Playbook.findOne({
+      _id: req.params.id,
+      store: storeId
+    })
+      .populate('createdBy', 'name email')
+      .populate('updatedBy', 'name email');
+
+    if (!playbook) {
+      return res.status(404).json({ message: 'Playbook not found' });
+    }
+
+    // Track view
+    playbook.viewCount += 1;
+
+    // Update last viewed by user
+    const existingView = playbook.lastViewedBy.find(
+      view => view.user.toString() === req.user._id.toString()
+    );
+
+    if (existingView) {
+      existingView.viewedAt = new Date();
+    } else {
+      playbook.lastViewedBy.push({
+        user: req.user._id,
+        viewedAt: new Date()
+      });
+    }
+
+    await playbook.save();
+
+    res.json(playbook);
+  } catch (error) {
+    logger.error('Error fetching playbook:', error);
+    res.status(500).json({ message: 'Server error' });
+  }
+});
+
+// Create a new playbook
+router.post('/playbooks', auth, checkSubscription, isManager, async (req, res) => {
+  try {
+    const storeId = extractStoreId(req.user);
+    const {
+      title,
+      subtitle,
+      description,
+      category,
+      targetRole,
+      contentBlocks,
+      isPublished,
+      tags
+    } = req.body;
+
+    const playbook = new Playbook({
+      title,
+      subtitle,
+      description,
+      store: storeId,
+      category: category || 'Leadership',
+      targetRole: targetRole || 'All',
+      contentBlocks: contentBlocks || [],
+      isPublished: isPublished || false,
+      tags: tags || [],
+      createdBy: req.user._id
+    });
+
+    await playbook.save();
+    await playbook.populate('createdBy', 'name email');
+
+    res.status(201).json(playbook);
+  } catch (error) {
+    logger.error('Error creating playbook:', error);
+    res.status(500).json({ message: 'Server error' });
+  }
+});
+
+// Update a playbook
+router.put('/playbooks/:id', auth, checkSubscription, isManager, async (req, res) => {
+  try {
+    const storeId = extractStoreId(req.user);
+    const {
+      title,
+      subtitle,
+      description,
+      category,
+      targetRole,
+      contentBlocks,
+      isPublished,
+      tags
+    } = req.body;
+
+    const playbook = await Playbook.findOne({
+      _id: req.params.id,
+      store: storeId
+    });
+
+    if (!playbook) {
+      return res.status(404).json({ message: 'Playbook not found' });
+    }
+
+    // Update fields
+    if (title !== undefined) playbook.title = title;
+    if (subtitle !== undefined) playbook.subtitle = subtitle;
+    if (description !== undefined) playbook.description = description;
+    if (category !== undefined) playbook.category = category;
+    if (targetRole !== undefined) playbook.targetRole = targetRole;
+    if (contentBlocks !== undefined) playbook.contentBlocks = contentBlocks;
+    if (isPublished !== undefined) playbook.isPublished = isPublished;
+    if (tags !== undefined) playbook.tags = tags;
+
+    playbook.updatedBy = req.user._id;
+
+    await playbook.save();
+    await playbook.populate(['createdBy', 'updatedBy'], 'name email');
+
+    res.json(playbook);
+  } catch (error) {
+    logger.error('Error updating playbook:', error);
+    res.status(500).json({ message: 'Server error' });
+  }
+});
+
+// Delete a playbook
+router.delete('/playbooks/:id', auth, checkSubscription, isManager, async (req, res) => {
+  try {
+    const storeId = extractStoreId(req.user);
+    const playbook = await Playbook.findOne({
+      _id: req.params.id,
+      store: storeId
+    });
+
+    if (!playbook) {
+      return res.status(404).json({ message: 'Playbook not found' });
+    }
+
+    await Playbook.deleteOne({ _id: req.params.id });
+
+    res.json({ message: 'Playbook deleted successfully' });
+  } catch (error) {
+    logger.error('Error deleting playbook:', error);
+    res.status(500).json({ message: 'Server error' });
+  }
+});
+
+// Duplicate a playbook
+router.post('/playbooks/:id/duplicate', auth, checkSubscription, isManager, async (req, res) => {
+  try {
+    const storeId = extractStoreId(req.user);
+    const originalPlaybook = await Playbook.findOne({
+      _id: req.params.id,
+      store: storeId
+    });
+
+    if (!originalPlaybook) {
+      return res.status(404).json({ message: 'Playbook not found' });
+    }
+
+    const duplicatedPlaybook = new Playbook({
+      title: `${originalPlaybook.title} (Copy)`,
+      subtitle: originalPlaybook.subtitle,
+      description: originalPlaybook.description,
+      store: storeId,
+      category: originalPlaybook.category,
+      targetRole: originalPlaybook.targetRole,
+      contentBlocks: originalPlaybook.contentBlocks,
+      isPublished: false, // Always start as draft
+      tags: originalPlaybook.tags,
+      createdBy: req.user._id
+    });
+
+    await duplicatedPlaybook.save();
+    await duplicatedPlaybook.populate('createdBy', 'name email');
+
+    res.status(201).json(duplicatedPlaybook);
+  } catch (error) {
+    logger.error('Error duplicating playbook:', error);
+    res.status(500).json({ message: 'Server error' });
   }
 });
 

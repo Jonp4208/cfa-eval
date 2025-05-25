@@ -13,7 +13,8 @@ import {
   Shield,
   RefreshCw,
   CheckCircle,
-  UserCheck
+  UserCheck,
+  BookOpen
 } from 'lucide-react'
 import { useAuth } from '@/contexts/AuthContext'
 import { useTranslation } from '@/contexts/TranslationContext'
@@ -110,6 +111,19 @@ export default function Leadership() {
               >
                 <UserCheck className="w-4 h-4" />
                 360° Evaluations
+              </Button>
+
+              <Button
+                variant={isActive('playbooks') ? 'default' : 'ghost'}
+                onClick={() => handleNavigate('playbooks')}
+                className={`flex items-center gap-2 px-4 py-2 whitespace-nowrap ${
+                  isActive('playbooks')
+                    ? 'bg-red-50 text-[#E51636] hover:bg-red-100'
+                    : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900'
+                }`}
+              >
+                <BookOpen className="w-4 h-4" />
+                Playbooks
               </Button>
 
               <Button

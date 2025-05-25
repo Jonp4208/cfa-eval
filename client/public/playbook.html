@@ -1,0 +1,520 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Facilities Director Playbook</title>
+    <style>
+        @media print {
+            body { margin: 0.5in; }
+            .page-break { page-break-before: always; }
+        }
+        
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            line-height: 1.6;
+            color: #333;
+            max-width: 8.5in;
+            margin: 0 auto;
+            padding: 20px;
+            background: white;
+        }
+        
+        .header {
+            text-align: center;
+            border-bottom: 3px solid #e31837;
+            padding-bottom: 20px;
+            margin-bottom: 30px;
+        }
+        
+        .header h1 {
+            color: #e31837;
+            font-size: 28px;
+            margin: 0;
+            font-weight: 700;
+        }
+        
+        .header h2 {
+            color: #666;
+            font-size: 18px;
+            margin: 10px 0 0 0;
+            font-weight: 400;
+        }
+        
+        .step-section {
+            background: #f8f9ff;
+            border-left: 5px solid #e31837;
+            padding: 20px;
+            margin: 25px 0;
+            border-radius: 0 8px 8px 0;
+        }
+        
+        .step-title {
+            color: #e31837;
+            font-size: 22px;
+            font-weight: 600;
+            margin: 0 0 15px 0;
+            display: flex;
+            align-items: center;
+        }
+        
+        .step-number {
+            background: #e31837;
+            color: white;
+            width: 35px;
+            height: 35px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            margin-right: 15px;
+            font-size: 18px;
+        }
+        
+        .priority-matrix {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 15px;
+            margin: 20px 0;
+        }
+        
+        .matrix-box {
+            padding: 20px;
+            border-radius: 8px;
+            text-align: center;
+            font-weight: 600;
+        }
+        
+        .urgent-important {
+            background: #fef2f2;
+            border: 2px solid #dc2626;
+            color: #dc2626;
+        }
+        
+        .important-not-urgent {
+            background: #f0f9ff;
+            border: 2px solid #2563eb;
+            color: #2563eb;
+        }
+        
+        .urgent-not-important {
+            background: #fefce8;
+            border: 2px solid #ca8a04;
+            color: #ca8a04;
+        }
+        
+        .not-urgent-not-important {
+            background: #f3f4f6;
+            border: 2px solid #6b7280;
+            color: #6b7280;
+        }
+        
+        .example-box {
+            background: #f0f9ff;
+            border: 1px solid #e5e7eb;
+            border-radius: 8px;
+            padding: 20px;
+            margin: 20px 0;
+        }
+        
+        .example-title {
+            color: #1e40af;
+            font-weight: 600;
+            margin-bottom: 10px;
+            font-size: 16px;
+        }
+        
+        .smart-template {
+            background: white;
+            border: 2px solid #e31837;
+            border-radius: 8px;
+            padding: 20px;
+            margin: 20px 0;
+        }
+        
+        .smart-template h4 {
+            color: #e31837;
+            margin-top: 0;
+            font-size: 18px;
+        }
+        
+        .smart-item {
+            margin: 15px 0;
+            padding: 10px;
+            background: #f8f9ff;
+            border-radius: 6px;
+            border-left: 3px solid #e31837;
+        }
+        
+        .smart-label {
+            font-weight: 600;
+            color: #e31837;
+        }
+        
+        .smart-prompt {
+            color: #666;
+            font-style: italic;
+            margin-top: 5px;
+        }
+        
+        .checklist {
+            background: #f9fafb;
+            border-radius: 8px;
+            padding: 20px;
+            margin: 20px 0;
+        }
+        
+        .checklist h4 {
+            color: #374151;
+            margin-top: 0;
+        }
+        
+        .checklist ul {
+            list-style: none;
+            padding: 0;
+        }
+        
+        .checklist li {
+            padding: 8px 0;
+            display: flex;
+            align-items: flex-start;
+        }
+        
+        .checklist li:before {
+            content: "☐";
+            font-size: 18px;
+            margin-right: 10px;
+            color: #6b7280;
+        }
+        
+        .warning-box {
+            background: #fef2f2;
+            border: 1px solid #fecaca;
+            border-radius: 8px;
+            padding: 15px;
+            margin: 20px 0;
+        }
+        
+        .warning-box h4 {
+            color: #dc2626;
+            margin-top: 0;
+            display: flex;
+            align-items: center;
+        }
+        
+        .warning-icon {
+            margin-right: 8px;
+        }
+        
+        .success-box {
+            background: #f0fdf4;
+            border: 1px solid #bbf7d0;
+            border-radius: 8px;
+            padding: 15px;
+            margin: 20px 0;
+        }
+        
+        .success-box h4 {
+            color: #16a34a;
+            margin-top: 0;
+            display: flex;
+            align-items: center;
+        }
+        
+        .practice-section {
+            background: #fffbeb;
+            border: 2px solid #f59e0b;
+            border-radius: 8px;
+            padding: 20px;
+            margin: 25px 0;
+        }
+        
+        .practice-section h3 {
+            color: #d97706;
+            margin-top: 0;
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>Director of Facilities Playbook</h1>
+        <h2>How to Identify Priorities & Create SMART Goals</h2>
+    </div>
+
+    <div class="step-section">
+        <div class="step-title">
+            <div class="step-number">1</div>
+            Identify Your Priorities Using the Priority Matrix
+        </div>
+        
+        <p><strong>Every week, categorize your facility issues into these four boxes:</strong></p>
+        
+        <div class="priority-matrix">
+            <div class="matrix-box urgent-important">
+                <h4>URGENT + IMPORTANT</h4>
+                <p>DO FIRST</p>
+                <small>Health/safety issues, customer complaints, equipment failures affecting operations</small>
+            </div>
+            <div class="matrix-box important-not-urgent">
+                <h4>IMPORTANT + NOT URGENT</h4>
+                <p>SCHEDULE</p>
+                <small>Preventive maintenance, training, system improvements</small>
+            </div>
+            <div class="matrix-box urgent-not-important">
+                <h4>URGENT + NOT IMPORTANT</h4>
+                <p>DELEGATE</p>
+                <small>Routine cleaning, minor repairs, supply orders</small>
+            </div>
+            <div class="matrix-box not-urgent-not-important">
+                <h4>NOT URGENT + NOT IMPORTANT</h4>
+                <p>ELIMINATE</p>
+                <small>Busy work, unnecessary meetings, over-organizing</small>
+            </div>
+        </div>
+        
+        <div class="example-box">
+            <div class="example-title">🔍 Examples for Facilities:</div>
+            <p><strong>URGENT + IMPORTANT:</strong> Flies in dining area, broken AC in summer, health department violation</p>
+            <p><strong>IMPORTANT + NOT URGENT:</strong> Monthly pest control, equipment maintenance schedule, staff training</p>
+            <p><strong>URGENT + NOT IMPORTANT:</strong> Light bulb replacement, restocking supplies, minor cosmetic repairs</p>
+            <p><strong>NOT URGENT + NOT IMPORTANT:</strong> Reorganizing storage room, excessive paperwork, non-essential meetings</p>
+        </div>
+    </div>
+
+    <div class="step-section">
+        <div class="step-title">
+            <div class="step-number">2</div>
+            Turn Top Priorities into SMART Goals
+        </div>
+        
+        <p><strong>Take your "URGENT + IMPORTANT" and "IMPORTANT + NOT URGENT" items and make them SMART goals:</strong></p>
+        
+        <div class="smart-template">
+            <h4>📝 SMART Goal Template</h4>
+            
+            <div class="smart-item">
+                <div class="smart-label">S - Specific</div>
+                <div class="smart-prompt">What exactly needs to be accomplished? Be precise.</div>
+            </div>
+            
+            <div class="smart-item">
+                <div class="smart-label">M - Measurable</div>
+                <div class="smart-prompt">How will you know when it's complete? What can you count or observe?</div>
+            </div>
+            
+            <div class="smart-item">
+                <div class="smart-label">A - Achievable</div>
+                <div class="smart-prompt">Can this realistically be done with available resources?</div>
+            </div>
+            
+            <div class="smart-item">
+                <div class="smart-label">R - Relevant</div>
+                <div class="smart-prompt">Why does this matter to the restaurant's success?</div>
+            </div>
+            
+            <div class="smart-item">
+                <div class="smart-label">T - Time-bound</div>
+                <div class="smart-prompt">When will this be completed? Set a specific deadline.</div>
+            </div>
+        </div>
+    </div>
+
+    <div class="step-section">
+        <div class="step-title">
+            <div class="step-number">3</div>
+            Weekly Priority Assessment Process
+        </div>
+        
+        <div class="checklist">
+            <h4>📅 Every Monday Morning (15 minutes):</h4>
+            <ul>
+                <li>Walk the entire facility - what do you see that needs attention?</li>
+                <li>Review customer complaints from last week - any facility-related issues?</li>
+                <li>Check equipment status - anything breaking down or needing service?</li>
+                <li>Ask team members - what problems are they seeing?</li>
+                <li>Review upcoming schedules - pest control, maintenance, inspections due?</li>
+            </ul>
+        </div>
+        
+        <div class="checklist">
+            <h4>📊 Then Categorize Each Issue:</h4>
+            <ul>
+                <li>Write each issue on the priority matrix</li>
+                <li>Focus on "Urgent + Important" first</li>
+                <li>Schedule "Important + Not Urgent" items</li>
+                <li>Delegate "Urgent + Not Important" to team</li>
+                <li>Eliminate or ignore "Not Urgent + Not Important"</li>
+            </ul>
+        </div>
+    </div>
+
+    <div class="step-section">
+        <div class="step-title">
+            <div class="step-number">4</div>
+            Goal Setting Examples
+        </div>
+        
+        <div class="example-box">
+            <div class="example-title">❌ BAD Goal Example:</div>
+            <p><strong>"Fix the cleanliness problems"</strong></p>
+            <p><em>Problem: Too vague, no timeline, can't measure success</em></p>
+        </div>
+        
+        <div class="example-box">
+            <div class="example-title">✅ GOOD Goal Example:</div>
+            <p><strong>"Achieve 100% completion of daily cleaning checklists in all areas for 30 consecutive days by [specific date]"</strong></p>
+            <p><em>Why it works: Specific (checklists), Measurable (100%, 30 days), Achievable (daily tasks), Relevant (cleanliness), Time-bound (specific date)</em></p>
+        </div>
+        
+        <div class="example-box">
+            <div class="example-title">❌ BAD Goal Example:</div>
+            <p><strong>"Deal with pest issues"</strong></p>
+            <p><em>Problem: Not specific, no measurement, no deadline</em></p>
+        </div>
+        
+        <div class="example-box">
+            <div class="example-title">✅ GOOD Goal Example:</div>
+            <p><strong>"Eliminate all visible pests in customer areas and receive zero pest-related customer complaints for 14 consecutive days by [specific date]"</strong></p>
+            <p><em>Why it works: Specific (visible pests, customer areas), Measurable (zero complaints, 14 days), Time-bound (specific date)</em></p>
+        </div>
+    </div>
+
+    <div class="warning-box">
+        <h4><span class="warning-icon">⚠️</span>Common Mistakes to Avoid</h4>
+        <ul>
+            <li><strong>Setting too many goals:</strong> Focus on 3-5 goals maximum at one time</li>
+            <li><strong>Making goals too big:</strong> Break large projects into smaller 30-90 day goals</li>
+            <li><strong>No clear deadline:</strong> "Soon" or "ASAP" are not deadlines</li>
+            <li><strong>Can't measure success:</strong> If you can't count it or see it, rewrite the goal</li>
+            <li><strong>Doing instead of managing:</strong> Your goals should be about creating systems, not doing tasks</li>
+        </ul>
+    </div>
+
+    <div class="step-section">
+        <div class="step-title">
+            <div class="step-number">5</div>
+            Cleanliness Standards & Systems
+        </div>
+        
+        <p><strong>As Facilities Director, you don't clean - you create systems that ensure consistent cleanliness.</strong></p>
+        
+        <div class="example-box">
+            <div class="example-title">🧹 Your Cleanliness Role:</div>
+            <p><strong>✅ DIRECTOR LEVEL:</strong> Set standards, create checklists, train team, monitor compliance, solve system problems</p>
+            <p><strong>❌ NOT YOUR JOB:</strong> Wiping tables, mopping floors, cleaning bathrooms, washing dishes</p>
+        </div>
+        
+        <div class="checklist">
+            <h4>📋 Cleanliness System Setup:</h4>
+            <ul>
+                <li><strong>Create Simple Checklists:</strong> Daily, weekly, monthly cleaning tasks with checkboxes</li>
+                <li><strong>Assign Ownership:</strong> Specific people responsible for specific areas</li>
+                <li><strong>Set Standards:</strong> What does "clean" look like? Take photos of properly cleaned areas</li>
+                <li><strong>Monitor Compliance:</strong> Check completed checklists, do random spot checks</li>
+                <li><strong>Address Failures:</strong> Retrain, reassign, or improve systems when standards aren't met</li>
+            </ul>
+        </div>
+        
+        <div class="smart-template">
+            <h4>📝 Cleanliness SMART Goal Examples:</h4>
+            
+            <div class="smart-item">
+                <div class="smart-label">Bathroom Cleanliness</div>
+                <div style="margin-top: 8px; color: #374151;">
+                    <strong>Goal:</strong> "Achieve 100% completion of hourly bathroom cleaning checklists with zero customer complaints about bathroom cleanliness for 30 consecutive days by [date]"
+                </div>
+            </div>
+            
+            <div class="smart-item">
+                <div class="smart-label">Dining Area Standards</div>
+                <div style="margin-top: 8px; color: #374151;">
+                    <strong>Goal:</strong> "Implement table cleaning system where all tables are cleaned within 2 minutes of customer departure, measured by manager observations during 5 random checks daily for 14 days by [date]"
+                </div>
+            </div>
+            
+            <div class="smart-item">
+                <div class="smart-label">Kitchen Cleanliness</div>
+                <div style="margin-top: 8px; color: #374151;">
+                    <strong>Goal:</strong> "Establish end-of-shift deep cleaning checklist with 100% completion rate verified by photos for 21 consecutive days by [date]"
+                </div>
+            </div>
+        </div>
+        
+        <div class="warning-box">
+            <h4><span class="warning-icon">⚠️</span>Cleanliness Red Flags - Take Action Immediately</h4>
+            <ul>
+                <li><strong>Customer complaints</strong> about dirty bathrooms, sticky tables, or messy areas</li>
+                <li><strong>Team members</strong> not following cleaning protocols or skipping checklist items</li>
+                <li><strong>Health department</strong> concerns or potential violations</li>
+                <li><strong>Visible dirt/grime</strong> that customers can see</li>
+                <li><strong>Bad odors</strong> in any customer area</li>
+            </ul>
+        </div>
+        
+        <div class="success-box">
+            <h4>✅ Cleanliness Success Metrics</h4>
+            <p><strong>Daily:</strong> All cleaning checklists completed and verified</p>
+            <p><strong>Weekly:</strong> Zero cleanliness-related customer complaints</p>
+            <p><strong>Monthly:</strong> Pass all internal cleanliness inspections</p>
+            <p><strong>Remember:</strong> Clean facilities = happy customers = better business</p>
+        </div>
+    </div>
+
+    <div class="practice-section">
+        <h3>🎯 Practice Exercise</h3>
+        <p><strong>Right now, identify 3 facility issues and turn them into SMART goals:</strong></p>
+        
+        <div style="margin: 20px 0;">
+            <p><strong>Issue #1:</strong> _________________________________</p>
+            <div style="margin-left: 20px;">
+                <p><strong>Specific:</strong> _________________________________</p>
+                <p><strong>Measurable:</strong> _________________________________</p>
+                <p><strong>Achievable:</strong> _________________________________</p>
+                <p><strong>Relevant:</strong> _________________________________</p>
+                <p><strong>Time-bound:</strong> _________________________________</p>
+            </div>
+        </div>
+        
+        <div style="margin: 20px 0;">
+            <p><strong>Issue #2:</strong> _________________________________</p>
+            <div style="margin-left: 20px;">
+                <p><strong>Specific:</strong> _________________________________</p>
+                <p><strong>Measurable:</strong> _________________________________</p>
+                <p><strong>Achievable:</strong> _________________________________</p>
+                <p><strong>Relevant:</strong> _________________________________</p>
+                <p><strong>Time-bound:</strong> _________________________________</p>
+            </div>
+        </div>
+        
+        <div style="margin: 20px 0;">
+            <p><strong>Issue #3:</strong> _________________________________</p>
+            <div style="margin-left: 20px;">
+                <p><strong>Specific:</strong> _________________________________</p>
+                <p><strong>Measurable:</strong> _________________________________</p>
+                <p><strong>Achievable:</strong> _________________________________</p>
+                <p><strong>Relevant:</strong> _________________________________</p>
+                <p><strong>Time-bound:</strong> _________________________________</p>
+            </div>
+        </div>
+    </div>
+
+    <div class="success-box">
+        <h4>✅ Success Formula</h4>
+        <p><strong>Weekly:</strong> Assess priorities using the matrix</p>
+        <p><strong>Monthly:</strong> Create 3-5 SMART goals from top priorities</p>
+        <p><strong>Daily:</strong> Work on goal activities, not random tasks</p>
+        <p><strong>Remember:</strong> You manage the work, you don't do all the work</p>
+    </div>
+
+    <div style="background: #f9fafb; border: 2px solid #e31837; border-radius: 8px; padding: 20px; margin: 30px 0; text-align: center;">
+        <h3 style="color: #e31837; margin-top: 0;">🎯 KEY QUESTION</h3>
+        <p style="font-size: 18px; font-weight: 500; color: #374151; margin-bottom: 0;">
+            "Is this something only a Director can do, or can I teach someone else to handle it?"
+        </p>
+        <p style="color: #666; margin-top: 10px; margin-bottom: 0;">
+            If someone else can do it, delegate it and focus on director-level priorities.
+        </p>
+    </div>
+</body>
+</html>

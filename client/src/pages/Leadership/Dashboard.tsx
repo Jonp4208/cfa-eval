@@ -173,11 +173,14 @@ export default function LeadershipDashboard() {
   )
 
   // Stats grid component for the plans and tasks cards
-  const StatsGrid = ({ stats }: { stats: { label: string; value: string | number }[] }) => (
+  const StatsGrid = ({ stats }: { stats: { label: string; value: string | number; icon?: string }[] }) => (
     <div className="grid grid-cols-2 gap-4">
       {stats.map((stat, index) => (
         <div key={index} className="space-y-1">
-          <p className="text-sm text-[#27251F]/60">{stat.label}</p>
+          <div className="flex items-center gap-2">
+            {stat.icon && <span className="text-sm">{stat.icon}</span>}
+            <p className="text-sm text-[#27251F]/60">{stat.label}</p>
+          </div>
           <p className="text-xl font-semibold text-[#27251F]">{stat.value}</p>
         </div>
       ))}
@@ -255,37 +258,72 @@ export default function LeadershipDashboard() {
           onClick={() => navigate('/leadership/plans')}
         >
           <div className="space-y-4">
+            {/* Circular Progress Indicator */}
+            <div className="flex items-center justify-center mb-4">
+              <div className="relative w-24 h-24">
+                <svg className="w-24 h-24 transform -rotate-90" viewBox="0 0 100 100">
+                  <circle
+                    cx="50"
+                    cy="50"
+                    r="40"
+                    stroke="currentColor"
+                    strokeWidth="8"
+                    fill="transparent"
+                    className="text-gray-200"
+                  />
+                  <circle
+                    cx="50"
+                    cy="50"
+                    r="40"
+                    stroke="currentColor"
+                    strokeWidth="8"
+                    fill="transparent"
+                    strokeDasharray={`${2 * Math.PI * 40}`}
+                    strokeDashoffset={`${2 * Math.PI * 40 * (1 - stats.plans.overallProgress / 100)}`}
+                    className="text-[#E51636] transition-all duration-500"
+                    strokeLinecap="round"
+                  />
+                </svg>
+                <div className="absolute inset-0 flex items-center justify-center">
+                  <div className="text-center">
+                    <div className="text-xl font-bold text-[#E51636]">{stats.plans.overallProgress}%</div>
+                    <div className="text-xs text-gray-500">Complete</div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
             <StatsGrid
               stats={[
-                { label: 'Enrolled', value: stats.plans.enrolled },
-                { label: 'In Progress', value: stats.plans.inProgress },
-                { label: 'Completed', value: stats.plans.completed },
-                { label: 'Overall Progress', value: `${stats.plans.overallProgress}%` }
+                { label: 'Enrolled', value: stats.plans.enrolled, icon: '📚' },
+                { label: 'In Progress', value: stats.plans.inProgress, icon: '⏳' },
+                { label: 'Completed', value: stats.plans.completed, icon: '✅' },
+                { label: 'Available', value: 5 - stats.plans.enrolled, icon: '🎯' }
               ]}
             />
 
-            {stats.plans.enrolled > 0 && (
-              <div className="space-y-2">
-                <p className="text-sm text-[#27251F]/60">Overall Progress</p>
-                <Progress
-                  value={stats.plans.overallProgress}
-                  className="h-2 bg-gray-100"
-                  indicatorClassName="bg-[#E51636]"
-                />
-              </div>
-            )}
-
-            <div className="flex justify-end">
+            <div className="flex justify-between items-center">
+              <Button
+                variant="outline"
+                size="sm"
+                className="text-[#E51636] border-[#E51636]/20 hover:bg-[#E51636]/10"
+                onClick={(e) => {
+                  e.stopPropagation()
+                  navigate('/leadership/developmental-plan')
+                }}
+              >
+                Browse Plans
+              </Button>
               <Button
                 variant="ghost"
                 size="sm"
                 className="text-[#E51636] hover:text-[#E51636] hover:bg-[#E51636]/10"
                 onClick={(e) => {
                   e.stopPropagation()
-                  navigate('/leadership/plans')
+                  navigate('/leadership/my-plans')
                 }}
               >
-                View All Plans <ArrowRight className="ml-2 h-4 w-4" />
+                My Plans <ArrowRight className="ml-2 h-4 w-4" />
               </Button>
             </div>
           </div>
@@ -297,23 +335,59 @@ export default function LeadershipDashboard() {
           icon={ClipboardList}
         >
           <div className="space-y-4">
+            {/* Task Progress Ring */}
+            <div className="flex items-center justify-center mb-4">
+              <div className="relative w-20 h-20">
+                <svg className="w-20 h-20 transform -rotate-90" viewBox="0 0 100 100">
+                  <circle
+                    cx="50"
+                    cy="50"
+                    r="35"
+                    stroke="currentColor"
+                    strokeWidth="6"
+                    fill="transparent"
+                    className="text-gray-200"
+                  />
+                  <circle
+                    cx="50"
+                    cy="50"
+                    r="35"
+                    stroke="currentColor"
+                    strokeWidth="6"
+                    fill="transparent"
+                    strokeDasharray={`${2 * Math.PI * 35}`}
+                    strokeDashoffset={`${2 * Math.PI * 35 * (1 - stats.tasks.completionRate / 100)}`}
+                    className="text-green-500 transition-all duration-500"
+                    strokeLinecap="round"
+                  />
+                </svg>
+                <div className="absolute inset-0 flex items-center justify-center">
+                  <div className="text-center">
+                    <div className="text-lg font-bold text-green-600">{stats.tasks.completionRate}%</div>
+                    <div className="text-xs text-gray-500">Done</div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
             <StatsGrid
               stats={[
-                { label: 'Total Tasks', value: stats.tasks.total },
-                { label: 'Completed', value: stats.tasks.completed },
-                { label: 'Pending', value: stats.tasks.pending },
-                { label: 'Completion Rate', value: `${stats.tasks.completionRate}%` }
+                { label: 'Total', value: stats.tasks.total, icon: '📋' },
+                { label: 'Completed', value: stats.tasks.completed, icon: '✅' },
+                { label: 'Pending', value: stats.tasks.pending, icon: '⏰' },
+                { label: 'This Week', value: Math.min(stats.tasks.pending, 3), icon: '🎯' }
               ]}
             />
 
-            {stats.tasks.total > 0 && (
-              <div className="space-y-2">
-                <p className="text-sm text-[#27251F]/60">Task Completion</p>
-                <Progress
-                  value={stats.tasks.completionRate}
-                  className="h-2 bg-gray-100"
-                  indicatorClassName="bg-[#E51636]"
-                />
+            {stats.tasks.pending > 0 && (
+              <div className="bg-blue-50 p-3 rounded-lg border border-blue-200">
+                <div className="flex items-center gap-2 mb-1">
+                  <div className="w-2 h-2 bg-blue-500 rounded-full animate-pulse"></div>
+                  <span className="text-sm font-medium text-blue-800">Next Up</span>
+                </div>
+                <p className="text-xs text-blue-600">
+                  {stats.tasks.pending} tasks waiting for completion
+                </p>
               </div>
             )}
 

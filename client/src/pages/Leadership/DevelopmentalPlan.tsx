@@ -12,7 +12,8 @@ import {
   Lock,
   CheckCircle,
   Loader2,
-  Clock
+  Clock,
+  ArrowRight
 } from 'lucide-react'
 import { useSubscription } from '@/contexts/SubscriptionContext'
 import { Badge } from '@/components/ui/badge'
@@ -457,47 +458,92 @@ export default function DevelopmentalPlan() {
           return (
             <div key={plan.id} className="space-y-4">
               <Card
-                className="bg-white p-6 hover:shadow-xl transition-all duration-300 relative cursor-pointer"
+                className="bg-white p-6 hover:shadow-xl transition-all duration-300 relative cursor-pointer border-l-4 border-l-transparent hover:border-l-[#E51636]"
                 onClick={() => planStatuses[plan.id]?.enrolled ? navigate(`/leadership/plans/${plan.id}/tasks`) : null}
               >
                 <div className="space-y-4">
-                  <div className="flex items-center gap-4">
-                    <div className="h-12 w-12 bg-[#E51636]/10 text-[#E51636] rounded-xl flex items-center justify-center">
-                      <Icon className="h-6 w-6" />
+                  <div className="flex items-start justify-between">
+                    <div className="flex items-center gap-4">
+                      <div className="h-14 w-14 bg-gradient-to-br from-[#E51636]/10 to-[#E51636]/20 text-[#E51636] rounded-xl flex items-center justify-center shadow-sm">
+                        <Icon className="h-7 w-7" />
+                      </div>
+                      <div className="space-y-1">
+                        <div className="flex items-center gap-2 flex-wrap">
+                          <h3 className="text-lg font-semibold text-[#27251F]">{plan.title}</h3>
+                          {plan.id === 'heart-of-leadership' && (
+                            <Badge variant="outline" className="bg-green-50 text-green-700 border-green-200 text-xs">
+                              🆓 Free Access
+                            </Badge>
+                          )}
+                          {isEnrolled && (
+                            <Badge variant="outline" className={`text-xs ${
+                              isPlanCompleted
+                                ? 'bg-green-50 text-green-700 border-green-200'
+                                : 'bg-blue-50 text-blue-700 border-blue-200'
+                            }`}>
+                              {isPlanCompleted ? '✅ Completed' : '📚 Enrolled'}
+                            </Badge>
+                          )}
+                        </div>
+                        <div className="flex items-center gap-4 text-sm text-gray-500">
+                          <span className="flex items-center gap-1">
+                            <Clock className="h-3 w-3" />
+                            {plan.skills.length} skills
+                          </span>
+                          <span className="flex items-center gap-1">
+                            <CheckCircle className="h-3 w-3" />
+                            {plan.activities.length} activities
+                          </span>
+                        </div>
+                      </div>
                     </div>
-                    <div className="flex items-center gap-2">
-                      <h3 className="text-lg font-semibold text-[#27251F]">{plan.title}</h3>
-                      {plan.id === 'heart-of-leadership' && (
-                        <Badge variant="outline" className="bg-green-50 text-green-700 border-green-200 text-xs">
-                          Free Access
-                        </Badge>
-                      )}
-                      {isEnrolled && (
-                        <Badge variant="outline" className="bg-blue-50 text-blue-700 border-blue-200 text-xs">
-                          {isPlanCompleted ? 'Completed' : 'Enrolled'}
-                        </Badge>
-                      )}
-                    </div>
+                    {isEnrolled && (
+                      <div className="text-right">
+                        <div className="text-2xl font-bold text-[#E51636]">{planStatus.progress}%</div>
+                        <div className="text-xs text-gray-500">Progress</div>
+                      </div>
+                    )}
                   </div>
-                  <p className="text-gray-600">{plan.description}</p>
+                  <p className="text-gray-600 leading-relaxed">{plan.description}</p>
 
                   {isEnrolled && (
-                    <div className="space-y-2">
-                      <div className="flex justify-between items-center">
-                        <span className="text-sm font-medium">Progress</span>
-                        <span className="text-sm">{planStatus.progress}%</span>
+                    <div className="space-y-3">
+                      <div className="bg-gray-50 p-4 rounded-lg">
+                        <div className="flex justify-between items-center mb-2">
+                          <span className="text-sm font-medium text-gray-700">Overall Progress</span>
+                          <span className="text-sm font-bold text-[#E51636]">{planStatus.progress}%</span>
+                        </div>
+                        <Progress value={planStatus.progress} className="h-3 bg-gray-200" />
+                        <div className="flex justify-between text-xs text-gray-500 mt-2">
+                          <span>📅 Enrolled: {formatDate(planStatus.enrolledAt)}</span>
+                          {planStatus.completedAt && (
+                            <span>🎉 Completed: {formatDate(planStatus.completedAt)}</span>
+                          )}
+                        </div>
                       </div>
-                      <Progress value={planStatus.progress} className="h-2" />
-                      <div className="flex justify-between text-xs text-gray-500">
-                        <span>Enrolled: {formatDate(planStatus.enrolledAt)}</span>
-                        {planStatus.completedAt && (
-                          <span>Completed: {formatDate(planStatus.completedAt)}</span>
-                        )}
+
+                      {/* Skills Preview */}
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                        {plan.skills.slice(0, 2).map((skill, index) => (
+                          <div key={index} className="flex items-center justify-between p-2 bg-blue-50 rounded-lg">
+                            <span className="text-sm text-blue-800">{skill.area}</span>
+                            <div className="flex items-center gap-1">
+                              {[...Array(5)].map((_, i) => (
+                                <div
+                                  key={i}
+                                  className={`w-2 h-2 rounded-full ${
+                                    i < skill.currentLevel ? 'bg-blue-500' : 'bg-gray-300'
+                                  }`}
+                                />
+                              ))}
+                            </div>
+                          </div>
+                        ))}
                       </div>
                     </div>
                   )}
 
-                  <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+                  <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 pt-2 border-t border-gray-100">
                     <div className="flex items-center gap-2">
                       <div className="h-8 w-8 bg-[#E51636]/5 text-[#E51636] rounded-lg flex items-center justify-center">
                         <GraduationCap className="h-4 w-4" />
@@ -505,7 +551,18 @@ export default function DevelopmentalPlan() {
                       <span className="text-sm text-gray-500">{plan.skills.length} Core Skills</span>
                     </div>
                     <div className="flex flex-col sm:flex-row gap-2 w-full sm:w-auto">
-                      {!isEnrolled && (
+                      {isEnrolled ? (
+                        <Button
+                          variant="default"
+                          className="w-full sm:w-auto bg-[#E51636] hover:bg-[#E51636]/90 text-white"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            navigate(`/leadership/plans/${plan.id}/tasks`);
+                          }}
+                        >
+                          {isPlanCompleted ? '🎉 Review Plan' : '📚 Continue Learning'}
+                        </Button>
+                      ) : (
                         <Button
                           variant="default"
                           className="w-full sm:w-auto bg-[#E51636] hover:bg-[#E51636]/90 text-white"
@@ -524,7 +581,7 @@ export default function DevelopmentalPlan() {
                               Enrolling...
                             </>
                           ) : (
-                            'Enroll Now'
+                            '🚀 Enroll Now'
                           )}
                           {plan.id !== 'heart-of-leadership' && !hasActiveSubscription && (
                             <Lock className="h-4 w-4 ml-2" />
