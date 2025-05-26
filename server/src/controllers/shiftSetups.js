@@ -2,7 +2,7 @@ import ShiftSetup from '../models/ShiftSetup.js';
 import User from '../models/User.js';
 import { nanoid } from 'nanoid';
 import multer from 'multer';
-import xlsx from 'xlsx';
+import ExcelJS from 'exceljs';
 import fs from 'fs';
 import path from 'path';
 import { fileURLToPath } from 'url';
@@ -593,10 +593,19 @@ export const uploadSchedule = async (req, res) => {
     let rawData = [];
 
     // Process Excel/CSV file
-    const workbook = xlsx.readFile(filePath);
-    const sheetName = workbook.SheetNames[0];
-    const worksheet = workbook.Sheets[sheetName];
-    rawData = xlsx.utils.sheet_to_json(worksheet, { header: 1 });
+    const workbook = new ExcelJS.Workbook();
+    await workbook.xlsx.readFile(filePath);
+    const worksheet = workbook.worksheets[0];
+
+    // Convert worksheet to array of arrays
+    rawData = [];
+    worksheet.eachRow((row, rowNumber) => {
+      const rowData = [];
+      row.eachCell((cell, colNumber) => {
+        rowData[colNumber - 1] = cell.value;
+      });
+      rawData.push(rowData);
+    });
 
     // Clean up the uploaded file
     fs.unlinkSync(filePath);

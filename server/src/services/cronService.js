@@ -28,7 +28,7 @@ const sendReminderEmail = async (evaluation, daysUntilDue) => {
     });
 
     // Log successful email send
-    console.log(`[Reminder] ✓ Sent evaluation reminder email to ${evaluation.employee.email} (${daysUntilDue} days until due)`);
+    logger.info(`Sent evaluation reminder email to ${evaluation.employee.email} (${daysUntilDue} days until due)`);
   } catch (error) {
     handleError(error, ErrorCategory.SYSTEM, {
       evaluationId: evaluation._id,
@@ -219,10 +219,10 @@ const scheduleUserEvaluations = async () => {
 export const initCronJobs = () => {
   // Run evaluation scheduling at midnight
   cron.schedule('0 0 * * *', async () => {
-    console.log('Running automatic evaluation scheduling...');
+    logger.info('Running automatic evaluation scheduling...');
     try {
       const result = await scheduleAllEvaluations();
-      console.log('Automatic evaluation scheduling completed', result);
+      logger.info('Automatic evaluation scheduling completed', result);
 
       // If there were errors, notify admins
       if (result.totalErrors > 0) {

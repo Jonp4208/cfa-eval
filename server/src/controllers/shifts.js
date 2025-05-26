@@ -1,7 +1,7 @@
 import { ShiftSetup, User, DefaultPositions } from '../models/index.js';
 import { handleError, ErrorCategory } from '../utils/errorHandler.js';
 import multer from 'multer';
-import xlsx from 'xlsx';
+import ExcelJS from 'exceljs';
 import fs from 'fs';
 import path from 'path';
 import { fileURLToPath } from 'url';
@@ -823,10 +823,33 @@ export const uploadSchedule = async (req, res) => {
     }
 
     // Read Excel or CSV file
-    const workbook = xlsx.readFile(req.file.path, { raw: false, dateNF: 'yyyy-mm-dd' });
-    const sheetName = workbook.SheetNames[0];
-    const worksheet = workbook.Sheets[sheetName];
-    const data = xlsx.utils.sheet_to_json(worksheet, { defval: '' });
+    const workbook = new ExcelJS.Workbook();
+    await workbook.xlsx.readFile(req.file.path);
+    const worksheet = workbook.worksheets[0];
+
+    // Convert worksheet to JSON
+    const data = [];
+    const headers = [];
+
+    // Get headers from first row
+    worksheet.getRow(1).eachCell((cell, colNumber) => {
+      headers[colNumber - 1] = cell.value;
+    });
+
+    // Get data from remaining rows
+    for (let rowNumber = 2; rowNumber <= worksheet.rowCount; rowNumber++) {
+      const row = worksheet.getRow(rowNumber);
+      const rowData = {};
+      row.eachCell((cell, colNumber) => {
+        const header = headers[colNumber - 1];
+        if (header) {
+          rowData[header] = cell.value || '';
+        }
+      });
+      if (Object.values(rowData).some(val => val !== '')) {
+        data.push(rowData);
+      }
+    }
 
     // Check if we're updating an existing shift setup
     let existingShiftSetup;

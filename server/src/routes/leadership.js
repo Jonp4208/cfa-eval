@@ -24,6 +24,7 @@ import {
   getAssessmentTemplate,
   createAssessmentTemplate,
   getUserAssessments,
+  getAssessment,
   startAssessment,
   submitAssessmentResponse,
   getAssessmentResults,
@@ -252,6 +253,7 @@ router.post('/assessment-templates', auth, isManager, createAssessmentTemplate);
 
 router.get('/assessments', auth, getUserAssessments);
 router.get('/assessments/user/:userId', auth, getUserAssessments);
+router.get('/assessments/:assessmentId', auth, getAssessment);
 router.post('/assessments/:templateId/start', auth, startAssessment);
 router.put('/assessments/:assessmentId/submit', auth, submitAssessmentResponse);
 router.get('/assessments/:assessmentId/results', auth, getAssessmentResults);

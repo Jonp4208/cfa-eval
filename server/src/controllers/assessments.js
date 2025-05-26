@@ -160,6 +160,34 @@ export const getUserAssessments = async (req, res) => {
   }
 };
 
+// Get specific assessment
+export const getAssessment = async (req, res) => {
+  try {
+    const { assessmentId } = req.params;
+    const storeId = extractStoreId(req.user);
+
+    const assessment = await AssessmentResponse.findOne({
+      _id: assessmentId,
+      store: storeId,
+      $or: [
+        { respondent: req.user._id },
+        { subject: req.user._id }
+      ]
+    }).populate('template', 'title description type category questions areas timeEstimate')
+      .populate('respondent', 'name email')
+      .populate('subject', 'name email');
+
+    if (!assessment) {
+      return res.status(404).json({ message: 'Assessment not found' });
+    }
+
+    res.json(assessment);
+  } catch (error) {
+    logger.error('Error fetching assessment:', error);
+    res.status(500).json({ message: 'Server error' });
+  }
+};
+
 // Start new assessment
 export const startAssessment = async (req, res) => {
   try {

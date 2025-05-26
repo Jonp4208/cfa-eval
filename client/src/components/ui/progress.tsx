@@ -39,7 +39,7 @@ const SimpleProgress = React.forwardRef<
   }
 >(({ className, value = 0, max = 100, color = 'default', ...props }, ref) => {
   const percentage = Math.min(Math.max(0, (value / max) * 100), 100)
-  
+
   return (
     <div
       ref={ref}
@@ -53,10 +53,9 @@ const SimpleProgress = React.forwardRef<
         className={cn(
           'h-full transition-all duration-300',
           {
-            'bg-gradient-to-r from-blue-400 to-blue-500': color === 'default',
+            'bg-gradient-to-r from-blue-400 to-blue-500': color === 'default' || color === 'blue',
             'bg-gradient-to-r from-red-400 to-red-500': color === 'red',
             'bg-gradient-to-r from-green-400 to-green-500': color === 'green',
-            'bg-gradient-to-r from-blue-400 to-blue-500': color === 'blue',
             'bg-gradient-to-r from-yellow-400 to-yellow-500': color === 'yellow',
           }
         )}

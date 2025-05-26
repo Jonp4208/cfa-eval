@@ -9,7 +9,7 @@ import { Button } from '@/components/ui/button'
 import { Card } from '@/components/ui/card'
 import { Alert, AlertDescription } from '@/components/ui/alert'
 import { AlertCircle, Search } from 'lucide-react'
-import * as XLSX from 'xlsx'
+import * as ExcelJS from 'exceljs'
 import { DraggableEmployee } from '@/components/setup-sheet/DraggableEmployee'
 import { useSetupSheetStore } from '@/stores/setupSheetStore'
 import { useToast } from '@/components/ui/use-toast'
@@ -91,25 +91,29 @@ export function SetupSheetBuilder() {
         const data = await file.arrayBuffer()
         console.log('File size:', data.byteLength, 'bytes')
 
-        const workbook = XLSX.read(data)
-        console.log('Workbook sheets:', workbook.SheetNames)
+        const workbook = new ExcelJS.Workbook()
+        await workbook.xlsx.load(data)
+        console.log('Workbook sheets:', workbook.worksheets.map(ws => ws.name))
 
-        const worksheet = workbook.Sheets[workbook.SheetNames[0]]
-        console.log('Worksheet range:', worksheet['!ref'])
+        const worksheet = workbook.worksheets[0]
+        console.log('Worksheet name:', worksheet.name)
 
-        // Try different parsing options
-        jsonData = XLSX.utils.sheet_to_json(worksheet, {
-          header: 1,  // Use first row as header
-          defval: '',  // Default value for empty cells
-          raw: false   // Don't use raw values
+        // Convert worksheet to array of arrays
+        const rawData: any[][] = []
+        worksheet.eachRow((row, rowNumber) => {
+          const rowData: any[] = []
+          row.eachCell((cell, colNumber) => {
+            rowData[colNumber - 1] = cell.value
+          })
+          rawData.push(rowData)
         })
 
-        console.log('Raw parsed data (first 3 rows):', jsonData.slice(0, 3))
+        console.log('Raw parsed data (first 3 rows):', rawData.slice(0, 3))
 
         // Convert array of arrays to array of objects
-        if (jsonData.length > 0) {
-          const headers = jsonData[0] as string[]
-          const dataRows = jsonData.slice(1)
+        if (rawData.length > 0) {
+          const headers = rawData[0] as string[]
+          const dataRows = rawData.slice(1)
 
           jsonData = dataRows.map(row => {
             const obj: any = {}

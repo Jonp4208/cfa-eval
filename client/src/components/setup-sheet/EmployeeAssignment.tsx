@@ -5,7 +5,7 @@ import { Card } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Alert, AlertDescription } from '@/components/ui/alert'
 import { AlertCircle, Copy, CheckCircle2, AlertTriangle } from 'lucide-react'
-import * as XLSX from 'xlsx'
+import * as ExcelJS from 'exceljs'
 import { DroppablePosition } from './DroppablePosition'
 import { BulkAssignmentHelper } from './BulkAssignmentHelper'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
@@ -425,8 +425,8 @@ export function EmployeeAssignment({ employees, template, onSave, showSaveButton
     return hasOverlap;
   }
 
-  const exportToExcel = () => {
-    const workbook = XLSX.utils.book_new()
+  const exportToExcel = async () => {
+    const workbook = new ExcelJS.Workbook()
 
     // Create worksheet data for each day
     DAYS.forEach(day => {
@@ -454,11 +454,35 @@ export function EmployeeAssignment({ employees, template, onSave, showSaveButton
         return rows
       })
 
-      const worksheet = XLSX.utils.json_to_sheet(worksheetData)
-      XLSX.utils.book_append_sheet(workbook, worksheet, day.charAt(0).toUpperCase() + day.slice(1))
+      const worksheet = workbook.addWorksheet(day.charAt(0).toUpperCase() + day.slice(1))
+
+      // Add headers
+      const headers = ['Day', 'Time Block', 'Position', 'Category', 'Section', 'Employee', 'Employee Shift']
+      worksheet.addRow(headers)
+
+      // Add data
+      worksheetData.forEach(row => {
+        worksheet.addRow([
+          row['Day'],
+          row['Time Block'],
+          row['Position'],
+          row['Category'],
+          row['Section'],
+          row['Employee'],
+          row['Employee Shift']
+        ])
+      })
     })
 
-    XLSX.writeFile(workbook, 'setup-sheet.xlsx')
+    // Generate buffer and download
+    const buffer = await workbook.xlsx.writeBuffer()
+    const blob = new Blob([buffer], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' })
+    const url = window.URL.createObjectURL(blob)
+    const a = document.createElement('a')
+    a.href = url
+    a.download = 'setup-sheet.xlsx'
+    a.click()
+    window.URL.revokeObjectURL(url)
   }
 
   return (

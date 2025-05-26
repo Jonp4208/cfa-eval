@@ -16,6 +16,11 @@ export default defineConfig({
     },
     extensions: ['.js', '.jsx', '.ts', '.tsx', '.json'],
   },
+  optimizeDeps: {
+    include: ['exceljs'],
+    exclude: ['@radix-ui/react-toast'],
+    force: true
+  },
   server: {
     // Use HTTPS if certificates exist
     https: useHttps ? {
