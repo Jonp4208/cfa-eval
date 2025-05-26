@@ -53,6 +53,8 @@ import TrainingPrograms from '@/pages/Leadership/TrainingPrograms';
 import TrainingProgramDetails from '@/pages/Leadership/TrainingProgramDetails';
 import Assessments from '@/pages/Leadership/Assessments';
 import AssessmentDetails from '@/pages/Leadership/AssessmentDetails';
+import AssessmentTaking from '@/pages/Leadership/AssessmentTaking';
+import AssessmentResults from '@/pages/Leadership/AssessmentResults';
 import Subscription from '@/pages/Leadership/Subscription';
 import Evaluations360 from '@/pages/Leadership/Evaluations360';
 import New360Evaluation from '@/pages/Leadership/Evaluations360/New360Evaluation';
@@ -239,6 +241,8 @@ export default function AppRoutes() {
         <Route path="training-programs" element={<TrainingPrograms />} />
         <Route path="training-programs/:id" element={<TrainingProgramDetails />} />
         <Route path="assessments" element={<Assessments />} />
+        <Route path="assessments/:assessmentId/take" element={<AssessmentTaking />} />
+        <Route path="assessments/:assessmentId/results" element={<AssessmentResults />} />
         <Route path="assessments/:id" element={<AssessmentDetails />} />
         <Route path="360-evaluations" element={<Evaluations360 />} />
         <Route path="360-evaluations/new" element={<New360Evaluation />} />

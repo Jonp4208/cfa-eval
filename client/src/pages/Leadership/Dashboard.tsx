@@ -82,7 +82,7 @@ export default function LeadershipDashboard() {
   const fetchDashboardStats = async () => {
     try {
       setLoading(true)
-      const response = await api.get('/leadership/dashboard')
+      const response = await api.get('/api/leadership/dashboard')
 
       // Ensure the response has the expected structure
       const data = response.data || {}

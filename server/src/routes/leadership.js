@@ -19,6 +19,16 @@ import {
   getEvaluationSummary,
   generateDevelopmentPlan
 } from '../controllers/leadership360.js'
+import {
+  getAssessmentTemplates,
+  getAssessmentTemplate,
+  createAssessmentTemplate,
+  getUserAssessments,
+  startAssessment,
+  submitAssessmentResponse,
+  getAssessmentResults,
+  getAssessmentAnalytics
+} from '../controllers/assessments.js'
 
 const router = express.Router()
 
@@ -235,25 +245,17 @@ router.post('/goals', auth, checkSubscription, async (req, res) => {
   }
 })
 
-// Get leadership assessments
-router.get('/assessments', auth, checkSubscription, async (req, res) => {
-  try {
-    const assessments = [] // TODO: Implement with actual model
-    res.json(assessments)
-  } catch (error) {
-    res.status(500).json({ message: error.message })
-  }
-})
+// Assessment Routes
+router.get('/assessment-templates', auth, getAssessmentTemplates);
+router.get('/assessment-templates/:templateId', auth, getAssessmentTemplate);
+router.post('/assessment-templates', auth, isManager, createAssessmentTemplate);
 
-// Create a new leadership assessment
-router.post('/assessments', auth, checkSubscription, async (req, res) => {
-  try {
-    // TODO: Implement with actual model
-    res.status(201).json({ message: 'Assessment created' })
-  } catch (error) {
-    res.status(400).json({ message: error.message })
-  }
-})
+router.get('/assessments', auth, getUserAssessments);
+router.get('/assessments/user/:userId', auth, getUserAssessments);
+router.post('/assessments/:templateId/start', auth, startAssessment);
+router.put('/assessments/:assessmentId/submit', auth, submitAssessmentResponse);
+router.get('/assessments/:assessmentId/results', auth, getAssessmentResults);
+router.get('/assessments/analytics', auth, getAssessmentAnalytics);
 
 // Get mentorship programs
 router.get('/mentorship', auth, checkSubscription, async (req, res) => {

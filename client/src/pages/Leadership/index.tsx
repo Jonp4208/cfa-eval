@@ -14,7 +14,8 @@ import {
   RefreshCw,
   CheckCircle,
   UserCheck,
-  BookOpen
+  BookOpen,
+  Brain
 } from 'lucide-react'
 import { useAuth } from '@/contexts/AuthContext'
 import { useTranslation } from '@/contexts/TranslationContext'
@@ -98,6 +99,19 @@ export default function Leadership() {
               >
                 <Target className="w-4 h-4" />
                 Development Plans
+              </Button>
+
+              <Button
+                variant={isActive('assessments') ? 'default' : 'ghost'}
+                onClick={() => handleNavigate('assessments')}
+                className={`flex items-center gap-2 px-4 py-2 whitespace-nowrap ${
+                  isActive('assessments')
+                    ? 'bg-red-50 text-[#E51636] hover:bg-red-100'
+                    : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900'
+                }`}
+              >
+                <Brain className="w-4 h-4" />
+                Assessments
               </Button>
 
               <Button
