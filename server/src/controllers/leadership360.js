@@ -424,6 +424,115 @@ export const deleteLeadership360Evaluation = async (req, res) => {
     }
 };
 
+// Helper function to generate development recommendations based on rating patterns
+const generateDevelopmentRecommendations = (categoryRatings, overallRating) => {
+    const recommendations = [];
+
+    // Find areas scoring below 3.0 (needs development)
+    const lowPerformanceAreas = Object.entries(categoryRatings)
+        .filter(([_, data]) => data.average < 3.0)
+        .sort((a, b) => a[1].average - b[1].average); // Sort by lowest first
+
+    // Find areas scoring above 4.0 (strengths)
+    const highPerformanceAreas = Object.entries(categoryRatings)
+        .filter(([_, data]) => data.average >= 4.0)
+        .sort((a, b) => b[1].average - a[1].average); // Sort by highest first
+
+    // Generate recommendations for low performance areas
+    lowPerformanceAreas.forEach(([category, data]) => {
+        const recommendation = {
+            area: category,
+            priority: data.average < 2.5 ? 'high' : 'medium',
+            type: 'development',
+            rating: data.average,
+            suggestion: getAreaSpecificRecommendation(category, 'development'),
+            resources: getAreaSpecificResources(category, 'development')
+        };
+        recommendations.push(recommendation);
+    });
+
+    // Generate recommendations for leveraging strengths
+    if (highPerformanceAreas.length > 0) {
+        const topStrength = highPerformanceAreas[0];
+        recommendations.push({
+            area: topStrength[0],
+            priority: 'low',
+            type: 'leverage',
+            rating: topStrength[1].average,
+            suggestion: getAreaSpecificRecommendation(topStrength[0], 'leverage'),
+            resources: getAreaSpecificResources(topStrength[0], 'leverage')
+        });
+    }
+
+    // Overall leadership development recommendation
+    if (overallRating < 3.0) {
+        recommendations.unshift({
+            area: 'Overall Leadership',
+            priority: 'high',
+            type: 'foundational',
+            rating: overallRating,
+            suggestion: 'Focus on foundational leadership skills development with structured mentoring and coaching support',
+            resources: ['Leadership Fundamentals Course', 'Executive Coaching', 'Leadership Mentoring Program']
+        });
+    }
+
+    return recommendations.slice(0, 5); // Return top 5 recommendations
+};
+
+const getAreaSpecificRecommendation = (area, type) => {
+    const recommendations = {
+        'Strategic Leadership': {
+            development: 'Enhance strategic thinking through business case studies, strategic planning workshops, and cross-functional project leadership',
+            leverage: 'Mentor others in strategic thinking and lead strategic initiatives for the organization'
+        },
+        'People Leadership': {
+            development: 'Develop people management skills through coaching training, conflict resolution workshops, and team building exercises',
+            leverage: 'Share your people leadership expertise by mentoring new managers and leading HR initiatives'
+        },
+        'Operational Excellence': {
+            development: 'Improve operational efficiency through process improvement training, lean management principles, and operational metrics analysis',
+            leverage: 'Lead operational improvement initiatives and share best practices across teams'
+        },
+        'Communication & Influence': {
+            development: 'Strengthen communication through presentation skills training, active listening workshops, and stakeholder management courses',
+            leverage: 'Become a communication champion and help develop others\' presentation and influence skills'
+        },
+        'Innovation & Change': {
+            development: 'Build change management capabilities through change leadership training, innovation workshops, and agile methodology courses',
+            leverage: 'Lead organizational change initiatives and champion innovation across the company'
+        }
+    };
+
+    return recommendations[area]?.[type] || `Focus on developing ${area.toLowerCase()} through targeted training and practical application`;
+};
+
+const getAreaSpecificResources = (area, type) => {
+    const resources = {
+        'Strategic Leadership': {
+            development: ['Strategic Thinking Workshop', 'Business Strategy Course', 'Executive Leadership Program'],
+            leverage: ['Strategic Planning Facilitation', 'Mentoring Program', 'Cross-functional Leadership Role']
+        },
+        'People Leadership': {
+            development: ['Management Training', 'Coaching Certification', 'Conflict Resolution Workshop'],
+            leverage: ['Leadership Mentoring', 'HR Partnership Role', 'Team Development Facilitation']
+        },
+        'Operational Excellence': {
+            development: ['Process Improvement Training', 'Lean Six Sigma', 'Operations Management Course'],
+            leverage: ['Operational Excellence Champion', 'Process Improvement Lead', 'Best Practices Sharing']
+        },
+        'Communication & Influence': {
+            development: ['Presentation Skills Training', 'Influence & Persuasion Workshop', 'Public Speaking Course'],
+            leverage: ['Communication Training Facilitator', 'Presentation Coaching', 'Stakeholder Engagement Lead']
+        },
+        'Innovation & Change': {
+            development: ['Change Management Certification', 'Innovation Workshop', 'Agile Leadership Training'],
+            leverage: ['Change Champion Role', 'Innovation Committee Lead', 'Transformation Project Lead']
+        }
+    };
+
+    return resources[area]?.[type] || ['Leadership Development Program', 'Professional Coaching', 'Skill-specific Training'];
+};
+
 // Get summary of 360 evaluation results
 export const getEvaluationSummary = async (req, res) => {
     try {
@@ -530,9 +639,316 @@ export const getEvaluationSummary = async (req, res) => {
             summary.categoryRatings[cat].average = count > 0 ? (sum / count).toFixed(2) : 0;
         });
 
+        // Generate development recommendations based on rating patterns
+        summary.developmentRecommendations = generateDevelopmentRecommendations(
+            summary.categoryRatings,
+            parseFloat(summary.overallRating)
+        );
+
         res.json(summary);
     } catch (error) {
         console.error('Error getting evaluation summary:', error);
         res.status(500).json({ message: 'Error getting evaluation summary' });
     }
+};
+
+// Generate automatic development plan based on 360 feedback
+export const generateDevelopmentPlan = async (req, res) => {
+    try {
+        const Leadership360 = getModel('Leadership360');
+
+        // Find the evaluation
+        const evaluation = await Leadership360.findOne({
+            _id: req.params.evaluationId,
+            store: req.user.store._id,
+            status: { $in: ['completed', 'reviewed'] }
+        })
+        .populate('subject', 'name position')
+        .populate('template', 'name sections')
+        .populate('evaluations.evaluator', 'name position');
+
+        if (!evaluation) {
+            return res.status(404).json({ message: 'Evaluation not found or not completed' });
+        }
+
+        // Check if user has permission (subject or manager)
+        const isSubject = evaluation.subject._id.toString() === req.user._id.toString();
+        const isManagerOrDirector = ['Leader', 'Director'].includes(req.user.position);
+
+        if (!isSubject && !isManagerOrDirector) {
+            return res.status(403).json({ message: 'You do not have permission to generate development plan' });
+        }
+
+        // Calculate summary statistics (reuse logic from getEvaluationSummary)
+        const summary = {
+            overallRating: 0,
+            categoryRatings: {},
+            strengths: [],
+            improvements: []
+        };
+
+        let totalRatingSum = 0;
+        let totalRatingCount = 0;
+
+        evaluation.evaluations.forEach(evalItem => {
+            if (!evalItem.isComplete) return;
+
+            const responses = evalItem.responses || new Map();
+
+            // Extract text feedback
+            if (responses.textFeedback) {
+                const feedback = responses.textFeedback;
+                if (feedback.strengths) {
+                    summary.strengths.push({
+                        relationship: evalItem.relationship,
+                        text: feedback.strengths
+                    });
+                }
+                if (feedback.improvements) {
+                    summary.improvements.push({
+                        relationship: evalItem.relationship,
+                        text: feedback.improvements
+                    });
+                }
+            }
+
+            Object.entries(responses).forEach(([questionId, response]) => {
+                if (typeof response === 'number') {
+                    totalRatingSum += response;
+                    totalRatingCount++;
+
+                    const sectionId = questionId.split('_')[0];
+                    if (!summary.categoryRatings[sectionId]) {
+                        summary.categoryRatings[sectionId] = { sum: 0, count: 0, average: 0 };
+                    }
+                    summary.categoryRatings[sectionId].sum += response;
+                    summary.categoryRatings[sectionId].count++;
+                }
+            });
+        });
+
+        // Calculate averages
+        summary.overallRating = totalRatingCount > 0 ? (totalRatingSum / totalRatingCount) : 0;
+        Object.keys(summary.categoryRatings).forEach(cat => {
+            const { sum, count } = summary.categoryRatings[cat];
+            summary.categoryRatings[cat].average = count > 0 ? (sum / count) : 0;
+        });
+
+        // Generate development plan
+        const developmentPlan = generateAutomaticDevelopmentPlan(
+            summary.categoryRatings,
+            summary.overallRating,
+            summary.strengths,
+            summary.improvements,
+            evaluation.subject.name
+        );
+
+        res.json(developmentPlan);
+    } catch (error) {
+        console.error('Error generating development plan:', error);
+        res.status(500).json({ message: 'Error generating development plan' });
+    }
+};
+
+// Helper function to generate automatic development plan
+const generateAutomaticDevelopmentPlan = (categoryRatings, overallRating, strengths, improvements, subjectName) => {
+    const plan = {
+        subjectName,
+        overallRating,
+        generatedDate: new Date(),
+        developmentAreas: [],
+        smartGoals: [],
+        actionPlan: {
+            immediate: [], // 0-30 days
+            shortTerm: [], // 1-3 months
+            longTerm: [] // 3-12 months
+        },
+        resources: [],
+        milestones: []
+    };
+
+    // Identify top 3 development areas (lowest scoring categories)
+    // First try areas below 3.5, then fall back to lowest 3 areas regardless of score
+    let developmentAreas = Object.entries(categoryRatings)
+        .filter(([_, data]) => data.average < 3.5)
+        .sort((a, b) => a[1].average - b[1].average)
+        .slice(0, 3);
+
+    // If no areas below 3.5, take the 3 lowest scoring areas
+    if (developmentAreas.length === 0) {
+        developmentAreas = Object.entries(categoryRatings)
+            .sort((a, b) => a[1].average - b[1].average)
+            .slice(0, 3);
+    }
+
+    // If still no areas (shouldn't happen), create default areas
+    if (developmentAreas.length === 0) {
+        developmentAreas = [
+            ['Strategic Leadership', { average: 3.0, count: 1 }],
+            ['People Leadership', { average: 3.2, count: 1 }],
+            ['Communication & Influence', { average: 3.1, count: 1 }]
+        ];
+    }
+
+    developmentAreas.forEach(([area, data], index) => {
+        const priority = index === 0 ? 'high' : index === 1 ? 'medium' : 'low';
+
+        plan.developmentAreas.push({
+            area,
+            currentRating: data.average,
+            targetRating: Math.min(data.average + 1.0, 5.0),
+            priority,
+            keyFeedback: improvements
+                .filter(imp => imp.text.toLowerCase().includes(area.toLowerCase().split(' ')[0]))
+                .slice(0, 2)
+                .map(imp => imp.text)
+        });
+
+        // Generate SMART goal for this area
+        const smartGoal = generateSMARTGoal(area, data.average, improvements);
+        plan.smartGoals.push(smartGoal);
+
+        // Add area-specific action items
+        const actions = getAreaSpecificActions(area, priority);
+        plan.actionPlan.immediate.push(...actions.immediate);
+        plan.actionPlan.shortTerm.push(...actions.shortTerm);
+        plan.actionPlan.longTerm.push(...actions.longTerm);
+
+        // Add resources
+        plan.resources.push(...getAreaSpecificResources(area, 'development'));
+    });
+
+    // Ensure we have some resources even if no specific areas were found
+    if (plan.resources.length === 0) {
+        plan.resources.push(
+            'Leadership Development Program',
+            'Professional Coaching',
+            'Skill-specific Training',
+            'Mentoring Program',
+            'Leadership Books & Resources'
+        );
+    }
+
+    // Ensure we have SMART goals
+    if (plan.smartGoals.length === 0) {
+        plan.smartGoals.push({
+            area: 'Overall Leadership',
+            goal: `Improve overall leadership effectiveness from ${overallRating.toFixed(1)} to ${Math.min(overallRating + 1.0, 5.0).toFixed(1)} within 6 months`,
+            specific: 'Focus on comprehensive leadership development',
+            measurable: `Increase overall rating from ${overallRating.toFixed(1)} to ${Math.min(overallRating + 1.0, 5.0).toFixed(1)}`,
+            achievable: 'Based on feedback patterns and available resources',
+            relevant: 'Critical for leadership effectiveness in current role',
+            timeBound: '6 months'
+        });
+    }
+
+    // Ensure action plan sections have content
+    if (plan.actionPlan.immediate.length === 0) {
+        plan.actionPlan.immediate.push(
+            'Complete leadership assessment',
+            'Schedule feedback session with manager',
+            'Identify development mentor'
+        );
+    }
+
+    if (plan.actionPlan.shortTerm.length === 0) {
+        plan.actionPlan.shortTerm.push(
+            'Enroll in leadership training program',
+            'Begin regular coaching sessions',
+            'Implement new leadership practices'
+        );
+    }
+
+    if (plan.actionPlan.longTerm.length === 0) {
+        plan.actionPlan.longTerm.push(
+            'Complete advanced leadership certification',
+            'Mentor other emerging leaders',
+            'Lead major organizational initiative'
+        );
+    }
+
+    // Generate milestones
+    plan.milestones = [
+        {
+            timeframe: '30 days',
+            description: 'Complete initial assessment and begin first development activity',
+            measurable: 'Start one training program or coaching session'
+        },
+        {
+            timeframe: '90 days',
+            description: 'Show measurable improvement in primary development area',
+            measurable: 'Receive positive feedback from manager or peers on targeted behavior'
+        },
+        {
+            timeframe: '6 months',
+            description: 'Demonstrate consistent application of new skills',
+            measurable: 'Lead a project or initiative showcasing improved competency'
+        },
+        {
+            timeframe: '12 months',
+            description: 'Achieve target rating improvement in next 360 evaluation',
+            measurable: 'Increase overall rating by 0.5-1.0 points in follow-up assessment'
+        }
+    ];
+
+    return plan;
+};
+
+const generateSMARTGoal = (area, currentRating, improvements) => {
+    const targetRating = Math.min(currentRating + 1.0, 5.0);
+    const timeframe = currentRating < 2.5 ? '6 months' : '4 months';
+
+    const goalTemplates = {
+        'Strategic Leadership': `Improve strategic thinking and decision-making capabilities from ${currentRating.toFixed(1)} to ${targetRating.toFixed(1)} within ${timeframe}`,
+        'People Leadership': `Enhance team management and people development skills from ${currentRating.toFixed(1)} to ${targetRating.toFixed(1)} within ${timeframe}`,
+        'Operational Excellence': `Strengthen operational efficiency and process management from ${currentRating.toFixed(1)} to ${targetRating.toFixed(1)} within ${timeframe}`,
+        'Communication & Influence': `Develop communication and stakeholder influence abilities from ${currentRating.toFixed(1)} to ${targetRating.toFixed(1)} within ${timeframe}`,
+        'Innovation & Change': `Build change leadership and innovation capabilities from ${currentRating.toFixed(1)} to ${targetRating.toFixed(1)} within ${timeframe}`
+    };
+
+    return {
+        area,
+        goal: goalTemplates[area] || `Improve ${area.toLowerCase()} from ${currentRating.toFixed(1)} to ${targetRating.toFixed(1)} within ${timeframe}`,
+        specific: `Focus on ${area.toLowerCase()} development`,
+        measurable: `Increase rating from ${currentRating.toFixed(1)} to ${targetRating.toFixed(1)}`,
+        achievable: 'Based on feedback patterns and available resources',
+        relevant: `Critical for leadership effectiveness in current role`,
+        timeBound: timeframe
+    };
+};
+
+const getAreaSpecificActions = (area, priority) => {
+    const actions = {
+        'Strategic Leadership': {
+            immediate: ['Schedule strategic thinking assessment', 'Identify strategic mentor'],
+            shortTerm: ['Enroll in strategic planning workshop', 'Lead cross-functional project'],
+            longTerm: ['Complete executive leadership program', 'Develop organizational strategy']
+        },
+        'People Leadership': {
+            immediate: ['Schedule 1:1s with all team members', 'Complete leadership style assessment'],
+            shortTerm: ['Attend coaching skills training', 'Implement team development plan'],
+            longTerm: ['Become certified coach', 'Mentor other leaders']
+        },
+        'Operational Excellence': {
+            immediate: ['Audit current processes', 'Identify efficiency opportunities'],
+            shortTerm: ['Implement process improvements', 'Learn lean methodology'],
+            longTerm: ['Lead operational transformation', 'Share best practices organization-wide']
+        },
+        'Communication & Influence': {
+            immediate: ['Record and review presentation', 'Seek communication feedback'],
+            shortTerm: ['Join public speaking group', 'Practice stakeholder presentations'],
+            longTerm: ['Become internal communication trainer', 'Lead major stakeholder initiatives']
+        },
+        'Innovation & Change': {
+            immediate: ['Assess change readiness', 'Identify innovation opportunities'],
+            shortTerm: ['Lead small change initiative', 'Attend innovation workshop'],
+            longTerm: ['Champion major transformation', 'Develop innovation framework']
+        }
+    };
+
+    return actions[area] || {
+        immediate: [`Begin ${area.toLowerCase()} assessment`],
+        shortTerm: [`Develop ${area.toLowerCase()} skills`],
+        longTerm: [`Master ${area.toLowerCase()} competency`]
+    };
 };

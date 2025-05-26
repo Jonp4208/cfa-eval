@@ -38,6 +38,12 @@ import {
   DialogTitle,
   DialogTrigger
 } from '@/components/ui/dialog';
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from '@/components/ui/tooltip';
 import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
@@ -103,7 +109,42 @@ interface EvaluationSummary {
   examples: Array<{ relationship: string; text: string }>;
   goals?: Array<{ relationship: string; text: string }>;
   comments: Array<{ relationship: string; comment: string }>;
+  developmentRecommendations?: Array<{
+    area: string;
+    priority: 'high' | 'medium' | 'low';
+    type: 'development' | 'leverage' | 'foundational';
+    rating: number;
+    suggestion: string;
+    resources: string[];
+  }>;
 }
+
+// Helper function to get rating descriptions
+const getRatingDescription = (rating: number) => {
+  const descriptions = {
+    1: {
+      label: 'Needs Development',
+      description: 'Rarely demonstrates this behavior; requires significant improvement and support'
+    },
+    2: {
+      label: 'Developing',
+      description: 'Sometimes demonstrates this behavior; shows potential for growth with guidance'
+    },
+    3: {
+      label: 'Proficient',
+      description: 'Consistently demonstrates this behavior; meets expectations and standards'
+    },
+    4: {
+      label: 'Advanced',
+      description: 'Frequently exceeds expectations; serves as a strong role model for others'
+    },
+    5: {
+      label: 'Expert',
+      description: 'Consistently exceptional; teaches and develops others in this competency area'
+    }
+  };
+  return descriptions[rating as keyof typeof descriptions];
+};
 
 export default function View360Evaluation() {
   const { evaluationId } = useParams();
@@ -664,35 +705,47 @@ export default function View360Evaluation() {
                             <p className="text-sm text-muted-foreground mb-2">{criterion.description}</p>
 
                             {/* Always use rating for criteria */}
-                            <RadioGroup
-                                value={responses[criterion._id]?.toString() || ''}
-                                onValueChange={(value) =>
-                                  setResponses({...responses, [criterion._id]: parseInt(value)})
-                                }
-                                className="flex flex-wrap gap-2 md:space-x-2"
-                              >
-                                {[1, 2, 3, 4, 5].map((rating) => (
-                                  <div key={rating} className="flex flex-col items-center">
-                                    <RadioGroupItem
-                                      value={rating.toString()}
-                                      id={`${criterion._id}-${rating}`}
-                                      className="peer sr-only"
-                                    />
-                                    <Label
-                                      htmlFor={`${criterion._id}-${rating}`}
-                                      className="flex h-10 w-10 items-center justify-center rounded-full border border-gray-200 peer-data-[state=checked]:bg-[#E51636] peer-data-[state=checked]:text-white cursor-pointer"
-                                    >
-                                      {rating}
-                                    </Label>
-                                    <span className="text-xs mt-1">
-                                      {rating === 1 ? 'Poor' :
-                                       rating === 2 ? 'Fair' :
-                                       rating === 3 ? 'Good' :
-                                       rating === 4 ? 'Very Good' : 'Excellent'}
-                                    </span>
-                                  </div>
-                                ))}
-                              </RadioGroup>
+                            <TooltipProvider>
+                              <RadioGroup
+                                  value={responses[criterion._id]?.toString() || ''}
+                                  onValueChange={(value) =>
+                                    setResponses({...responses, [criterion._id]: parseInt(value)})
+                                  }
+                                  className="flex flex-wrap gap-2 md:space-x-2"
+                                >
+                                  {[1, 2, 3, 4, 5].map((rating) => {
+                                    const ratingInfo = getRatingDescription(rating);
+                                    return (
+                                      <Tooltip key={rating}>
+                                        <TooltipTrigger asChild>
+                                          <div className="flex flex-col items-center">
+                                            <RadioGroupItem
+                                              value={rating.toString()}
+                                              id={`${criterion._id}-${rating}`}
+                                              className="peer sr-only"
+                                            />
+                                            <Label
+                                              htmlFor={`${criterion._id}-${rating}`}
+                                              className="flex h-10 w-10 items-center justify-center rounded-full border border-gray-200 peer-data-[state=checked]:bg-[#E51636] peer-data-[state=checked]:text-white cursor-pointer hover:bg-gray-50 transition-colors"
+                                            >
+                                              {rating}
+                                            </Label>
+                                            <span className="text-xs mt-1 text-center max-w-[60px]">
+                                              {ratingInfo.label}
+                                            </span>
+                                          </div>
+                                        </TooltipTrigger>
+                                        <TooltipContent className="max-w-xs">
+                                          <div className="text-center">
+                                            <div className="font-medium">{rating} - {ratingInfo.label}</div>
+                                            <div className="text-sm mt-1">{ratingInfo.description}</div>
+                                          </div>
+                                        </TooltipContent>
+                                      </Tooltip>
+                                    );
+                                  })}
+                                </RadioGroup>
+                              </TooltipProvider>
                             {/* We're only using ratings for criteria, no text fields needed */}
 
                           </div>
@@ -968,10 +1021,10 @@ export default function View360Evaluation() {
                             {/* Rating label */}
                             <div className="absolute bottom-0 left-0 right-0 text-center -mb-6">
                               <span className="inline-block bg-white px-3 py-1 rounded-full text-sm font-medium shadow">
-                                {parseFloat(summary.overallRating) <= 1 ? 'Poor' :
-                                 parseFloat(summary.overallRating) <= 2 ? 'Fair' :
-                                 parseFloat(summary.overallRating) <= 3 ? 'Good' :
-                                 parseFloat(summary.overallRating) <= 4 ? 'Very Good' : 'Excellent'}
+                                {parseFloat(summary.overallRating) <= 1.5 ? 'Needs Development' :
+                                 parseFloat(summary.overallRating) <= 2.5 ? 'Developing' :
+                                 parseFloat(summary.overallRating) <= 3.5 ? 'Proficient' :
+                                 parseFloat(summary.overallRating) <= 4.5 ? 'Advanced' : 'Expert'}
                               </span>
                             </div>
                           </div>
@@ -1017,6 +1070,93 @@ export default function View360Evaluation() {
                         </div>
                       </CardContent>
                     </Card>
+
+                    {/* Development Recommendations */}
+                    {summary.developmentRecommendations && summary.developmentRecommendations.length > 0 && (
+                      <Card>
+                        <CardHeader className="bg-blue-50">
+                          <CardTitle className="flex items-center text-blue-700">
+                            <Target className="h-5 w-5 mr-2" />
+                            Development Recommendations
+                          </CardTitle>
+                          <CardDescription>
+                            Personalized recommendations based on your 360° feedback patterns
+                          </CardDescription>
+                        </CardHeader>
+                        <CardContent className="pt-4">
+                          <div className="space-y-4">
+                            {summary.developmentRecommendations.map((recommendation, index) => (
+                              <div key={index} className={`border rounded-lg p-4 ${
+                                recommendation.priority === 'high' ? 'border-red-200 bg-red-50' :
+                                recommendation.priority === 'medium' ? 'border-amber-200 bg-amber-50' :
+                                'border-green-200 bg-green-50'
+                              }`}>
+                                <div className="flex items-start justify-between mb-2">
+                                  <div className="flex items-center gap-2">
+                                    <h4 className="font-medium">{recommendation.area}</h4>
+                                    <Badge variant="outline" className={
+                                      recommendation.priority === 'high' ? 'bg-red-100 text-red-700 border-red-300' :
+                                      recommendation.priority === 'medium' ? 'bg-amber-100 text-amber-700 border-amber-300' :
+                                      'bg-green-100 text-green-700 border-green-300'
+                                    }>
+                                      {recommendation.priority.charAt(0).toUpperCase() + recommendation.priority.slice(1)} Priority
+                                    </Badge>
+                                  </div>
+                                  <div className="text-sm text-muted-foreground">
+                                    Rating: {typeof recommendation.rating === 'number' ? recommendation.rating.toFixed(1) : recommendation.rating}/5.0
+                                  </div>
+                                </div>
+                                <p className="text-sm mb-3">{recommendation.suggestion}</p>
+                                <div>
+                                  <h5 className="text-xs font-medium text-muted-foreground mb-2">Recommended Resources:</h5>
+                                  <div className="flex flex-wrap gap-1">
+                                    {recommendation.resources.map((resource, resourceIndex) => (
+                                      <Badge key={resourceIndex} variant="secondary" className="text-xs">
+                                        {resource}
+                                      </Badge>
+                                    ))}
+                                  </div>
+                                </div>
+                              </div>
+                            ))}
+                          </div>
+                        </CardContent>
+                      </Card>
+                    )}
+
+                    {/* Development Plan Generation */}
+                    {isSubject && (
+                      <Card>
+                        <CardHeader className="bg-purple-50">
+                          <CardTitle className="flex items-center text-purple-700">
+                            <Target className="h-5 w-5 mr-2" />
+                            Automatic Development Plan
+                          </CardTitle>
+                          <CardDescription>
+                            Generate a personalized development plan based on your 360° feedback
+                          </CardDescription>
+                        </CardHeader>
+                        <CardContent className="pt-4">
+                          <div className="text-center">
+                            <p className="text-sm text-muted-foreground mb-4">
+                              Create a comprehensive development plan with SMART goals, action items, and timelines based on your evaluation results.
+                            </p>
+                            <Button
+                              onClick={() => {
+                                // Navigate to development plan page
+                                navigate(`/leadership/360-evaluations/${evaluationId}/development-plan`);
+                              }}
+                              className="bg-purple-600 hover:bg-purple-700 text-white"
+                            >
+                              <Target className="h-4 w-4 mr-2" />
+                              Generate Development Plan
+                            </Button>
+                          </div>
+                        </CardContent>
+                      </Card>
+                    )}
+
+
 
                     {/* Strengths and Improvements */}
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">

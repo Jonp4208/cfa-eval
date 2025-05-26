@@ -59,6 +59,7 @@ import New360Evaluation from '@/pages/Leadership/Evaluations360/New360Evaluation
 import AddEvaluators from '@/pages/Leadership/Evaluations360/AddEvaluators';
 import View360Evaluation from '@/pages/Leadership/Evaluations360/View360Evaluation';
 import Evaluators from '@/pages/Leadership/Evaluations360/Evaluators';
+import DevelopmentPlan from '@/pages/Leadership/Evaluations360/DevelopmentPlan';
 import Playbooks from '@/pages/Leadership/Playbooks';
 import NewPlaybook from '@/pages/Leadership/Playbooks/NewPlaybook';
 import PlaybookViewer from '@/pages/Leadership/Playbooks/PlaybookViewer';
@@ -244,6 +245,7 @@ export default function AppRoutes() {
         <Route path="360-evaluations/:evaluationId" element={<View360Evaluation />} />
         <Route path="360-evaluations/:evaluationId/evaluators" element={<Evaluators />} />
         <Route path="360-evaluations/:evaluationId/evaluators/add" element={<AddEvaluators />} />
+        <Route path="360-evaluations/:evaluationId/development-plan" element={<DevelopmentPlan />} />
         <Route path="playbooks" element={<Playbooks />} />
         <Route path="playbooks/new" element={<NewPlaybook />} />
         <Route path="playbooks/new/simple-edit" element={<SimplePlaybookEditor />} />

@@ -12,7 +12,9 @@
     "start": "node src/index.js",
     "quiet": "node run-server.js --log-level=WARN",
     "verbose": "node run-server.js --log-level=DEBUG",
-    "cleanup-shifts": "node cleanup-shifts.js"
+    "cleanup-shifts": "node cleanup-shifts.js",
+    "send-playbook-announcement": "node scripts/runPlaybookAnnouncement.js",
+    "send-test-email": "node scripts/sendTestEmail.js"
   },
   "dependencies": {
     "@aws-sdk/client-s3": "^3.798.0",

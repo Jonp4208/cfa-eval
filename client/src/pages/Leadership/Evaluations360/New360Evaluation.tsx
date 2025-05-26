@@ -52,7 +52,7 @@ export default function New360Evaluation() {
   const [selectedTemplate, setSelectedTemplate] = useState<string>('');
   const [startDate, setStartDate] = useState<Date | undefined>(new Date());
   const [dueDate, setDueDate] = useState<Date | undefined>(
-    new Date(new Date().setDate(new Date().getDate() + 14)) // Default to 2 weeks from now
+    new Date(new Date().setDate(new Date().getDate() + 7)) // Default to 7 days from now
   );
 
   // Fetch users
@@ -325,7 +325,7 @@ export default function New360Evaluation() {
             <div>
               <h3 className="text-lg font-medium">Schedule Evaluation</h3>
               <p className="text-sm text-muted-foreground">
-                Set the start and due dates for the 360° leadership evaluation
+                Set the start and due dates for the 360° leadership evaluation. Evaluators typically need 7 days to complete their feedback.
               </p>
             </div>
 
@@ -351,11 +351,11 @@ export default function New360Evaluation() {
                           onClick={() => {
                             const today = new Date();
                             setStartDate(today);
-                            // If due date is not set or is before start date, set it to 30 days later
+                            // If due date is not set or is before start date, set it to 7 days later
                             if (!dueDate || dueDate < today) {
-                              const thirtyDaysLater = new Date();
-                              thirtyDaysLater.setDate(today.getDate() + 30);
-                              setDueDate(thirtyDaysLater);
+                              const sevenDaysLater = new Date();
+                              sevenDaysLater.setDate(today.getDate() + 7);
+                              setDueDate(sevenDaysLater);
                             }
                           }}
                         >
@@ -368,11 +368,11 @@ export default function New360Evaluation() {
                             const tomorrow = new Date();
                             tomorrow.setDate(tomorrow.getDate() + 1);
                             setStartDate(tomorrow);
-                            // If due date is not set or is before start date, set it to 30 days later
+                            // If due date is not set or is before start date, set it to 7 days later
                             if (!dueDate || dueDate < tomorrow) {
-                              const thirtyDaysLater = new Date();
-                              thirtyDaysLater.setDate(tomorrow.getDate() + 30);
-                              setDueDate(thirtyDaysLater);
+                              const sevenDaysLater = new Date();
+                              sevenDaysLater.setDate(tomorrow.getDate() + 7);
+                              setDueDate(sevenDaysLater);
                             }
                           }}
                         >
@@ -385,11 +385,11 @@ export default function New360Evaluation() {
                       selected={startDate}
                       onSelect={(date) => {
                         setStartDate(date);
-                        // If due date is not set or is before start date, set it to 30 days later
+                        // If due date is not set or is before start date, set it to 7 days later
                         if (!dueDate || (date && dueDate < date)) {
-                          const thirtyDaysLater = new Date(date);
-                          thirtyDaysLater.setDate(date.getDate() + 30);
-                          setDueDate(thirtyDaysLater);
+                          const sevenDaysLater = new Date(date);
+                          sevenDaysLater.setDate(date.getDate() + 7);
+                          setDueDate(sevenDaysLater);
                         }
                       }}
                       initialFocus
@@ -412,7 +412,22 @@ export default function New360Evaluation() {
                   </PopoverTrigger>
                   <PopoverContent className="w-auto p-0">
                     <div className="p-2 border-b">
-                      <div className="flex justify-between">
+                      <div className="flex justify-between gap-2">
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => {
+                            if (startDate) {
+                              const sevenDaysLater = new Date(startDate);
+                              sevenDaysLater.setDate(startDate.getDate() + 7);
+                              setDueDate(sevenDaysLater);
+                            }
+                          }}
+                          disabled={!startDate}
+                          className="bg-[#E51636] text-white hover:bg-[#C41230]"
+                        >
+                          +7 Days
+                        </Button>
                         <Button
                           variant="ghost"
                           size="sm"

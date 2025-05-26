@@ -16,7 +16,8 @@ import {
   submitEvaluationResponse,
   markAsReviewed,
   deleteLeadership360Evaluation,
-  getEvaluationSummary
+  getEvaluationSummary,
+  generateDevelopmentPlan
 } from '../controllers/leadership360.js'
 
 const router = express.Router()
@@ -298,6 +299,7 @@ router.post('/360-evaluations/:evaluationId/submit', auth, submitEvaluationRespo
 router.post('/360-evaluations/:evaluationId/review', auth, markAsReviewed);
 router.delete('/360-evaluations/:evaluationId', auth, deleteLeadership360Evaluation);
 router.get('/360-evaluations/:evaluationId/summary', auth, getEvaluationSummary);
+router.get('/360-evaluations/:evaluationId/development-plan', auth, generateDevelopmentPlan);
 
 // Get subscription status
 router.get('/subscription-status', auth, async (req, res) => {
