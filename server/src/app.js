@@ -220,9 +220,10 @@ apiRouter.post('/generate-pdf', async (req, res) => {
         timeout: 60000
       };
     } else {
-      // Production/Linux configuration - more restrictive
+      // Production/Linux configuration - use system Chrome from buildpack
       launchOptions = {
         headless: 'new',
+        executablePath: process.env.GOOGLE_CHROME_BIN || '/app/.apt/usr/bin/google-chrome',
         args: [
           '--no-sandbox',
           '--disable-setuid-sandbox',
