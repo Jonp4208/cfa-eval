@@ -14,8 +14,9 @@ const styles = StyleSheet.create({
   // Header styles
   header: {
     textAlign: 'center',
-    borderBottom: 3,
+    borderBottomWidth: 3,
     borderBottomColor: '#E51636',
+    borderBottomStyle: 'solid',
     paddingBottom: 15,
     marginBottom: 25,
   },
@@ -32,11 +33,11 @@ const styles = StyleSheet.create({
   // Step section styles
   stepSection: {
     backgroundColor: '#dbeafe',
-    borderLeft: 4,
+    borderLeftWidth: 4,
     borderLeftColor: '#E51636',
+    borderLeftStyle: 'solid',
     padding: 15,
     marginBottom: 15,
-    borderRadius: 4,
   },
   stepHeader: {
     flexDirection: 'row',
@@ -78,8 +79,8 @@ const styles = StyleSheet.create({
   matrixQuadrant: {
     width: '48%',
     padding: 12,
-    borderRadius: 6,
-    border: 2,
+    borderWidth: 2,
+    borderStyle: 'solid',
     textAlign: 'center',
     minHeight: 80,
   },
@@ -116,9 +117,9 @@ const styles = StyleSheet.create({
   // SMART Goals styles
   smartGoalsSection: {
     backgroundColor: 'white',
-    border: 2,
+    borderWidth: 2,
     borderColor: '#E51636',
-    borderRadius: 6,
+    borderStyle: 'solid',
     padding: 15,
     marginBottom: 20,
   },
@@ -130,9 +131,9 @@ const styles = StyleSheet.create({
   },
   smartGoal: {
     backgroundColor: '#f9fafb',
-    border: 1,
+    borderWidth: 1,
     borderColor: '#e5e7eb',
-    borderRadius: 6,
+    borderStyle: 'solid',
     padding: 12,
     marginBottom: 15,
   },
@@ -144,11 +145,11 @@ const styles = StyleSheet.create({
   },
   smartItem: {
     backgroundColor: '#dbeafe',
-    borderLeft: 3,
+    borderLeftWidth: 3,
     borderLeftColor: '#E51636',
+    borderLeftStyle: 'solid',
     padding: 8,
     marginBottom: 8,
-    borderRadius: 2,
   },
   smartLabel: {
     fontSize: 10,
@@ -164,9 +165,9 @@ const styles = StyleSheet.create({
   // Checklist styles
   checklistSection: {
     backgroundColor: '#f9fafb',
-    border: 1,
+    borderWidth: 1,
     borderColor: '#e5e7eb',
-    borderRadius: 6,
+    borderStyle: 'solid',
     padding: 12,
     marginBottom: 12,
   },
@@ -194,9 +195,9 @@ const styles = StyleSheet.create({
   // Leadership examples styles
   exampleSection: {
     backgroundColor: 'white',
-    border: 2,
+    borderWidth: 2,
     borderColor: '#E51636',
-    borderRadius: 6,
+    borderStyle: 'solid',
     padding: 12,
     marginBottom: 15,
   },
@@ -208,11 +209,11 @@ const styles = StyleSheet.create({
   },
   exampleItem: {
     backgroundColor: '#dbeafe',
-    borderLeft: 3,
+    borderLeftWidth: 3,
     borderLeftColor: '#E51636',
+    borderLeftStyle: 'solid',
     padding: 8,
     marginBottom: 8,
-    borderRadius: 2,
   },
   exampleLabel: {
     fontSize: 10,
@@ -228,9 +229,9 @@ const styles = StyleSheet.create({
   // Role definition styles
   roleSection: {
     backgroundColor: '#dbeafe',
-    border: 1,
+    borderWidth: 1,
     borderColor: '#e5e7eb',
-    borderRadius: 6,
+    borderStyle: 'solid',
     padding: 12,
     marginBottom: 12,
   },
@@ -255,8 +256,9 @@ const styles = StyleSheet.create({
     textAlign: 'center',
     fontSize: 9,
     color: '#9ca3af',
-    borderTop: 1,
+    borderTopWidth: 1,
     borderTopColor: '#e5e7eb',
+    borderTopStyle: 'solid',
     paddingTop: 10,
   },
 });
@@ -358,7 +360,7 @@ const PlaybookPDF: React.FC<PlaybookPDFProps> = ({ playbookData }) => {
 
         {/* SMART Goals Section */}
         <View style={styles.smartGoalsSection}>
-          <Text style={styles.smartGoalsTitle}>📝 Your SMART Goals</Text>
+          <Text style={styles.smartGoalsTitle}>Your SMART Goals</Text>
 
           {playbookData.smartGoals.map((goal, index) => (
             <View key={goal.id} style={styles.smartGoal}>
@@ -408,7 +410,7 @@ const PlaybookPDF: React.FC<PlaybookPDFProps> = ({ playbookData }) => {
 
         {/* Monday Morning Checklist */}
         <View style={styles.checklistSection}>
-          <Text style={styles.checklistTitle}>📅 Every Monday Morning (15 minutes):</Text>
+          <Text style={styles.checklistTitle}>Every Monday Morning (15 minutes):</Text>
           <View style={styles.checklistItem}>
             <Text style={styles.bullet}>•</Text>
             <Text style={styles.checklistText}>Review your area of responsibility - what needs attention?</Text>
@@ -433,7 +435,7 @@ const PlaybookPDF: React.FC<PlaybookPDFProps> = ({ playbookData }) => {
 
         {/* Categorization Checklist */}
         <View style={styles.checklistSection}>
-          <Text style={styles.checklistTitle}>📊 Then Categorize Each Issue:</Text>
+          <Text style={styles.checklistTitle}>Then Categorize Each Issue:</Text>
           <View style={styles.checklistItem}>
             <Text style={styles.bullet}>•</Text>
             <Text style={styles.checklistText}>Write each issue on the priority matrix</Text>
@@ -469,7 +471,7 @@ const PlaybookPDF: React.FC<PlaybookPDFProps> = ({ playbookData }) => {
 
         {/* Monthly Review Checklist */}
         <View style={styles.checklistSection}>
-          <Text style={styles.checklistTitle}>📅 Monthly Review (First Monday of Month):</Text>
+          <Text style={styles.checklistTitle}>Monthly Review (First Monday of Month):</Text>
           <View style={styles.checklistItem}>
             <Text style={styles.bullet}>•</Text>
             <Text style={styles.checklistText}>Review all completed weekly assessments - what patterns do you see?</Text>
@@ -496,9 +498,17 @@ const PlaybookPDF: React.FC<PlaybookPDFProps> = ({ playbookData }) => {
           </View>
         </View>
 
+        {/* Footer */}
+        <Text style={styles.footer}>
+          Generated by LD Growth Leadership Development Platform
+        </Text>
+      </Page>
+
+      {/* Page 3 - Step 5 Leadership Standards */}
+      <Page size="A4" style={styles.page}>
         {/* Monthly Goal Setting */}
         <View style={styles.checklistSection}>
-          <Text style={styles.checklistTitle}>🎯 Set Monthly Goals:</Text>
+          <Text style={styles.checklistTitle}>Set Monthly Goals:</Text>
           <View style={styles.checklistItem}>
             <Text style={styles.bullet}>•</Text>
             <Text style={styles.checklistText}>Set 3-5 major goals for the upcoming month</Text>
@@ -521,14 +531,6 @@ const PlaybookPDF: React.FC<PlaybookPDFProps> = ({ playbookData }) => {
           </View>
         </View>
 
-        {/* Footer */}
-        <Text style={styles.footer}>
-          Generated by LD Growth Leadership Development Platform
-        </Text>
-      </Page>
-
-      {/* Page 3 - Step 5 Leadership Standards */}
-      <Page size="A4" style={styles.page}>
         {/* Step 5 - Leadership Standards */}
         <View style={styles.stepSection}>
           <View style={styles.stepHeader}>
@@ -542,18 +544,18 @@ const PlaybookPDF: React.FC<PlaybookPDFProps> = ({ playbookData }) => {
 
         {/* Role Definition */}
         <View style={styles.roleSection}>
-          <Text style={styles.roleTitle}>👑 Your Leadership Role:</Text>
+          <Text style={styles.roleTitle}>Your Leadership Role:</Text>
           <Text style={styles.roleText}>
-            <Text style={{ fontWeight: 'bold' }}>✅ Your Job:</Text> Set standards, create processes, train team, monitor performance, solve system problems
+            <Text style={{ fontWeight: 'bold' }}>Your Job:</Text> Set standards, create processes, train team, monitor performance, solve system problems
           </Text>
           <Text style={styles.roleText}>
-            <Text style={{ fontWeight: 'bold' }}>❌ NOT YOUR JOB:</Text> Doing all the individual tasks, micromanaging every detail, working in the business instead of on it
+            <Text style={{ fontWeight: 'bold' }}>NOT YOUR JOB:</Text> Doing all the individual tasks, micromanaging every detail, working in the business instead of on it
           </Text>
         </View>
 
         {/* System Setup */}
         <View style={styles.checklistSection}>
-          <Text style={styles.checklistTitle}>📋 Leadership System Setup:</Text>
+          <Text style={styles.checklistTitle}>Leadership System Setup:</Text>
           <View style={styles.checklistItem}>
             <Text style={styles.bullet}>•</Text>
             <Text style={styles.checklistText}>Create Simple Processes: Daily, weekly, monthly tasks with clear steps and checkboxes</Text>
@@ -578,7 +580,7 @@ const PlaybookPDF: React.FC<PlaybookPDFProps> = ({ playbookData }) => {
 
         {/* Leadership SMART Goal Examples */}
         <View style={styles.exampleSection}>
-          <Text style={styles.exampleTitle}>📝 Leadership SMART Goal Examples:</Text>
+          <Text style={styles.exampleTitle}>Leadership SMART Goal Examples:</Text>
 
           <View style={styles.exampleItem}>
             <Text style={styles.exampleLabel}>Process Improvement</Text>
