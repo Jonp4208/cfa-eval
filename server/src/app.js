@@ -167,6 +167,7 @@ apiRouter.use('/user-store', userStoreRouter);
 
 // PDF Generation using Puppeteer
 apiRouter.post('/generate-pdf', async (req, res) => {
+  let browser;
   try {
     const { html, options = {} } = req.body;
 
@@ -177,7 +178,7 @@ apiRouter.post('/generate-pdf', async (req, res) => {
     const puppeteer = await import('puppeteer');
 
     // Launch browser with optimized settings
-    const browser = await puppeteer.default.launch({
+    browser = await puppeteer.default.launch({
       headless: 'new',
       args: [
         '--no-sandbox',
@@ -186,11 +187,17 @@ apiRouter.post('/generate-pdf', async (req, res) => {
         '--disable-accelerated-2d-canvas',
         '--no-first-run',
         '--no-zygote',
-        '--disable-gpu'
-      ]
+        '--disable-gpu',
+        '--disable-web-security',
+        '--disable-features=VizDisplayCompositor',
+        '--single-process'
+      ],
+      timeout: 60000
     });
 
     const page = await browser.newPage();
+
+    logger.info('PDF generation started', { htmlLength: html.length });
 
     // Set content with proper styling
     const fullHtml = `
@@ -208,11 +215,11 @@ apiRouter.post('/generate-pdf', async (req, res) => {
               line-height: 1.6;
               color: #2d3748;
               margin: 0;
-              padding: 20mm;
+              padding: 15mm;
               background: white;
             }
             @page {
-              margin: 20mm;
+              margin: 15mm;
               size: A4;
             }
             @media print {
@@ -255,10 +262,25 @@ apiRouter.post('/generate-pdf', async (req, res) => {
     res.end(pdfBuffer, 'binary');
 
   } catch (error) {
-    logger.error('Error generating PDF:', error);
+    logger.error('Error generating PDF:', {
+      error: error.message,
+      stack: error.stack,
+      name: error.name
+    });
+
+    // Ensure browser is closed even on error
+    try {
+      if (browser) {
+        await browser.close();
+      }
+    } catch (closeError) {
+      logger.error('Error closing browser:', closeError);
+    }
+
     res.status(500).json({
       error: 'Failed to generate PDF',
-      message: error.message
+      message: error.message,
+      details: process.env.NODE_ENV === 'development' ? error.stack : undefined
     });
   }
 });
