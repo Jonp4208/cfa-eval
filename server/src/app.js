@@ -165,9 +165,8 @@ apiRouter.use('/invoices', invoicesRouter);
 apiRouter.use('/admin', adminRouter);
 apiRouter.use('/user-store', userStoreRouter);
 
-// PDF Generation using Puppeteer
+// PDF Generation using html-pdf-node
 apiRouter.post('/generate-pdf', async (req, res) => {
-  let browser;
   try {
     const { html, options = {} } = req.body;
 
@@ -175,92 +174,14 @@ apiRouter.post('/generate-pdf', async (req, res) => {
       return res.status(400).json({ error: 'HTML content is required' });
     }
 
-    logger.info('Starting PDF generation', {
+    logger.info('Starting PDF generation with html-pdf-node', {
       htmlLength: html.length,
       environment: process.env.NODE_ENV
     });
 
-    // Try to import Puppeteer
-    let puppeteer;
-    try {
-      puppeteer = await import('puppeteer');
-      logger.info('Puppeteer imported successfully');
-    } catch (importError) {
-      logger.error('Failed to import Puppeteer:', {
-        error: importError.message,
-        stack: importError.stack
-      });
-      return res.status(500).json({
-        error: 'Puppeteer not available',
-        message: 'PDF generation service is not properly configured',
-        details: process.env.NODE_ENV === 'development' ? importError.message : undefined
-      });
-    }
-
-    // Launch browser with Windows-specific optimizations
-    logger.info('Launching Puppeteer browser...');
-
-    // Use different configurations for Windows vs Linux/production
-    const isWindows = process.platform === 'win32';
-    const isProduction = process.env.NODE_ENV === 'production';
-
-    let launchOptions;
-
-    if (isWindows && !isProduction) {
-      // Windows development configuration - more permissive
-      launchOptions = {
-        headless: 'new',
-        args: [
-          '--no-sandbox',
-          '--disable-setuid-sandbox',
-          '--disable-dev-shm-usage',
-          '--disable-web-security',
-          '--disable-features=VizDisplayCompositor'
-        ],
-        timeout: 60000
-      };
-    } else {
-      // Production/Linux configuration - let Puppeteer use its bundled Chrome
-      launchOptions = {
-        headless: 'new',
-        args: [
-          '--no-sandbox',
-          '--disable-setuid-sandbox',
-          '--disable-dev-shm-usage',
-          '--disable-accelerated-2d-canvas',
-          '--no-first-run',
-          '--no-zygote',
-          '--disable-gpu',
-          '--disable-web-security',
-          '--disable-features=VizDisplayCompositor',
-          '--single-process'
-        ],
-        timeout: 120000,
-        protocolTimeout: 120000
-      };
-    }
-
-    logger.info('Launch options:', {
-      platform: process.platform,
-      isProduction,
-      chromeEnvVar: process.env.GOOGLE_CHROME_BIN,
-      options: launchOptions
-    });
-
-    browser = await puppeteer.default.launch(launchOptions);
-    logger.info('Browser launched successfully');
-
-    // Set up error handlers for the browser
-    browser.on('disconnected', () => {
-      logger.warn('Browser disconnected unexpectedly');
-    });
-
-    const page = await browser.newPage();
-    logger.info('New page created');
-
-    // Set page timeout
-    page.setDefaultTimeout(120000);
-    page.setDefaultNavigationTimeout(120000);
+    // Import html-pdf-node
+    const htmlPdf = await import('html-pdf-node');
+    logger.info('html-pdf-node imported successfully');
 
     // Set content with proper styling
     const fullHtml = `
@@ -298,16 +219,7 @@ apiRouter.post('/generate-pdf', async (req, res) => {
       </html>
     `;
 
-    logger.info('Setting page content...');
-    // Use simpler wait condition for Windows
-    const waitCondition = isWindows && !isProduction ? 'domcontentloaded' : 'networkidle0';
-    await page.setContent(fullHtml, {
-      waitUntil: waitCondition,
-      timeout: 30000
-    });
-    logger.info('Page content set successfully');
-
-    // Generate PDF with optimized options for better space utilization
+    // Configure PDF options for html-pdf-node
     const pdfOptions = {
       format: options.format || 'A4',
       margin: options.margin || {
@@ -319,18 +231,18 @@ apiRouter.post('/generate-pdf', async (req, res) => {
       printBackground: options.printBackground !== false,
       preferCSSPageSize: options.preferCSSPageSize !== false,
       displayHeaderFooter: false,
-      timeout: 60000 // Add timeout for PDF generation
+      timeout: 60000
     };
 
     logger.info('Generating PDF with options:', pdfOptions);
-    const pdfBuffer = await page.pdf(pdfOptions);
-    logger.info('PDF generated successfully', { bufferSize: pdfBuffer.length });
 
-    // Close page first, then browser
-    await page.close();
-    logger.info('Page closed');
-    await browser.close();
-    logger.info('Browser closed');
+    // Generate PDF
+    const pdfBuffer = await htmlPdf.default.generatePdf(
+      { content: fullHtml },
+      pdfOptions
+    );
+
+    logger.info('PDF generated successfully', { bufferSize: pdfBuffer.length });
 
     // Set proper headers for PDF response
     res.setHeader('Content-Type', 'application/pdf');
@@ -345,15 +257,6 @@ apiRouter.post('/generate-pdf', async (req, res) => {
       stack: error.stack,
       name: error.name
     });
-
-    // Ensure browser is closed even on error
-    try {
-      if (browser) {
-        await browser.close();
-      }
-    } catch (closeError) {
-      logger.error('Error closing browser:', closeError);
-    }
 
     res.status(500).json({
       error: 'Failed to generate PDF',
