@@ -84,8 +84,8 @@ export default function TrainingPlanList() {
   const [assignedPlans, setAssignedPlans] = useState<TrainingPlan[]>([])
   const [searchQuery, setSearchQuery] = useState('')
 
-  // Check if user is a manager/leader or team member
-  const isManager = user?.position === 'Leader' || user?.position === 'Director'
+  // Check if user is a manager/leader/trainer or team member
+  const isManager = ['Director', 'Leader', 'Trainer'].includes(user?.position || '')
 
   const handleCreatePlan = async (plan: any) => {
     try {

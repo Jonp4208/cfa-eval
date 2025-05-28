@@ -109,8 +109,8 @@ export default function TrainingDetails() {
   const [notes, setNotes] = useState('')
   const [isUpdating, setIsUpdating] = useState(false)
 
-  // Check if user is a manager/leader or team member
-  const isManager = user?.position === 'Leader' || user?.position === 'Director'
+  // Check if user is a manager/leader/trainer or team member
+  const isManager = ['Director', 'Leader', 'Trainer'].includes(user?.position || '')
 
   useEffect(() => {
     fetchTrainingDetails()
