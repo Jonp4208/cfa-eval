@@ -24,11 +24,11 @@ const ensureUploadsDir = async () => {
  */
 export const generateInvoicePdf = async (invoice) => {
   await ensureUploadsDir();
-  
+
   // Format dates
   const issueDate = invoice.issueDate ? format(new Date(invoice.issueDate), 'MMMM d, yyyy') : 'N/A';
   const dueDate = invoice.dueDate ? format(new Date(invoice.dueDate), 'MMMM d, yyyy') : 'N/A';
-  
+
   // Generate HTML content for the invoice
   const htmlContent = `
     <!DOCTYPE html>
@@ -139,7 +139,7 @@ export const generateInvoicePdf = async (invoice) => {
           <p><strong>Due Date:</strong> ${dueDate}</p>
         </div>
       </div>
-      
+
       <div class="invoice-section">
         <h2 class="section-title">Bill To:</h2>
         <div class="client-info">
@@ -147,17 +147,17 @@ export const generateInvoicePdf = async (invoice) => {
           ${invoice.client.email ? `<p>Email: ${invoice.client.email}</p>` : ''}
           ${invoice.client.phone ? `<p>Phone: ${invoice.client.phone}</p>` : ''}
           ${invoice.client.address?.street ? `<p>${invoice.client.address.street}</p>` : ''}
-          ${(invoice.client.address?.city || invoice.client.address?.state || invoice.client.address?.zipCode) ? 
+          ${(invoice.client.address?.city || invoice.client.address?.state || invoice.client.address?.zipCode) ?
             `<p>${[
-              invoice.client.address?.city, 
-              invoice.client.address?.state, 
+              invoice.client.address?.city,
+              invoice.client.address?.state,
               invoice.client.address?.zipCode
             ].filter(Boolean).join(', ')}</p>` : ''
           }
           ${invoice.client.address?.country ? `<p>${invoice.client.address.country}</p>` : ''}
         </div>
       </div>
-      
+
       <div class="invoice-section">
         <h2 class="section-title">Invoice Items:</h2>
         <table>
@@ -180,7 +180,7 @@ export const generateInvoicePdf = async (invoice) => {
             `).join('')}
           </tbody>
         </table>
-        
+
         <table class="totals-table">
           <tr>
             <td class="label">Subtotal:</td>
@@ -196,12 +196,12 @@ export const generateInvoicePdf = async (invoice) => {
           </tr>
         </table>
       </div>
-      
+
       <div class="terms">
         <h2 class="section-title">Terms & Conditions:</h2>
         <p>${invoice.terms || 'Payment due within 30 days of invoice date.'}</p>
       </div>
-      
+
       <div class="payment-details">
         <h2 class="section-title">Payment Details:</h2>
         <p><strong>Payment Method:</strong> ${(invoice.paymentMethod || 'bank_transfer').replace('_', ' ')}</p>
@@ -210,15 +210,15 @@ export const generateInvoicePdf = async (invoice) => {
         ${invoice.paymentDetails?.accountNumber ? `<p><strong>Account Number:</strong> ${invoice.paymentDetails.accountNumber}</p>` : ''}
         ${invoice.paymentDetails?.routingNumber ? `<p><strong>Routing Number:</strong> ${invoice.paymentDetails.routingNumber}</p>` : ''}
       </div>
-      
+
       <div class="footer">
         <p>Thank you for your business!</p>
       </div>
     </body>
     </html>
   `;
-  
-  // Generate PDF
+
+  // Generate PDF with production-ready options
   const options = {
     format: 'A4',
     margin: {
@@ -226,19 +226,43 @@ export const generateInvoicePdf = async (invoice) => {
       right: '20mm',
       bottom: '20mm',
       left: '20mm'
-    }
+    },
+    timeout: 60000
   };
-  
+
+  // Add production-specific Puppeteer launch options
+  if (process.env.NODE_ENV === 'production') {
+    options.args = [
+      '--no-sandbox',
+      '--disable-setuid-sandbox',
+      '--disable-dev-shm-usage',
+      '--disable-accelerated-2d-canvas',
+      '--no-first-run',
+      '--no-zygote',
+      '--single-process',
+      '--disable-gpu',
+      '--disable-web-security',
+      '--disable-features=VizDisplayCompositor'
+    ];
+
+    // Use the Chrome executable provided by the Heroku buildpack
+    if (process.env.GOOGLE_CHROME_BIN) {
+      options.executablePath = process.env.GOOGLE_CHROME_BIN;
+    } else if (process.env.CHROME_BIN) {
+      options.executablePath = process.env.CHROME_BIN;
+    }
+  }
+
   const file = { content: htmlContent };
-  
+
   try {
     const pdfBuffer = await htmlPdf.generatePdf(file, options);
-    
+
     // Save PDF to file
     const fileName = `invoice-${invoice.invoiceNumber}-${Date.now()}.pdf`;
     const filePath = path.join(uploadsDir, fileName);
     await fs.writeFile(filePath, pdfBuffer);
-    
+
     return filePath;
   } catch (error) {
     console.error('Error generating invoice PDF:', error);

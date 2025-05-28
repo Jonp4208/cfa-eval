@@ -8,7 +8,7 @@
       "url": "https://github.com/heroku/heroku-buildpack-nodejs"
     },
     {
-      "url": "https://github.com/jontewks/puppeteer-heroku-buildpack"
+      "url": "https://github.com/puppeteer/heroku-buildpack-puppeteer"
     }
   ],
   "env": {
@@ -19,6 +19,10 @@
     "NPM_CONFIG_PRODUCTION": {
       "description": "Install dev dependencies for build",
       "value": "false"
+    },
+    "PUPPETEER_SKIP_CHROMIUM_DOWNLOAD": {
+      "description": "Skip Puppeteer Chromium download since we use buildpack",
+      "value": "true"
     }
   },
   "formation": {

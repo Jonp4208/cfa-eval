@@ -174,75 +174,11 @@ apiRouter.post('/generate-pdf', async (req, res) => {
       return res.status(400).json({ error: 'HTML content is required' });
     }
 
-    logger.info('Starting PDF generation with html-pdf-node', {
-      htmlLength: html.length,
-      environment: process.env.NODE_ENV
-    });
+    // Import the PDF generator utility
+    const { generatePDF } = await import('./utils/pdfGenerator.js');
 
-    // Import html-pdf-node
-    const htmlPdf = await import('html-pdf-node');
-    logger.info('html-pdf-node imported successfully');
-
-    // Set content with proper styling
-    const fullHtml = `
-      <!DOCTYPE html>
-      <html>
-        <head>
-          <meta charset="UTF-8">
-          <meta name="viewport" content="width=device-width, initial-scale=1.0">
-          <style>
-            * {
-              box-sizing: border-box;
-            }
-            body {
-              font-family: 'Segoe UI', Arial, sans-serif;
-              line-height: 1.6;
-              color: #2d3748;
-              margin: 0;
-              padding: 15mm;
-              background: white;
-            }
-            @page {
-              margin: 15mm;
-              size: A4;
-            }
-            @media print {
-              body {
-                padding: 0;
-              }
-            }
-          </style>
-        </head>
-        <body>
-          ${html}
-        </body>
-      </html>
-    `;
-
-    // Configure PDF options for html-pdf-node
-    const pdfOptions = {
-      format: options.format || 'A4',
-      margin: options.margin || {
-        top: '15mm',
-        right: '15mm',
-        bottom: '15mm',
-        left: '15mm'
-      },
-      printBackground: options.printBackground !== false,
-      preferCSSPageSize: options.preferCSSPageSize !== false,
-      displayHeaderFooter: false,
-      timeout: 60000
-    };
-
-    logger.info('Generating PDF with options:', pdfOptions);
-
-    // Generate PDF
-    const pdfBuffer = await htmlPdf.default.generatePdf(
-      { content: fullHtml },
-      pdfOptions
-    );
-
-    logger.info('PDF generated successfully', { bufferSize: pdfBuffer.length });
+    // Generate PDF using the utility
+    const pdfBuffer = await generatePDF(html, options);
 
     // Set proper headers for PDF response
     res.setHeader('Content-Type', 'application/pdf');
@@ -252,16 +188,47 @@ apiRouter.post('/generate-pdf', async (req, res) => {
     logger.info('PDF response sent successfully');
 
   } catch (error) {
-    logger.error('Error generating PDF:', {
+    logger.error('Error in PDF generation endpoint:', {
       error: error.message,
       stack: error.stack,
-      name: error.name
+      name: error.name,
+      environment: process.env.NODE_ENV,
+      chromeExecutable: process.env.GOOGLE_CHROME_BIN || process.env.CHROME_BIN || 'not set'
     });
 
     res.status(500).json({
       error: 'Failed to generate PDF',
       message: error.message,
       details: process.env.NODE_ENV === 'development' ? error.stack : undefined
+    });
+  }
+});
+
+// Test PDF Generation
+apiRouter.get('/test-pdf', async (req, res) => {
+  try {
+    logger.info('Testing PDF generation capability');
+
+    // Import the PDF generator utility
+    const { testPDFGeneration } = await import('./utils/pdfGenerator.js');
+
+    const isWorking = await testPDFGeneration();
+
+    res.json({
+      success: isWorking,
+      message: isWorking ? 'PDF generation is working' : 'PDF generation failed',
+      environment: process.env.NODE_ENV,
+      chromeExecutable: process.env.GOOGLE_CHROME_BIN || process.env.CHROME_BIN || 'not set',
+      platform: process.platform,
+      nodeVersion: process.version
+    });
+
+  } catch (error) {
+    logger.error('Error testing PDF generation:', error);
+    res.status(500).json({
+      success: false,
+      message: 'PDF generation test failed',
+      error: error.message
     });
   }
 });
