@@ -1,0 +1,31 @@
+{
+  "name": "CFA Leadership Development App",
+  "description": "Leadership development and evaluation platform for Chick-fil-A stores",
+  "repository": "https://github.com/your-repo/cfa-eval",
+  "keywords": ["node", "express", "react", "mongodb", "leadership"],
+  "buildpacks": [
+    {
+      "url": "https://github.com/heroku/heroku-buildpack-nodejs"
+    },
+    {
+      "url": "https://github.com/jontewks/puppeteer-heroku-buildpack"
+    }
+  ],
+  "env": {
+    "NODE_ENV": {
+      "description": "Node environment",
+      "value": "production"
+    },
+    "NPM_CONFIG_PRODUCTION": {
+      "description": "Install dev dependencies for build",
+      "value": "false"
+    }
+  },
+  "formation": {
+    "web": {
+      "quantity": 1,
+      "size": "basic"
+    }
+  },
+  "addons": []
+}
