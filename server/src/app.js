@@ -223,7 +223,7 @@ apiRouter.post('/generate-pdf', async (req, res) => {
       // Production/Linux configuration - use system Chrome from buildpack
       launchOptions = {
         headless: 'new',
-        executablePath: process.env.GOOGLE_CHROME_BIN || '/app/.apt/usr/bin/google-chrome',
+        executablePath: process.env.GOOGLE_CHROME_BIN || '/app/.chrome-for-testing/chrome-linux64/chrome',
         args: [
           '--no-sandbox',
           '--disable-setuid-sandbox',
@@ -241,7 +241,12 @@ apiRouter.post('/generate-pdf', async (req, res) => {
       };
     }
 
-    logger.info('Launch options:', { platform: process.platform, isProduction, options: launchOptions });
+    logger.info('Launch options:', {
+      platform: process.platform,
+      isProduction,
+      chromeEnvVar: process.env.GOOGLE_CHROME_BIN,
+      options: launchOptions
+    });
 
     browser = await puppeteer.default.launch(launchOptions);
     logger.info('Browser launched successfully');
