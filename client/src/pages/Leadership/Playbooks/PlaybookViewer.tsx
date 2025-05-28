@@ -76,7 +76,73 @@ export default function PlaybookViewer() {
       setPdfProgress(0);
       setPdfStep('Initializing...');
 
-      await downloadReactPDF(playbook, (step: string, progress: number) => {
+      // Extract playbook data from content blocks
+      const extractedData = {
+        title: playbook.title || 'Your Title',
+        subtitle: playbook.subtitle || 'Your Subtitle',
+        // Default values for priority matrix
+        urgentImportantDescription: '2 to 3 Important/urgent Items here',
+        importantNotUrgentDescription: '2 to 3 Important/Not urgent Items here',
+        urgentNotImportantDescription: '2 to 3 urgent/Not Important Items here',
+        notUrgentNotImportantDescription: '2 to 3 Not Urgent/Not Important Items here',
+        // Default SMART goals
+        smartGoals: [
+          {
+            id: 1,
+            title: 'Goal 1',
+            specific: 'What exactly needs to be accomplished? Be precise.',
+            measurable: 'How will you know when it\'s complete? What can you count or observe?',
+            achievable: 'Can this realistically be done with available resources?',
+            relevant: 'Why does this matter to your organization\'s success?',
+            timeBound: 'When will this be completed? Set a specific deadline.'
+          }
+        ]
+      };
+
+      // Extract data from content blocks if they exist
+      if (playbook.contentBlocks && playbook.contentBlocks.length > 0) {
+        playbook.contentBlocks.forEach(block => {
+          switch (block.type) {
+            case 'priority-matrix':
+              if (block.content?.quadrants) {
+                block.content.quadrants.forEach((quadrant: any) => {
+                  switch (quadrant.title) {
+                    case 'URGENT + IMPORTANT':
+                      extractedData.urgentImportantDescription = quadrant.description || extractedData.urgentImportantDescription;
+                      break;
+                    case 'IMPORTANT + NOT URGENT':
+                      extractedData.importantNotUrgentDescription = quadrant.description || extractedData.importantNotUrgentDescription;
+                      break;
+                    case 'URGENT + NOT IMPORTANT':
+                      extractedData.urgentNotImportantDescription = quadrant.description || extractedData.urgentNotImportantDescription;
+                      break;
+                    case 'NOT URGENT + NOT IMPORTANT':
+                      extractedData.notUrgentNotImportantDescription = quadrant.description || extractedData.notUrgentNotImportantDescription;
+                      break;
+                  }
+                });
+              }
+              break;
+
+            case 'practice-section':
+              if (block.content?.title === 'Your SMART Goals' && block.content?.exercises) {
+                // Extract SMART goals from practice section
+                extractedData.smartGoals = block.content.exercises.map((exercise: any, index: number) => ({
+                  id: index + 1,
+                  title: exercise.title || `Goal ${index + 1}`,
+                  specific: exercise.fields?.find((f: any) => f.label === 'Specific')?.value || 'What exactly needs to be accomplished? Be precise.',
+                  measurable: exercise.fields?.find((f: any) => f.label === 'Measurable')?.value || 'How will you know when it\'s complete? What can you count or observe?',
+                  achievable: exercise.fields?.find((f: any) => f.label === 'Achievable')?.value || 'Can this realistically be done with available resources?',
+                  relevant: exercise.fields?.find((f: any) => f.label === 'Relevant')?.value || 'Why does this matter to your organization\'s success?',
+                  timeBound: exercise.fields?.find((f: any) => f.label === 'Time-bound')?.value || 'When will this be completed? Set a specific deadline.'
+                }));
+              }
+              break;
+          }
+        });
+      }
+
+      await downloadReactPDF(extractedData, (step: string, progress: number) => {
         setPdfStep(step);
         setPdfProgress(progress);
       });

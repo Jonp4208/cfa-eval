@@ -696,9 +696,9 @@ export default function SimplePlaybookEditor() {
         ]
       };
 
-      // Use the new React PDF export
+      // Use the new React PDF export with the current playbook data
       const { downloadReactPDF } = await import('../../../utils/ReactPdfExport');
-      await downloadReactPDF(playbookForPdf);
+      await downloadReactPDF(playbookData);
 
       toast({
         title: 'Success',
