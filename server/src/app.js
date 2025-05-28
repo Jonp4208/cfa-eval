@@ -165,6 +165,104 @@ apiRouter.use('/invoices', invoicesRouter);
 apiRouter.use('/admin', adminRouter);
 apiRouter.use('/user-store', userStoreRouter);
 
+// PDF Generation using Puppeteer
+apiRouter.post('/generate-pdf', async (req, res) => {
+  try {
+    const { html, options = {} } = req.body;
+
+    if (!html) {
+      return res.status(400).json({ error: 'HTML content is required' });
+    }
+
+    const puppeteer = await import('puppeteer');
+
+    // Launch browser with optimized settings
+    const browser = await puppeteer.default.launch({
+      headless: 'new',
+      args: [
+        '--no-sandbox',
+        '--disable-setuid-sandbox',
+        '--disable-dev-shm-usage',
+        '--disable-accelerated-2d-canvas',
+        '--no-first-run',
+        '--no-zygote',
+        '--disable-gpu'
+      ]
+    });
+
+    const page = await browser.newPage();
+
+    // Set content with proper styling
+    const fullHtml = `
+      <!DOCTYPE html>
+      <html>
+        <head>
+          <meta charset="UTF-8">
+          <meta name="viewport" content="width=device-width, initial-scale=1.0">
+          <style>
+            * {
+              box-sizing: border-box;
+            }
+            body {
+              font-family: 'Segoe UI', Arial, sans-serif;
+              line-height: 1.6;
+              color: #2d3748;
+              margin: 0;
+              padding: 20mm;
+              background: white;
+            }
+            @page {
+              margin: 20mm;
+              size: A4;
+            }
+            @media print {
+              body {
+                padding: 0;
+              }
+            }
+          </style>
+        </head>
+        <body>
+          ${html}
+        </body>
+      </html>
+    `;
+
+    await page.setContent(fullHtml, { waitUntil: 'networkidle0' });
+
+    // Generate PDF with optimized options for better space utilization
+    const pdfOptions = {
+      format: options.format || 'A4',
+      margin: options.margin || {
+        top: '15mm',
+        right: '15mm',
+        bottom: '15mm',
+        left: '15mm'
+      },
+      printBackground: options.printBackground !== false,
+      preferCSSPageSize: options.preferCSSPageSize !== false,
+      displayHeaderFooter: false
+    };
+
+    const pdfBuffer = await page.pdf(pdfOptions);
+
+    await browser.close();
+
+    // Set proper headers for PDF response
+    res.setHeader('Content-Type', 'application/pdf');
+    res.setHeader('Content-Disposition', 'attachment; filename="playbook.pdf"');
+    res.setHeader('Content-Length', pdfBuffer.length);
+    res.end(pdfBuffer, 'binary');
+
+  } catch (error) {
+    logger.error('Error generating PDF:', error);
+    res.status(500).json({
+      error: 'Failed to generate PDF',
+      message: error.message
+    });
+  }
+});
+
 // Test Email Configuration
 apiRouter.post('/test-email', async (req, res) => {
   try {

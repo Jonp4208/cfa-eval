@@ -8,8 +8,6 @@ import { useToast } from '@/components/ui/use-toast';
 import { Toaster } from '@/components/ui/toaster';
 import { ArrowLeft, Save, Eye, EyeOff, Printer } from 'lucide-react';
 import playbookService, { Playbook, ContentBlock } from '@/services/playbookService';
-import jsPDF from 'jspdf';
-import html2canvas from 'html2canvas';
 
 interface EditableTextProps {
   value: string;
@@ -583,115 +581,124 @@ export default function SimplePlaybookEditor() {
 
   const handlePrint = async () => {
     try {
-      // Get the playbook content element
-      const playbookContent = document.querySelector('.playbook-content') as HTMLElement;
-      if (!playbookContent) {
-        toast({
-          title: 'Error',
-          description: 'Could not find playbook content to print',
-          variant: 'destructive'
-        });
-        return;
-      }
-
-      // Show loading state
       toast({
-        title: 'Generating PDF',
+        title: 'Generating PDF...',
         description: 'Please wait while we create your PDF...'
       });
 
-      // Temporarily hide edit indicators for clean PDF
-      const editIndicators = playbookContent.querySelectorAll('.border-dashed, .border-blue-300');
-      editIndicators.forEach(el => {
-        (el as HTMLElement).style.border = 'none';
-        (el as HTMLElement).style.background = 'transparent';
-      });
+      // Convert the current playbook data to the format expected by the PDF generator
+      const playbookForPdf = {
+        title: playbookData.title,
+        subtitle: playbookData.subtitle,
+        description: playbookData.description,
+        category: playbookData.category,
+        targetRole: playbookData.targetRole,
+        contentBlocks: [
+          // Step 1 - Priority Matrix
+          {
+            type: 'step-section',
+            order: 1,
+            content: {
+              stepNumber: 1,
+              title: 'Identify Your Priorities Using the Priority Matrix',
+              description: 'Every week, categorize your responsibilities and tasks into these four boxes:'
+            }
+          },
+          {
+            type: 'priority-matrix',
+            order: 2,
+            content: {
+              urgentImportant: playbookData.urgentImportantDescription,
+              importantNotUrgent: playbookData.importantNotUrgentDescription,
+              urgentNotImportant: playbookData.urgentNotImportantDescription,
+              notUrgentNotImportant: playbookData.notUrgentNotImportantDescription
+            }
+          },
+          // Step 2 - SMART Goals
+          {
+            type: 'step-section',
+            order: 3,
+            content: {
+              stepNumber: 2,
+              title: 'Turn Top Priorities into SMART Goals',
+              description: 'Take your "URGENT + IMPORTANT" and "IMPORTANT + NOT URGENT" items and make them SMART goals:'
+            }
+          },
+          {
+            type: 'smart-template',
+            order: 4,
+            content: {
+              goals: playbookData.smartGoals
+            }
+          },
+          // Step 3 - Weekly Process
+          {
+            type: 'step-section',
+            order: 5,
+            content: {
+              stepNumber: 3,
+              title: 'Weekly Priority Assessment Process',
+              description: 'Follow this weekly process to stay on top of your priorities:'
+            }
+          },
+          {
+            type: 'checklist',
+            order: 6,
+            content: {
+              title: 'Every Monday Morning (15 minutes):',
+              items: [
+                'Review your area of responsibility - what needs attention?',
+                'Check feedback from last week - any recurring issues?',
+                'Assess current projects and systems - what needs follow-up?',
+                'Ask team members - what challenges are they facing?',
+                'Review upcoming deadlines and commitments - what\'s due soon?'
+              ]
+            }
+          },
+          {
+            type: 'checklist',
+            order: 7,
+            content: {
+              title: 'Then Categorize Each Issue:',
+              items: [
+                'Write each issue on the priority matrix',
+                'Focus on "Urgent + Important" first',
+                'Schedule "Important + Not Urgent" items',
+                'Delegate "Urgent + Not Important" to team',
+                'Eliminate or ignore "Not Urgent + Not Important"'
+              ]
+            }
+          },
+          // Step 4 - Monthly Process
+          {
+            type: 'step-section',
+            order: 8,
+            content: {
+              stepNumber: 4,
+              title: 'Monthly Priority Assessment Process',
+              description: 'Every month, conduct a comprehensive review of your priorities and systems:'
+            }
+          },
+          {
+            type: 'checklist',
+            order: 9,
+            content: {
+              title: 'Monthly Review (First Monday of Month):',
+              items: [
+                'Review all completed weekly assessments - what patterns do you see?',
+                'Analyze feedback and performance data - any recurring issues?',
+                'Evaluate systems and processes - what needs improvement or updating?',
+                'Assess team development - who needs additional training or support?',
+                'Review goals and priorities - are they still relevant and achievable?'
+              ]
+            }
+          }
+        ]
+      };
 
-      // Hide edit icons
-      const editIcons = playbookContent.querySelectorAll('.absolute');
-      editIcons.forEach(el => {
-        (el as HTMLElement).style.display = 'none';
-      });
-
-      // Create full canvas first
-      const canvas = await html2canvas(playbookContent, {
-        scale: 2,
-        useCORS: true,
-        allowTaint: true,
-        backgroundColor: '#ffffff',
-        width: playbookContent.scrollWidth,
-        height: playbookContent.scrollHeight
-      });
-
-      // Create PDF with proper page dimensions
-      const pdf = new jsPDF({
-        orientation: 'portrait',
-        unit: 'mm',
-        format: 'a4'
-      });
-
-      const pdfWidth = pdf.internal.pageSize.getWidth();
-      const pdfHeight = pdf.internal.pageSize.getHeight();
-      const margin = 10; // 10mm margin
-      const contentWidth = pdfWidth - (margin * 2);
-      const contentHeight = pdfHeight - (margin * 2);
-
-      // Calculate scaling
-      const imgWidth = canvas.width;
-      const imgHeight = canvas.height;
-      const ratio = contentWidth / imgWidth;
-      const scaledHeight = imgHeight * ratio;
-
-      // Calculate how many pages we need
-      const pageHeight = contentHeight;
-      const totalPages = Math.ceil(scaledHeight / pageHeight);
-
-      for (let pageNum = 0; pageNum < totalPages; pageNum++) {
-        // Add new page if not the first page
-        if (pageNum > 0) {
-          pdf.addPage();
-        }
-
-        // Calculate the portion of the image for this page
-        const sourceY = (pageNum * pageHeight) / ratio;
-        const sourceHeight = Math.min(pageHeight / ratio, imgHeight - sourceY);
-
-        // Create a temporary canvas for this page
-        const pageCanvas = document.createElement('canvas');
-        const pageCtx = pageCanvas.getContext('2d');
-        pageCanvas.width = imgWidth;
-        pageCanvas.height = sourceHeight;
-
-        // Draw the portion of the original canvas onto the page canvas
-        pageCtx?.drawImage(
-          canvas,
-          0, sourceY,           // Source x, y
-          imgWidth, sourceHeight, // Source width, height
-          0, 0,                 // Destination x, y
-          imgWidth, sourceHeight  // Destination width, height
-        );
-
-        // Convert to image and add to PDF
-        const pageImgData = pageCanvas.toDataURL('image/png');
-        const finalHeight = Math.min(pageHeight, scaledHeight - (pageNum * pageHeight));
-
-        pdf.addImage(pageImgData, 'PNG', margin, margin, contentWidth, finalHeight);
-      }
-
-      // Restore edit indicators
-      editIndicators.forEach(el => {
-        (el as HTMLElement).style.border = '';
-        (el as HTMLElement).style.background = '';
-      });
-
-      // Restore edit icons
-      editIcons.forEach(el => {
-        (el as HTMLElement).style.display = '';
-      });
-
-      // Save the PDF
-      const fileName = `${playbookData.title.replace(/[^a-z0-9]/gi, '_').toLowerCase()}_playbook.pdf`;
-      pdf.save(fileName);
+      // Use the new Puppeteer-based PDF export
+      const { downloadPlaybookPDF } = await import('../../../utils/PlaybookPdfExport');
+      await downloadPlaybookPDF(playbookForPdf);
 
       toast({
         title: 'Success',
