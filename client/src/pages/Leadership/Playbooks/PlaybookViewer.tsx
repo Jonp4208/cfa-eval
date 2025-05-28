@@ -20,7 +20,7 @@ import { toast } from 'sonner';
 import playbookService, { Playbook } from '@/services/playbookService';
 import PageHeader, { headerButtonClass } from '@/components/PageHeader';
 import PlaybookPreview from './components/PlaybookPreview';
-import { downloadPlaybookPDF } from '@/utils/PlaybookPdfExport';
+import { downloadReactPDF } from '@/utils/ReactPdfExport';
 import PDFLoadingOverlay from '@/components/PDFLoadingOverlay';
 
 export default function PlaybookViewer() {
@@ -76,7 +76,7 @@ export default function PlaybookViewer() {
       setPdfProgress(0);
       setPdfStep('Initializing...');
 
-      await downloadPlaybookPDF(playbook, (step: string, progress: number) => {
+      await downloadReactPDF(playbook, (step: string, progress: number) => {
         setPdfStep(step);
         setPdfProgress(progress);
       });

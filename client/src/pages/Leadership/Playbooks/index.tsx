@@ -25,7 +25,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import { toast } from 'sonner';
 import playbookService, { Playbook } from '@/services/playbookService';
 import PlaybookPreview from './components/PlaybookPreview';
-import { downloadPlaybookPDF } from '@/utils/PlaybookPdfExport';
+import { downloadReactPDF } from '@/utils/ReactPdfExport';
 import PDFLoadingOverlay from '@/components/PDFLoadingOverlay';
 import {
   Select,
@@ -147,7 +147,7 @@ export default function Playbooks() {
       setPdfProgress(0);
       setPdfStep('Initializing...');
 
-      await downloadPlaybookPDF(playbook, (step: string, progress: number) => {
+      await downloadReactPDF(playbook, (step: string, progress: number) => {
         setPdfStep(step);
         setPdfProgress(progress);
       });
@@ -235,7 +235,7 @@ export default function Playbooks() {
       setPdfProgress(0);
       setPdfStep('Initializing...');
 
-      await downloadPlaybookPDF(demoPlaybook, (step: string, progress: number) => {
+      await downloadReactPDF(demoPlaybook, (step: string, progress: number) => {
         setPdfStep(step);
         setPdfProgress(progress);
       });

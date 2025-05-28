@@ -696,9 +696,9 @@ export default function SimplePlaybookEditor() {
         ]
       };
 
-      // Use the new Puppeteer-based PDF export
-      const { downloadPlaybookPDF } = await import('../../../utils/PlaybookPdfExport');
-      await downloadPlaybookPDF(playbookForPdf);
+      // Use the new React PDF export
+      const { downloadReactPDF } = await import('../../../utils/ReactPdfExport');
+      await downloadReactPDF(playbookForPdf);
 
       toast({
         title: 'Success',
