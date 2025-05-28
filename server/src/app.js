@@ -220,10 +220,9 @@ apiRouter.post('/generate-pdf', async (req, res) => {
         timeout: 60000
       };
     } else {
-      // Production/Linux configuration - use system Chrome from buildpack
+      // Production/Linux configuration - let Puppeteer use its bundled Chrome
       launchOptions = {
         headless: 'new',
-        executablePath: process.env.GOOGLE_CHROME_BIN || '/app/.chrome-for-testing/chrome-linux64/chrome',
         args: [
           '--no-sandbox',
           '--disable-setuid-sandbox',
