@@ -14,8 +14,7 @@
     "verbose": "node run-server.js --log-level=DEBUG",
     "cleanup-shifts": "node cleanup-shifts.js",
     "send-playbook-announcement": "node scripts/runPlaybookAnnouncement.js",
-    "send-test-email": "node scripts/sendTestEmail.js",
-    "postinstall": "npx puppeteer browsers install chrome"
+    "send-test-email": "node scripts/sendTestEmail.js"
   },
   "dependencies": {
     "@aws-sdk/client-s3": "^3.798.0",
@@ -42,7 +41,6 @@
     "node-schedule": "^2.1.1",
     "nodemailer": "^6.9.16",
     "pdf-poppler": "^0.2.1",
-    "html-pdf-node": "^1.0.8",
     "zod": "^3.24.3"
   },
   "description": "Server for CFA Evaluation App",
