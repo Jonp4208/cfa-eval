@@ -59,6 +59,8 @@
   }
 }
 
+/* Removed complex print styles - using PDF export instead */
+
 /* Mobile-friendly styles */
 @layer utilities {
   .tap-highlight-transparent {

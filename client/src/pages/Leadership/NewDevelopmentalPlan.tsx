@@ -31,7 +31,9 @@ import {
   Lock,
   AlertCircle,
   RefreshCw,
-  Bug
+  Bug,
+  MessageSquare,
+  Settings
 } from 'lucide-react'
 import { format } from 'date-fns'
 import { useSubscription } from '@/contexts/SubscriptionContext'
@@ -68,7 +70,7 @@ const LEADERSHIP_PLANS = [
   {
     id: 'heart-of-leadership',
     title: 'The Heart of Leadership',
-    description: 'Build a foundation of character-based leadership focused on serving others first - the essential starting point for restaurant leaders.',
+    description: 'Build a foundation of character-based leadership focused on serving others first. This plan develops the essential leadership traits that inspire team members to follow you because of who you are, not just your position.',
     icon: Heart,
     skills: [
       {
@@ -138,7 +140,7 @@ const LEADERSHIP_PLANS = [
   {
     id: 'restaurant-culture-builder',
     title: 'Restaurant Culture Builder',
-    description: 'Create a positive, high-performing restaurant culture where team members thrive and guests receive exceptional service.',
+    description: 'Learn to intentionally shape your restaurant\'s culture to create an environment where team members are engaged, guests receive exceptional service, and business results follow. This plan provides practical tools for building a thriving culture.',
     icon: Users,
     skills: [
       {
@@ -170,7 +172,9 @@ const LEADERSHIP_PLANS = [
           ],
           resources: [
             'Team huddle format',
-            'Cross-training schedule template'
+            'Cross-training schedule template',
+            '90-Day Culture Leadership Plan Template (downloadable)',
+            '90-Day Culture Leadership Plan Example (Chick-fil-A)'
           ],
           timeline: '4-weeks'
         }
@@ -206,79 +210,9 @@ const LEADERSHIP_PLANS = [
     ]
   },
   {
-    id: 'guest-experience-master',
-    title: 'Guest Experience Master',
-    description: 'Apply Truett Cathy\'s principles to create remarkable guest experiences that build loyalty and drive business results.',
-    icon: Heart,
-    skills: [
-      {
-        area: 'Second-Mile Service',
-        currentLevel: 1,
-        targetLevel: 5,
-        developmentPlan: {
-          actions: [
-            'Identify 3 "second-mile" service opportunities for your restaurant',
-            'Train team on recognizing guest needs before they\'re expressed',
-            'Share and celebrate second-mile service stories daily'
-          ],
-          resources: [
-            'Second-mile service examples',
-            'Guest need anticipation guide'
-          ],
-          timeline: '3-weeks'
-        }
-      },
-      {
-        area: 'Service Recovery',
-        currentLevel: 1,
-        targetLevel: 5,
-        developmentPlan: {
-          actions: [
-            'Implement the LAST model: Listen, Apologize, Solve, Thank',
-            'Empower team members to resolve guest issues on the spot',
-            'Debrief service failures to prevent recurrence'
-          ],
-          resources: [
-            'LAST model quick reference',
-            'Service recovery role-play scenarios'
-          ],
-          timeline: '2-weeks'
-        }
-      }
-    ],
-    activities: [
-      {
-        title: 'Guest Journey Mapping',
-        type: 'development',
-        description: 'Map your guest experience from arrival to departure, identifying moments that matter.',
-        timeline: '1 week',
-        status: 'not-started'
-      },
-      {
-        title: 'Service Standards Workshop',
-        type: 'training',
-        description: 'Define specific, observable service behaviors for each guest touchpoint.',
-        timeline: '2 weeks',
-        status: 'not-started'
-      }
-    ],
-    milestones: [
-      {
-        title: 'Service Standards Implementation',
-        dueDate: '2024-05-15',
-        description: 'Train all team members on new service standards and expectations'
-      },
-      {
-        title: 'Guest Feedback System',
-        dueDate: '2024-06-15',
-        description: 'Implement a simple system to collect and act on guest feedback'
-      }
-    ]
-  },
-  {
     id: 'team-development',
     title: 'Team Development Expert',
-    description: 'Build a high-performing restaurant team by mastering the art of hiring, training, and developing exceptional team members.',
+    description: 'Master the skills of coaching, feedback, and talent development to build a high-performing restaurant team. This plan equips you with practical tools to help each team member reach their full potential while driving operational excellence.',
     icon: Users,
     skills: [
       {
@@ -304,12 +238,12 @@ const LEADERSHIP_PLANS = [
         targetLevel: 5,
         developmentPlan: {
           actions: [
-            'Identify potential in team members using the "will/skill" matrix',
-            'Create simple development plans for high-potential team members',
-            'Provide stretch assignments that build new capabilities'
+            'Identify high-potential team members',
+            'Create personalized development plans',
+            'Provide stretch assignments for growth'
           ],
           resources: [
-            'Will/skill assessment tool',
+            'Potential assessment guide',
             'Development plan template'
           ],
           timeline: '4-weeks'
@@ -318,17 +252,17 @@ const LEADERSHIP_PLANS = [
     ],
     activities: [
       {
-        title: 'Team Skills Assessment',
+        title: 'Coaching Practice',
         type: 'development',
-        description: 'Evaluate your team\'s current capabilities and identify development needs.',
-        timeline: '1 week',
+        description: 'Practice coaching conversations with a peer or mentor for feedback.',
+        timeline: '2 weeks',
         status: 'not-started'
       },
       {
-        title: 'Coaching Practice Sessions',
-        type: 'training',
-        description: 'Conduct structured practice of coaching conversations with peer feedback.',
-        timeline: '2 weeks',
+        title: 'Team Member Development Plan',
+        type: 'assignment',
+        description: 'Create a development plan for one high-potential team member.',
+        timeline: '3 weeks',
         status: 'not-started'
       }
     ],
@@ -346,72 +280,282 @@ const LEADERSHIP_PLANS = [
     ]
   },
   {
-    id: 'operational-excellence',
-    title: 'Operational Excellence',
-    description: 'Master the fundamentals of restaurant operations to deliver consistent quality, speed, and efficiency that drives business results.',
-    icon: Brain,
+    id: 'strategic-leadership',
+    title: 'Strategic Leadership Mastery',
+    description: 'Develop strategic thinking, vision-setting, and decision-making capabilities to drive organizational success. This plan builds the skills needed to think beyond day-to-day operations and lead with strategic purpose.',
+    icon: Target,
     skills: [
       {
-        area: 'Process Optimization',
+        area: 'Strategic Thinking',
         currentLevel: 1,
         targetLevel: 5,
         developmentPlan: {
           actions: [
-            'Identify and eliminate bottlenecks in service delivery',
-            'Implement visual management tools for key processes',
-            'Conduct regular process audits and improvements'
+            'Analyze industry trends and their impact on your restaurant',
+            'Practice the "5 Whys" technique for root cause analysis',
+            'Create monthly strategic reviews with your team'
           ],
           resources: [
-            'Process mapping template',
-            'Visual management examples'
+            'Strategic Thinking for Leaders course',
+            'Industry trend analysis template'
           ],
-          timeline: '3-weeks'
+          timeline: '6-weeks'
         }
       },
       {
-        area: 'Performance Management',
+        area: 'Vision & Direction',
         currentLevel: 1,
         targetLevel: 5,
         developmentPlan: {
           actions: [
-            'Set clear, measurable targets for key performance indicators',
-            'Implement daily/weekly performance tracking',
-            'Hold effective performance conversations'
+            'Develop a clear 90-day vision for your team',
+            'Communicate vision through storytelling',
+            'Align daily operations with long-term goals'
           ],
           resources: [
-            'KPI tracking template',
-            'Performance conversation guide'
+            'Vision crafting workshop',
+            'Storytelling for leaders guide'
           ],
-          timeline: '2-weeks'
+          timeline: '4-weeks'
         }
       }
     ],
     activities: [
       {
-        title: 'Operations Assessment',
+        title: 'Strategic Planning Session',
         type: 'development',
-        description: 'Evaluate current operational performance against standards and identify gaps.',
+        description: 'Lead a strategic planning session with your team to set quarterly goals.',
+        timeline: '2 weeks',
+        status: 'not-started'
+      },
+      {
+        title: 'Industry Analysis Project',
+        type: 'assignment',
+        description: 'Research and present on industry trends affecting your restaurant.',
+        timeline: '4 weeks',
+        status: 'not-started'
+      }
+    ],
+    milestones: [
+      {
+        title: 'Strategic Plan Development',
+        dueDate: '2024-06-01',
+        description: 'Create a comprehensive strategic plan for your team'
+      },
+      {
+        title: 'Vision Communication',
+        dueDate: '2024-07-01',
+        description: 'Successfully communicate and align team with strategic vision'
+      }
+    ]
+  },
+  {
+    id: 'communication-influence',
+    title: 'Communication & Influence Excellence',
+    description: 'Master the art of clear communication and positive influence to inspire teams and drive results. This plan develops both verbal and non-verbal communication skills essential for effective leadership.',
+    icon: MessageSquare,
+    skills: [
+      {
+        area: 'Clear Communication',
+        currentLevel: 1,
+        targetLevel: 5,
+        developmentPlan: {
+          actions: [
+            'Practice the "Tell-Show-Check" communication method',
+            'Use active listening techniques in all conversations',
+            'Provide specific, actionable feedback daily'
+          ],
+          resources: [
+            'Communication skills workshop',
+            'Active listening checklist'
+          ],
+          timeline: '4-weeks'
+        }
+      },
+      {
+        area: 'Positive Influence',
+        currentLevel: 1,
+        targetLevel: 5,
+        developmentPlan: {
+          actions: [
+            'Build rapport with team members through genuine interest',
+            'Use persuasion techniques based on understanding others\' motivations',
+            'Lead by example in all situations'
+          ],
+          resources: [
+            'Influence without authority guide',
+            'Rapport building techniques'
+          ],
+          timeline: '5-weeks'
+        }
+      }
+    ],
+    activities: [
+      {
+        title: 'Communication Style Assessment',
+        type: 'development',
+        description: 'Complete an assessment to understand your communication style and its impact.',
         timeline: '1 week',
         status: 'not-started'
       },
       {
-        title: 'Process Improvement Project',
-        type: 'assignment',
-        description: 'Select one operational process to optimize for better results.',
+        title: 'Presentation Skills Practice',
+        type: 'training',
+        description: 'Practice presenting to your team and receive feedback on delivery.',
         timeline: '3 weeks',
         status: 'not-started'
       }
     ],
     milestones: [
       {
-        title: 'Performance Dashboard',
+        title: 'Communication Improvement',
         dueDate: '2024-05-15',
-        description: 'Implement visual tracking of key performance metrics'
+        description: 'Demonstrate measurable improvement in communication effectiveness'
       },
       {
-        title: 'Process Improvement Results',
-        dueDate: '2024-07-01',
-        description: 'Document measurable improvements from process optimization'
+        title: 'Influence Mastery',
+        dueDate: '2024-06-15',
+        description: 'Successfully influence positive change in team behavior'
+      }
+    ]
+  },
+  {
+    id: 'operational-excellence',
+    title: 'Operational Excellence Leader',
+    description: 'Drive efficiency, quality, and continuous improvement in restaurant operations. This plan equips you with the tools and mindset to optimize processes and deliver consistent results.',
+    icon: Settings,
+    skills: [
+      {
+        area: 'Process Improvement',
+        currentLevel: 1,
+        targetLevel: 5,
+        developmentPlan: {
+          actions: [
+            'Map current processes and identify bottlenecks',
+            'Implement small improvements weekly',
+            'Track and measure process efficiency metrics'
+          ],
+          resources: [
+            'Process mapping template',
+            'Lean restaurant operations guide'
+          ],
+          timeline: '6-weeks'
+        }
+      },
+      {
+        area: 'Quality Management',
+        currentLevel: 1,
+        targetLevel: 5,
+        developmentPlan: {
+          actions: [
+            'Establish quality standards for all key processes',
+            'Conduct regular quality audits',
+            'Train team on quality expectations and procedures'
+          ],
+          resources: [
+            'Quality management system',
+            'Audit checklist template'
+          ],
+          timeline: '4-weeks'
+        }
+      }
+    ],
+    activities: [
+      {
+        title: 'Process Improvement Project',
+        type: 'assignment',
+        description: 'Identify and improve one key operational process in your restaurant.',
+        timeline: '4 weeks',
+        status: 'not-started'
+      },
+      {
+        title: 'Efficiency Metrics Dashboard',
+        type: 'development',
+        description: 'Create a dashboard to track key operational efficiency metrics.',
+        timeline: '2 weeks',
+        status: 'not-started'
+      }
+    ],
+    milestones: [
+      {
+        title: 'Process Optimization',
+        dueDate: '2024-06-01',
+        description: 'Complete optimization of one major operational process'
+      },
+      {
+        title: 'Quality System Implementation',
+        dueDate: '2024-07-15',
+        description: 'Implement comprehensive quality management system'
+      }
+    ]
+  },
+  {
+    id: 'innovation-change',
+    title: 'Innovation & Change Champion',
+    description: 'Lead innovation initiatives and guide teams through change with confidence. This plan develops the skills needed to foster creativity, adapt to change, and drive continuous improvement.',
+    icon: Lightbulb,
+    skills: [
+      {
+        area: 'Change Leadership',
+        currentLevel: 1,
+        targetLevel: 5,
+        developmentPlan: {
+          actions: [
+            'Communicate the "why" behind changes clearly',
+            'Address resistance with empathy and understanding',
+            'Celebrate small wins during change initiatives'
+          ],
+          resources: [
+            'Change management framework',
+            'Resistance management guide'
+          ],
+          timeline: '5-weeks'
+        }
+      },
+      {
+        area: 'Innovation Mindset',
+        currentLevel: 1,
+        targetLevel: 5,
+        developmentPlan: {
+          actions: [
+            'Encourage team members to suggest improvements',
+            'Test small experiments before major changes',
+            'Learn from failures and iterate quickly'
+          ],
+          resources: [
+            'Innovation workshop materials',
+            'Experimentation framework'
+          ],
+          timeline: '4-weeks'
+        }
+      }
+    ],
+    activities: [
+      {
+        title: 'Innovation Challenge',
+        type: 'development',
+        description: 'Lead a team innovation challenge to improve customer experience.',
+        timeline: '3 weeks',
+        status: 'not-started'
+      },
+      {
+        title: 'Change Management Case Study',
+        type: 'training',
+        description: 'Study a successful change initiative and present learnings to leadership.',
+        timeline: '2 weeks',
+        status: 'not-started'
+      }
+    ],
+    milestones: [
+      {
+        title: 'Innovation Implementation',
+        dueDate: '2024-06-15',
+        description: 'Successfully implement one innovative solution'
+      },
+      {
+        title: 'Change Leadership Mastery',
+        dueDate: '2024-08-01',
+        description: 'Lead a major change initiative with positive outcomes'
       }
     ]
   }
@@ -579,7 +723,25 @@ export default function NewDevelopmentalPlan() {
                                   <h5 className="text-sm font-medium text-gray-700 mb-2">Required Resources:</h5>
                                   <ul className="list-disc pl-5 space-y-1">
                                     {skill.developmentPlan.resources.map((resource, i) => (
-                                      <li key={i} className="text-sm text-gray-600">{resource}</li>
+                                      <li key={i} className="text-sm text-gray-600">
+                                        {resource.includes('90-Day Culture Leadership Plan Template') ? (
+                                          <button
+                                            onClick={() => window.open('/templates/90-day-culture-leadership-plan.html', '_blank')}
+                                            className="text-blue-600 hover:text-blue-800 hover:underline cursor-pointer"
+                                          >
+                                            {resource}
+                                          </button>
+                                        ) : resource.includes('90-Day Culture Leadership Plan Example') ? (
+                                          <button
+                                            onClick={() => window.open('/templates/90-day-culture-leadership-plan-example.html', '_blank')}
+                                            className="text-green-600 hover:text-green-800 hover:underline cursor-pointer"
+                                          >
+                                            {resource}
+                                          </button>
+                                        ) : (
+                                          resource
+                                        )}
+                                      </li>
                                     ))}
                                   </ul>
                                 </div>

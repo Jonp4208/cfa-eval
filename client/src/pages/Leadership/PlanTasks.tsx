@@ -19,7 +19,8 @@ import {
   Loader2,
   ExternalLink,
   FileCheck,
-  X
+  X,
+  RefreshCw
 } from 'lucide-react'
 import api from '@/lib/axios'
 
@@ -235,6 +236,17 @@ export default function PlanTasks() {
   const handleTaskCompletion = async () => {
     if (!selectedTask) return
 
+    // Validate that evidence is provided for tasks that require it
+    const requiresEvidence = ['reading', 'video', 'reflection', 'assessment'].includes(selectedTask.type)
+    if (requiresEvidence && !completionEvidence.trim()) {
+      toast({
+        title: 'Evidence Required',
+        description: `Please provide evidence of completion for this ${selectedTask.type} task.`,
+        variant: 'destructive'
+      })
+      return
+    }
+
     try {
       setUpdatingTask(selectedTask.id)
       await api.patch(`/api/leadership/my-plans/${planId}/tasks/${selectedTask.id}`, {
@@ -269,9 +281,10 @@ export default function PlanTasks() {
       closeCompletionDialog()
     } catch (error) {
       console.error('Error completing task:', error)
+      const errorMessage = error.response?.data?.message || 'Failed to complete task. Please try again.'
       toast({
         title: 'Error',
-        description: 'Failed to complete task. Please try again.',
+        description: errorMessage,
         variant: 'destructive'
       })
     } finally {
@@ -621,7 +634,26 @@ export default function PlanTasks() {
             </div>
             <Progress value={progress} className="h-3 sm:h-2" />
           </div>
-          <div className="pt-2 flex justify-end">
+          <div className="pt-2 flex flex-col sm:flex-row gap-2 justify-end">
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={updateTasks}
+              disabled={updatingTasks}
+              className="text-blue-600 border-blue-200 hover:bg-blue-50 hover:text-blue-700 w-full sm:w-auto h-10"
+            >
+              {updatingTasks ? (
+                <>
+                  <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                  Updating...
+                </>
+              ) : (
+                <>
+                  <RefreshCw className="h-4 w-4 mr-2" />
+                  Update Tasks
+                </>
+              )}
+            </Button>
             <Button
               variant="outline"
               size="sm"
@@ -732,20 +764,50 @@ export default function PlanTasks() {
                       </div>
                     )}
 
-                    {task.resourceUrl && (
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        className="w-full sm:w-auto mt-2 text-blue-600 border-blue-200 hover:bg-blue-50 h-10 sm:h-9"
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          window.open(task.resourceUrl, '_blank');
-                        }}
-                      >
-                        <ExternalLink className="h-4 w-4 mr-2" />
-                        Open Resource
-                      </Button>
-                    )}
+                    <div className="flex flex-col sm:flex-row gap-2 mt-2">
+                      {task.resourceUrl && (
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          className="w-full sm:w-auto text-blue-600 border-blue-200 hover:bg-blue-50 h-10 sm:h-9"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            window.open(task.resourceUrl, '_blank');
+                          }}
+                        >
+                          <ExternalLink className="h-4 w-4 mr-2" />
+                          Open Resource
+                        </Button>
+                      )}
+                      {task.title === 'Culture Leadership Plan' && (
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          className="w-full sm:w-auto text-green-600 border-green-200 hover:bg-green-50 h-10 sm:h-9"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            window.open('/templates/90-day-culture-leadership-plan-example.html', '_blank');
+                          }}
+                        >
+                          <ExternalLink className="h-4 w-4 mr-2" />
+                          Example Plan
+                        </Button>
+                      )}
+                      {task.title === 'Team Values Workshop' && (
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          className="w-full sm:w-auto text-green-600 border-green-200 hover:bg-green-50 h-10 sm:h-9"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            window.open('/templates/team-values-workshop-example.html', '_blank');
+                          }}
+                        >
+                          <ExternalLink className="h-4 w-4 mr-2" />
+                          Example Workshop
+                        </Button>
+                      )}
+                    </div>
                   </div>
                 </div>
               </div>
@@ -766,6 +828,14 @@ export default function PlanTasks() {
             </DialogTitle>
             <DialogDescription className="text-xs sm:text-sm mt-2">
               {selectedTask && getCompletionPrompt(selectedTask.type, selectedTask.title)}
+              {selectedTask && ['reading', 'video', 'reflection', 'assessment'].includes(selectedTask.type) && (
+                <div className="mt-2 p-2 bg-amber-50 border border-amber-200 rounded-md">
+                  <div className="flex items-center gap-2 text-amber-800">
+                    <AlertCircle className="h-4 w-4 flex-shrink-0" />
+                    <span className="text-xs font-medium">Evidence of completion is required for this task</span>
+                  </div>
+                </div>
+              )}
             </DialogDescription>
           </DialogHeader>
           <div className="space-y-4 py-2 max-h-[60vh] overflow-y-auto pr-1">
@@ -954,7 +1024,10 @@ export default function PlanTasks() {
             </Button>
             <Button
               onClick={handleTaskCompletion}
-              disabled={!completionEvidence.trim() || updatingTask === selectedTask?.id}
+              disabled={
+                updatingTask === selectedTask?.id ||
+                (selectedTask && ['reading', 'video', 'reflection', 'assessment'].includes(selectedTask.type) && !completionEvidence.trim())
+              }
               className="w-full sm:w-auto order-1 sm:order-2 bg-green-600 hover:bg-green-700 h-11 sm:h-10"
             >
               {updatingTask === selectedTask?.id ? (

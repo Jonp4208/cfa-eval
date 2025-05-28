@@ -25,6 +25,8 @@ import { useAuth } from '@/contexts/AuthContext';
 import { toast } from 'sonner';
 import playbookService, { Playbook } from '@/services/playbookService';
 import PlaybookPreview from './components/PlaybookPreview';
+import { downloadPlaybookPDF } from '@/utils/PlaybookPdfExport';
+import PDFLoadingOverlay from '@/components/PDFLoadingOverlay';
 import {
   Select,
   SelectContent,
@@ -57,6 +59,10 @@ export default function Playbooks() {
   const [demoPlaybookOpen, setDemoPlaybookOpen] = useState(false);
   const [selectedPlaybook, setSelectedPlaybook] = useState<Playbook | null>(null);
   const [playbookModalOpen, setPlaybookModalOpen] = useState(false);
+  const [loadingPlaybook, setLoadingPlaybook] = useState(false);
+  const [pdfLoading, setPdfLoading] = useState(false);
+  const [pdfProgress, setPdfProgress] = useState(0);
+  const [pdfStep, setPdfStep] = useState('');
 
   const categories = ['Leadership', 'Operations', 'Training', 'Safety', 'Customer Service', 'General'];
   const roles = ['Team Member', 'Trainer', 'Leader', 'Director', 'All'];
@@ -85,9 +91,19 @@ export default function Playbooks() {
     navigate('/leadership/playbooks/new');
   };
 
-  const handleViewPlaybook = (playbook: Playbook) => {
-    setSelectedPlaybook(playbook);
-    setPlaybookModalOpen(true);
+  const handleViewPlaybook = async (playbook: Playbook) => {
+    try {
+      setLoadingPlaybook(true);
+      // Fetch the full playbook data to ensure we have all content blocks
+      const fullPlaybook = await playbookService.getPlaybook(playbook._id!);
+      setSelectedPlaybook(fullPlaybook);
+      setPlaybookModalOpen(true);
+    } catch (error) {
+      console.error('Error fetching playbook:', error);
+      toast.error('Failed to load playbook');
+    } finally {
+      setLoadingPlaybook(false);
+    }
   };
 
   const handleEditPlaybook = (id: string) => {
@@ -123,6 +139,119 @@ export default function Playbooks() {
   const openDeleteDialog = (playbook: Playbook) => {
     setPlaybookToDelete(playbook);
     setDeleteDialogOpen(true);
+  };
+
+  const handleExportPDF = async (playbook: Playbook) => {
+    try {
+      setPdfLoading(true);
+      setPdfProgress(0);
+      setPdfStep('Initializing...');
+
+      await downloadPlaybookPDF(playbook, (step: string, progress: number) => {
+        setPdfStep(step);
+        setPdfProgress(progress);
+      });
+
+      toast.success('PDF downloaded successfully!');
+    } catch (error) {
+      console.error('Error exporting PDF:', error);
+      toast.error('Failed to generate PDF');
+    } finally {
+      // Keep the overlay visible for a moment to show completion
+      setTimeout(() => {
+        setPdfLoading(false);
+        setPdfProgress(0);
+        setPdfStep('');
+      }, 1000);
+    }
+  };
+
+  const handleExportDemoPDF = async () => {
+    // Create a demo playbook object for PDF export
+    const demoPlaybook: Playbook = {
+      _id: 'demo',
+      title: 'Director of Facilities Playbook',
+      subtitle: 'How to Identify Priorities & Create SMART Goals',
+      description: 'A comprehensive guide for facilities directors on prioritizing tasks and creating effective SMART goals.',
+      category: 'Leadership',
+      targetRole: 'Director',
+      tags: ['facilities', 'priorities', 'smart-goals'],
+      isPublished: true,
+      viewCount: 247,
+      contentBlocks: [
+        {
+          id: '1',
+          type: 'header',
+          order: 1,
+          content: { text: 'Identify Your Priorities Using the Priority Matrix' }
+        },
+        {
+          id: '2',
+          type: 'text',
+          order: 2,
+          content: { text: 'Every week, categorize your facility issues into four boxes: Urgent + Important (DO FIRST), Important + Not Urgent (SCHEDULE), Urgent + Not Important (DELEGATE), and Not Urgent + Not Important (ELIMINATE).' }
+        },
+        {
+          id: '3',
+          type: 'header',
+          order: 3,
+          content: { text: 'Turn Top Priorities into SMART Goals' }
+        },
+        {
+          id: '4',
+          type: 'text',
+          order: 4,
+          content: { text: 'Take your "URGENT + IMPORTANT" and "IMPORTANT + NOT URGENT" items and make them SMART goals using the template below.' }
+        },
+        {
+          id: '5',
+          type: 'practice-section',
+          order: 5,
+          content: {
+            title: 'SMART Goal Template',
+            description: 'Use this template to create effective goals from your priorities.',
+            exercises: [
+              {
+                title: 'SMART Goal #1',
+                fields: [
+                  { label: 'S - Specific', value: 'What exactly needs to be accomplished? Be precise.' },
+                  { label: 'M - Measurable', value: 'How will you know when it\'s complete? What can you count or observe?' },
+                  { label: 'A - Achievable', value: 'Can this realistically be done with available resources?' },
+                  { label: 'R - Relevant', value: 'Why does this matter to the restaurant\'s success?' },
+                  { label: 'T - Time-bound', value: 'When will this be completed? Set a specific deadline.' }
+                ]
+              }
+            ]
+          }
+        }
+      ],
+      createdBy: { _id: 'demo', name: 'Demo User', email: 'demo@example.com' },
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString()
+    };
+
+    try {
+      setPdfLoading(true);
+      setPdfProgress(0);
+      setPdfStep('Initializing...');
+
+      await downloadPlaybookPDF(demoPlaybook, (step: string, progress: number) => {
+        setPdfStep(step);
+        setPdfProgress(progress);
+      });
+
+      toast.success('PDF downloaded successfully!');
+    } catch (error) {
+      console.error('Error exporting demo PDF:', error);
+      toast.error('Failed to generate PDF');
+    } finally {
+      // Keep the overlay visible for a moment to show completion
+      setTimeout(() => {
+        setPdfLoading(false);
+        setPdfProgress(0);
+        setPdfStep('');
+      }, 1000);
+    }
   };
 
   const getFilteredPlaybooks = () => {
@@ -574,11 +703,11 @@ export default function Playbooks() {
                 <Button
                   variant="outline"
                   size="sm"
-                  onClick={() => window.print()}
+                  onClick={handleExportDemoPDF}
                   className="flex items-center gap-2"
                 >
                   <Printer className="w-4 h-4" />
-                  Print
+                  Export PDF
                 </Button>
                 <AlertDialogAction onClick={() => setDemoPlaybookOpen(false)} className="m-0">
                   Close
@@ -937,7 +1066,14 @@ export default function Playbooks() {
       {/* Created Playbook Modal */}
       <AlertDialog open={playbookModalOpen} onOpenChange={setPlaybookModalOpen}>
         <AlertDialogContent className="max-w-4xl max-h-[90vh] flex flex-col">
-          {selectedPlaybook && (
+          {loadingPlaybook ? (
+            <div className="flex items-center justify-center p-8">
+              <div className="text-center">
+                <Loader2 className="w-8 h-8 animate-spin text-[#E51636] mx-auto mb-2" />
+                <p className="text-gray-600">Loading playbook...</p>
+              </div>
+            </div>
+          ) : selectedPlaybook ? (
             <>
               <AlertDialogHeader className="flex-shrink-0">
                 <div className="flex items-center justify-between mb-4">
@@ -958,11 +1094,11 @@ export default function Playbooks() {
                     <Button
                       variant="outline"
                       size="sm"
-                      onClick={() => window.print()}
+                      onClick={() => handleExportPDF(selectedPlaybook)}
                       className="flex items-center gap-2"
                     >
                       <Printer className="w-4 h-4" />
-                      Print
+                      Export PDF
                     </Button>
                     <AlertDialogAction onClick={() => setPlaybookModalOpen(false)} className="m-0">
                       Close
@@ -974,13 +1110,231 @@ export default function Playbooks() {
                 </AlertDialogDescription>
               </AlertDialogHeader>
 
-              <div className="playbook-content flex-1 overflow-y-auto">
-                <PlaybookPreview playbook={selectedPlaybook} />
+              <div className="playbook-content flex-1 overflow-y-auto space-y-6 p-6">
+                {/* Header */}
+                <div className="text-center border-b-2 border-red-600 pb-6 mb-8">
+                  <h1 className="text-2xl font-bold text-red-600 mb-2">
+                    {selectedPlaybook.title}
+                  </h1>
+                  <h2 className="text-base text-gray-600">
+                    {selectedPlaybook.subtitle || 'Leadership Development Playbook'}
+                  </h2>
+                </div>
+
+                {/* Description */}
+                {selectedPlaybook.description && (
+                  <div className="text-gray-700 leading-relaxed">
+                    {selectedPlaybook.description}
+                  </div>
+                )}
+
+                {/* Content Blocks */}
+                {selectedPlaybook.contentBlocks && selectedPlaybook.contentBlocks.length > 0 ? (
+                  <div className="space-y-6">
+                    {selectedPlaybook.contentBlocks.map((block, index) => (
+                      <div key={index} className="border-l-4 border-red-600 pl-4 py-2">
+                        {block.type === 'header' && (
+                          <div>
+                            <h3 className="text-lg font-semibold text-red-600 mb-2">
+                              {block.content.title}
+                            </h3>
+                            {block.content.subtitle && (
+                              <p className="text-gray-600">{block.content.subtitle}</p>
+                            )}
+                          </div>
+                        )}
+
+                        {block.type === 'text' && (
+                          <div className="prose max-w-none">
+                            <p className="text-gray-700">{block.content.text}</p>
+                          </div>
+                        )}
+
+                        {block.type === 'step-section' && (
+                          <div className="bg-blue-50 border-l-4 border-red-600 p-4 rounded-r-lg">
+                            <div className="flex items-center mb-3">
+                              <div className="bg-red-600 text-white w-6 h-6 rounded-full flex items-center justify-center font-bold mr-3 text-sm">
+                                {block.content.stepNumber || '?'}
+                              </div>
+                              <h3 className="text-lg font-semibold text-red-600">
+                                {block.content.title}
+                              </h3>
+                            </div>
+                            {block.content.description && (
+                              <p className="text-gray-700 text-sm">{block.content.description}</p>
+                            )}
+                          </div>
+                        )}
+
+                        {block.type === 'checklist' && (
+                          <div>
+                            <h3 className="text-lg font-semibold text-red-600 mb-3">{block.content.title || 'Checklist'}</h3>
+                            {block.content.items && block.content.items.length > 0 && (
+                              <div className="bg-gray-50 rounded-lg p-4">
+                                <div className="space-y-2">
+                                  {block.content.items.map((item: any, itemIndex: number) => (
+                                    <div key={itemIndex} className="flex items-start gap-3">
+                                      <span className="text-gray-500 mt-1 text-sm">☐</span>
+                                      <span className="text-gray-700 text-sm">{item.text || item}</span>
+                                    </div>
+                                  ))}
+                                </div>
+                              </div>
+                            )}
+                          </div>
+                        )}
+
+                        {(block.type === 'example-box' || block.type === 'warning-box' || block.type === 'success-box') && (
+                          <div className={`border rounded-lg p-4 ${
+                            block.type === 'warning-box' ? 'bg-yellow-50 border-yellow-200' :
+                            block.type === 'success-box' ? 'bg-green-50 border-green-200' :
+                            'bg-blue-50 border-blue-200'
+                          }`}>
+                            <h4 className={`font-semibold mb-2 text-sm ${
+                              block.type === 'warning-box' ? 'text-yellow-800' :
+                              block.type === 'success-box' ? 'text-green-800' :
+                              'text-blue-800'
+                            }`}>
+                              {block.content.title ||
+                                (block.type === 'warning-box' ? '⚠️ Warning' :
+                                 block.type === 'success-box' ? '✅ Success' : '💡 Example')
+                              }
+                            </h4>
+                            {block.content.content && (
+                              <p className="text-gray-700 text-sm">{block.content.content}</p>
+                            )}
+                          </div>
+                        )}
+
+                        {block.type === 'priority-matrix' && (
+                          <div>
+                            <h3 className="text-lg font-semibold text-red-600 mb-4">{block.content.title || 'Priority Matrix'}</h3>
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                              {block.content.quadrants && Array.isArray(block.content.quadrants) ? (
+                                block.content.quadrants.map((quadrant: any, qIndex: number) => {
+                                  const bgColor = quadrant.color === 'red' ? 'bg-red-50 border-red-200' :
+                                                 quadrant.color === 'blue' ? 'bg-blue-50 border-blue-200' :
+                                                 quadrant.color === 'yellow' ? 'bg-yellow-50 border-yellow-200' :
+                                                 'bg-gray-50 border-gray-200';
+                                  const textColor = quadrant.color === 'red' ? 'text-red-800' :
+                                                   quadrant.color === 'blue' ? 'text-blue-800' :
+                                                   quadrant.color === 'yellow' ? 'text-yellow-800' :
+                                                   'text-gray-800';
+                                  const subtitleColor = quadrant.color === 'red' ? 'text-red-700' :
+                                                       quadrant.color === 'blue' ? 'text-blue-700' :
+                                                       quadrant.color === 'yellow' ? 'text-yellow-700' :
+                                                       'text-gray-700';
+                                  const descColor = quadrant.color === 'red' ? 'text-red-600' :
+                                                   quadrant.color === 'blue' ? 'text-blue-600' :
+                                                   quadrant.color === 'yellow' ? 'text-yellow-600' :
+                                                   'text-gray-600';
+
+                                  return (
+                                    <div key={qIndex} className={`border rounded-lg p-3 ${bgColor}`}>
+                                      <h4 className={`font-bold mb-1 text-sm ${textColor}`}>
+                                        {quadrant.title}
+                                      </h4>
+                                      <p className={`text-xs font-medium mb-1 ${subtitleColor}`}>
+                                        {quadrant.action || quadrant.subtitle}
+                                      </p>
+                                      <p className={`text-xs ${descColor}`}>
+                                        {quadrant.description}
+                                      </p>
+                                    </div>
+                                  );
+                                })
+                              ) : (
+                                /* Fallback for old object-based structure */
+                                <>
+                                  <div className="bg-red-50 border border-red-200 rounded-lg p-3">
+                                    <h4 className="font-bold text-red-800 mb-1 text-sm">URGENT + IMPORTANT</h4>
+                                    <p className="text-xs font-medium text-red-700 mb-1">DO FIRST</p>
+                                    <p className="text-xs text-red-600">Critical issues requiring immediate attention</p>
+                                  </div>
+                                  <div className="bg-blue-50 border border-blue-200 rounded-lg p-3">
+                                    <h4 className="font-bold text-blue-800 mb-1 text-sm">IMPORTANT + NOT URGENT</h4>
+                                    <p className="text-xs font-medium text-blue-700 mb-1">SCHEDULE</p>
+                                    <p className="text-xs text-blue-600">Important tasks to plan and schedule</p>
+                                  </div>
+                                  <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-3">
+                                    <h4 className="font-bold text-yellow-800 mb-1 text-sm">URGENT + NOT IMPORTANT</h4>
+                                    <p className="text-xs font-medium text-yellow-700 mb-1">DELEGATE</p>
+                                    <p className="text-xs text-yellow-600">Tasks that can be delegated to others</p>
+                                  </div>
+                                  <div className="bg-gray-50 border border-gray-200 rounded-lg p-3">
+                                    <h4 className="font-bold text-gray-800 mb-1 text-sm">NOT URGENT + NOT IMPORTANT</h4>
+                                    <p className="text-xs font-medium text-gray-700 mb-1">ELIMINATE</p>
+                                    <p className="text-xs text-gray-600">Activities to minimize or eliminate</p>
+                                  </div>
+                                </>
+                              )}
+                            </div>
+                          </div>
+                        )}
+
+                        {(block.type === 'smart-template' || block.type === 'practice-section') && (
+                          <div>
+                            <h3 className="text-lg font-semibold text-red-600 mb-4">{block.content.title || 'SMART Goals'}</h3>
+
+                            {/* Check for practice-section with exercises (actual SMART goals) */}
+                            {block.type === 'practice-section' && block.content.exercises && block.content.exercises.length > 0 ? (
+                              <div className="space-y-3">
+                                {block.content.exercises.map((exercise: any, exerciseIndex: number) => (
+                                  <div key={exerciseIndex} className="bg-gray-50 border border-gray-200 rounded-lg p-3">
+                                    <h4 className="font-semibold text-red-600 mb-2 text-sm">{exercise.title || `Goal ${exerciseIndex + 1}`}</h4>
+                                    <div className="space-y-1 text-xs">
+                                      {exercise.fields && exercise.fields.map((field: any, fieldIndex: number) => (
+                                        <div key={fieldIndex}>
+                                          <strong>{field.label}:</strong> {field.value}
+                                        </div>
+                                      ))}
+                                    </div>
+                                  </div>
+                                ))}
+                              </div>
+                            ) : block.content.goals && block.content.goals.length > 0 ? (
+                              /* If there are actual goals in smart-template format, show them */
+                              <div className="space-y-3">
+                                {block.content.goals.map((goal: any, goalIndex: number) => (
+                                  <div key={goalIndex} className="bg-gray-50 border border-gray-200 rounded-lg p-3">
+                                    <h4 className="font-semibold text-red-600 mb-2 text-sm">{goal.title}</h4>
+                                    <div className="space-y-1 text-xs">
+                                      <div><strong>Specific:</strong> {goal.specific}</div>
+                                      <div><strong>Measurable:</strong> {goal.measurable}</div>
+                                      <div><strong>Achievable:</strong> {goal.achievable}</div>
+                                      <div><strong>Relevant:</strong> {goal.relevant}</div>
+                                      <div><strong>Time-bound:</strong> {goal.timeBound}</div>
+                                    </div>
+                                  </div>
+                                ))}
+                              </div>
+                            ) : block.content.items && block.content.items.length > 0 ? (
+                              /* If it's a template with items, show the template */
+                              <div className="space-y-3">
+                                {block.content.items.map((item: any, itemIndex: number) => (
+                                  <div key={itemIndex} className="bg-blue-50 border-l-4 border-red-600 p-3 rounded-r">
+                                    <div className="font-bold text-red-600 text-sm">{item.label}</div>
+                                    <div className="text-gray-600 italic mt-1 text-xs">{item.prompt}</div>
+                                  </div>
+                                ))}
+                              </div>
+                            ) : (
+                              <p className="text-gray-500 italic text-sm">No SMART goals or template defined yet.</p>
+                            )}
+                          </div>
+                        )}
+                      </div>
+                    ))}
+                  </div>
+                ) : (
+                  <div className="text-center py-8">
+                    <p className="text-gray-500">This playbook doesn't have any content yet.</p>
+                    <p className="text-gray-400 text-sm mt-2">Add content blocks to build your playbook.</p>
+                  </div>
+                )}
               </div>
-
-
             </>
-          )}
+          ) : null}
         </AlertDialogContent>
       </AlertDialog>
 
@@ -1004,6 +1358,13 @@ export default function Playbooks() {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+
+      {/* PDF Loading Overlay */}
+      <PDFLoadingOverlay
+        isVisible={pdfLoading}
+        progress={pdfProgress}
+        step={pdfStep}
+      />
     </div>
   );
 }

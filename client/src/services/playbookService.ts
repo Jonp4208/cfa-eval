@@ -1,7 +1,7 @@
 import api from '@/lib/axios';
 
 export interface ContentBlock {
-  type: 'header' | 'text' | 'step-section' | 'priority-matrix' | 'smart-template' | 'checklist' | 'example-box' | 'warning-box' | 'success-box' | 'practice-section';
+  type: 'header' | 'text' | 'step-section' | 'priority-matrix' | 'smart-template' | 'checklist' | 'example-box' | 'warning-box' | 'success-box' | 'practice-section' | 'leadership-examples';
   order: number;
   content: any;
 }

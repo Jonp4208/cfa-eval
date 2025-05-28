@@ -663,16 +663,16 @@ router.post('/plans/:planId/enroll', auth, checkSubscription, async (req, res) =
           id: 'culture-task-1',
           type: 'video',
           title: 'Building a Positive Restaurant Culture',
-          description: 'Watch this video on creating a thriving restaurant culture. Pay special attention to the connection between culture and operational excellence, team retention, and guest satisfaction.',
-          resourceUrl: 'https://www.youtube.com/watch?v=MQJ0c2mLi0o',
+          description: 'Watch this video on how Chick-fil-A built a world-class culture. Pay special attention to the connection between culture and operational excellence, team retention, and guest satisfaction.',
+          resourceUrl: 'https://www.youtube.com/watch?v=-0agMNXMGrA',
           estimatedTime: '20 minutes'
         },
         {
           id: 'culture-task-2',
           type: 'reading',
           title: 'Culture by Design',
-          description: 'Read this article on intentionally designing your restaurant culture. Take notes on the key elements of strong cultures and identify which elements are present or missing in your restaurant.',
-          resourceUrl: 'https://www.qsrmagazine.com/outside-insights/how-build-winning-restaurant-culture',
+          description: 'Read this comprehensive guide on building epic restaurant culture. Take notes on the key elements of strong cultures and identify which elements are present or missing in your restaurant.',
+          resourceUrl: 'https://www.7shifts.com/blog/build-restaurant-culture/',
           estimatedTime: '25 minutes'
         },
         {
@@ -694,7 +694,9 @@ router.post('/plans/:planId/enroll', auth, checkSubscription, async (req, res) =
           id: 'culture-task-5',
           type: 'activity',
           title: 'Team Values Workshop',
-          description: 'Conduct a 30-minute workshop with your team to identify and define your shared values. Use the "Start, Stop, Continue" framework to identify behaviors that align with these values. Create visual reminders of these values to display in team areas.',
+          description: 'Conduct a 30-minute workshop with your team to identify and define your shared values. Use the "Start, Stop, Continue" framework to identify behaviors that align with these values. Create visual reminders of these values to display in team areas.\n\n🛠️ Use the interactive workshop tool to facilitate your team session\n👀 View the example to see a completed workshop for a Chick-fil-A team',
+          resourceUrl: '/templates/team-values-workshop.html',
+          exampleUrl: '/templates/team-values-workshop-example.html',
           estimatedTime: '1.5 hours'
         },
         {
@@ -715,7 +717,9 @@ router.post('/plans/:planId/enroll', auth, checkSubscription, async (req, res) =
           id: 'culture-task-8',
           type: 'reflection',
           title: 'Culture Leadership Plan',
-          description: 'Create a 90-day culture leadership plan with specific actions you will take to strengthen your restaurant\'s culture. Include how you will model desired behaviors, reinforce values, and address cultural misalignments.',
+          description: 'Create a 90-day culture leadership plan with specific actions you will take to strengthen your restaurant\'s culture. Include how you will model desired behaviors, reinforce values, and address cultural misalignments.\n\n📋 Use the blank template to create your own plan\n👀 View the example to see how a completed plan looks for a Chick-fil-A restaurant',
+          resourceUrl: '/templates/90-day-culture-leadership-plan.html',
+          exampleUrl: '/templates/90-day-culture-leadership-plan-example.html',
           estimatedTime: '1 hour'
         }
       ];
@@ -892,6 +896,14 @@ router.patch('/my-plans/:planId/progress', auth, async (req, res) => {
 
     if (!enrollment) {
       return res.status(404).json({ message: 'Enrollment not found' });
+    }
+
+    // Only allow starting a plan (enrolled -> in-progress) or updating activity progress
+    // Do not allow manual completion - completion should only happen through task completion
+    if (status === 'completed') {
+      return res.status(400).json({
+        message: 'Plans can only be completed by finishing all required tasks. Please complete your tasks to finish the plan.'
+      });
     }
 
     // Update progress if provided
@@ -1273,11 +1285,132 @@ router.post('/my-plans/:planId/update-tasks', auth, async (req, res) => {
         }
       ];
     } else if (planId === 'restaurant-culture-builder') {
-      // Keep existing tasks for other plans
-      learningTasks = enrollment.learningTasks;
+      learningTasks = [
+        {
+          id: 'culture-task-1',
+          type: 'video',
+          title: 'Building a Positive Restaurant Culture',
+          description: 'Watch this video on creating a positive workplace culture in restaurants. Focus on practical strategies for building team cohesion, improving communication, and creating an environment where team members want to work.',
+          resourceUrl: 'https://www.youtube.com/watch?v=fLanvSTCqpE',
+          estimatedTime: '20 minutes'
+        },
+        {
+          id: 'culture-task-2',
+          type: 'reading',
+          title: 'The Culture Map for Restaurants',
+          description: 'Read this article on understanding and mapping your restaurant\'s current culture. Learn how to identify cultural strengths and areas for improvement, and how to create a plan for positive cultural change.',
+          resourceUrl: 'https://hbr.org/2013/05/what-is-organizational-culture',
+          estimatedTime: '25 minutes'
+        },
+        {
+          id: 'culture-task-3',
+          type: 'activity',
+          title: 'Culture Assessment Exercise',
+          description: 'Complete a comprehensive assessment of your restaurant\'s current culture. Evaluate team dynamics, communication patterns, leadership effectiveness, and guest service standards. Identify 3 key areas for improvement.',
+          estimatedTime: '1 hour'
+        },
+        {
+          id: 'culture-task-4',
+          type: 'assessment',
+          title: 'Team Experience Survey',
+          description: 'Create and distribute a brief anonymous survey to team members asking about their experience working in your restaurant. Include questions about team support, leadership accessibility, growth opportunities, and overall satisfaction. Analyze results and identify 3 key insights.',
+          resourceUrl: 'https://www.surveymonkey.com/mp/employee-engagement-survey-template/',
+          estimatedTime: '2 hours'
+        },
+        {
+          id: 'culture-task-5',
+          type: 'activity',
+          title: 'Team Values Workshop',
+          description: 'Conduct a 30-minute workshop with your team to identify and define your shared values. Use the "Start, Stop, Continue" framework to identify behaviors that align with these values. Create visual reminders of these values to display in team areas.\n\n🛠️ Use the interactive workshop tool to facilitate your team session\n👀 View the example to see a completed workshop for a Chick-fil-A team',
+          resourceUrl: '/templates/team-values-workshop.html',
+          exampleUrl: '/templates/team-values-workshop-example.html',
+          estimatedTime: '1.5 hours'
+        },
+        {
+          id: 'culture-task-6',
+          type: 'activity',
+          title: 'Recognition Program Design',
+          description: 'Design a simple team member recognition program that aligns with your restaurant values. Include both formal and informal recognition methods, peer-to-peer recognition, and ways to celebrate both individual and team achievements.',
+          estimatedTime: '1 hour'
+        },
+        {
+          id: 'culture-task-7',
+          type: 'activity',
+          title: 'Culture-Building Rituals',
+          description: 'Implement three new team rituals that reinforce your desired culture: 1) A pre-shift huddle format that energizes the team, 2) A method for celebrating wins, and 3) A consistent approach to addressing challenges. Document these rituals and practice them for two weeks.',
+          estimatedTime: '2 hours (across multiple shifts)'
+        },
+        {
+          id: 'culture-task-8',
+          type: 'reflection',
+          title: 'Culture Leadership Plan',
+          description: 'Create a 90-day culture leadership plan with specific actions you will take to strengthen your restaurant\'s culture. Include how you will model desired behaviors, reinforce values, and address cultural misalignments.\n\n📋 Use the blank template to create your own plan\n👀 View the example to see how a completed plan looks for a Chick-fil-A restaurant',
+          resourceUrl: '/templates/90-day-culture-leadership-plan.html',
+          exampleUrl: '/templates/90-day-culture-leadership-plan-example.html',
+          estimatedTime: '1 hour'
+        }
+      ];
     } else if (planId === 'team-development') {
-      // Keep existing tasks for other plans
-      learningTasks = enrollment.learningTasks;
+      learningTasks = [
+        {
+          id: 'team-task-1',
+          type: 'video',
+          title: 'Effective Coaching Techniques',
+          description: 'Watch this video on coaching techniques specifically designed for restaurant team development. Focus on the difference between directing, coaching, and mentoring approaches and when to use each one.',
+          resourceUrl: 'https://www.youtube.com/watch?v=oHIR3gp-tXU',
+          estimatedTime: '25 minutes'
+        },
+        {
+          id: 'team-task-2',
+          type: 'reading',
+          title: 'The Art of Feedback',
+          description: 'Read this article on delivering effective feedback in fast-paced environments. Practice the SBI (Situation-Behavior-Impact) feedback model by writing out 3 examples of feedback you need to deliver to team members.',
+          resourceUrl: 'https://www.mindtools.com/a3mi95b/the-situation-behavior-impact-sbi-feedback-tool',
+          estimatedTime: '30 minutes'
+        },
+        {
+          id: 'team-task-3',
+          type: 'activity',
+          title: 'Talent Assessment',
+          description: 'Create a talent map of your team by placing each team member in one of four quadrants: 1) High performance/High potential, 2) High performance/Lower potential, 3) Lower performance/High potential, 4) Lower performance/Lower potential. Identify specific development actions for each quadrant.',
+          estimatedTime: '1 hour'
+        },
+        {
+          id: 'team-task-4',
+          type: 'activity',
+          title: 'GROW Coaching Conversation',
+          description: 'Conduct a coaching conversation with a team member using the GROW model (Goal, Reality, Options, Will/Way Forward). Document the conversation and reflect on what went well and what you would do differently next time.',
+          estimatedTime: '45 minutes'
+        },
+        {
+          id: 'team-task-5',
+          type: 'activity',
+          title: 'Development Plan Creation',
+          description: 'Create a detailed 90-day development plan for a high-potential team member. Include specific skills to develop, learning resources, on-the-job experiences, and regular check-in points. Share this plan with the team member and refine it based on their input.',
+          estimatedTime: '1 hour'
+        },
+        {
+          id: 'team-task-6',
+          type: 'activity',
+          title: 'Training Effectiveness Audit',
+          description: 'Observe 3 different team members who were recently trained on a procedure. Note variations in execution and identify potential gaps in the training approach. Create a plan to address these gaps and standardize training outcomes.',
+          estimatedTime: '2 hours (across multiple shifts)'
+        },
+        {
+          id: 'team-task-7',
+          type: 'activity',
+          title: 'Skill-Building Workshop',
+          description: 'Design and deliver a 15-minute skill-building session for your team on a topic where performance could be improved (e.g., guest recovery, suggestive selling, teamwork during rush periods). Use the "Tell, Show, Do, Review" training method.',
+          estimatedTime: '2 hours'
+        },
+        {
+          id: 'team-task-8',
+          type: 'reflection',
+          title: 'Team Development Philosophy',
+          description: 'Write a 1-page statement describing your philosophy on team development. Include your beliefs about how people learn and grow, your role as a developer of others, and the connection between team development and business results.',
+          estimatedTime: '45 minutes'
+        }
+      ];
     }
 
     // Preserve completion status for existing tasks

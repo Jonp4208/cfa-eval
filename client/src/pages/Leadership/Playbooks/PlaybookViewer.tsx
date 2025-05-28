@@ -20,6 +20,8 @@ import { toast } from 'sonner';
 import playbookService, { Playbook } from '@/services/playbookService';
 import PageHeader, { headerButtonClass } from '@/components/PageHeader';
 import PlaybookPreview from './components/PlaybookPreview';
+import { downloadPlaybookPDF } from '@/utils/PlaybookPdfExport';
+import PDFLoadingOverlay from '@/components/PDFLoadingOverlay';
 
 export default function PlaybookViewer() {
   const navigate = useNavigate();
@@ -27,6 +29,9 @@ export default function PlaybookViewer() {
   const { user } = useAuth();
   const [playbook, setPlaybook] = useState<Playbook | null>(null);
   const [loading, setLoading] = useState(true);
+  const [pdfLoading, setPdfLoading] = useState(false);
+  const [pdfProgress, setPdfProgress] = useState(0);
+  const [pdfStep, setPdfStep] = useState('');
 
   useEffect(() => {
     if (id) {
@@ -63,9 +68,31 @@ export default function PlaybookViewer() {
     }
   };
 
-  const handleExport = () => {
-    // TODO: Implement export functionality
-    toast.info('Export functionality coming soon');
+  const handleExport = async () => {
+    if (!playbook) return;
+
+    try {
+      setPdfLoading(true);
+      setPdfProgress(0);
+      setPdfStep('Initializing...');
+
+      await downloadPlaybookPDF(playbook, (step: string, progress: number) => {
+        setPdfStep(step);
+        setPdfProgress(progress);
+      });
+
+      toast.success('PDF downloaded successfully!');
+    } catch (error) {
+      console.error('Error exporting PDF:', error);
+      toast.error('Failed to generate PDF');
+    } finally {
+      // Keep the overlay visible for a moment to show completion
+      setTimeout(() => {
+        setPdfLoading(false);
+        setPdfProgress(0);
+        setPdfStep('');
+      }, 1000);
+    }
   };
 
   const handleShare = () => {
@@ -114,13 +141,13 @@ export default function PlaybookViewer() {
 
         <div className="flex flex-wrap gap-2">
           <Button
-            onClick={() => window.print()}
+            onClick={handleExport}
             variant="outline"
             size="sm"
             className="flex items-center gap-2"
           >
             <Printer className="w-4 h-4" />
-            Print
+            Export PDF
           </Button>
 
           {canManage && (
@@ -147,15 +174,7 @@ export default function PlaybookViewer() {
             </>
           )}
 
-          <Button
-            onClick={handleExport}
-            variant="outline"
-            size="sm"
-            className="flex items-center gap-2"
-          >
-            <Download className="w-4 h-4" />
-            Export
-          </Button>
+
         </div>
       </div>
 
@@ -230,6 +249,13 @@ export default function PlaybookViewer() {
       ) : (
         <PlaybookPreview playbook={playbook} />
       )}
+
+      {/* PDF Loading Overlay */}
+      <PDFLoadingOverlay
+        isVisible={pdfLoading}
+        progress={pdfProgress}
+        step={pdfStep}
+      />
     </div>
   );
 }

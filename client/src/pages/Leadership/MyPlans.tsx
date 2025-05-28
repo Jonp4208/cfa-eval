@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { Card } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
+import { Badge } from '@/components/ui/badge'
 import {
   GraduationCap,
   Users,
@@ -199,49 +200,80 @@ export default function MyPlans() {
           {plans.map((plan) => (
             <Card
               key={plan.id}
-              className="bg-white p-6 hover:shadow-md transition-all duration-300 cursor-pointer"
+              className="bg-white p-6 hover:shadow-xl transition-all duration-300 relative cursor-pointer border-l-4 border-l-transparent hover:border-l-[#E51636]"
               onClick={() => navigate(`/leadership/plans/${plan.id}/tasks`)}
             >
               <div className="space-y-4">
-                <div className="flex items-center gap-4">
-                  <div className="h-12 w-12 bg-[#E51636]/10 text-[#E51636] rounded-xl flex items-center justify-center">
-                    {getPlanIcon(plan.id)}
+                <div className="flex items-start justify-between">
+                  <div className="flex items-center gap-4">
+                    <div className="h-14 w-14 bg-gradient-to-br from-[#E51636]/10 to-[#E51636]/20 text-[#E51636] rounded-xl flex items-center justify-center shadow-sm">
+                      {getPlanIcon(plan.id)}
+                    </div>
+                    <div className="space-y-1">
+                      <div className="flex items-center gap-2 flex-wrap">
+                        <h3 className="text-lg font-semibold text-[#27251F]">{plan.title}</h3>
+                        <Badge variant="outline" className={`text-xs ${
+                          plan.status === 'completed'
+                            ? 'bg-green-50 text-green-700 border-green-200'
+                            : plan.status === 'in-progress'
+                            ? 'bg-blue-50 text-blue-700 border-blue-200'
+                            : 'bg-gray-50 text-gray-700 border-gray-200'
+                        }`}>
+                          {plan.status === 'completed' ? '✅ Completed' :
+                           plan.status === 'in-progress' ? '📚 In Progress' :
+                           '📝 Enrolled'}
+                        </Badge>
+                      </div>
+                      <div className="flex items-center gap-4 text-sm text-gray-500">
+                        <span className="flex items-center gap-1">
+                          <Clock className="h-3 w-3" />
+                          Multiple skills
+                        </span>
+                        <span className="flex items-center gap-1">
+                          <CheckCircle className="h-3 w-3" />
+                          Multiple activities
+                        </span>
+                      </div>
+                    </div>
                   </div>
-                  <div>
-                    <h3 className="text-lg font-semibold text-[#27251F]">{plan.title}</h3>
-                    <div className="flex items-center gap-2 text-sm text-gray-500">
-                      <span>Enrolled: {formatDate(plan.enrolledAt)}</span>
+                  <div className="text-right">
+                    <div className="text-2xl font-bold text-[#E51636]">{plan.progress}%</div>
+                    <div className="text-xs text-gray-500">Progress</div>
+                  </div>
+                </div>
+
+                <p className="text-gray-600 leading-relaxed">{plan.description}</p>
+
+                <div className="space-y-3">
+                  <div className="bg-gray-50 p-4 rounded-lg">
+                    <div className="flex justify-between items-center mb-2">
+                      <span className="text-sm font-medium text-gray-700">Overall Progress</span>
+                      <span className="text-sm font-bold text-[#E51636]">{plan.progress}%</span>
+                    </div>
+                    <Progress value={plan.progress} className="h-3 bg-gray-200" />
+                    <div className="flex justify-between text-xs text-gray-500 mt-2">
+                      <span>📅 Enrolled: {formatDate(plan.enrolledAt)}</span>
                       {plan.completedAt && (
-                        <>
-                          <span>•</span>
-                          <span>Completed: {formatDate(plan.completedAt)}</span>
-                        </>
+                        <span>🎉 Completed: {formatDate(plan.completedAt)}</span>
                       )}
                     </div>
                   </div>
                 </div>
 
-                <p className="text-gray-600">{plan.description}</p>
-
-                <div className="space-y-2">
-                  <div className="flex justify-between items-center">
-                    <div className="flex items-center gap-2">
-                      {getStatusIcon(plan.status)}
-                      <span className="text-sm font-medium">{getStatusText(plan.status)}</span>
+                <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 pt-2 border-t border-gray-100">
+                  <div className="flex items-center gap-2">
+                    <div className="h-8 w-8 bg-[#E51636]/5 text-[#E51636] rounded-lg flex items-center justify-center">
+                      <GraduationCap className="h-4 w-4" />
                     </div>
-                    <span className="text-sm font-medium">{plan.progress}% Complete</span>
+                    <span className="text-sm text-gray-500">Leadership Development</span>
                   </div>
-                  <Progress value={plan.progress} className="h-2" />
-                </div>
-
-                <div className="flex flex-col sm:flex-row gap-3 pt-2">
-                  <div className="flex flex-col sm:flex-row gap-2 w-full">
+                  <div className="flex flex-col sm:flex-row gap-2 w-full sm:w-auto">
                     {plan.status !== 'completed' && (
                       <>
                         {plan.status === 'enrolled' && (
                           <Button
                             variant="default"
-                            className="bg-[#E51636] hover:bg-[#E51636]/90 text-white"
+                            className="w-full sm:w-auto bg-[#E51636] hover:bg-[#E51636]/90 text-white"
                             onClick={(e) => {
                               e.stopPropagation(); // Prevent card click
                               handleUpdateProgress(plan.id, 10, 'in-progress');
@@ -251,10 +283,10 @@ export default function MyPlans() {
                             {updatingPlan === plan.id ? (
                               <>
                                 <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                                Updating...
+                                Starting...
                               </>
                             ) : (
-                              'Start Plan'
+                              '🚀 Start Plan'
                             )}
                           </Button>
                         )}
@@ -262,35 +294,40 @@ export default function MyPlans() {
                         {plan.status === 'in-progress' && (
                           <Button
                             variant="default"
-                            className="bg-green-600 hover:bg-green-700 text-white"
+                            className="w-full sm:w-auto bg-[#E51636] hover:bg-[#E51636]/90 text-white"
                             onClick={(e) => {
                               e.stopPropagation(); // Prevent card click
-                              handleUpdateProgress(plan.id, 100, 'completed');
+                              navigate(`/leadership/plans/${plan.id}/tasks`);
                             }}
-                            disabled={updatingPlan === plan.id}
                           >
-                            {updatingPlan === plan.id ? (
-                              <>
-                                <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                                Updating...
-                              </>
-                            ) : (
-                              'Mark as Completed'
-                            )}
+                            📚 Continue Learning
                           </Button>
                         )}
                       </>
                     )}
 
+                    {plan.status === 'completed' && (
+                      <Button
+                        variant="default"
+                        className="w-full sm:w-auto bg-[#E51636] hover:bg-[#E51636]/90 text-white"
+                        onClick={(e) => {
+                          e.stopPropagation(); // Prevent card click
+                          navigate(`/leadership/plans/${plan.id}/tasks`);
+                        }}
+                      >
+                        🎉 Review Plan
+                      </Button>
+                    )}
+
                     <Button
-                      variant="outline"
-                      className="border-[#E51636] text-[#E51636] hover:bg-[#E51636]/5"
+                      variant="ghost"
+                      className="w-full sm:w-auto text-[#E51636] hover:text-[#E51636] hover:bg-[#E51636]/5 rounded-xl"
                       onClick={(e) => {
                         e.stopPropagation(); // Prevent card click
                         navigate(`/leadership/developmental-plan?planId=${plan.id}`);
                       }}
                     >
-                      View Plan Details
+                      View Details
                     </Button>
                   </div>
                 </div>

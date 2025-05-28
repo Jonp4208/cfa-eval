@@ -6,7 +6,7 @@ const contentBlockSchema = new mongoose.Schema({
     required: true,
     enum: [
       'header',
-      'text', 
+      'text',
       'step-section',
       'priority-matrix',
       'smart-template',
@@ -14,7 +14,8 @@ const contentBlockSchema = new mongoose.Schema({
       'example-box',
       'warning-box',
       'success-box',
-      'practice-section'
+      'practice-section',
+      'leadership-examples'
     ]
   },
   order: {
@@ -51,7 +52,7 @@ const playbookSchema = new mongoose.Schema({
     required: true,
     enum: [
       'Leadership',
-      'Operations', 
+      'Operations',
       'Training',
       'Safety',
       'Customer Service',

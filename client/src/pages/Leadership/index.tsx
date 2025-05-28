@@ -8,9 +8,7 @@ import {
   Users,
   BarChart2,
   LayoutDashboard,
-  Lock,
   AlertCircle,
-  Shield,
   RefreshCw,
   CheckCircle,
   UserCheck,
@@ -138,23 +136,6 @@ export default function Leadership() {
               >
                 <BookOpen className="w-4 h-4" />
                 Playbooks
-              </Button>
-
-              <Button
-                variant={isActive('subscription') ? 'default' : 'ghost'}
-                onClick={() => handleNavigate('subscription')}
-                className={`flex items-center gap-2 px-4 py-2 whitespace-nowrap ${
-                  isActive('subscription')
-                    ? 'bg-red-50 text-[#E51636] hover:bg-red-100'
-                    : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900'
-                }`}
-              >
-                {hasActiveSubscription ? (
-                  <Shield className="w-4 h-4" />
-                ) : (
-                  <Lock className="w-4 h-4" />
-                )}
-                Subscription
               </Button>
             </div>
           </div>

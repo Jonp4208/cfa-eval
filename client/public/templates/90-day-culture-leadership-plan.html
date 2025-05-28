@@ -1,0 +1,902 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>90-Day Culture Leadership Plan Template</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            line-height: 1.6;
+            color: #333;
+            background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 15px;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.1);
+            overflow: hidden;
+        }
+
+        .header {
+            background: linear-gradient(135deg, #E51636 0%, #c41230 100%);
+            color: white;
+            padding: 40px 30px;
+            text-align: center;
+            position: relative;
+        }
+
+        .header::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><defs><pattern id="grain" width="100" height="100" patternUnits="userSpaceOnUse"><circle cx="25" cy="25" r="1" fill="white" opacity="0.1"/><circle cx="75" cy="75" r="1" fill="white" opacity="0.1"/><circle cx="50" cy="10" r="0.5" fill="white" opacity="0.1"/><circle cx="10" cy="60" r="0.5" fill="white" opacity="0.1"/><circle cx="90" cy="40" r="0.5" fill="white" opacity="0.1"/></pattern></defs><rect width="100" height="100" fill="url(%23grain)"/></svg>');
+        }
+
+        .header h1 {
+            font-size: 2.5em;
+            font-weight: 700;
+            margin-bottom: 10px;
+            position: relative;
+            z-index: 1;
+        }
+
+        .header p {
+            font-size: 1.2em;
+            opacity: 0.9;
+            position: relative;
+            z-index: 1;
+        }
+
+        .content {
+            padding: 40px 30px;
+        }
+
+        .section {
+            margin-bottom: 40px;
+            padding: 25px;
+            border-radius: 10px;
+            background: #f8f9fa;
+            border-left: 5px solid #E51636;
+        }
+
+        .section h2 {
+            color: #E51636;
+            font-size: 1.8em;
+            margin-bottom: 20px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .section h3 {
+            color: #2c3e50;
+            font-size: 1.3em;
+            margin: 20px 0 10px 0;
+            border-bottom: 2px solid #E51636;
+            padding-bottom: 5px;
+            display: inline-block;
+        }
+
+        .week-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 20px;
+            margin-top: 20px;
+        }
+
+        .week-card {
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+            border-top: 4px solid #E51636;
+        }
+
+        .week-card h4 {
+            color: #E51636;
+            font-size: 1.2em;
+            margin-bottom: 15px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .action-list {
+            list-style: none;
+            padding: 0;
+        }
+
+        .action-list li {
+            padding: 8px 0;
+            border-bottom: 1px solid #eee;
+            position: relative;
+            padding-left: 25px;
+        }
+
+        .action-list li:before {
+            content: '✓';
+            position: absolute;
+            left: 0;
+            color: #E51636;
+            font-weight: bold;
+        }
+
+        .input-field {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid #ddd;
+            border-radius: 6px;
+            font-size: 14px;
+            margin: 10px 0;
+            transition: border-color 0.3s;
+        }
+
+        .input-field:focus {
+            outline: none;
+            border-color: #E51636;
+        }
+
+        .textarea-field {
+            min-height: 100px;
+            resize: vertical;
+        }
+
+        .metrics-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+            margin-top: 15px;
+        }
+
+        .metric-card {
+            background: white;
+            padding: 15px;
+            border-radius: 6px;
+            text-align: center;
+            border: 2px solid #E51636;
+        }
+
+        .metric-card h5 {
+            color: #E51636;
+            margin-bottom: 10px;
+        }
+
+        .footer {
+            background: #2c3e50;
+            color: white;
+            padding: 20px 30px;
+            text-align: center;
+        }
+
+        .icon {
+            width: 24px;
+            height: 24px;
+            display: inline-block;
+        }
+
+        .smart-goals-grid {
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+            margin-top: 20px;
+        }
+
+        .smart-goal-card {
+            background: white;
+            border: 2px solid #E51636;
+            border-radius: 10px;
+            padding: 20px;
+            width: 100%;
+        }
+
+        .smart-breakdown {
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+            margin-top: 15px;
+        }
+
+        .smart-item {
+            display: flex;
+            flex-direction: column;
+            gap: 5px;
+        }
+
+        .smart-item strong {
+            color: #E51636;
+            font-size: 14px;
+            margin-bottom: 5px;
+        }
+
+        .add-goal-section {
+            display: flex;
+            justify-content: center;
+            margin-top: 20px;
+            padding: 15px;
+            background: rgba(229, 22, 54, 0.05);
+            border-radius: 10px;
+            border: 2px dashed #E51636;
+        }
+
+        .bottom-save-section {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 15px;
+            margin: 30px 0;
+            padding: 20px;
+            background: rgba(229, 22, 54, 0.05);
+            border-radius: 10px;
+            border: 2px dashed #E51636;
+        }
+
+        .bottom-buttons {
+            display: flex;
+            gap: 15px;
+            justify-content: center;
+            flex-wrap: wrap;
+        }
+
+        .week-grid {
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+            margin-top: 20px;
+        }
+
+        .week-card {
+            background: white;
+            border: 2px solid #E51636;
+            border-radius: 10px;
+            padding: 20px;
+            width: 100%;
+        }
+
+        .action-buttons {
+            display: flex;
+            justify-content: center;
+            gap: 15px;
+            margin: 20px 0;
+            padding: 20px;
+            background: rgba(229, 22, 54, 0.05);
+            border-radius: 10px;
+            border: 2px dashed #E51636;
+        }
+
+        .btn {
+            padding: 12px 20px;
+            border: none;
+            border-radius: 6px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 14px;
+        }
+
+        .btn-primary {
+            background: #E51636;
+            color: white;
+        }
+
+        .btn-primary:hover {
+            background: #c41230;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 8px rgba(229, 22, 54, 0.3);
+        }
+
+        .btn-secondary {
+            background: #2c3e50;
+            color: white;
+        }
+
+        .btn-secondary:hover {
+            background: #34495e;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 8px rgba(44, 62, 80, 0.3);
+        }
+
+        .btn-success {
+            background: #27ae60;
+            color: white;
+        }
+
+        .btn-success:hover {
+            background: #229954;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 8px rgba(39, 174, 96, 0.3);
+        }
+
+        .btn-danger {
+            background: #e74c3c;
+            color: white;
+        }
+
+        .btn-danger:hover {
+            background: #c0392b;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 8px rgba(231, 76, 60, 0.3);
+        }
+
+        .save-indicator {
+            position: fixed;
+            top: 80px;
+            right: 20px;
+            background: #27ae60;
+            color: white;
+            padding: 8px 16px;
+            border-radius: 4px;
+            font-size: 12px;
+            opacity: 0;
+            transition: opacity 0.3s;
+            z-index: 1000;
+        }
+
+        .save-indicator.show {
+            opacity: 1;
+        }
+
+        @media print {
+            body {
+                background: white;
+                padding: 0;
+            }
+            .container {
+                box-shadow: none;
+                border-radius: 0;
+            }
+            .action-buttons {
+                display: none;
+            }
+            .save-indicator {
+                display: none;
+            }
+        }
+
+        @media (max-width: 768px) {
+            .container {
+                padding: 10px;
+            }
+
+            .action-buttons {
+                flex-direction: column;
+                gap: 10px;
+            }
+
+            .btn {
+                width: 100%;
+                padding: 12px 20px;
+                font-size: 14px;
+            }
+
+            .two-column {
+                flex-direction: column;
+            }
+
+            .column {
+                margin-bottom: 20px;
+            }
+
+            .smart-goals-grid {
+                gap: 15px;
+            }
+
+            .smart-goal-card {
+                padding: 15px;
+            }
+
+            .smart-breakdown {
+                gap: 12px;
+            }
+
+            .week-grid {
+                gap: 15px;
+            }
+
+            .week-card {
+                padding: 15px;
+            }
+
+            .bottom-buttons {
+                flex-direction: column;
+                width: 100%;
+            }
+
+            .bottom-buttons .btn {
+                width: 100%;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- Save Indicator -->
+    <div class="save-indicator" id="saveIndicator">
+        ✅ Progress Saved!
+    </div>
+
+    <div class="container">
+        <div class="header">
+            <h1>🎯 90-Day Culture Leadership Plan</h1>
+            <p>Transform Your Restaurant Culture Through Intentional Leadership</p>
+        </div>
+
+        <!-- Action Buttons -->
+        <div class="action-buttons">
+            <button class="btn btn-success" onclick="saveProgress()">
+                💾 Save Progress
+            </button>
+            <button class="btn btn-secondary" onclick="loadProgress()">
+                📂 Load Saved
+            </button>
+            <button class="btn btn-primary" onclick="printPlan()">
+                🖨️ Print Plan
+            </button>
+        </div>
+
+        <div class="content">
+            <div class="section">
+                <h2>📋 Restaurant Information</h2>
+                <input type="text" class="input-field" placeholder="Store Name (e.g., Chick-fil-A #12345)">
+                <input type="text" class="input-field" placeholder="Restaurant Name/Location">
+                <input type="text" class="input-field" placeholder="Your Name & Title">
+                <input type="date" class="input-field" placeholder="Plan Start Date">
+                <textarea class="input-field textarea-field" placeholder="Current Culture Assessment (What's working well? What needs improvement?)"></textarea>
+            </div>
+
+            <div class="section">
+                <h2>🎯 Culture Vision & Goals</h2>
+                <h3>Our Culture Vision Statement</h3>
+                <textarea class="input-field textarea-field" placeholder="Describe the culture you want to create in 2-3 sentences..."></textarea>
+
+                <h3>90-Day SMART Goals</h3>
+                <p style="margin-bottom: 20px; font-style: italic; color: #666;">Create Specific, Measurable, Achievable, Relevant, and Time-bound goals for your culture transformation.</p>
+
+                <div class="smart-goals-grid" id="smartGoalsContainer">
+                    <div class="smart-goal-card">
+                        <h4>🎯 SMART Goal #1</h4>
+                        <div class="smart-breakdown">
+                            <div class="smart-item">
+                                <strong>Specific:</strong>
+                                <input type="text" class="input-field" placeholder="What exactly will you improve? (e.g., Daily team huddle participation)">
+                            </div>
+                            <div class="smart-item">
+                                <strong>Measurable:</strong>
+                                <input type="text" class="input-field" placeholder="How will you measure it? (e.g., 90% team participation rate)">
+                            </div>
+                            <div class="smart-item">
+                                <strong>Achievable:</strong>
+                                <input type="text" class="input-field" placeholder="Why is this realistic? (e.g., Current rate is 60%, 90% is attainable)">
+                            </div>
+                            <div class="smart-item">
+                                <strong>Relevant:</strong>
+                                <input type="text" class="input-field" placeholder="Why does this matter? (e.g., Engaged teams provide better guest service)">
+                            </div>
+                            <div class="smart-item">
+                                <strong>Time-bound:</strong>
+                                <input type="text" class="input-field" placeholder="When will you achieve this? (e.g., By day 90 of this plan)">
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="add-goal-section">
+                    <button class="btn btn-secondary" onclick="addSmartGoal()">
+                        ➕ Add Another SMART Goal
+                    </button>
+                </div>
+            </div>
+
+            <div class="section">
+                <h2>📅 30-60-90 Day Action Plan</h2>
+
+                <div class="week-grid">
+                    <div class="week-card">
+                        <h4>🚀 Days 1-30: Foundation Building</h4>
+                        <h5>Modeling Behaviors:</h5>
+                        <ul class="action-list">
+                            <li><input type="text" class="input-field" placeholder="Behavior I will model daily..."></li>
+                            <li><input type="text" class="input-field" placeholder="How I will demonstrate our values..."></li>
+                            <li><input type="text" class="input-field" placeholder="Leadership presence I will maintain..."></li>
+                        </ul>
+
+                        <h5>Reinforcing Values:</h5>
+                        <ul class="action-list">
+                            <li><input type="text" class="input-field" placeholder="Recognition system I will implement..."></li>
+                            <li><input type="text" class="input-field" placeholder="Team ritual I will start..."></li>
+                            <li><input type="text" class="input-field" placeholder="Communication method I will use..."></li>
+                        </ul>
+                    </div>
+
+                    <div class="week-card">
+                        <h4>⚡ Days 31-60: Momentum Building</h4>
+                        <h5>Modeling Behaviors:</h5>
+                        <ul class="action-list">
+                            <li><input type="text" class="input-field" placeholder="Advanced leadership behavior..."></li>
+                            <li><input type="text" class="input-field" placeholder="Coaching approach I will use..."></li>
+                            <li><input type="text" class="input-field" placeholder="Problem-solving method I will model..."></li>
+                        </ul>
+
+                        <h5>Reinforcing Values:</h5>
+                        <ul class="action-list">
+                            <li><input type="text" class="input-field" placeholder="Team development initiative..."></li>
+                            <li><input type="text" class="input-field" placeholder="Performance feedback system..."></li>
+                            <li><input type="text" class="input-field" placeholder="Culture celebration I will create..."></li>
+                        </ul>
+                    </div>
+
+                    <div class="week-card">
+                        <h4>🎯 Days 61-90: Culture Embedding</h4>
+                        <h5>Modeling Behaviors:</h5>
+                        <ul class="action-list">
+                            <li><input type="text" class="input-field" placeholder="Sustainable leadership practice..."></li>
+                            <li><input type="text" class="input-field" placeholder="Mentoring approach I will use..."></li>
+                            <li><input type="text" class="input-field" placeholder="Innovation I will encourage..."></li>
+                        </ul>
+
+                        <h5>Reinforcing Values:</h5>
+                        <ul class="action-list">
+                            <li><input type="text" class="input-field" placeholder="Culture measurement system..."></li>
+                            <li><input type="text" class="input-field" placeholder="Long-term reinforcement plan..."></li>
+                            <li><input type="text" class="input-field" placeholder="Success celebration method..."></li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+
+            <div class="section">
+                <h2>⚠️ Addressing Cultural Misalignment</h2>
+
+                <h3>Identification Strategy</h3>
+                <textarea class="input-field textarea-field" placeholder="How will you identify cultural misalignment? (observation methods, feedback systems, etc.)"></textarea>
+
+                <h3>Response Framework</h3>
+                <div class="week-grid">
+                    <div class="week-card">
+                        <h4>🔍 Minor Misalignment</h4>
+                        <textarea class="input-field textarea-field" placeholder="How will you address small cultural issues? (coaching conversations, redirecting, etc.)"></textarea>
+                    </div>
+                    <div class="week-card">
+                        <h4>⚡ Major Misalignment</h4>
+                        <textarea class="input-field textarea-field" placeholder="How will you handle serious cultural violations? (formal discussions, documentation, etc.)"></textarea>
+                    </div>
+                </div>
+
+                <h3>Prevention Measures</h3>
+                <ul class="action-list">
+                    <li><input type="text" class="input-field" placeholder="Hiring practice to prevent misalignment..."></li>
+                    <li><input type="text" class="input-field" placeholder="Training program to reinforce culture..."></li>
+                    <li><input type="text" class="input-field" placeholder="Regular check-in system..."></li>
+                    <li><input type="text" class="input-field" placeholder="Culture reinforcement activity..."></li>
+                </ul>
+            </div>
+
+            <div class="section">
+                <h2>📊 Measurement & Accountability</h2>
+
+                <h3>Weekly Culture Metrics</h3>
+                <div class="metrics-grid">
+                    <div class="metric-card">
+                        <h5>Team Morale</h5>
+                        <input type="text" class="input-field" placeholder="How measured?">
+                        <input type="text" class="input-field" placeholder="Target score">
+                    </div>
+                    <div class="metric-card">
+                        <h5>Guest Feedback</h5>
+                        <input type="text" class="input-field" placeholder="How measured?">
+                        <input type="text" class="input-field" placeholder="Target score">
+                    </div>
+                    <div class="metric-card">
+                        <h5>Team Engagement</h5>
+                        <input type="text" class="input-field" placeholder="How measured?">
+                        <input type="text" class="input-field" placeholder="Target %">
+                    </div>
+                    <div class="metric-card">
+                        <h5>Culture Behaviors</h5>
+                        <input type="text" class="input-field" placeholder="How measured?">
+                        <input type="text" class="input-field" placeholder="Target frequency">
+                    </div>
+                </div>
+
+                <h3>Monthly Review Questions</h3>
+                <ul class="action-list">
+                    <li>What cultural improvements have I observed?</li>
+                    <li>Which team members are exemplifying our values?</li>
+                    <li>What challenges am I facing in culture development?</li>
+                    <li>How am I growing as a culture leader?</li>
+                    <li>What adjustments need to be made to my approach?</li>
+                </ul>
+            </div>
+
+            <div class="section">
+                <h2>🎉 Recognition & Celebration Plan</h2>
+
+                <h3>Daily Recognition</h3>
+                <input type="text" class="input-field" placeholder="How will you recognize culture champions daily?">
+
+                <h3>Weekly Celebrations</h3>
+                <input type="text" class="input-field" placeholder="What weekly ritual will celebrate cultural wins?">
+
+                <h3>Monthly Culture Awards</h3>
+                <input type="text" class="input-field" placeholder="What monthly recognition will you implement?">
+
+                <h3>90-Day Success Celebration</h3>
+                <textarea class="input-field textarea-field" placeholder="How will you celebrate achieving your 90-day culture goals?"></textarea>
+            </div>
+
+            <div class="section">
+                <h2>📝 Personal Leadership Commitments</h2>
+
+                <h3>My Leadership Pledge</h3>
+                <textarea class="input-field textarea-field" placeholder="Write your personal commitment to leading culture change in your restaurant..."></textarea>
+
+                <h3>Daily Leadership Habits</h3>
+                <ul class="action-list">
+                    <li><input type="text" class="input-field" placeholder="Morning leadership habit..."></li>
+                    <li><input type="text" class="input-field" placeholder="During-shift leadership practice..."></li>
+                    <li><input type="text" class="input-field" placeholder="End-of-shift reflection..."></li>
+                </ul>
+
+                <h3>Weekly Leadership Development</h3>
+                <input type="text" class="input-field" placeholder="What will you do weekly to grow as a culture leader?">
+            </div>
+
+            <!-- Bottom Save Section -->
+            <div class="bottom-save-section">
+                <div class="bottom-buttons">
+                    <button class="btn btn-success" onclick="saveProgress()">
+                        💾 Save Your 90-Day Plan
+                    </button>
+                    <button class="btn btn-primary" onclick="printPlan()">
+                        🖨️ Print Plan
+                    </button>
+                </div>
+                <p style="font-size: 12px; color: #666; text-align: center;">
+                    Your progress is automatically saved as you type. Use the buttons above to manually save or print your completed plan.
+                </p>
+            </div>
+        </div>
+
+        <div class="footer">
+            <p>🌟 <strong>Remember:</strong> Culture is built through consistent daily actions, not grand gestures. Your leadership sets the tone for everything that happens in your restaurant.</p>
+            <p style="margin-top: 10px; opacity: 0.8;">© Leadership Development Platform - Transform Your Restaurant Culture</p>
+        </div>
+    </div>
+
+    <script>
+        // Auto-save functionality
+        let autoSaveTimeout;
+
+        // Add event listeners to all form fields
+        document.addEventListener('DOMContentLoaded', function() {
+            const formFields = document.querySelectorAll('input, textarea');
+            formFields.forEach(field => {
+                field.addEventListener('input', function() {
+                    // Clear existing timeout
+                    clearTimeout(autoSaveTimeout);
+
+                    // Set new timeout for auto-save
+                    autoSaveTimeout = setTimeout(autoSave, 2000); // Auto-save after 2 seconds of inactivity
+                });
+            });
+
+            // Load saved data on page load
+            loadProgress(false); // false = don't show notification
+        });
+
+        // Save progress function
+        function saveProgress() {
+            const formData = {};
+            const formFields = document.querySelectorAll('input, textarea');
+
+            formFields.forEach((field, index) => {
+                if (field.value.trim() !== '') {
+                    formData[`field_${index}`] = {
+                        value: field.value,
+                        placeholder: field.placeholder,
+                        type: field.tagName.toLowerCase()
+                    };
+                }
+            });
+
+            // Save to localStorage
+            localStorage.setItem('culture_leadership_plan', JSON.stringify(formData));
+
+            // Show save indicator
+            showSaveIndicator();
+
+            console.log('Progress saved successfully!');
+        }
+
+        // Auto-save function (silent)
+        function autoSave() {
+            const formData = {};
+            const formFields = document.querySelectorAll('input, textarea');
+
+            formFields.forEach((field, index) => {
+                if (field.value.trim() !== '') {
+                    formData[`field_${index}`] = {
+                        value: field.value,
+                        placeholder: field.placeholder,
+                        type: field.tagName.toLowerCase()
+                    };
+                }
+            });
+
+            // Save to localStorage
+            localStorage.setItem('culture_leadership_plan', JSON.stringify(formData));
+        }
+
+        // Load progress function
+        function loadProgress(showNotification = true) {
+            const savedData = localStorage.getItem('culture_leadership_plan');
+
+            if (savedData) {
+                const formData = JSON.parse(savedData);
+                const formFields = document.querySelectorAll('input, textarea');
+
+                formFields.forEach((field, index) => {
+                    const savedField = formData[`field_${index}`];
+                    if (savedField && savedField.placeholder === field.placeholder) {
+                        field.value = savedField.value;
+                    }
+                });
+
+                if (showNotification) {
+                    showSaveIndicator('📂 Data Loaded!');
+                }
+
+                console.log('Progress loaded successfully!');
+            } else if (showNotification) {
+                showSaveIndicator('❌ No saved data found', 'error');
+            }
+        }
+
+        // Print function
+        function printPlan() {
+            // Save current progress before printing
+            saveProgress();
+
+            // Print the page
+            window.print();
+        }
+
+        // Show save indicator
+        function showSaveIndicator(message = '✅ Progress Saved!', type = 'success') {
+            const indicator = document.getElementById('saveIndicator');
+            indicator.textContent = message;
+
+            if (type === 'error') {
+                indicator.style.background = '#e74c3c';
+            } else {
+                indicator.style.background = '#27ae60';
+            }
+
+            indicator.classList.add('show');
+
+            setTimeout(() => {
+                indicator.classList.remove('show');
+            }, 3000);
+        }
+
+        // Export as PDF function (bonus feature)
+        function exportAsPDF() {
+            // Save current progress
+            saveProgress();
+
+            // Use browser's print to PDF functionality
+            window.print();
+        }
+
+        // Clear all data function (for testing)
+        function clearAllData() {
+            if (confirm('Are you sure you want to clear all data? This cannot be undone.')) {
+                localStorage.removeItem('culture_leadership_plan');
+                location.reload();
+            }
+        }
+
+        // Add SMART Goal function
+        let goalCounter = 1;
+        function addSmartGoal() {
+            goalCounter++;
+            const container = document.getElementById('smartGoalsContainer');
+
+            const goalCard = document.createElement('div');
+            goalCard.className = 'smart-goal-card';
+            goalCard.innerHTML = `
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
+                    <h4>🎯 SMART Goal #${goalCounter}</h4>
+                    <button class="btn btn-danger" onclick="removeSmartGoal(this)" style="padding: 5px 10px; font-size: 12px;">
+                        ❌ Remove
+                    </button>
+                </div>
+                <div class="smart-breakdown">
+                    <div class="smart-item">
+                        <strong>Specific:</strong>
+                        <input type="text" class="input-field" placeholder="What exactly will you improve?">
+                    </div>
+                    <div class="smart-item">
+                        <strong>Measurable:</strong>
+                        <input type="text" class="input-field" placeholder="How will you measure it?">
+                    </div>
+                    <div class="smart-item">
+                        <strong>Achievable:</strong>
+                        <input type="text" class="input-field" placeholder="Why is this realistic?">
+                    </div>
+                    <div class="smart-item">
+                        <strong>Relevant:</strong>
+                        <input type="text" class="input-field" placeholder="Why does this matter?">
+                    </div>
+                    <div class="smart-item">
+                        <strong>Time-bound:</strong>
+                        <input type="text" class="input-field" placeholder="When will you achieve this?">
+                    </div>
+                </div>
+            `;
+
+            container.appendChild(goalCard);
+
+            // Add event listeners to new fields for auto-save
+            const newFields = goalCard.querySelectorAll('input, textarea');
+            newFields.forEach(field => {
+                field.addEventListener('input', function() {
+                    clearTimeout(autoSaveTimeout);
+                    autoSaveTimeout = setTimeout(autoSave, 2000);
+                });
+            });
+
+            // Auto-save after adding new goal
+            setTimeout(autoSave, 100);
+        }
+
+        // Remove SMART Goal function
+        function removeSmartGoal(button) {
+            const goalCard = button.closest('.smart-goal-card');
+            goalCard.remove();
+
+            // Renumber remaining goals
+            const remainingGoals = document.querySelectorAll('.smart-goal-card h4');
+            remainingGoals.forEach((goal, index) => {
+                goal.textContent = `🎯 SMART Goal #${index + 1}`;
+            });
+
+            goalCounter = remainingGoals.length;
+
+            // Auto-save after removing goal
+            setTimeout(autoSave, 100);
+        }
+
+        // Add keyboard shortcuts
+        document.addEventListener('keydown', function(e) {
+            // Ctrl+S or Cmd+S to save
+            if ((e.ctrlKey || e.metaKey) && e.key === 's') {
+                e.preventDefault();
+                saveProgress();
+            }
+
+            // Ctrl+P or Cmd+P to print
+            if ((e.ctrlKey || e.metaKey) && e.key === 'p') {
+                e.preventDefault();
+                printPlan();
+            }
+        });
+    </script>
+</body>
+</html>

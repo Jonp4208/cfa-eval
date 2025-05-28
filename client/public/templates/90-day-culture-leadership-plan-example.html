@@ -1,0 +1,466 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>90-Day Culture Leadership Plan - Example</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            line-height: 1.6;
+            color: #333;
+            background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 15px;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.1);
+            overflow: hidden;
+        }
+
+        .header {
+            background: linear-gradient(135deg, #E51636 0%, #c41230 100%);
+            color: white;
+            padding: 40px 30px;
+            text-align: center;
+            position: relative;
+        }
+
+        .header h1 {
+            font-size: 2.5rem;
+            margin-bottom: 10px;
+            font-weight: 700;
+        }
+
+        .header p {
+            font-size: 1.1rem;
+            opacity: 0.9;
+        }
+
+        .example-banner {
+            background: #f39c12;
+            color: white;
+            padding: 15px 30px;
+            text-align: center;
+            font-weight: 600;
+            font-size: 1.1rem;
+        }
+
+        .content {
+            padding: 30px;
+        }
+
+        .section {
+            margin-bottom: 40px;
+            padding: 25px;
+            background: #f8f9fa;
+            border-radius: 10px;
+            border-left: 5px solid #E51636;
+        }
+
+        .section h2 {
+            color: #E51636;
+            font-size: 1.8rem;
+            margin-bottom: 20px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .section h3 {
+            color: #2c3e50;
+            font-size: 1.3rem;
+            margin: 20px 0 10px 0;
+        }
+
+        .input-field {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid #ddd;
+            border-radius: 6px;
+            font-size: 14px;
+            margin-bottom: 15px;
+            background: white;
+            color: #333;
+        }
+
+        .textarea-field {
+            min-height: 100px;
+            resize: vertical;
+        }
+
+        .smart-goals-grid {
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+            margin-top: 20px;
+        }
+
+        .smart-goal-card {
+            background: white;
+            border: 2px solid #E51636;
+            border-radius: 10px;
+            padding: 20px;
+            width: 100%;
+        }
+
+        .smart-breakdown {
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+            margin-top: 15px;
+        }
+
+        .smart-item {
+            display: flex;
+            flex-direction: column;
+            gap: 5px;
+        }
+
+        .smart-item strong {
+            color: #E51636;
+            font-size: 14px;
+            margin-bottom: 5px;
+        }
+
+        .week-grid {
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+            margin-top: 20px;
+        }
+
+        .week-card {
+            background: white;
+            border: 2px solid #E51636;
+            border-radius: 10px;
+            padding: 20px;
+            width: 100%;
+        }
+
+        .week-card h4 {
+            color: #E51636;
+            margin-bottom: 15px;
+            font-size: 1.2rem;
+        }
+
+        .week-card h5 {
+            color: #2c3e50;
+            margin: 15px 0 10px 0;
+            font-size: 1rem;
+        }
+
+        .action-list {
+            list-style: none;
+            padding: 0;
+        }
+
+        .action-list li {
+            margin-bottom: 10px;
+            padding: 10px 0;
+            border-bottom: 1px solid #eee;
+            position: relative;
+            padding-left: 25px;
+        }
+
+        .action-list li:before {
+            content: '✓';
+            position: absolute;
+            left: 0;
+            color: #E51636;
+            font-weight: bold;
+        }
+
+        .metrics-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+            margin-top: 15px;
+        }
+
+        .metric-card {
+            background: white;
+            padding: 15px;
+            border-radius: 6px;
+            text-align: center;
+            border: 2px solid #E51636;
+        }
+
+        .metric-card h5 {
+            color: #E51636;
+            margin-bottom: 10px;
+        }
+
+        .footer {
+            background: #2c3e50;
+            color: white;
+            padding: 20px 30px;
+            text-align: center;
+        }
+
+        .example-value {
+            background: #e8f5e8;
+            border-color: #4caf50;
+            font-style: italic;
+        }
+
+        @media print {
+            body {
+                background: white;
+                padding: 0;
+            }
+            .container {
+                box-shadow: none;
+                border-radius: 0;
+            }
+            .example-banner {
+                display: none;
+            }
+        }
+
+        @media (max-width: 768px) {
+            .container {
+                padding: 10px;
+            }
+
+            .week-grid {
+                gap: 15px;
+            }
+
+            .week-card {
+                padding: 15px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🎯 90-Day Culture Leadership Plan</h1>
+            <p>Transform Your Restaurant Culture Through Intentional Leadership</p>
+        </div>
+
+        <div class="example-banner">
+            📋 EXAMPLE PLAN - This shows how a completed plan might look for a Chick-fil-A restaurant
+        </div>
+
+        <div class="content">
+            <div class="section">
+                <h2>📋 Restaurant Information</h2>
+                <input type="text" class="input-field example-value" value="Chick-fil-A #12345" readonly>
+                <input type="text" class="input-field example-value" value="Chick-fil-A Northside - 123 Main Street" readonly>
+                <input type="text" class="input-field example-value" value="Sarah Johnson - General Manager" readonly>
+                <input type="date" class="input-field example-value" value="2024-01-15" readonly>
+                <textarea class="input-field textarea-field example-value" readonly>Current Culture Assessment: Our team is hardworking and committed to quality, but we're seeing some communication gaps between FOH and BOH. Team morale is good (7/10) but could be stronger. We have high standards but need better systems for recognition and feedback. Turnover is at 18% which is below industry average but we want to get to 12%.</textarea>
+            </div>
+
+            <div class="section">
+                <h2>🎯 Culture Vision & Goals</h2>
+                <h3>Our Culture Vision Statement</h3>
+                <textarea class="input-field textarea-field example-value" readonly>We will create a culture where every team member feels valued, empowered, and excited to serve our guests with excellence. Our culture will be built on mutual respect, continuous growth, and genuine care for each other and our community.</textarea>
+
+                <h3>90-Day SMART Goals</h3>
+                <p style="margin-bottom: 20px; font-style: italic; color: #666;">Create Specific, Measurable, Achievable, Relevant, and Time-bound goals for your culture transformation.</p>
+
+                <div class="smart-goals-grid">
+                    <div class="smart-goal-card">
+                        <h4>🎯 SMART Goal #1: Team Engagement</h4>
+                        <div class="smart-breakdown">
+                            <div class="smart-item">
+                                <strong>Specific:</strong>
+                                <input type="text" class="input-field example-value" value="Increase daily team huddle participation and engagement" readonly>
+                            </div>
+                            <div class="smart-item">
+                                <strong>Measurable:</strong>
+                                <input type="text" class="input-field example-value" value="Achieve 95% team member participation in daily huddles with active contribution" readonly>
+                            </div>
+                            <div class="smart-item">
+                                <strong>Achievable:</strong>
+                                <input type="text" class="input-field example-value" value="Current participation is 70%, and with structured approach and incentives, 95% is realistic" readonly>
+                            </div>
+                            <div class="smart-item">
+                                <strong>Relevant:</strong>
+                                <input type="text" class="input-field example-value" value="Engaged teams provide better guest service and have higher job satisfaction" readonly>
+                            </div>
+                            <div class="smart-item">
+                                <strong>Time-bound:</strong>
+                                <input type="text" class="input-field example-value" value="Achieve 95% participation consistently by day 60 of this plan" readonly>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="section">
+                <h2>📅 30-60-90 Day Action Plan</h2>
+
+                <div class="week-grid">
+                    <div class="week-card">
+                        <h4>🚀 Days 1-30: Foundation Building</h4>
+                        <h5>Modeling Behaviors:</h5>
+                        <ul class="action-list">
+                            <li><input type="text" class="input-field example-value" value="Start each shift by personally greeting every team member and asking how they're doing" readonly></li>
+                            <li><input type="text" class="input-field example-value" value="Demonstrate our core values through visible actions - helping during rushes, staying calm under pressure" readonly></li>
+                            <li><input type="text" class="input-field example-value" value="Maintain open-door policy and be physically present on the floor 80% of my shift" readonly></li>
+                        </ul>
+
+                        <h5>Reinforcing Values:</h5>
+                        <ul class="action-list">
+                            <li><input type="text" class="input-field example-value" value="Implement daily 'Culture Champion' recognition - highlight one team member who exemplified our values" readonly></li>
+                            <li><input type="text" class="input-field example-value" value="Start weekly team meetings with culture stories and wins from the previous week" readonly></li>
+                            <li><input type="text" class="input-field example-value" value="Create visual culture reminders in break room and post weekly culture focus areas" readonly></li>
+                        </ul>
+                    </div>
+
+                    <div class="week-card">
+                        <h4>⚡ Days 31-60: Momentum Building</h4>
+                        <h5>Modeling Behaviors:</h5>
+                        <ul class="action-list">
+                            <li><input type="text" class="input-field example-value" value="Conduct monthly one-on-one coaching sessions with each team member focused on growth" readonly></li>
+                            <li><input type="text" class="input-field example-value" value="Demonstrate conflict resolution by addressing issues immediately and fairly" readonly></li>
+                            <li><input type="text" class="input-field example-value" value="Show vulnerability by sharing my own learning goals and asking for feedback from team" readonly></li>
+                        </ul>
+
+                        <h5>Reinforcing Values:</h5>
+                        <ul class="action-list">
+                            <li><input type="text" class="input-field example-value" value="Launch peer-to-peer recognition program where team members nominate each other" readonly></li>
+                            <li><input type="text" class="input-field example-value" value="Implement monthly team building activities that reinforce our values" readonly></li>
+                            <li><input type="text" class="input-field example-value" value="Create culture scorecard and review progress with team weekly" readonly></li>
+                        </ul>
+                    </div>
+
+                    <div class="week-card">
+                        <h4>🎯 Days 61-90: Culture Embedding</h4>
+                        <h5>Modeling Behaviors:</h5>
+                        <ul class="action-list">
+                            <li><input type="text" class="input-field example-value" value="Develop and mentor team leaders to become culture ambassadors" readonly></li>
+                            <li><input type="text" class="input-field example-value" value="Consistently make decisions that prioritize long-term culture over short-term convenience" readonly></li>
+                            <li><input type="text" class="input-field example-value" value="Celebrate failures as learning opportunities and model continuous improvement mindset" readonly></li>
+                        </ul>
+
+                        <h5>Reinforcing Values:</h5>
+                        <ul class="action-list">
+                            <li><input type="text" class="input-field example-value" value="Integrate culture assessment into hiring process and new team member onboarding" readonly></li>
+                            <li><input type="text" class="input-field example-value" value="Establish quarterly culture review process with team input and action planning" readonly></li>
+                            <li><input type="text" class="input-field example-value" value="Create culture legacy plan to ensure sustainability beyond my tenure" readonly></li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+
+            <div class="section">
+                <h2>⚠️ Addressing Cultural Misalignment</h2>
+
+                <h3>Identification Strategy</h3>
+                <textarea class="input-field textarea-field example-value" readonly>I will identify cultural misalignment through: 1) Daily floor observations and interactions, 2) Weekly anonymous feedback surveys, 3) Monthly team member check-ins, 4) Guest feedback analysis, 5) Peer feedback from other managers. I'll look for signs like negative attitudes, resistance to standards, poor teamwork, or guest complaints about service attitude.</textarea>
+
+                <h3>Response Framework</h3>
+                <div class="week-grid">
+                    <div class="week-card">
+                        <h4>🔍 Minor Misalignment</h4>
+                        <textarea class="input-field textarea-field example-value" readonly>For minor issues: 1) Address immediately with private, respectful conversation, 2) Understand root cause - is it training, personal issues, or attitude?, 3) Provide specific examples and clear expectations, 4) Offer support and resources, 5) Follow up within 48 hours to ensure improvement, 6) Document conversation for future reference.</textarea>
+                    </div>
+                    <div class="week-card">
+                        <h4>⚡ Major Misalignment</h4>
+                        <textarea class="input-field textarea-field example-value" readonly>For serious violations: 1) Remove from guest-facing role immediately if needed, 2) Conduct formal discussion with HR documentation, 3) Create specific improvement plan with timeline, 4) Involve district manager if necessary, 5) Consider reassignment or termination if no improvement, 6) Protect team culture by being decisive and fair.</textarea>
+                    </div>
+                </div>
+
+                <h3>Prevention Measures</h3>
+                <ul class="action-list">
+                    <li><input type="text" class="input-field example-value" value="Include culture-fit questions in all interviews and check references for attitude and teamwork" readonly></li>
+                    <li><input type="text" class="input-field example-value" value="Implement 30-60-90 day culture check-ins for all new hires with clear expectations" readonly></li>
+                    <li><input type="text" class="input-field example-value" value="Provide monthly culture training sessions covering values, expectations, and real scenarios" readonly></li>
+                    <li><input type="text" class="input-field example-value" value="Create buddy system pairing new team members with culture champions for first 60 days" readonly></li>
+                </ul>
+            </div>
+
+            <div class="section">
+                <h2>📊 Measurement & Accountability</h2>
+
+                <h3>Weekly Culture Metrics</h3>
+                <div class="metrics-grid">
+                    <div class="metric-card">
+                        <h5>Team Morale</h5>
+                        <input type="text" class="input-field example-value" value="Weekly 1-10 scale survey" readonly>
+                        <input type="text" class="input-field example-value" value="Target: 8.5 average" readonly>
+                    </div>
+                    <div class="metric-card">
+                        <h5>Guest Feedback</h5>
+                        <input type="text" class="input-field example-value" value="Daily guest satisfaction scores" readonly>
+                        <input type="text" class="input-field example-value" value="Target: 4.7/5.0 stars" readonly>
+                    </div>
+                    <div class="metric-card">
+                        <h5>Team Engagement</h5>
+                        <input type="text" class="input-field example-value" value="Huddle participation tracking" readonly>
+                        <input type="text" class="input-field example-value" value="Target: 95% participation" readonly>
+                    </div>
+                    <div class="metric-card">
+                        <h5>Culture Behaviors</h5>
+                        <input type="text" class="input-field example-value" value="Daily observation checklist" readonly>
+                        <input type="text" class="input-field example-value" value="Target: 90% positive behaviors" readonly>
+                    </div>
+                </div>
+
+                <h3>Monthly Review Questions</h3>
+                <ul class="action-list">
+                    <li>What cultural improvements have I observed?</li>
+                    <li>Which team members are exemplifying our values?</li>
+                    <li>What challenges am I facing in culture development?</li>
+                    <li>How am I growing as a culture leader?</li>
+                    <li>What adjustments need to be made to my approach?</li>
+                </ul>
+            </div>
+
+            <div class="section">
+                <h2>🎉 Recognition & Celebration Plan</h2>
+
+                <h3>Daily Recognition</h3>
+                <input type="text" class="input-field example-value" value="Daily 'Culture Champion' shout-out during shift change with specific example of values in action" readonly>
+
+                <h3>Weekly Celebrations</h3>
+                <input type="text" class="input-field example-value" value="Friday team huddle celebrating weekly culture wins and sharing positive guest feedback" readonly>
+
+                <h3>Monthly Culture Awards</h3>
+                <input type="text" class="input-field example-value" value="Monthly 'Culture Leader' award with gift card and recognition in team communication" readonly>
+
+                <h3>90-Day Success Celebration</h3>
+                <textarea class="input-field textarea-field example-value" readonly>Host team celebration dinner at local restaurant to celebrate culture transformation achievements. Share before/after metrics, recognize individual contributions, and set vision for continued culture excellence. Present team with custom culture champion t-shirts and individual thank you notes.</textarea>
+            </div>
+
+            <div class="section">
+                <h2>📝 Personal Leadership Commitments</h2>
+
+                <h3>My Leadership Pledge</h3>
+                <textarea class="input-field textarea-field example-value" readonly>I commit to leading by example every day, treating each team member with respect and dignity, and creating an environment where everyone can thrive. I will be consistent in my actions, transparent in my communication, and dedicated to the growth and success of every person on our team. I will hold myself accountable to the same standards I expect from others and continuously work to improve as a leader.</textarea>
+
+                <h3>Daily Leadership Habits</h3>
+                <ul class="action-list">
+                    <li><input type="text" class="input-field example-value" value="Start each day with 5-minute reflection on how I can serve my team better" readonly></li>
+                    <li><input type="text" class="input-field example-value" value="Have at least 3 meaningful conversations with team members during each shift" readonly></li>
+                    <li><input type="text" class="input-field example-value" value="End each shift by writing down one culture win and one area for improvement" readonly></li>
+                </ul>
+
+                <h3>Weekly Leadership Development</h3>
+                <input type="text" class="input-field example-value" value="Read one leadership article, listen to one leadership podcast episode, and practice one new leadership skill" readonly>
+            </div>
+        </div>
+
+        <div class="footer">
+            <p>🌟 <strong>Remember:</strong> Culture is built through consistent daily actions, not grand gestures. Your leadership sets the tone for everything that happens in your restaurant.</p>
+            <p style="margin-top: 10px; opacity: 0.8;">© Leadership Development Platform - Transform Your Restaurant Culture</p>
+        </div>
+    </div>
+</body>
+</html>

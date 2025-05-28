@@ -485,7 +485,7 @@ export default function Layout({ children }: { children: React.ReactNode }) {
   return (
     <div className="min-h-screen bg-white">
       {/* Mobile Header */}
-      <div className="[&>*]:min-[938px]:hidden fixed-header-ios">
+      <div className="[&>*]:min-[938px]:hidden fixed-header-ios print:hidden">
         {/* iOS Status Bar Spacer - only visible on iOS PWA */}
         <div className="ios-status-bar-height"></div>
         <div className="h-16 px-4 flex items-center justify-between">
@@ -514,7 +514,7 @@ export default function Layout({ children }: { children: React.ReactNode }) {
       </div>
 
       {/* Desktop Navigation Bar */}
-      <div className="hidden min-[938px]:block fixed top-0 left-0 right-0 bg-white border-b z-50">
+      <div className="hidden min-[938px]:block fixed top-0 left-0 right-0 bg-white border-b z-50 print:hidden">
         <div className="h-16 mx-auto max-w-7xl px-4 flex items-center justify-between gap-8">
           {/* Left Section: Logo and Store Info */}
           <div className="flex items-center gap-8">
@@ -715,12 +715,12 @@ export default function Layout({ children }: { children: React.ReactNode }) {
       </main>
 
       {/* Update Notification */}
-      <UpdateNotification />
+      <UpdateNotification className="print:hidden" />
 
       {/* Mobile Menu Dropdown */}
       {isMobileMenuOpen && (
         <div
-          className="min-[938px]:hidden fixed inset-0 bg-black/50 z-[200] overflow-hidden"
+          className="min-[938px]:hidden fixed inset-0 bg-black/50 z-[200] overflow-hidden print:hidden"
           onClick={() => setIsMobileMenuOpen(false)}
         >
           <div

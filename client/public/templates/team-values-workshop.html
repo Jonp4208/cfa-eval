@@ -1,0 +1,602 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Team Values Workshop - Interactive Tool</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            line-height: 1.6;
+            color: #27251F;
+            background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 900px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.1);
+            overflow: hidden;
+        }
+
+        .header {
+            background: linear-gradient(135deg, #E51636 0%, #B91C3C 100%);
+            color: white;
+            padding: 40px;
+            text-align: center;
+        }
+
+        .header h1 {
+            font-size: 2.5rem;
+            margin-bottom: 10px;
+            font-weight: 700;
+        }
+
+        .header p {
+            font-size: 1.1rem;
+            opacity: 0.9;
+        }
+
+        .content {
+            padding: 40px;
+        }
+
+        .section {
+            margin-bottom: 40px;
+            padding: 30px;
+            background: #f8f9fa;
+            border-radius: 15px;
+            border-left: 5px solid #E51636;
+        }
+
+        .section h2 {
+            color: #E51636;
+            font-size: 1.8rem;
+            margin-bottom: 20px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .section h3 {
+            color: #002D72;
+            font-size: 1.3rem;
+            margin-bottom: 15px;
+            margin-top: 25px;
+        }
+
+        .input-field {
+            width: 100%;
+            padding: 15px;
+            border: 2px solid #e1e5e9;
+            border-radius: 10px;
+            font-size: 16px;
+            margin-bottom: 15px;
+            transition: border-color 0.3s ease;
+            font-family: inherit;
+        }
+
+        .input-field:focus {
+            outline: none;
+            border-color: #E51636;
+            box-shadow: 0 0 0 3px rgba(229, 22, 54, 0.1);
+        }
+
+        .textarea-field {
+            min-height: 120px;
+            resize: vertical;
+        }
+
+        .values-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 20px;
+            margin-bottom: 20px;
+        }
+
+        .value-card {
+            background: white;
+            padding: 20px;
+            border-radius: 12px;
+            border: 2px solid #e1e5e9;
+            transition: all 0.3s ease;
+        }
+
+        .value-card:hover {
+            border-color: #E51636;
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+        }
+
+        .value-card h4 {
+            color: #E51636;
+            margin-bottom: 10px;
+            font-size: 1.1rem;
+        }
+
+        .framework-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 25px;
+            margin-top: 20px;
+        }
+
+        .framework-card {
+            background: white;
+            padding: 25px;
+            border-radius: 15px;
+            border: 3px solid #e1e5e9;
+            transition: all 0.3s ease;
+        }
+
+        .framework-card.start {
+            border-color: #10B981;
+        }
+
+        .framework-card.stop {
+            border-color: #EF4444;
+        }
+
+        .framework-card.continue {
+            border-color: #3B82F6;
+        }
+
+        .framework-card h4 {
+            font-size: 1.3rem;
+            margin-bottom: 15px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .framework-card.start h4 {
+            color: #10B981;
+        }
+
+        .framework-card.stop h4 {
+            color: #EF4444;
+        }
+
+        .framework-card.continue h4 {
+            color: #3B82F6;
+        }
+
+        .behavior-list {
+            list-style: none;
+            margin-top: 15px;
+        }
+
+        .behavior-item {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 10px;
+        }
+
+        .behavior-input {
+            flex: 1;
+            padding: 10px;
+            border: 1px solid #e1e5e9;
+            border-radius: 8px;
+            font-size: 14px;
+        }
+
+        .add-behavior-btn {
+            background: #E51636;
+            color: white;
+            border: none;
+            padding: 8px 15px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 14px;
+            transition: background 0.3s ease;
+        }
+
+        .add-behavior-btn:hover {
+            background: #B91C3C;
+        }
+
+        .visual-reminders {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 25px;
+            border-radius: 15px;
+            margin-top: 20px;
+        }
+
+        .reminder-templates {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+            margin-top: 20px;
+        }
+
+        .reminder-template {
+            background: rgba(255,255,255,0.1);
+            padding: 15px;
+            border-radius: 10px;
+            border: 1px solid rgba(255,255,255,0.2);
+        }
+
+        .action-buttons {
+            display: flex;
+            gap: 15px;
+            justify-content: center;
+            margin-top: 40px;
+            flex-wrap: wrap;
+        }
+
+        .btn {
+            padding: 15px 30px;
+            border: none;
+            border-radius: 10px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-decoration: none;
+            display: inline-block;
+            text-align: center;
+        }
+
+        .btn-primary {
+            background: #E51636;
+            color: white;
+        }
+
+        .btn-primary:hover {
+            background: #B91C3C;
+            transform: translateY(-2px);
+        }
+
+        .btn-secondary {
+            background: #002D72;
+            color: white;
+        }
+
+        .btn-secondary:hover {
+            background: #001a4d;
+            transform: translateY(-2px);
+        }
+
+        .facilitator-guide {
+            background: #fff3cd;
+            border: 1px solid #ffeaa7;
+            border-radius: 10px;
+            padding: 20px;
+            margin-bottom: 30px;
+        }
+
+        .facilitator-guide h3 {
+            color: #856404;
+            margin-bottom: 15px;
+        }
+
+        .guide-steps {
+            list-style: none;
+            counter-reset: step-counter;
+        }
+
+        .guide-steps li {
+            counter-increment: step-counter;
+            margin-bottom: 10px;
+            padding-left: 30px;
+            position: relative;
+        }
+
+        .guide-steps li::before {
+            content: counter(step-counter);
+            position: absolute;
+            left: 0;
+            top: 0;
+            background: #E51636;
+            color: white;
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 12px;
+            font-weight: bold;
+        }
+
+        @media (max-width: 768px) {
+            .container {
+                margin: 10px;
+                border-radius: 15px;
+            }
+
+            .header {
+                padding: 30px 20px;
+            }
+
+            .header h1 {
+                font-size: 2rem;
+            }
+
+            .content {
+                padding: 20px;
+            }
+
+            .section {
+                padding: 20px;
+            }
+
+            .framework-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .action-buttons {
+                flex-direction: column;
+                align-items: center;
+            }
+
+            .btn {
+                width: 100%;
+                max-width: 300px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🎯 Team Values Workshop</h1>
+            <p>Interactive tool to identify team values and align behaviors using the Start, Stop, Continue framework</p>
+        </div>
+
+        <div class="content">
+            <!-- Facilitator Guide -->
+            <div class="facilitator-guide">
+                <h3>📋 Workshop Facilitation Guide (30 minutes)</h3>
+                <ul class="guide-steps">
+                    <li>Gather your team in a comfortable setting away from distractions</li>
+                    <li>Explain that you want to identify shared values that guide how you work together</li>
+                    <li>Start with values identification (10 minutes) - ask "What matters most to us as a team?"</li>
+                    <li>Use Start, Stop, Continue framework (15 minutes) to identify specific behaviors</li>
+                    <li>Create action plan (5 minutes) and assign someone to create visual reminders</li>
+                </ul>
+            </div>
+
+            <!-- Workshop Information -->
+            <div class="section">
+                <h2>📋 Workshop Information</h2>
+                <input type="text" class="input-field" placeholder="Restaurant Name/Location">
+                <input type="text" class="input-field" placeholder="Workshop Facilitator Name">
+                <input type="date" class="input-field" placeholder="Workshop Date">
+                <textarea class="input-field textarea-field" placeholder="Team Members Present (list names)"></textarea>
+            </div>
+
+            <!-- Values Identification -->
+            <div class="section">
+                <h2>💎 Our Team Values</h2>
+                <p style="margin-bottom: 20px; color: #666;">Work together to identify 3-5 core values that represent what matters most to your team. These should be principles that guide how you treat each other and serve guests.</p>
+
+                <div class="values-grid">
+                    <div class="value-card">
+                        <h4>Value #1</h4>
+                        <input type="text" class="input-field" placeholder="Value name (e.g., Respect)">
+                        <textarea class="input-field" placeholder="What this means to us..." style="min-height: 80px;"></textarea>
+                    </div>
+                    <div class="value-card">
+                        <h4>Value #2</h4>
+                        <input type="text" class="input-field" placeholder="Value name (e.g., Excellence)">
+                        <textarea class="input-field" placeholder="What this means to us..." style="min-height: 80px;"></textarea>
+                    </div>
+                    <div class="value-card">
+                        <h4>Value #3</h4>
+                        <input type="text" class="input-field" placeholder="Value name (e.g., Teamwork)">
+                        <textarea class="input-field" placeholder="What this means to us..." style="min-height: 80px;"></textarea>
+                    </div>
+                    <div class="value-card">
+                        <h4>Value #4 (Optional)</h4>
+                        <input type="text" class="input-field" placeholder="Value name">
+                        <textarea class="input-field" placeholder="What this means to us..." style="min-height: 80px;"></textarea>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Start, Stop, Continue Framework -->
+            <div class="section">
+                <h2>🔄 Start, Stop, Continue Framework</h2>
+                <p style="margin-bottom: 20px; color: #666;">For each value you identified, discuss specific behaviors using this framework. What should we START doing, STOP doing, and CONTINUE doing to live out our values?</p>
+
+                <div class="framework-grid">
+                    <div class="framework-card start">
+                        <h4>🚀 START</h4>
+                        <p style="margin-bottom: 15px; font-size: 14px; color: #666;">New behaviors we should begin doing to demonstrate our values</p>
+                        <ul class="behavior-list" id="start-behaviors">
+                            <li class="behavior-item">
+                                <input type="text" class="behavior-input" placeholder="We should start...">
+                                <button type="button" class="add-behavior-btn" onclick="addBehavior('start')">+</button>
+                            </li>
+                        </ul>
+                    </div>
+
+                    <div class="framework-card stop">
+                        <h4>🛑 STOP</h4>
+                        <p style="margin-bottom: 15px; font-size: 14px; color: #666;">Behaviors that don't align with our values and should be eliminated</p>
+                        <ul class="behavior-list" id="stop-behaviors">
+                            <li class="behavior-item">
+                                <input type="text" class="behavior-input" placeholder="We should stop...">
+                                <button type="button" class="add-behavior-btn" onclick="addBehavior('stop')">+</button>
+                            </li>
+                        </ul>
+                    </div>
+
+                    <div class="framework-card continue">
+                        <h4>✅ CONTINUE</h4>
+                        <p style="margin-bottom: 15px; font-size: 14px; color: #666;">Positive behaviors we're already doing that reinforce our values</p>
+                        <ul class="behavior-list" id="continue-behaviors">
+                            <li class="behavior-item">
+                                <input type="text" class="behavior-input" placeholder="We should continue...">
+                                <button type="button" class="add-behavior-btn" onclick="addBehavior('continue')">+</button>
+                            </li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Action Planning -->
+            <div class="section">
+                <h2>📋 Action Planning</h2>
+                <h3>Priority Actions (Next 30 Days)</h3>
+                <textarea class="input-field textarea-field" placeholder="What are the top 3 actions we will take in the next 30 days to implement these behaviors?"></textarea>
+
+                <h3>Accountability</h3>
+                <input type="text" class="input-field" placeholder="Who will be responsible for following up on our progress?">
+                <input type="date" class="input-field" placeholder="When will we check in on our progress?">
+
+                <h3>Success Metrics</h3>
+                <textarea class="input-field textarea-field" placeholder="How will we know if we're successfully living out our values? What will we see, hear, or feel differently?"></textarea>
+            </div>
+
+            <!-- Visual Reminders -->
+            <div class="section">
+                <h2>🎨 Visual Reminders</h2>
+                <p style="margin-bottom: 20px; color: #666;">Create visual displays for your team areas to keep values top-of-mind. Choose from these templates or create your own.</p>
+
+                <div class="visual-reminders">
+                    <h3 style="color: white; margin-bottom: 15px;">📌 Display Ideas</h3>
+                    <div class="reminder-templates">
+                        <div class="reminder-template">
+                            <h4>Values Poster</h4>
+                            <p>Large poster with values and definitions for break room</p>
+                        </div>
+                        <div class="reminder-template">
+                            <h4>Pocket Cards</h4>
+                            <p>Small cards team members can carry with key behaviors</p>
+                        </div>
+                        <div class="reminder-template">
+                            <h4>Daily Huddle Board</h4>
+                            <p>Whiteboard with daily value focus and examples</p>
+                        </div>
+                        <div class="reminder-template">
+                            <h4>Recognition Board</h4>
+                            <p>Space to highlight team members living out values</p>
+                        </div>
+                    </div>
+                </div>
+
+                <h3>Custom Visual Reminder Plan</h3>
+                <textarea class="input-field textarea-field" placeholder="Describe what visual reminders you will create and where you will display them..."></textarea>
+
+                <div style="margin-top: 20px; text-align: center;">
+                    <a href="/templates/team-values-poster-template.html" target="_blank" class="btn btn-secondary">
+                        🎨 Download Poster Template
+                    </a>
+                </div>
+            </div>
+
+            <!-- Workshop Reflection -->
+            <div class="section">
+                <h2>💭 Workshop Reflection</h2>
+                <h3>What went well in this workshop?</h3>
+                <textarea class="input-field textarea-field" placeholder="Reflect on the team's engagement, insights shared, and overall workshop experience..."></textarea>
+
+                <h3>Key Insights</h3>
+                <textarea class="input-field textarea-field" placeholder="What were the most important insights or 'aha moments' from this workshop?"></textarea>
+
+                <h3>Next Steps</h3>
+                <textarea class="input-field textarea-field" placeholder="What specific next steps will you take to implement what you learned?"></textarea>
+            </div>
+
+            <!-- Action Buttons -->
+            <div class="action-buttons">
+                <button class="btn btn-primary" onclick="window.print()">🖨️ Print Workshop Results</button>
+                <button class="btn btn-secondary" onclick="saveWorkshop()">💾 Save Workshop</button>
+                <a href="/templates/team-values-workshop-example.html" class="btn btn-secondary" target="_blank">👀 View Example</a>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        function addBehavior(type) {
+            const list = document.getElementById(type + '-behaviors');
+            const newItem = document.createElement('li');
+            newItem.className = 'behavior-item';
+            newItem.innerHTML = `
+                <input type="text" class="behavior-input" placeholder="We should ${type}...">
+                <button type="button" class="add-behavior-btn" onclick="addBehavior('${type}')">+</button>
+            `;
+            list.appendChild(newItem);
+        }
+
+        function saveWorkshop() {
+            // Get all form data
+            const workshopData = {
+                restaurantName: document.querySelector('input[placeholder="Restaurant Name/Location"]').value,
+                facilitator: document.querySelector('input[placeholder="Workshop Facilitator Name"]').value,
+                date: document.querySelector('input[type="date"]').value,
+                teamMembers: document.querySelector('textarea[placeholder="Team Members Present (list names)"]').value,
+                values: [],
+                behaviors: {
+                    start: [],
+                    stop: [],
+                    continue: []
+                }
+            };
+
+            // Get values
+            const valueCards = document.querySelectorAll('.value-card');
+            valueCards.forEach(card => {
+                const name = card.querySelector('input').value;
+                const description = card.querySelector('textarea').value;
+                if (name.trim()) {
+                    workshopData.values.push({ name, description });
+                }
+            });
+
+            // Get behaviors
+            ['start', 'stop', 'continue'].forEach(type => {
+                const inputs = document.querySelectorAll(`#${type}-behaviors .behavior-input`);
+                inputs.forEach(input => {
+                    if (input.value.trim()) {
+                        workshopData.behaviors[type].push(input.value.trim());
+                    }
+                });
+            });
+
+            // Save to localStorage
+            localStorage.setItem('teamValuesWorkshop', JSON.stringify(workshopData));
+
+            // Show success message
+            alert('Workshop saved successfully! You can print this page or return to it later.');
+        }
+
+        // Load saved data on page load
+        window.addEventListener('load', function() {
+            const saved = localStorage.getItem('teamValuesWorkshop');
+            if (saved) {
+                const data = JSON.parse(saved);
+
+                // Restore basic info
+                if (data.restaurantName) document.querySelector('input[placeholder="Restaurant Name/Location"]').value = data.restaurantName;
+                if (data.facilitator) document.querySelector('input[placeholder="Workshop Facilitator Name"]').value = data.facilitator;
+                if (data.date) document.querySelector('input[type="date"]').value = data.date;
+                if (data.teamMembers) document.querySelector('textarea[placeholder="Team Members Present (list names)"]').value = data.teamMembers;
+
+                // Restore values
+                const valueCards = document.querySelectorAll('.value-card');
+                data.values.forEach((value, index) => {
+                    if (valueCards[index]) {
+                        valueCards[index].querySelector('input').value = value.name;
+                        valueCards[index].querySelector('textarea').value = value.description;
+                    }
+                });
+            }
+        });
+    </script>
+</body>
+</html>

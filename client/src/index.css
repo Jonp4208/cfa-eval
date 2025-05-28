@@ -242,3 +242,61 @@
 .rdp-button.rdp-day_selected:hover {
   background-color: var(--slate-800);
 }
+
+/* Playbook Page Break Styles */
+@media print {
+  .page-break {
+    page-break-before: always;
+  }
+  .page-break-before {
+    page-break-before: always;
+  }
+  .page-break-after {
+    page-break-after: always;
+  }
+  .page-break-inside-avoid {
+    page-break-inside: avoid;
+  }
+}
+
+@media screen {
+  .page-break {
+    margin-top: 3rem;
+    padding-top: 3rem;
+    border-top: 2px dashed #e5e7eb;
+    position: relative;
+  }
+
+  .page-break::before {
+    content: "Page Break";
+    position: absolute;
+    top: -10px;
+    left: 50%;
+    transform: translateX(-50%);
+    background: white;
+    padding: 0 1rem;
+    font-size: 0.75rem;
+    color: #9ca3af;
+    font-weight: 500;
+  }
+
+  .page-break-before {
+    margin-top: 3rem;
+    padding-top: 3rem;
+    border-top: 2px dashed #e5e7eb;
+    position: relative;
+  }
+
+  .page-break-before::before {
+    content: "Page Break";
+    position: absolute;
+    top: -10px;
+    left: 50%;
+    transform: translateX(-50%);
+    background: white;
+    padding: 0 1rem;
+    font-size: 0.75rem;
+    color: #9ca3af;
+    font-weight: 500;
+  }
+}

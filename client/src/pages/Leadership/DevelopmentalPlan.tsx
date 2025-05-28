@@ -13,7 +13,11 @@ import {
   CheckCircle,
   Loader2,
   Clock,
-  ArrowRight
+  ArrowRight,
+  Target,
+  MessageSquare,
+  Settings,
+  Lightbulb
 } from 'lucide-react'
 import { useSubscription } from '@/contexts/SubscriptionContext'
 import { Badge } from '@/components/ui/badge'
@@ -102,7 +106,7 @@ const LEADERSHIP_PLANS = [
   {
     id: 'restaurant-culture-builder',
     title: 'Restaurant Culture Builder',
-    description: 'Learn to intentionally shape your restaurant\'s culture to create an environment where team members are engaged, guests receive exceptional service, and business results follow. This plan provides practical tools for building a thriving culture.',
+    description: 'Learn to intentionally shape your restaurant\'s culture to create an environment where team members are engaged, guests receive exceptional service, and business results follow. This comprehensive 8-week plan provides practical tools for building a thriving culture.',
     icon: Users,
     skills: [
       {
@@ -113,13 +117,17 @@ const LEADERSHIP_PLANS = [
           actions: [
             'Create simple, visual standards for each station',
             'Conduct daily pre-shift meetings with clear goals',
-            'Provide immediate, specific feedback'
+            'Provide immediate, specific feedback',
+            'Develop accountability systems for standards',
+            'Train team leaders on expectation setting'
           ],
           resources: [
-            'Visual standards template',
-            'Pre-shift meeting guide'
+            'Book: "The Culture Map" by Erin Meyer (free at local library)',
+            'Free visual standards template (Google Docs)',
+            'Free pre-shift meeting checklist (downloadable PDF)',
+            'YouTube: "The 5 Levels of Leadership" by John Maxwell'
           ],
-          timeline: '2-weeks'
+          timeline: '3-weeks'
         }
       },
       {
@@ -130,13 +138,40 @@ const LEADERSHIP_PLANS = [
           actions: [
             'Implement team huddles during shifts',
             'Create cross-training opportunities',
-            'Celebrate team wins consistently'
+            'Celebrate team wins consistently',
+            'Establish team traditions and rituals',
+            'Foster peer-to-peer recognition programs'
           ],
           resources: [
-            'Team huddle format',
-            'Cross-training schedule template'
+            'Book: "The Five Dysfunctions of a Team" by Patrick Lencioni (free audiobook on Spotify)',
+            'Free team huddle template (Google Sheets)',
+            'Free cross-training tracker (Excel template)',
+            'YouTube: "How Great Leaders Inspire Action" by Simon Sinek (TED Talk)'
           ],
-          timeline: '4-weeks'
+          timeline: '3-weeks'
+        }
+      },
+      {
+        area: 'Culture Reinforcement',
+        currentLevel: 1,
+        targetLevel: 5,
+        developmentPlan: {
+          actions: [
+            'Create culture scorecards and metrics',
+            'Implement regular culture check-ins',
+            'Address culture violations immediately',
+            'Reward culture champions publicly',
+            'Integrate culture into hiring and training'
+          ],
+          resources: [
+            'Book: "Delivering Happiness" by Tony Hsieh (free PDF online)',
+            'Free culture scorecard template (Google Docs)',
+            'Free culture interview questions (downloadable PDF)',
+            'Podcast: "Culture by Design" episodes (free on Apple Podcasts)',
+            '90-Day Culture Leadership Plan Template (downloadable)',
+            '90-Day Culture Leadership Plan Example (Chick-fil-A)'
+          ],
+          timeline: '2-weeks'
         }
       }
     ],
@@ -151,7 +186,21 @@ const LEADERSHIP_PLANS = [
       {
         title: 'Team Values Workshop',
         type: 'training',
-        description: 'Lead a brief session to define your team\'s core values and behaviors.',
+        description: 'Lead a comprehensive session to define your team\'s core values and behaviors.',
+        timeline: '2 weeks',
+        status: 'not-started'
+      },
+      {
+        title: 'Culture Implementation Project',
+        type: 'assignment',
+        description: 'Design and implement a culture improvement initiative for your restaurant.',
+        timeline: '3 weeks',
+        status: 'not-started'
+      },
+      {
+        title: 'Leadership Culture Coaching',
+        type: 'mentoring',
+        description: 'Work with a mentor to refine your culture-building leadership style.',
         timeline: '2 weeks',
         status: 'not-started'
       }
@@ -160,7 +209,7 @@ const LEADERSHIP_PLANS = [
   {
     id: 'team-development',
     title: 'Team Development Expert',
-    description: 'Master the skills of coaching, feedback, and talent development to build a high-performing restaurant team. This plan equips you with practical tools to help each team member reach their full potential while driving operational excellence.',
+    description: 'Master the skills of coaching, feedback, and talent development to build a high-performing restaurant team. This comprehensive 10-week plan equips you with practical tools to help each team member reach their full potential while driving operational excellence.',
     icon: Users,
     skills: [
       {
@@ -171,13 +220,17 @@ const LEADERSHIP_PLANS = [
           actions: [
             'Use the "Tell-Show-Do-Review" method for skill training',
             'Provide specific, behavior-focused feedback',
-            'Ask powerful questions that promote self-discovery'
+            'Ask powerful questions that promote self-discovery',
+            'Practice active listening and empathy in coaching',
+            'Develop coaching plans for different personality types'
           ],
           resources: [
-            'Coaching conversation guide',
-            'Feedback formula template'
+            'Book: "The Coaching Habit" by Michael Bungay Stanier (free summary on Blinkist trial)',
+            'Free coaching conversation template (Google Docs)',
+            'YouTube: "Active Listening Skills" by TED-Ed (free)',
+            'Free personality assessment: 16Personalities.com'
           ],
-          timeline: '3-weeks'
+          timeline: '4-weeks'
         }
       },
       {
@@ -186,13 +239,139 @@ const LEADERSHIP_PLANS = [
         targetLevel: 5,
         developmentPlan: {
           actions: [
-            'Identify high-potential team members',
-            'Create personalized development plans',
-            'Provide stretch assignments for growth'
+            'Identify high-potential team members using assessment tools',
+            'Create personalized development plans for each team member',
+            'Provide stretch assignments for growth',
+            'Implement succession planning for key positions',
+            'Track and measure development progress'
           ],
           resources: [
-            'Potential assessment guide',
-            'Development plan template'
+            'Book: "Multipliers" by Liz Wiseman (free at local library)',
+            'Free development plan template (Microsoft Word online)',
+            'Free succession planning guide (SHRM.org)',
+            'Free progress tracking spreadsheet (Google Sheets)'
+          ],
+          timeline: '3-weeks'
+        }
+      },
+      {
+        area: 'Performance Management',
+        currentLevel: 1,
+        targetLevel: 5,
+        developmentPlan: {
+          actions: [
+            'Conduct regular one-on-one performance discussions',
+            'Set SMART goals with team members',
+            'Address performance issues promptly and fairly',
+            'Recognize and reward high performance',
+            'Create performance improvement plans when needed'
+          ],
+          resources: [
+            'Book: "Radical Candor" by Kim Scott (free summary on YouTube)',
+            'Free one-on-one meeting template (Notion.so)',
+            'Free SMART goals worksheet (MindTools.com)',
+            'Free performance improvement plan template (HR.com)'
+          ],
+          timeline: '3-weeks'
+        }
+      }
+    ],
+    activities: [
+      {
+        title: 'Coaching Skills Assessment',
+        type: 'development',
+        description: 'Complete a comprehensive assessment of your current coaching abilities.',
+        timeline: '1 week',
+        status: 'not-started'
+      },
+      {
+        title: 'Coaching Practice Sessions',
+        type: 'training',
+        description: 'Practice coaching conversations with peers and receive detailed feedback.',
+        timeline: '3 weeks',
+        status: 'not-started'
+      },
+      {
+        title: 'Team Development Project',
+        type: 'assignment',
+        description: 'Create and implement development plans for your entire team.',
+        timeline: '4 weeks',
+        status: 'not-started'
+      },
+      {
+        title: 'Performance Management Workshop',
+        type: 'training',
+        description: 'Learn advanced performance management techniques and tools.',
+        timeline: '2 weeks',
+        status: 'not-started'
+      }
+    ],
+  },
+  {
+    id: 'strategic-leadership',
+    title: 'Strategic Leadership Mastery',
+    description: 'Develop strategic thinking, vision-setting, and decision-making capabilities to drive organizational success. This comprehensive 12-week plan builds the skills needed to think beyond day-to-day operations and lead with strategic purpose.',
+    icon: Target,
+    skills: [
+      {
+        area: 'Strategic Thinking',
+        currentLevel: 1,
+        targetLevel: 5,
+        developmentPlan: {
+          actions: [
+            'Analyze industry trends and their impact on your restaurant',
+            'Practice the "5 Whys" technique for root cause analysis',
+            'Create monthly strategic reviews with your team',
+            'Develop scenario planning for different business conditions',
+            'Learn competitive analysis and market positioning'
+          ],
+          resources: [
+            'Book: "Good Strategy Bad Strategy" by Richard Rumelt (free at local library)',
+            'Free industry analysis template (McKinsey Insights)',
+            'Free scenario planning guide (MIT Sloan free resources)',
+            'YouTube: "What is Strategy?" by Harvard Business Review'
+          ],
+          timeline: '4-weeks'
+        }
+      },
+      {
+        area: 'Vision & Direction',
+        currentLevel: 1,
+        targetLevel: 5,
+        developmentPlan: {
+          actions: [
+            'Develop a clear 90-day vision for your team',
+            'Communicate vision through storytelling',
+            'Align daily operations with long-term goals',
+            'Create visual representations of your vision',
+            'Build consensus around shared vision'
+          ],
+          resources: [
+            'Book: "Start with Why" by Simon Sinek (free TED Talk + summary)',
+            'Free vision statement template (Business.gov.au)',
+            'YouTube: "The Power of Storytelling" by TED',
+            'Free consensus building guide (Harvard Negotiation Project)'
+          ],
+          timeline: '4-weeks'
+        }
+      },
+      {
+        area: 'Decision Making Excellence',
+        currentLevel: 1,
+        targetLevel: 5,
+        developmentPlan: {
+          actions: [
+            'Learn structured decision-making frameworks',
+            'Practice data-driven decision making',
+            'Develop risk assessment capabilities',
+            'Improve decision timing and execution',
+            'Build decision accountability systems'
+          ],
+          resources: [
+            'Book: "Decisive" by Chip Heath & Dan Heath (free summary on Blinkist trial)',
+            'Free decision matrix template (Smartsheet.com)',
+            'Free risk assessment worksheet (ISO 31000 guide)',
+            'YouTube: "Better Decision Making" by TED-Ed'
           ],
           timeline: '4-weeks'
         }
@@ -200,16 +379,636 @@ const LEADERSHIP_PLANS = [
     ],
     activities: [
       {
-        title: 'Coaching Practice',
+        title: 'Strategic Assessment',
         type: 'development',
-        description: 'Practice coaching conversations with a peer or mentor for feedback.',
+        description: 'Complete a comprehensive assessment of your strategic leadership capabilities.',
+        timeline: '1 week',
+        status: 'not-started'
+      },
+      {
+        title: 'Strategic Planning Workshop',
+        type: 'training',
+        description: 'Participate in an intensive strategic planning workshop.',
         timeline: '2 weeks',
         status: 'not-started'
       },
       {
-        title: 'Team Member Development Plan',
+        title: 'Vision Implementation Project',
         type: 'assignment',
-        description: 'Create a development plan for one high-potential team member.',
+        description: 'Develop and implement a strategic vision for your restaurant.',
+        timeline: '6 weeks',
+        status: 'not-started'
+      },
+      {
+        title: 'Strategic Mentoring',
+        type: 'mentoring',
+        description: 'Work with a strategic leadership mentor to refine your approach.',
+        timeline: '3 weeks',
+        status: 'not-started'
+      }
+    ],
+  },
+  {
+    id: 'communication-influence',
+    title: 'Communication & Influence Excellence',
+    description: 'Master the art of clear communication and positive influence to inspire teams and drive results. This comprehensive 10-week plan develops both verbal and non-verbal communication skills essential for effective leadership.',
+    icon: MessageSquare,
+    skills: [
+      {
+        area: 'Clear Communication',
+        currentLevel: 1,
+        targetLevel: 5,
+        developmentPlan: {
+          actions: [
+            'Practice the "Tell-Show-Check" communication method',
+            'Use active listening techniques in all conversations',
+            'Provide specific, actionable feedback daily',
+            'Master non-verbal communication and body language',
+            'Develop written communication excellence'
+          ],
+          resources: [
+            'Book: "Crucial Conversations" by Kerry Patterson (free at local library)',
+            'Free active listening checklist (MindTools.com)',
+            'YouTube: "Body Language Secrets" by Vanessa Van Edwards',
+            'Free email templates (Grammarly.com free resources)'
+          ],
+          timeline: '4-weeks'
+        }
+      },
+      {
+        area: 'Positive Influence',
+        currentLevel: 1,
+        targetLevel: 5,
+        developmentPlan: {
+          actions: [
+            'Build rapport with team members through genuine interest',
+            'Use persuasion techniques based on understanding others\' motivations',
+            'Lead by example in all situations',
+            'Practice influence without authority techniques',
+            'Develop emotional intelligence for better influence'
+          ],
+          resources: [
+            'Book: "Influence: The Psychology of Persuasion" by Robert Cialdini (free summary online)',
+            'Free rapport building guide (Dale Carnegie free resources)',
+            'YouTube: "6 Principles of Persuasion" by Robert Cialdini',
+            'Free emotional intelligence assessment (Psychology Today)'
+          ],
+          timeline: '3-weeks'
+        }
+      },
+      {
+        area: 'Difficult Conversations',
+        currentLevel: 1,
+        targetLevel: 5,
+        developmentPlan: {
+          actions: [
+            'Learn the CRUCIAL conversations framework',
+            'Practice delivering difficult feedback constructively',
+            'Master conflict resolution communication',
+            'Develop skills for crucial accountability conversations',
+            'Build confidence in challenging discussions'
+          ],
+          resources: [
+            'Book: "Difficult Conversations" by Douglas Stone (free at local library)',
+            'Free feedback conversation template (15Five.com)',
+            'YouTube: "How to Have Difficult Conversations" by TED',
+            'Free conflict resolution guide (Harvard Law School)'
+          ],
+          timeline: '3-weeks'
+        }
+      }
+    ],
+    activities: [
+      {
+        title: 'Communication Style Assessment',
+        type: 'development',
+        description: 'Complete a comprehensive assessment of your communication style and its impact.',
+        timeline: '1 week',
+        status: 'not-started'
+      },
+      {
+        title: 'Presentation Skills Mastery',
+        type: 'training',
+        description: 'Intensive training on presentation and public speaking skills.',
+        timeline: '3 weeks',
+        status: 'not-started'
+      },
+      {
+        title: 'Influence Practice Project',
+        type: 'assignment',
+        description: 'Lead a change initiative using influence techniques without formal authority.',
+        timeline: '4 weeks',
+        status: 'not-started'
+      },
+      {
+        title: 'Communication Coaching',
+        type: 'mentoring',
+        description: 'Work with a communication coach to refine your leadership communication.',
+        timeline: '2 weeks',
+        status: 'not-started'
+      }
+    ],
+  },
+  {
+    id: 'operational-excellence',
+    title: 'Operational Excellence Leader',
+    description: 'Drive efficiency, quality, and continuous improvement in restaurant operations. This comprehensive 10-week plan equips you with the tools and mindset to optimize processes and deliver consistent results.',
+    icon: Settings,
+    skills: [
+      {
+        area: 'Process Improvement',
+        currentLevel: 1,
+        targetLevel: 5,
+        developmentPlan: {
+          actions: [
+            'Map current processes and identify bottlenecks',
+            'Implement small improvements weekly',
+            'Track and measure process efficiency metrics',
+            'Learn Lean Six Sigma principles for restaurants',
+            'Create standard operating procedures for all processes'
+          ],
+          resources: [
+            'Book: "The Lean Startup" by Eric Ries (free summary on YouTube)',
+            'Free process mapping template (Lucidchart.com)',
+            'Free Lean Six Sigma Yellow Belt course (GoLeanSixSigma.com)',
+            'Free SOP template (Process.st)'
+          ],
+          timeline: '4-weeks'
+        }
+      },
+      {
+        area: 'Quality Management',
+        currentLevel: 1,
+        targetLevel: 5,
+        developmentPlan: {
+          actions: [
+            'Establish quality standards for all key processes',
+            'Conduct regular quality audits',
+            'Train team on quality expectations and procedures',
+            'Implement quality control checkpoints',
+            'Develop corrective action procedures'
+          ],
+          resources: [
+            'Book: "Out of the Crisis" by W. Edwards Deming (free PDF online)',
+            'Free quality audit checklist (ASQ.org)',
+            'YouTube: "Quality Management Principles" by ASQ',
+            'Free corrective action template (SafetyCulture.com)'
+          ],
+          timeline: '3-weeks'
+        }
+      },
+      {
+        area: 'Performance Analytics',
+        currentLevel: 1,
+        targetLevel: 5,
+        developmentPlan: {
+          actions: [
+            'Identify key performance indicators for your restaurant',
+            'Implement data collection and analysis systems',
+            'Create performance dashboards and reports',
+            'Use data to drive operational decisions',
+            'Train team on performance metrics importance'
+          ],
+          resources: [
+            'Book: "Lean Analytics" by Alistair Croll (free summary online)',
+            'Free KPI template (Klipfolio.com)',
+            'Free Google Data Studio course (Google Analytics Academy)',
+            'YouTube: "Data-Driven Decision Making" by MIT'
+          ],
+          timeline: '3-weeks'
+        }
+      }
+    ],
+    activities: [
+      {
+        title: 'Operational Assessment',
+        type: 'development',
+        description: 'Complete a comprehensive assessment of your current operational effectiveness.',
+        timeline: '1 week',
+        status: 'not-started'
+      },
+      {
+        title: 'Lean Operations Training',
+        type: 'training',
+        description: 'Intensive training on Lean principles and waste elimination in restaurants.',
+        timeline: '3 weeks',
+        status: 'not-started'
+      },
+      {
+        title: 'Process Optimization Project',
+        type: 'assignment',
+        description: 'Lead a major process improvement initiative in your restaurant.',
+        timeline: '4 weeks',
+        status: 'not-started'
+      },
+      {
+        title: 'Quality System Implementation',
+        type: 'assignment',
+        description: 'Design and implement a comprehensive quality management system.',
+        timeline: '2 weeks',
+        status: 'not-started'
+      }
+    ],
+  },
+  {
+    id: 'innovation-change',
+    title: 'Innovation & Change Champion',
+    description: 'Lead innovation initiatives and guide teams through change with confidence. This comprehensive 9-week plan develops the skills needed to foster creativity, adapt to change, and drive continuous improvement.',
+    icon: Lightbulb,
+    skills: [
+      {
+        area: 'Change Leadership',
+        currentLevel: 1,
+        targetLevel: 5,
+        developmentPlan: {
+          actions: [
+            'Communicate the "why" behind changes clearly',
+            'Address resistance with empathy and understanding',
+            'Celebrate small wins during change initiatives',
+            'Build change readiness in your team',
+            'Create change communication plans'
+          ],
+          resources: [
+            'Book: "Switch" by Chip Heath & Dan Heath (free summary on Blinkist trial)',
+            'Free change management guide (Prosci.com free resources)',
+            'YouTube: "Leading Change" by John Kotter',
+            'Free change communication template (McKinsey Insights)'
+          ],
+          timeline: '3-weeks'
+        }
+      },
+      {
+        area: 'Innovation Mindset',
+        currentLevel: 1,
+        targetLevel: 5,
+        developmentPlan: {
+          actions: [
+            'Encourage team members to suggest improvements',
+            'Test small experiments before major changes',
+            'Learn from failures and iterate quickly',
+            'Create innovation time and space for team',
+            'Implement idea generation and evaluation systems'
+          ],
+          resources: [
+            'Book: "The Innovator\'s Dilemma" by Clayton Christensen (free at local library)',
+            'Free innovation workshop toolkit (IDEO Design Kit)',
+            'YouTube: "Creative Thinking Techniques" by Stanford d.school',
+            'Free idea management template (Trello.com)'
+          ],
+          timeline: '3-weeks'
+        }
+      },
+      {
+        area: 'Continuous Improvement',
+        currentLevel: 1,
+        targetLevel: 5,
+        developmentPlan: {
+          actions: [
+            'Establish regular improvement review cycles',
+            'Train team on problem identification and solving',
+            'Implement suggestion and feedback systems',
+            'Measure and track improvement initiatives',
+            'Create a culture of continuous learning'
+          ],
+          resources: [
+            'Book: "Kaizen: The Key to Japan\'s Competitive Success" (free PDF online)',
+            'Free problem-solving toolkit (MindTools.com)',
+            'YouTube: "Continuous Improvement" by Toyota Production System',
+            'Free improvement tracking template (Smartsheet.com)'
+          ],
+          timeline: '3-weeks'
+        }
+      }
+    ],
+    activities: [
+      {
+        title: 'Innovation Assessment',
+        type: 'development',
+        description: 'Assess your current innovation and change leadership capabilities.',
+        timeline: '1 week',
+        status: 'not-started'
+      },
+      {
+        title: 'Change Management Workshop',
+        type: 'training',
+        description: 'Intensive training on leading organizational change effectively.',
+        timeline: '2 weeks',
+        status: 'not-started'
+      },
+      {
+        title: 'Innovation Implementation Project',
+        type: 'assignment',
+        description: 'Lead a major innovation initiative in your restaurant.',
+        timeline: '4 weeks',
+        status: 'not-started'
+      },
+      {
+        title: 'Change Leadership Mentoring',
+        type: 'mentoring',
+        description: 'Work with an experienced change leader to develop your skills.',
+        timeline: '2 weeks',
+        status: 'not-started'
+      }
+    ],
+  },
+  {
+    id: 'customer-experience',
+    title: 'Customer Experience Leader',
+    description: 'Excel at creating exceptional customer experiences and building a hospitality-focused culture. This comprehensive 8-week plan develops the skills needed to consistently deliver outstanding service and recover from service failures.',
+    icon: Heart,
+    skills: [
+      {
+        area: 'Service Excellence',
+        currentLevel: 1,
+        targetLevel: 5,
+        developmentPlan: {
+          actions: [
+            'Set clear service standards and expectations',
+            'Model exceptional customer service behaviors',
+            'Conduct regular service quality assessments',
+            'Create customer journey maps for your restaurant',
+            'Implement service training programs for team'
+          ],
+          resources: [
+            'Book: "The Customer Service Revolution" by John DiJulius (free at local library)',
+            'Free service standards checklist (CustomerServiceZone.com)',
+            'Free customer journey mapping template (UXPressia.com)',
+            'YouTube: "Service Excellence" by Ritz-Carlton Leadership Center'
+          ],
+          timeline: '3-weeks'
+        }
+      },
+      {
+        area: 'Customer Recovery',
+        currentLevel: 1,
+        targetLevel: 5,
+        developmentPlan: {
+          actions: [
+            'Learn the LAST method (Listen, Apologize, Solve, Thank)',
+            'Practice turning complaints into opportunities',
+            'Follow up with customers after service recovery',
+            'Empower team to resolve issues immediately',
+            'Create service recovery protocols and training'
+          ],
+          resources: [
+            'Book: "Complaint Free World" by Will Bowen (free summary online)',
+            'Free service recovery template (Help Scout free resources)',
+            'YouTube: "Turning Complaints into Opportunities" by Disney Institute',
+            'Free empowerment guidelines (Zappos Insights)'
+          ],
+          timeline: '2-weeks'
+        }
+      },
+      {
+        area: 'Hospitality Culture',
+        currentLevel: 1,
+        targetLevel: 5,
+        developmentPlan: {
+          actions: [
+            'Define hospitality values for your restaurant',
+            'Train team on hospitality mindset and behaviors',
+            'Create systems to recognize hospitality excellence',
+            'Measure and track customer satisfaction',
+            'Build customer loyalty programs and initiatives'
+          ],
+          resources: [
+            'Book: "Unreasonable Hospitality" by Will Guidara (free at local library)',
+            'Free values workshop template (Culture Amp free resources)',
+            'YouTube: "Setting the Table" by Danny Meyer (92nd Street Y)',
+            'Free customer satisfaction survey (SurveyMonkey.com)'
+          ],
+          timeline: '3-weeks'
+        }
+      }
+    ],
+    activities: [
+      {
+        title: 'Customer Experience Assessment',
+        type: 'development',
+        description: 'Evaluate your current customer experience delivery and identify gaps.',
+        timeline: '1 week',
+        status: 'not-started'
+      },
+      {
+        title: 'Service Excellence Training',
+        type: 'training',
+        description: 'Intensive training on delivering exceptional customer service.',
+        timeline: '2 weeks',
+        status: 'not-started'
+      },
+      {
+        title: 'Customer Experience Improvement Project',
+        type: 'assignment',
+        description: 'Lead a major customer experience improvement initiative.',
+        timeline: '3 weeks',
+        status: 'not-started'
+      },
+      {
+        title: 'Hospitality Mentoring',
+        type: 'mentoring',
+        description: 'Work with a hospitality expert to refine your customer experience leadership.',
+        timeline: '2 weeks',
+        status: 'not-started'
+      }
+    ],
+  },
+  {
+    id: 'conflict-resolution',
+    title: 'Conflict Resolution & Problem Solving',
+    description: 'Master the skills to resolve conflicts constructively and solve complex problems effectively. This comprehensive 9-week plan equips you with tools to handle difficult conversations and find win-win solutions.',
+    icon: Users,
+    skills: [
+      {
+        area: 'Conflict Management',
+        currentLevel: 1,
+        targetLevel: 5,
+        developmentPlan: {
+          actions: [
+            'Practice active listening during disagreements',
+            'Use the DESC method (Describe, Express, Specify, Consequences)',
+            'Focus on interests, not positions',
+            'Learn mediation and facilitation techniques',
+            'Develop de-escalation strategies for heated situations'
+          ],
+          resources: [
+            'Book: "Getting to Yes" by Roger Fisher (free at local library)',
+            'Free conflict resolution guide (Harvard Negotiation Project)',
+            'YouTube: "Conflict Resolution Skills" by TED-Ed',
+            'Free de-escalation techniques (Crisis Prevention Institute)'
+          ],
+          timeline: '3-weeks'
+        }
+      },
+      {
+        area: 'Critical Thinking',
+        currentLevel: 1,
+        targetLevel: 5,
+        developmentPlan: {
+          actions: [
+            'Use structured problem-solving frameworks',
+            'Gather data before making decisions',
+            'Consider multiple perspectives and solutions',
+            'Practice root cause analysis techniques',
+            'Develop analytical and logical reasoning skills'
+          ],
+          resources: [
+            'Book: "Thinking, Fast and Slow" by Daniel Kahneman (free summary online)',
+            'Free problem-solving toolkit (MindTools.com)',
+            'YouTube: "Critical Thinking" by Crash Course',
+            'Free root cause analysis template (Lucidchart.com)'
+          ],
+          timeline: '3-weeks'
+        }
+      },
+      {
+        area: 'Negotiation Skills',
+        currentLevel: 1,
+        targetLevel: 5,
+        developmentPlan: {
+          actions: [
+            'Learn principled negotiation techniques',
+            'Practice win-win solution finding',
+            'Develop preparation strategies for negotiations',
+            'Master communication during negotiations',
+            'Build relationship-preserving negotiation skills'
+          ],
+          resources: [
+            'Book: "Never Split the Difference" by Chris Voss (free summary on YouTube)',
+            'Free negotiation preparation worksheet (Harvard Business School)',
+            'YouTube: "Negotiation Masterclass" by Chris Voss',
+            'Free win-win negotiation guide (Program on Negotiation at Harvard)'
+          ],
+          timeline: '3-weeks'
+        }
+      }
+    ],
+    activities: [
+      {
+        title: 'Conflict Resolution Assessment',
+        type: 'development',
+        description: 'Assess your current conflict resolution and problem-solving capabilities.',
+        timeline: '1 week',
+        status: 'not-started'
+      },
+      {
+        title: 'Mediation Training Workshop',
+        type: 'training',
+        description: 'Intensive training on mediation and conflict resolution techniques.',
+        timeline: '2 weeks',
+        status: 'not-started'
+      },
+      {
+        title: 'Complex Problem-Solving Project',
+        type: 'assignment',
+        description: 'Lead the resolution of a complex, multi-stakeholder problem.',
+        timeline: '4 weeks',
+        status: 'not-started'
+      },
+      {
+        title: 'Negotiation Skills Practice',
+        type: 'training',
+        description: 'Practice negotiation skills through simulations and role-playing.',
+        timeline: '2 weeks',
+        status: 'not-started'
+      }
+    ],
+  },
+  {
+    id: 'emotional-intelligence',
+    title: 'Emotional Intelligence Leader',
+    description: 'Develop emotional intelligence to better understand yourself and others, build stronger relationships, and lead with empathy. This comprehensive 10-week plan focuses on self-awareness, social skills, and emotional regulation.',
+    icon: Heart,
+    skills: [
+      {
+        area: 'Self-Awareness',
+        currentLevel: 1,
+        targetLevel: 5,
+        developmentPlan: {
+          actions: [
+            'Practice daily self-reflection and journaling',
+            'Seek feedback on your emotional responses',
+            'Identify your emotional triggers and patterns',
+            'Develop mindfulness and present-moment awareness',
+            'Learn to recognize emotions as they arise'
+          ],
+          resources: [
+            'Book: "Emotional Intelligence 2.0" by Travis Bradberry (free at local library)',
+            'Free EQ assessment (Psychology Today)',
+            'Free mindfulness app: Insight Timer',
+            'YouTube: "Understanding Emotions" by TED-Ed'
+          ],
+          timeline: '4-weeks'
+        }
+      },
+      {
+        area: 'Empathy & Social Skills',
+        currentLevel: 1,
+        targetLevel: 5,
+        developmentPlan: {
+          actions: [
+            'Practice reading non-verbal communication cues',
+            'Ask open-ended questions to understand others',
+            'Respond with empathy to team member concerns',
+            'Develop perspective-taking abilities',
+            'Build rapport and connection with diverse personalities'
+          ],
+          resources: [
+            'Book: "Nonviolent Communication" by Marshall Rosenberg (free PDF online)',
+            'Free empathy exercises (Greater Good Science Center)',
+            'YouTube: "Reading Body Language" by Joe Navarro',
+            'Free social skills guide (SkillsYouNeed.com)'
+          ],
+          timeline: '3-weeks'
+        }
+      },
+      {
+        area: 'Emotional Regulation',
+        currentLevel: 1,
+        targetLevel: 5,
+        developmentPlan: {
+          actions: [
+            'Learn stress management and coping strategies',
+            'Practice emotional self-control in challenging situations',
+            'Develop resilience and bounce-back capabilities',
+            'Master techniques for staying calm under pressure',
+            'Build emotional stability and consistency'
+          ],
+          resources: [
+            'Book: "The Resilience Factor" by Karen Reivich (free summary online)',
+            'Free stress management toolkit (American Psychological Association)',
+            'Free meditation app: Headspace (free trial)',
+            'YouTube: "Building Resilience" by American Psychological Association'
+          ],
+          timeline: '3-weeks'
+        }
+      }
+    ],
+    activities: [
+      {
+        title: 'Comprehensive EQ Assessment',
+        type: 'development',
+        description: 'Complete a detailed emotional intelligence assessment and development plan.',
+        timeline: '1 week',
+        status: 'not-started'
+      },
+      {
+        title: 'Emotional Intelligence Workshop',
+        type: 'training',
+        description: 'Intensive workshop on developing emotional intelligence for leaders.',
+        timeline: '2 weeks',
+        status: 'not-started'
+      },
+      {
+        title: 'EQ Leadership Project',
+        type: 'assignment',
+        description: 'Lead a team initiative focusing on emotional intelligence and relationship building.',
+        timeline: '4 weeks',
+        status: 'not-started'
+      },
+      {
+        title: 'EQ Coaching and Mentoring',
+        type: 'mentoring',
+        description: 'Work with an EQ coach to develop your emotional leadership capabilities.',
         timeline: '3 weeks',
         status: 'not-started'
       }
@@ -634,7 +1433,25 @@ export default function DevelopmentalPlan() {
                                   <h5 className="text-sm font-medium text-gray-700">Resources:</h5>
                                   <ul className="list-disc pl-5 mt-1 space-y-1">
                                     {skill.developmentPlan.resources.map((resource, i) => (
-                                      <li key={i} className="text-sm text-gray-600">{resource}</li>
+                                      <li key={i} className="text-sm text-gray-600">
+                                        {resource.includes('90-Day Culture Leadership Plan Template') ? (
+                                          <button
+                                            onClick={() => window.open('/templates/90-day-culture-leadership-plan.html', '_blank')}
+                                            className="text-blue-600 hover:text-blue-800 hover:underline cursor-pointer"
+                                          >
+                                            {resource}
+                                          </button>
+                                        ) : resource.includes('90-Day Culture Leadership Plan Example') ? (
+                                          <button
+                                            onClick={() => window.open('/templates/90-day-culture-leadership-plan-example.html', '_blank')}
+                                            className="text-green-600 hover:text-green-800 hover:underline cursor-pointer"
+                                          >
+                                            {resource}
+                                          </button>
+                                        ) : (
+                                          resource
+                                        )}
+                                      </li>
                                     ))}
                                   </ul>
                                 </div>

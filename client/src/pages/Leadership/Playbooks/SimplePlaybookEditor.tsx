@@ -6,8 +6,10 @@ import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { useToast } from '@/components/ui/use-toast';
 import { Toaster } from '@/components/ui/toaster';
-import { ArrowLeft, Save, Eye, EyeOff, Subtitles } from 'lucide-react';
-import playbookService, { Playbook } from '@/services/playbookService';
+import { ArrowLeft, Save, Eye, EyeOff, Printer } from 'lucide-react';
+import playbookService, { Playbook, ContentBlock } from '@/services/playbookService';
+import jsPDF from 'jspdf';
+import html2canvas from 'html2canvas';
 
 interface EditableTextProps {
   value: string;
@@ -157,7 +159,113 @@ export default function SimplePlaybookEditor() {
       // Extract data from content blocks if they exist
       if (data.contentBlocks && data.contentBlocks.length > 0) {
         // Parse existing content blocks back into our simple structure
-        // This would need to be implemented based on how you want to handle existing playbooks
+        const extractedData = {
+          title: data.title || 'Your Title',
+          subtitle: data.subtitle || 'Your Subtitle',
+          // Default values for priority matrix
+          urgentImportantDescription: '2 to 3 Important/urgent Items heres',
+          importantNotUrgentDescription: '2 to 3 Important/Not urgent Items heres',
+          urgentNotImportantDescription: '2 to 3 urgent/Not Important Items heres',
+          notUrgentNotImportantDescription: '2 to 3 Not Urgent/Not Important Items heres',
+          // Default values for SMART template
+          specificDescription: 'What exactly needs to be accomplished? Be precise.',
+          measurableDescription: 'How will you know when it\'s complete? What can you count or observe?',
+          achievableDescription: 'Can this realistically be done with available resources?',
+          relevantDescription: 'Why does this matter to your organization\'s success?',
+          timeBoundDescription: 'When will this be completed? Set a specific deadline.',
+          // Default SMART goals
+          smartGoals: [
+            {
+              id: 1,
+              title: 'Goal 1',
+              specific: 'What exactly needs to be accomplished? Be precise.',
+              measurable: 'How will you know when it\'s complete? What can you count or observe?',
+              achievable: 'Can this realistically be done with available resources?',
+              relevant: 'Why does this matter to your organization\'s success?',
+              timeBound: 'When will this be completed? Set a specific deadline.'
+            }
+          ]
+        };
+
+        // Extract data from content blocks
+        data.contentBlocks.forEach((block: any) => {
+          switch (block.type) {
+            case 'header':
+              if (block.content?.title) extractedData.title = block.content.title;
+              if (block.content?.subtitle) extractedData.subtitle = block.content.subtitle;
+              break;
+
+            case 'priority-matrix':
+              if (block.content?.quadrants) {
+                block.content.quadrants.forEach((quadrant: any) => {
+                  switch (quadrant.title) {
+                    case 'URGENT + IMPORTANT':
+                      extractedData.urgentImportantDescription = quadrant.description || extractedData.urgentImportantDescription;
+                      break;
+                    case 'IMPORTANT + NOT URGENT':
+                      extractedData.importantNotUrgentDescription = quadrant.description || extractedData.importantNotUrgentDescription;
+                      break;
+                    case 'URGENT + NOT IMPORTANT':
+                      extractedData.urgentNotImportantDescription = quadrant.description || extractedData.urgentNotImportantDescription;
+                      break;
+                    case 'NOT URGENT + NOT IMPORTANT':
+                      extractedData.notUrgentNotImportantDescription = quadrant.description || extractedData.notUrgentNotImportantDescription;
+                      break;
+                  }
+                });
+              }
+              break;
+
+            case 'smart-template':
+              if (block.content?.items) {
+                block.content.items.forEach((item: any) => {
+                  switch (item.label) {
+                    case 'S - Specific':
+                      extractedData.specificDescription = item.description || extractedData.specificDescription;
+                      break;
+                    case 'M - Measurable':
+                      extractedData.measurableDescription = item.description || extractedData.measurableDescription;
+                      break;
+                    case 'A - Achievable':
+                      extractedData.achievableDescription = item.description || extractedData.achievableDescription;
+                      break;
+                    case 'R - Relevant':
+                      extractedData.relevantDescription = item.description || extractedData.relevantDescription;
+                      break;
+                    case 'T - Time-bound':
+                      extractedData.timeBoundDescription = item.description || extractedData.timeBoundDescription;
+                      break;
+                  }
+                });
+              }
+              break;
+
+            case 'practice-section':
+              if (block.content?.title === 'Your SMART Goals' && block.content?.exercises) {
+                // Extract SMART goals from practice section
+                extractedData.smartGoals = block.content.exercises.map((exercise: any, index: number) => ({
+                  id: index + 1,
+                  title: exercise.title || `Goal ${index + 1}`,
+                  specific: exercise.fields?.find((f: any) => f.label === 'Specific')?.value || 'What exactly needs to be accomplished? Be precise.',
+                  measurable: exercise.fields?.find((f: any) => f.label === 'Measurable')?.value || 'How will you know when it\'s complete? What can you count or observe?',
+                  achievable: exercise.fields?.find((f: any) => f.label === 'Achievable')?.value || 'Can this realistically be done with available resources?',
+                  relevant: exercise.fields?.find((f: any) => f.label === 'Relevant')?.value || 'Why does this matter to your organization\'s success?',
+                  timeBound: exercise.fields?.find((f: any) => f.label === 'Time-bound')?.value || 'When will this be completed? Set a specific deadline.'
+                }));
+              }
+              break;
+          }
+        });
+
+        // Update the playbook data state with extracted values
+        setPlaybookData(extractedData);
+      } else {
+        // If no content blocks, use the basic title and subtitle from the playbook
+        setPlaybookData(prev => ({
+          ...prev,
+          title: data.title || 'Your Title',
+          subtitle: data.subtitle || 'Your Subtitle'
+        }));
       }
 
       setLoading(false);
@@ -177,9 +285,9 @@ export default function SimplePlaybookEditor() {
       setSaving(true);
 
       // Convert our simple structure back to content blocks
-      const contentBlocks = [
+      const contentBlocks: ContentBlock[] = [
         {
-          type: 'header',
+          type: 'header' as const,
           order: 0,
           content: {
             title: playbookData.title,
@@ -187,7 +295,7 @@ export default function SimplePlaybookEditor() {
           }
         },
         {
-          type: 'step-section',
+          type: 'step-section' as const,
           order: 1,
           content: {
             stepNumber: 1,
@@ -196,7 +304,7 @@ export default function SimplePlaybookEditor() {
           }
         },
         {
-          type: 'priority-matrix',
+          type: 'priority-matrix' as const,
           order: 2,
           content: {
             title: 'Priority Matrix',
@@ -229,7 +337,7 @@ export default function SimplePlaybookEditor() {
           }
         },
         {
-          type: 'step-section',
+          type: 'step-section' as const,
           order: 3,
           content: {
             stepNumber: 2,
@@ -238,7 +346,7 @@ export default function SimplePlaybookEditor() {
           }
         },
         {
-          type: 'smart-template',
+          type: 'smart-template' as const,
           order: 4,
           content: {
             title: 'SMART Goal Template',
@@ -267,8 +375,26 @@ export default function SimplePlaybookEditor() {
           }
         },
         {
-          type: 'step-section',
+          type: 'practice-section' as const,
           order: 5,
+          content: {
+            title: 'Your SMART Goals',
+            description: 'Complete your SMART goals using the template above',
+            exercises: playbookData.smartGoals.map(goal => ({
+              title: goal.title,
+              fields: [
+                { label: 'Specific', value: goal.specific },
+                { label: 'Measurable', value: goal.measurable },
+                { label: 'Achievable', value: goal.achievable },
+                { label: 'Relevant', value: goal.relevant },
+                { label: 'Time-bound', value: goal.timeBound }
+              ]
+            }))
+          }
+        },
+        {
+          type: 'step-section' as const,
+          order: 6,
           content: {
             stepNumber: 3,
             title: 'Weekly Priority Assessment Process',
@@ -276,8 +402,8 @@ export default function SimplePlaybookEditor() {
           }
         },
         {
-          type: 'checklist',
-          order: 6,
+          type: 'checklist' as const,
+          order: 7,
           content: {
             title: '📅 Every Monday Morning (15 minutes):',
             items: [
@@ -290,8 +416,8 @@ export default function SimplePlaybookEditor() {
           }
         },
         {
-          type: 'checklist',
-          order: 7,
+          type: 'checklist' as const,
+          order: 8,
           content: {
             title: '📊 Then Categorize Each Issue:',
             items: [
@@ -304,8 +430,8 @@ export default function SimplePlaybookEditor() {
           }
         },
         {
-          type: 'step-section',
-          order: 8,
+          type: 'step-section' as const,
+          order: 9,
           content: {
             stepNumber: 4,
             title: 'Monthly Priority Assessment Process',
@@ -313,8 +439,8 @@ export default function SimplePlaybookEditor() {
           }
         },
         {
-          type: 'checklist',
-          order: 9,
+          type: 'checklist' as const,
+          order: 10,
           content: {
             title: '📅 Every Month End (30 minutes):',
             items: [
@@ -327,8 +453,8 @@ export default function SimplePlaybookEditor() {
           }
         },
         {
-          type: 'example-box',
-          order: 10,
+          type: 'example-box' as const,
+          order: 11,
           content: {
             type: 'bad',
             content: '"Fix the problems"',
@@ -336,8 +462,8 @@ export default function SimplePlaybookEditor() {
           }
         },
         {
-          type: 'example-box',
-          order: 11,
+          type: 'example-box' as const,
+          order: 12,
           content: {
             type: 'good',
             content: '"Achieve 100% completion of daily maintenance checklists in all areas for 30 consecutive days by [specific date]"',
@@ -345,8 +471,8 @@ export default function SimplePlaybookEditor() {
           }
         },
         {
-          type: 'step-section',
-          order: 12,
+          type: 'step-section' as const,
+          order: 13,
           content: {
             stepNumber: 5,
             title: 'Implementation & Systems',
@@ -354,8 +480,8 @@ export default function SimplePlaybookEditor() {
           }
         },
         {
-          type: 'success-box',
-          order: 13,
+          type: 'success-box' as const,
+          order: 14,
           content: {
             title: 'Your Leadership Role',
             items: [
@@ -365,8 +491,8 @@ export default function SimplePlaybookEditor() {
           }
         },
         {
-          type: 'warning-box',
-          order: 14,
+          type: 'warning-box' as const,
+          order: 15,
           content: {
             title: 'Common Mistakes to Avoid',
             items: [
@@ -455,6 +581,133 @@ export default function SimplePlaybookEditor() {
     }));
   };
 
+  const handlePrint = async () => {
+    try {
+      // Get the playbook content element
+      const playbookContent = document.querySelector('.playbook-content') as HTMLElement;
+      if (!playbookContent) {
+        toast({
+          title: 'Error',
+          description: 'Could not find playbook content to print',
+          variant: 'destructive'
+        });
+        return;
+      }
+
+      // Show loading state
+      toast({
+        title: 'Generating PDF',
+        description: 'Please wait while we create your PDF...'
+      });
+
+      // Temporarily hide edit indicators for clean PDF
+      const editIndicators = playbookContent.querySelectorAll('.border-dashed, .border-blue-300');
+      editIndicators.forEach(el => {
+        (el as HTMLElement).style.border = 'none';
+        (el as HTMLElement).style.background = 'transparent';
+      });
+
+      // Hide edit icons
+      const editIcons = playbookContent.querySelectorAll('.absolute');
+      editIcons.forEach(el => {
+        (el as HTMLElement).style.display = 'none';
+      });
+
+      // Create full canvas first
+      const canvas = await html2canvas(playbookContent, {
+        scale: 2,
+        useCORS: true,
+        allowTaint: true,
+        backgroundColor: '#ffffff',
+        width: playbookContent.scrollWidth,
+        height: playbookContent.scrollHeight
+      });
+
+      // Create PDF with proper page dimensions
+      const pdf = new jsPDF({
+        orientation: 'portrait',
+        unit: 'mm',
+        format: 'a4'
+      });
+
+      const pdfWidth = pdf.internal.pageSize.getWidth();
+      const pdfHeight = pdf.internal.pageSize.getHeight();
+      const margin = 10; // 10mm margin
+      const contentWidth = pdfWidth - (margin * 2);
+      const contentHeight = pdfHeight - (margin * 2);
+
+      // Calculate scaling
+      const imgWidth = canvas.width;
+      const imgHeight = canvas.height;
+      const ratio = contentWidth / imgWidth;
+      const scaledHeight = imgHeight * ratio;
+
+      // Calculate how many pages we need
+      const pageHeight = contentHeight;
+      const totalPages = Math.ceil(scaledHeight / pageHeight);
+
+      for (let pageNum = 0; pageNum < totalPages; pageNum++) {
+        // Add new page if not the first page
+        if (pageNum > 0) {
+          pdf.addPage();
+        }
+
+        // Calculate the portion of the image for this page
+        const sourceY = (pageNum * pageHeight) / ratio;
+        const sourceHeight = Math.min(pageHeight / ratio, imgHeight - sourceY);
+
+        // Create a temporary canvas for this page
+        const pageCanvas = document.createElement('canvas');
+        const pageCtx = pageCanvas.getContext('2d');
+        pageCanvas.width = imgWidth;
+        pageCanvas.height = sourceHeight;
+
+        // Draw the portion of the original canvas onto the page canvas
+        pageCtx?.drawImage(
+          canvas,
+          0, sourceY,           // Source x, y
+          imgWidth, sourceHeight, // Source width, height
+          0, 0,                 // Destination x, y
+          imgWidth, sourceHeight  // Destination width, height
+        );
+
+        // Convert to image and add to PDF
+        const pageImgData = pageCanvas.toDataURL('image/png');
+        const finalHeight = Math.min(pageHeight, scaledHeight - (pageNum * pageHeight));
+
+        pdf.addImage(pageImgData, 'PNG', margin, margin, contentWidth, finalHeight);
+      }
+
+      // Restore edit indicators
+      editIndicators.forEach(el => {
+        (el as HTMLElement).style.border = '';
+        (el as HTMLElement).style.background = '';
+      });
+
+      // Restore edit icons
+      editIcons.forEach(el => {
+        (el as HTMLElement).style.display = '';
+      });
+
+      // Save the PDF
+      const fileName = `${playbookData.title.replace(/[^a-z0-9]/gi, '_').toLowerCase()}_playbook.pdf`;
+      pdf.save(fileName);
+
+      toast({
+        title: 'Success',
+        description: 'PDF downloaded successfully!'
+      });
+
+    } catch (error) {
+      console.error('Error generating PDF:', error);
+      toast({
+        title: 'Error',
+        description: 'Failed to generate PDF. Please try again.',
+        variant: 'destructive'
+      });
+    }
+  };
+
   if (loading) {
     return (
       <div className="flex items-center justify-center min-h-screen">
@@ -469,7 +722,7 @@ export default function SimplePlaybookEditor() {
   return (
     <div className="min-h-screen bg-gray-50">
       {/* Header */}
-      <div className="bg-white border-b border-gray-200 px-6 py-4">
+      <div className="bg-white border-b border-gray-200 px-6 py-4 print:hidden">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-4">
             <Button
@@ -499,6 +752,16 @@ export default function SimplePlaybookEditor() {
               {isPreview ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
               {isPreview ? 'Edit Mode' : 'Preview'}
             </Button>
+            {isPreview && (
+              <Button
+                variant="outline"
+                onClick={handlePrint}
+                className="flex items-center gap-2"
+              >
+                <Printer className="w-4 h-4" />
+                Download PDF
+              </Button>
+            )}
             <Button
               onClick={handleSave}
               disabled={saving}
@@ -627,11 +890,11 @@ export default function SimplePlaybookEditor() {
               </div>
 
               {/* SMART Goals Section */}
-              <div className="bg-white border-2 border-[#E51636] rounded-lg p-6">
+              <div className="bg-white border-2 border-[#E51636] rounded-lg p-6 page-break">
                 <h4 className="text-lg font-semibold text-[#E51636] mb-4">📝 Your SMART Goals</h4>
 
                 <div className="space-y-6">
-                  {playbookData.smartGoals.map((goal, index) => (
+                  {playbookData.smartGoals.map((goal) => (
                     <div key={goal.id} className="bg-gray-50 border border-gray-200 rounded-lg p-4">
                       <div className="flex items-center justify-between mb-4">
                         <EditableText
@@ -734,7 +997,7 @@ export default function SimplePlaybookEditor() {
               </div>
 
               {/* Step 3 */}
-              <div className="bg-blue-50 border-l-4 border-[#E51636] p-6 rounded-r-lg">
+              <div className="bg-blue-50 border-l-4 border-[#E51636] p-6 rounded-r-lg page-break">
                 <div className="flex items-center mb-4">
                   <div className="bg-[#E51636] text-white w-8 h-8 rounded-full flex items-center justify-center font-bold mr-4">
                     3
@@ -979,7 +1242,7 @@ export default function SimplePlaybookEditor() {
       </div>
 
       {/* Floating Action Bar */}
-      <div className="fixed bottom-6 right-6 z-50">
+      <div className="fixed bottom-6 right-6 z-50 print:hidden">
         <div className="bg-white border border-gray-200 rounded-lg shadow-lg p-3">
           <div className="flex items-center gap-3">
             <Button
@@ -990,6 +1253,16 @@ export default function SimplePlaybookEditor() {
               {isPreview ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
               {isPreview ? 'Edit' : 'Preview'}
             </Button>
+            {isPreview && (
+              <Button
+                variant="outline"
+                onClick={handlePrint}
+                className="flex items-center gap-2"
+              >
+                <Printer className="w-4 h-4" />
+                Download PDF
+              </Button>
+            )}
             <Button
               onClick={handleSave}
               disabled={saving}
