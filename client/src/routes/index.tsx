@@ -67,6 +67,13 @@ import NewPlaybook from '@/pages/Leadership/Playbooks/NewPlaybook';
 import PlaybookViewer from '@/pages/Leadership/Playbooks/PlaybookViewer';
 import PlaybookEditor from '@/pages/Leadership/Playbooks/PlaybookEditor';
 import SimplePlaybookEditor from '@/pages/Leadership/Playbooks/SimplePlaybookEditor';
+import TeamSurveys from '@/pages/TeamSurveys';
+import TeamSurveysDashboard from '@/pages/TeamSurveys/Dashboard';
+import NewTeamSurvey from '@/pages/TeamSurveys/NewSurvey';
+import CreateAdvanced from '@/pages/TeamSurveys/CreateAdvanced';
+import TeamSurveyBuilder from '@/pages/TeamSurveys/SurveyBuilder';
+import TeamSurveyResults from '@/pages/TeamSurveys/SurveyResults';
+import TakeSurvey from '@/pages/TeamSurveys/TakeSurvey';
 import Checklists from '@/pages/Kitchen/Checklists';
 import KitchenChecklistHistory from '@/pages/Kitchen/Checklists/History';
 import WasteTracker from '@/pages/Kitchen/WasteTracker';
@@ -262,6 +269,18 @@ export default function AppRoutes() {
 
       <Route path="/foh" element={<PrivateRoute requiredFeature="fohTasks"><FOH /></PrivateRoute>} />
       <Route path="/foh/history" element={<PrivateRoute requiredFeature="fohTasks"><FOHHistory /></PrivateRoute>} />
+
+      <Route path="/team-surveys" element={<PrivateRoute requiredFeature="leadership"><TeamSurveys /></PrivateRoute>}>
+        <Route index element={<Navigate to="/team-surveys/dashboard" replace />} />
+        <Route path="dashboard" element={<TeamSurveysDashboard />} />
+        <Route path="new" element={<NewTeamSurvey />} />
+        <Route path="create-advanced" element={<CreateAdvanced />} />
+        <Route path=":surveyId/edit" element={<TeamSurveyBuilder />} />
+        <Route path=":surveyId/results" element={<TeamSurveyResults />} />
+      </Route>
+
+      {/* Anonymous survey taking route (no auth required) */}
+      <Route path="/survey/:token" element={<TakeSurvey />} />
 
       {/* Shifts functionality removed */}
 

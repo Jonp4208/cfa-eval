@@ -14,3 +14,5 @@ export { default as DefaultPositions } from './defaultPositions.js';
 export { default as Playbook } from './Playbook.js';
 export { default as Invoice } from './Invoice.js';
 export { AssessmentTemplate, AssessmentResponse } from './Assessment.js';
+export { default as TeamSurvey } from './TeamSurvey.js';
+export { default as TeamSurveyResponse } from './TeamSurveyResponse.js';

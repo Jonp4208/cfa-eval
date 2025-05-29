@@ -40,7 +40,8 @@ import {
   FileText,
   CalendarDays,
   Plus,
-  Building
+  Building,
+  MessageSquare
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import api from '@/lib/axios';
@@ -384,6 +385,14 @@ export default function Layout({ children }: { children: React.ReactNode }) {
           icon: TrendingUp,
           label: 'Leadership',
           href: '/leadership',
+          badge: null
+        }] : []),
+
+        // Only include Team Surveys if the leadership feature is enabled
+        ...(isFeatureEnabled('leadership') ? [{
+          icon: MessageSquare,
+          label: 'Team Surveys',
+          href: '/team-surveys',
           badge: null
         }] : []),
 

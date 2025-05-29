@@ -19,7 +19,8 @@ import {
   Plus,
   Users,
   TrendingUp,
-  BarChart
+  BarChart,
+  MessageSquare
 } from 'lucide-react';
 
 // Define all available navigation items with their configurations
@@ -99,6 +100,14 @@ const ALL_NAV_ITEMS = {
     getLabel: (user: any, t: any) => user?.position === 'Team Member' ? 'My Profile' : 'Team Members',
     href: (user: any) => user?.position === 'Team Member' ? `/users/${user?._id}` : '/users',
     defaultShow: false
+  },
+  teamSurveys: {
+    icon: MessageSquare,
+    label: 'Team Surveys',
+    href: '/team-surveys',
+    showIf: (user: any) => user?.position !== 'Team Member',
+    defaultShow: false,
+    requiresFeature: 'leadership'
   }
 };
 

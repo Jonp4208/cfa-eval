@@ -45,6 +45,7 @@ import userPreferencesRouter from './routes/userPreferences.js';
 import invoicesRouter from './routes/invoices.js';
 import adminRouter from './routes/admin.js';
 import userStoreRouter from './routes/userStore.js';
+import teamSurveysRouter from './routes/teamSurveys.js';
 
 // Services
 import { initCronJobs } from './services/cronService.js';
@@ -164,6 +165,7 @@ apiRouter.use('/user-preferences', userPreferencesRouter);
 apiRouter.use('/invoices', invoicesRouter);
 apiRouter.use('/admin', adminRouter);
 apiRouter.use('/user-store', userStoreRouter);
+apiRouter.use('/team-surveys', teamSurveysRouter);
 
 // PDF Generation using html-pdf-node
 apiRouter.post('/generate-pdf', async (req, res) => {

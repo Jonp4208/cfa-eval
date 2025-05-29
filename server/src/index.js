@@ -3,6 +3,7 @@ import cors from 'cors';
 import dotenv from 'dotenv';
 import * as Sentry from "@sentry/node";
 import { initCronJobs } from './services/cronService.js';
+import './services/surveyScheduler.js';
 import { verifyEmailConfig } from './utils/email.js';
 import { connectDB } from './config/db.js';
 import { testS3Config } from './config/s3.js';

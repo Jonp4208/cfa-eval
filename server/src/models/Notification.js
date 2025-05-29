@@ -15,7 +15,7 @@ const notificationSchema = new mongoose.Schema({
   },
   type: {
     type: String,
-    enum: ['TRAINING_ASSIGNED', 'TRAINING_COMPLETED', 'DISCIPLINARY', 'EVALUATION', 'GOAL', 'RECOGNITION', 'SYSTEM', 'REMINDER', 'TASK', 'evaluation', 'DOCUMENTATION', 'documentation'],
+    enum: ['TRAINING_ASSIGNED', 'TRAINING_COMPLETED', 'DISCIPLINARY', 'EVALUATION', 'GOAL', 'RECOGNITION', 'SYSTEM', 'REMINDER', 'TASK', 'evaluation', 'DOCUMENTATION', 'documentation', 'SURVEY_INVITATION'],
     required: true,
     set: function(v) {
       return v.toUpperCase();

@@ -217,3 +217,108 @@ export const sendEmail = async ({ to, subject, html, attachments = [] }) => {
     };
   }
 };
+
+// Survey invitation email
+export const sendSurveyInviteEmail = async (to, data) => {
+  const subject = 'Your Voice Matters - Team Experience Survey';
+
+  const html = `
+    <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
+      <div style="background: linear-gradient(135deg, #E51636, #FF4757); padding: 30px; text-align: center; border-radius: 10px 10px 0 0;">
+        <h1 style="color: white; margin: 0; font-size: 28px;">Team Experience Survey</h1>
+        <p style="color: white; margin: 10px 0 0 0; font-size: 16px;">Your feedback helps us improve</p>
+      </div>
+
+      <div style="background: white; padding: 30px; border: 1px solid #ddd; border-top: none;">
+        <p style="font-size: 16px; color: #333; margin-bottom: 20px;">Hi ${data.userName},</p>
+
+        <p style="font-size: 16px; color: #333; line-height: 1.6; margin-bottom: 20px;">
+          ${data.customMessage || 'We value your feedback! Please take a few minutes to complete our anonymous team experience survey.'}
+        </p>
+
+        <div style="background: #f8f9fa; padding: 20px; border-radius: 8px; margin: 20px 0;">
+          <h3 style="color: #E51636; margin: 0 0 10px 0;">Survey: ${data.surveyTitle}</h3>
+          <p style="margin: 0; color: #666;">
+            <strong>Deadline:</strong> ${new Date(data.expiryDate).toLocaleDateString()}
+          </p>
+        </div>
+
+        <div style="text-align: center; margin: 30px 0;">
+          <a href="${data.surveyUrl}"
+             style="background: #E51636; color: white; padding: 15px 30px; text-decoration: none; border-radius: 5px; font-weight: bold; display: inline-block;">
+            Take Survey Now
+          </a>
+        </div>
+
+        <div style="background: #e8f5e8; padding: 15px; border-radius: 5px; margin: 20px 0;">
+          <p style="margin: 0; font-size: 14px; color: #2d5a2d;">
+            <strong>🔒 Your responses are completely anonymous.</strong> We cannot trace answers back to individuals.
+          </p>
+        </div>
+
+        <p style="font-size: 14px; color: #666; margin-top: 30px;">
+          If you have any questions, please contact your manager.<br>
+          Thank you for helping us create a better workplace!
+        </p>
+      </div>
+
+      <div style="background: #f8f9fa; padding: 20px; text-align: center; border-radius: 0 0 10px 10px;">
+        <p style="margin: 0; font-size: 12px; color: #666;">
+          This is an automated message from the Chick-fil-A Leadership Development Platform
+        </p>
+      </div>
+    </div>
+  `;
+
+  return sendEmail({ to, subject, html });
+};
+
+// Survey reminder email
+export const sendSurveyReminderEmail = async (to, data) => {
+  const subject = `Reminder: ${data.surveyTitle} - ${data.daysLeft} days left`;
+
+  const html = `
+    <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
+      <div style="background: linear-gradient(135deg, #FF6B35, #E51636); padding: 30px; text-align: center; border-radius: 10px 10px 0 0;">
+        <h1 style="color: white; margin: 0; font-size: 28px;">Survey Reminder</h1>
+        <p style="color: white; margin: 10px 0 0 0; font-size: 16px;">
+          ${data.daysLeft === 'manual' ? 'Don\'t miss out!' : `${data.daysLeft} days remaining`}
+        </p>
+      </div>
+
+      <div style="background: white; padding: 30px; border: 1px solid #ddd; border-top: none;">
+        <p style="font-size: 16px; color: #333; margin-bottom: 20px;">Hi ${data.userName},</p>
+
+        <p style="font-size: 16px; color: #333; line-height: 1.6; margin-bottom: 20px;">
+          ${data.customMessage || 'This is a friendly reminder to complete the team experience survey. Your feedback is important to us!'}
+        </p>
+
+        <div style="background: #fff3cd; border: 1px solid #ffeaa7; padding: 20px; border-radius: 8px; margin: 20px 0;">
+          <h3 style="color: #856404; margin: 0 0 10px 0;">⏰ Survey: ${data.surveyTitle}</h3>
+          <p style="margin: 0; color: #856404;">
+            ${data.daysLeft === 'manual' ? 'Please complete soon' : `Closes in ${data.daysLeft} day${data.daysLeft !== 1 ? 's' : ''}`}
+          </p>
+        </div>
+
+        <div style="text-align: center; margin: 30px 0;">
+          <a href="${data.surveyUrl}"
+             style="background: #E51636; color: white; padding: 15px 30px; text-decoration: none; border-radius: 5px; font-weight: bold; display: inline-block;">
+            Complete Survey
+          </a>
+        </div>
+
+        <p style="font-size: 14px; color: #666; margin-top: 30px;">
+          Your anonymous feedback helps us improve the workplace for everyone.
+        </p>
+      </div>
+
+      <div style="background: #f8f9fa; padding: 20px; text-align: center; border-radius: 0 0 10px 10px;">
+        <p style="margin: 0; font-size: 12px; color: #666;">
+          This is an automated reminder from the Chick-fil-A Leadership Development Platform
+        </p>
+      </div>
+    </div>
+  `;
+
+  return sendEmail({ to, subject, html });
+};
