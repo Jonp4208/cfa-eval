@@ -149,7 +149,7 @@ export default function Assessments() {
         averageScore: Math.round(averageScore * 100) / 100,
         recentActivity: completedResponses.slice(0, 3),
         upcomingAssessments: templatesData.filter((t: AssessmentTemplate) =>
-          !responsesData.some((r: AssessmentResponse) => r.template._id === t._id)
+          !responsesData.some((r: AssessmentResponse) => r.template && r.template._id === t._id)
         ).slice(0, 3)
       })
 
@@ -489,7 +489,7 @@ export default function Assessments() {
       {/* Assessment Cards Grid */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
         {Array.isArray(templates) && templates.length > 0 ? templates.map(template => {
-              const existingResponse = Array.isArray(responses) ? responses.find(r => r.template._id === template._id) : null
+              const existingResponse = Array.isArray(responses) ? responses.find(r => r.template && r.template._id === template._id) : null
 
               return (
                 <Card key={template._id} className="bg-white rounded-[20px] border border-gray-100 hover:shadow-xl hover:border-[#E51636]/20 transition-all duration-300 group">
@@ -635,7 +635,7 @@ export default function Assessments() {
                     <CheckCircle2 className="h-4 w-4" />
                   </div>
                   <div className="flex-1">
-                    <p className="font-medium text-sm text-[#27251F]">{activity.template.title}</p>
+                    <p className="font-medium text-sm text-[#27251F]">{activity.template?.title || 'Assessment'}</p>
                     <p className="text-xs text-[#27251F]/60">
                       Completed {activity.completedAt ? formatDistanceToNow(new Date(activity.completedAt), { addSuffix: true }) : 'recently'}
                       {activity.overallScore && ` • Score: ${activity.overallScore.toFixed(1)}/5`}

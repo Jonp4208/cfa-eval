@@ -68,6 +68,15 @@ import StrategicChangeInitiativePlanForm from '@/components/leadership/Strategic
 import NinetyDayStrategicPlanForm from '@/components/leadership/NinetyDayStrategicPlanForm'
 import LongTermPlanningForm from '@/components/leadership/LongTermPlanningForm'
 import RestaurantWhyStatementForm from '@/components/leadership/RestaurantWhyStatementForm'
+import FeedbackDeliveryPracticeForm from '@/components/leadership/FeedbackDeliveryPracticeForm'
+import BodyLanguageAwarenessForm from '@/components/leadership/BodyLanguageAwarenessForm'
+import InfluenceWithoutAuthorityForm from '@/components/leadership/InfluenceWithoutAuthorityForm'
+import InfluencePracticeProjectForm from '@/components/leadership/InfluencePracticeProjectForm'
+import DifficultConversationsFrameworkForm from '@/components/leadership/DifficultConversationsFrameworkForm'
+import DifficultConversationPracticeForm from '@/components/leadership/DifficultConversationPracticeForm'
+import WrittenCommunicationExcellenceForm from '@/components/leadership/WrittenCommunicationExcellenceForm'
+import CommunicationSystemImprovementForm from '@/components/leadership/CommunicationSystemImprovementForm'
+import CommunicationLeadershipPhilosophyForm from '@/components/leadership/CommunicationLeadershipPhilosophyForm'
 
 interface Task {
   id: string
@@ -992,6 +1001,8 @@ export default function PlanTasks() {
                       </p>
                     )}
 
+
+
                     {/* Interactive Forms for Strategic Leadership Tasks */}
                     {!task.completed && task.title === 'Restaurant Strategy Diagnosis' && (
                       <div className="mt-4">
@@ -1691,6 +1702,460 @@ export default function PlanTasks() {
                       </div>
                     )}
 
+                    {!task.completed && task.title === 'Feedback Delivery Practice' && (
+                      <div className="mt-4">
+                        {!openForms[task.id] ? (
+                          <Button
+                            onClick={() => toggleForm(task.id)}
+                            variant="outline"
+                            className="w-full text-orange-600 border-orange-200 hover:bg-orange-50 h-12"
+                          >
+                            <MessageSquare className="h-4 w-4 mr-2" />
+                            Complete Feedback Practice
+                          </Button>
+                        ) : (
+                          <div className="p-4 bg-orange-50 rounded-lg border border-orange-200">
+                            <div className="flex items-center justify-between mb-3">
+                              <div className="flex items-center gap-2">
+                                <MessageSquare className="h-5 w-5 text-orange-600" />
+                                <h4 className="font-semibold text-orange-800">Feedback Delivery Practice</h4>
+                              </div>
+                              <Button
+                                onClick={() => toggleForm(task.id)}
+                                variant="ghost"
+                                size="sm"
+                                className="text-orange-600 hover:text-orange-800"
+                              >
+                                <X className="h-4 w-4" />
+                              </Button>
+                            </div>
+                            <FeedbackDeliveryPracticeForm
+                              value={task.evidence || ''}
+                              onChange={(value) => {
+                                setTasks(prevTasks => prevTasks.map(t =>
+                                  t.id === task.id ? { ...t, evidence: value } : t
+                                ))
+                                debouncedAutoSave(task.id, value);
+                              }}
+                            />
+                            <div className="mt-3 pt-3 border-t border-orange-200 flex gap-2">
+                              <Button
+                                onClick={() => {
+                                  if (task.evidence && task.evidence.trim()) {
+                                    handleTaskToggle(task.id, true);
+                                  }
+                                }}
+                                disabled={!task.evidence || !task.evidence.trim()}
+                                className="flex-1 bg-orange-600 hover:bg-orange-700 text-white"
+                              >
+                                <CheckCircle className="h-4 w-4 mr-2" />
+                                Complete Feedback Practice
+                              </Button>
+                              <Button
+                                onClick={() => toggleForm(task.id)}
+                                variant="outline"
+                                className="text-gray-600 border-gray-200 hover:bg-gray-50"
+                              >
+                                Save & Close
+                              </Button>
+                            </div>
+                          </div>
+                        )}
+                      </div>
+                    )}
+
+                    {!task.completed && task.title === 'Body Language Awareness' && openForms[task.id] && (
+                          <div className="p-4 bg-blue-50 rounded-lg border border-blue-200">
+                            <div className="flex items-center justify-between mb-3">
+                              <div className="flex items-center gap-2">
+                                <Users className="h-5 w-5 text-blue-600" />
+                                <h4 className="font-semibold text-blue-800">Body Language Awareness</h4>
+                              </div>
+                              <Button
+                                onClick={() => toggleForm(task.id)}
+                                variant="ghost"
+                                size="sm"
+                                className="text-blue-600 hover:text-blue-800"
+                              >
+                                <X className="h-4 w-4" />
+                              </Button>
+                            </div>
+                            <BodyLanguageAwarenessForm
+                              value={task.evidence || ''}
+                              onChange={(value) => {
+                                setTasks(prevTasks => prevTasks.map(t =>
+                                  t.id === task.id ? { ...t, evidence: value } : t
+                                ))
+                                debouncedAutoSave(task.id, value);
+                              }}
+                            />
+                            <div className="mt-3 pt-3 border-t border-blue-200 flex gap-2">
+                              <Button
+                                onClick={() => {
+                                  if (task.evidence && task.evidence.trim()) {
+                                    handleTaskToggle(task.id, true);
+                                  }
+                                }}
+                                disabled={!task.evidence || !task.evidence.trim()}
+                                className="flex-1 bg-blue-600 hover:bg-blue-700 text-white"
+                              >
+                                <CheckCircle className="h-4 w-4 mr-2" />
+                                Complete Body Language Practice
+                              </Button>
+                              <Button
+                                onClick={() => toggleForm(task.id)}
+                                variant="outline"
+                                className="text-gray-600 border-gray-200 hover:bg-gray-50"
+                              >
+                                Save & Close
+                              </Button>
+                            </div>
+                          </div>
+                    )}
+
+                    {!task.completed && task.title === 'Influence Without Authority' && openForms[task.id] && (
+                          <div className="p-4 bg-purple-50 rounded-lg border border-purple-200">
+                            <div className="flex items-center justify-between mb-3">
+                              <div className="flex items-center gap-2">
+                                <Target className="h-5 w-5 text-purple-600" />
+                                <h4 className="font-semibold text-purple-800">Influence Without Authority</h4>
+                              </div>
+                              <Button
+                                onClick={() => toggleForm(task.id)}
+                                variant="ghost"
+                                size="sm"
+                                className="text-purple-600 hover:text-purple-800"
+                              >
+                                <X className="h-4 w-4" />
+                              </Button>
+                            </div>
+                            <InfluenceWithoutAuthorityForm
+                              value={task.evidence || ''}
+                              onChange={(value) => {
+                                setTasks(prevTasks => prevTasks.map(t =>
+                                  t.id === task.id ? { ...t, evidence: value } : t
+                                ))
+                                debouncedAutoSave(task.id, value);
+                              }}
+                            />
+                            <div className="mt-3 pt-3 border-t border-purple-200 flex gap-2">
+                              <Button
+                                onClick={() => {
+                                  if (task.evidence && task.evidence.trim()) {
+                                    handleTaskToggle(task.id, true);
+                                  }
+                                }}
+                                disabled={!task.evidence || !task.evidence.trim()}
+                                className="flex-1 bg-purple-600 hover:bg-purple-700 text-white"
+                              >
+                                <CheckCircle className="h-4 w-4 mr-2" />
+                                Complete Influence Practice
+                              </Button>
+                              <Button
+                                onClick={() => toggleForm(task.id)}
+                                variant="outline"
+                                className="text-gray-600 border-gray-200 hover:bg-gray-50"
+                              >
+                                Save & Close
+                              </Button>
+                            </div>
+                          </div>
+                    )}
+
+                    {!task.completed && task.title === 'Influence Practice Project' && openForms[task.id] && (
+                          <div className="p-4 bg-indigo-50 rounded-lg border border-indigo-200">
+                            <div className="flex items-center justify-between mb-3">
+                              <div className="flex items-center gap-2">
+                                <TrendingUp className="h-5 w-5 text-indigo-600" />
+                                <h4 className="font-semibold text-indigo-800">Influence Practice Project</h4>
+                              </div>
+                              <Button
+                                onClick={() => toggleForm(task.id)}
+                                variant="ghost"
+                                size="sm"
+                                className="text-indigo-600 hover:text-indigo-800"
+                              >
+                                <X className="h-4 w-4" />
+                              </Button>
+                            </div>
+                            <InfluencePracticeProjectForm
+                              value={task.evidence || ''}
+                              onChange={(value) => {
+                                setTasks(prevTasks => prevTasks.map(t =>
+                                  t.id === task.id ? { ...t, evidence: value } : t
+                                ))
+                                debouncedAutoSave(task.id, value);
+                              }}
+                            />
+                            <div className="mt-3 pt-3 border-t border-indigo-200 flex gap-2">
+                              <Button
+                                onClick={() => {
+                                  if (task.evidence && task.evidence.trim()) {
+                                    handleTaskToggle(task.id, true);
+                                  }
+                                }}
+                                disabled={!task.evidence || !task.evidence.trim()}
+                                className="flex-1 bg-indigo-600 hover:bg-indigo-700 text-white"
+                              >
+                                <CheckCircle className="h-4 w-4 mr-2" />
+                                Complete Influence Project
+                              </Button>
+                              <Button
+                                onClick={() => toggleForm(task.id)}
+                                variant="outline"
+                                className="text-gray-600 border-gray-200 hover:bg-gray-50"
+                              >
+                                Save & Close
+                              </Button>
+                            </div>
+                          </div>
+                    )}
+
+                    {!task.completed && task.title === 'Difficult Conversations Framework' && openForms[task.id] && (
+                          <div className="p-4 bg-red-50 rounded-lg border border-red-200">
+                            <div className="flex items-center justify-between mb-3">
+                              <div className="flex items-center gap-2">
+                                <AlertCircle className="h-5 w-5 text-red-600" />
+                                <h4 className="font-semibold text-red-800">Difficult Conversations Framework</h4>
+                              </div>
+                              <Button
+                                onClick={() => toggleForm(task.id)}
+                                variant="ghost"
+                                size="sm"
+                                className="text-red-600 hover:text-red-800"
+                              >
+                                <X className="h-4 w-4" />
+                              </Button>
+                            </div>
+                            <DifficultConversationsFrameworkForm
+                              value={task.evidence || ''}
+                              onChange={(value) => {
+                                setTasks(prevTasks => prevTasks.map(t =>
+                                  t.id === task.id ? { ...t, evidence: value } : t
+                                ))
+                                debouncedAutoSave(task.id, value);
+                              }}
+                            />
+                            <div className="mt-3 pt-3 border-t border-red-200 flex gap-2">
+                              <Button
+                                onClick={() => {
+                                  if (task.evidence && task.evidence.trim()) {
+                                    handleTaskToggle(task.id, true);
+                                  }
+                                }}
+                                disabled={!task.evidence || !task.evidence.trim()}
+                                className="flex-1 bg-red-600 hover:bg-red-700 text-white"
+                              >
+                                <CheckCircle className="h-4 w-4 mr-2" />
+                                Complete Framework Development
+                              </Button>
+                              <Button
+                                onClick={() => toggleForm(task.id)}
+                                variant="outline"
+                                className="text-gray-600 border-gray-200 hover:bg-gray-50"
+                              >
+                                Save & Close
+                              </Button>
+                            </div>
+                          </div>
+                    )}
+
+                    {!task.completed && task.title === 'Difficult Conversation Practice' && openForms[task.id] && (
+                          <div className="p-4 bg-blue-50 rounded-lg border border-blue-200">
+                            <div className="flex items-center justify-between mb-3">
+                              <div className="flex items-center gap-2">
+                                <MessageSquare className="h-5 w-5 text-blue-600" />
+                                <h4 className="font-semibold text-blue-800">Difficult Conversation Practice</h4>
+                              </div>
+                              <Button
+                                onClick={() => toggleForm(task.id)}
+                                variant="ghost"
+                                size="sm"
+                                className="text-blue-600 hover:text-blue-800"
+                              >
+                                <X className="h-4 w-4" />
+                              </Button>
+                            </div>
+                            <DifficultConversationPracticeForm
+                              value={task.evidence || ''}
+                              onChange={(value) => {
+                                setTasks(prevTasks => prevTasks.map(t =>
+                                  t.id === task.id ? { ...t, evidence: value } : t
+                                ))
+                                debouncedAutoSave(task.id, value);
+                              }}
+                            />
+                            <div className="mt-3 pt-3 border-t border-blue-200 flex gap-2">
+                              <Button
+                                onClick={() => {
+                                  if (task.evidence && task.evidence.trim()) {
+                                    handleTaskToggle(task.id, true);
+                                  }
+                                }}
+                                disabled={!task.evidence || !task.evidence.trim()}
+                                className="flex-1 bg-blue-600 hover:bg-blue-700 text-white"
+                              >
+                                <CheckCircle className="h-4 w-4 mr-2" />
+                                Complete Conversation Practice
+                              </Button>
+                              <Button
+                                onClick={() => toggleForm(task.id)}
+                                variant="outline"
+                                className="text-gray-600 border-gray-200 hover:bg-gray-50"
+                              >
+                                Save & Close
+                              </Button>
+                            </div>
+                          </div>
+                    )}
+
+                    {!task.completed && task.title === 'Written Communication Excellence' && openForms[task.id] && (
+                          <div className="p-4 bg-green-50 rounded-lg border border-green-200">
+                            <div className="flex items-center justify-between mb-3">
+                              <div className="flex items-center gap-2">
+                                <PenTool className="h-5 w-5 text-green-600" />
+                                <h4 className="font-semibold text-green-800">Written Communication Excellence</h4>
+                              </div>
+                              <Button
+                                onClick={() => toggleForm(task.id)}
+                                variant="ghost"
+                                size="sm"
+                                className="text-green-600 hover:text-green-800"
+                              >
+                                <X className="h-4 w-4" />
+                              </Button>
+                            </div>
+                            <WrittenCommunicationExcellenceForm
+                              value={task.evidence || ''}
+                              onChange={(value) => {
+                                setTasks(prevTasks => prevTasks.map(t =>
+                                  t.id === task.id ? { ...t, evidence: value } : t
+                                ))
+                                debouncedAutoSave(task.id, value);
+                              }}
+                            />
+                            <div className="mt-3 pt-3 border-t border-green-200 flex gap-2">
+                              <Button
+                                onClick={() => {
+                                  if (task.evidence && task.evidence.trim()) {
+                                    handleTaskToggle(task.id, true);
+                                  }
+                                }}
+                                disabled={!task.evidence || !task.evidence.trim()}
+                                className="flex-1 bg-green-600 hover:bg-green-700 text-white"
+                              >
+                                <CheckCircle className="h-4 w-4 mr-2" />
+                                Complete Writing Excellence
+                              </Button>
+                              <Button
+                                onClick={() => toggleForm(task.id)}
+                                variant="outline"
+                                className="text-gray-600 border-gray-200 hover:bg-gray-50"
+                              >
+                                Save & Close
+                              </Button>
+                            </div>
+                          </div>
+                    )}
+
+                    {!task.completed && task.title === 'Communication System Improvement' && openForms[task.id] && (
+                          <div className="p-4 bg-indigo-50 rounded-lg border border-indigo-200">
+                            <div className="flex items-center justify-between mb-3">
+                              <div className="flex items-center gap-2">
+                                <RefreshCw className="h-5 w-5 text-indigo-600" />
+                                <h4 className="font-semibold text-indigo-800">Communication System Improvement</h4>
+                              </div>
+                              <Button
+                                onClick={() => toggleForm(task.id)}
+                                variant="ghost"
+                                size="sm"
+                                className="text-indigo-600 hover:text-indigo-800"
+                              >
+                                <X className="h-4 w-4" />
+                              </Button>
+                            </div>
+                            <CommunicationSystemImprovementForm
+                              value={task.evidence || ''}
+                              onChange={(value) => {
+                                setTasks(prevTasks => prevTasks.map(t =>
+                                  t.id === task.id ? { ...t, evidence: value } : t
+                                ))
+                                debouncedAutoSave(task.id, value);
+                              }}
+                            />
+                            <div className="mt-3 pt-3 border-t border-indigo-200 flex gap-2">
+                              <Button
+                                onClick={() => {
+                                  if (task.evidence && task.evidence.trim()) {
+                                    handleTaskToggle(task.id, true);
+                                  }
+                                }}
+                                disabled={!task.evidence || !task.evidence.trim()}
+                                className="flex-1 bg-indigo-600 hover:bg-indigo-700 text-white"
+                              >
+                                <CheckCircle className="h-4 w-4 mr-2" />
+                                Complete System Improvement
+                              </Button>
+                              <Button
+                                onClick={() => toggleForm(task.id)}
+                                variant="outline"
+                                className="text-gray-600 border-gray-200 hover:bg-gray-50"
+                              >
+                                Save & Close
+                              </Button>
+                            </div>
+                          </div>
+                    )}
+
+                    {!task.completed && task.title === 'Communication Leadership Philosophy' && openForms[task.id] && (
+                          <div className="p-4 bg-purple-50 rounded-lg border border-purple-200">
+                            <div className="flex items-center justify-between mb-3">
+                              <div className="flex items-center gap-2">
+                                <Heart className="h-5 w-5 text-purple-600" />
+                                <h4 className="font-semibold text-purple-800">Communication Leadership Philosophy</h4>
+                              </div>
+                              <Button
+                                onClick={() => toggleForm(task.id)}
+                                variant="ghost"
+                                size="sm"
+                                className="text-purple-600 hover:text-purple-800"
+                              >
+                                <X className="h-4 w-4" />
+                              </Button>
+                            </div>
+                            <CommunicationLeadershipPhilosophyForm
+                              value={task.evidence || ''}
+                              onChange={(value) => {
+                                setTasks(prevTasks => prevTasks.map(t =>
+                                  t.id === task.id ? { ...t, evidence: value } : t
+                                ))
+                                debouncedAutoSave(task.id, value);
+                              }}
+                            />
+                            <div className="mt-3 pt-3 border-t border-purple-200 flex gap-2">
+                              <Button
+                                onClick={() => {
+                                  if (task.evidence && task.evidence.trim()) {
+                                    handleTaskToggle(task.id, true);
+                                  }
+                                }}
+                                disabled={!task.evidence || !task.evidence.trim()}
+                                className="flex-1 bg-purple-600 hover:bg-purple-700 text-white"
+                              >
+                                <CheckCircle className="h-4 w-4 mr-2" />
+                                Complete Leadership Philosophy
+                              </Button>
+                              <Button
+                                onClick={() => toggleForm(task.id)}
+                                variant="outline"
+                                className="text-gray-600 border-gray-200 hover:bg-gray-50"
+                              >
+                                Save & Close
+                              </Button>
+                            </div>
+                          </div>
+                    )}
+
                     <div className="flex flex-wrap gap-x-4 gap-y-2">
                       {task.estimatedTime && (
                         <div className="flex items-center gap-2 text-sm text-gray-500">
@@ -1872,6 +2337,42 @@ export default function PlanTasks() {
                           <div className="text-sm text-gray-600">
                             <p>Restaurant Why statement completed. Use the buttons above to view or edit your purpose statement and team feedback.</p>
                           </div>
+                        ) : task.title === 'Feedback Delivery Practice' ? (
+                          <div className="text-sm text-gray-600">
+                            <p>Feedback delivery practice completed. You've documented three SBI feedback sessions and reflected on your communication approach. Use the buttons above to view or edit your feedback practice documentation.</p>
+                          </div>
+                        ) : task.title === 'Body Language Awareness' ? (
+                          <div className="text-sm text-gray-600">
+                            <p>Body language awareness practice completed. You've documented observations and developed your non-verbal communication reading skills. Use the buttons above to view or edit your practice documentation.</p>
+                          </div>
+                        ) : task.title === 'Influence Without Authority' ? (
+                          <div className="text-sm text-gray-600">
+                            <p>Influence without authority practice completed. You've documented scenarios and developed strategies for influencing others effectively. Use the buttons above to view or edit your influence documentation.</p>
+                          </div>
+                        ) : task.title === 'Influence Practice Project' ? (
+                          <div className="text-sm text-gray-600">
+                            <p>Influence practice project completed. You've planned and executed a comprehensive influence project with measurable results. Use the buttons above to view or edit your project documentation.</p>
+                          </div>
+                        ) : task.title === 'Difficult Conversations Framework' ? (
+                          <div className="text-sm text-gray-600">
+                            <p>Difficult conversations framework completed. You've developed structured approaches for handling challenging workplace conversations. Use the buttons above to view or edit your framework documentation.</p>
+                          </div>
+                        ) : task.title === 'Difficult Conversation Practice' ? (
+                          <div className="text-sm text-gray-600">
+                            <p>Difficult conversation practice completed. You've documented real conversations and refined your approach to challenging discussions. Use the buttons above to view or edit your practice documentation.</p>
+                          </div>
+                        ) : task.title === 'Written Communication Excellence' ? (
+                          <div className="text-sm text-gray-600">
+                            <p>Written communication excellence completed. You've analyzed and improved various types of workplace writing with professional standards. Use the buttons above to view or edit your communication samples.</p>
+                          </div>
+                        ) : task.title === 'Communication System Improvement' ? (
+                          <div className="text-sm text-gray-600">
+                            <p>Communication system improvement completed. You've assessed and implemented improvements to your restaurant's communication processes. Use the buttons above to view or edit your system analysis.</p>
+                          </div>
+                        ) : task.title === 'Communication Leadership Philosophy' ? (
+                          <div className="text-sm text-gray-600">
+                            <p>Communication leadership philosophy completed. You've developed your personal approach to leading through effective communication. Use the buttons above to view or edit your philosophy statement.</p>
+                          </div>
                         ) : (
                           <p className="text-sm text-gray-600 whitespace-pre-wrap">{task.evidence}</p>
                         )}
@@ -1932,6 +2433,103 @@ export default function PlanTasks() {
                             >
                               <ExternalLink className="h-4 w-4 mr-2" />
                               Open Resource
+                            </Button>
+                          )}
+
+                          {/* Communication Leadership Task Buttons */}
+                          {!task.completed && task.title === 'Body Language Awareness' && (
+                            <Button
+                              onClick={() => toggleForm(task.id)}
+                              variant="outline"
+                              size="sm"
+                              className="w-full sm:w-auto text-blue-600 border-blue-200 hover:bg-blue-50 h-10 sm:h-9"
+                            >
+                              <Users className="h-4 w-4 mr-2" />
+                              Complete Body Language Practice
+                            </Button>
+                          )}
+
+                          {!task.completed && task.title === 'Influence Without Authority' && (
+                            <Button
+                              onClick={() => toggleForm(task.id)}
+                              variant="outline"
+                              size="sm"
+                              className="w-full sm:w-auto text-purple-600 border-purple-200 hover:bg-purple-50 h-10 sm:h-9"
+                            >
+                              <Target className="h-4 w-4 mr-2" />
+                              Complete Influence Practice
+                            </Button>
+                          )}
+
+                          {!task.completed && task.title === 'Influence Practice Project' && (
+                            <Button
+                              onClick={() => toggleForm(task.id)}
+                              variant="outline"
+                              size="sm"
+                              className="w-full sm:w-auto text-indigo-600 border-indigo-200 hover:bg-indigo-50 h-10 sm:h-9"
+                            >
+                              <TrendingUp className="h-4 w-4 mr-2" />
+                              Complete Influence Project
+                            </Button>
+                          )}
+
+                          {!task.completed && task.title === 'Difficult Conversations Framework' && (
+                            <Button
+                              onClick={() => toggleForm(task.id)}
+                              variant="outline"
+                              size="sm"
+                              className="w-full sm:w-auto text-red-600 border-red-200 hover:bg-red-50 h-10 sm:h-9"
+                            >
+                              <AlertCircle className="h-4 w-4 mr-2" />
+                              Complete Framework Development
+                            </Button>
+                          )}
+
+                          {!task.completed && task.title === 'Difficult Conversation Practice' && (
+                            <Button
+                              onClick={() => toggleForm(task.id)}
+                              variant="outline"
+                              size="sm"
+                              className="w-full sm:w-auto text-blue-600 border-blue-200 hover:bg-blue-50 h-10 sm:h-9"
+                            >
+                              <MessageSquare className="h-4 w-4 mr-2" />
+                              Complete Conversation Practice
+                            </Button>
+                          )}
+
+                          {!task.completed && task.title === 'Written Communication Excellence' && (
+                            <Button
+                              onClick={() => toggleForm(task.id)}
+                              variant="outline"
+                              size="sm"
+                              className="w-full sm:w-auto text-green-600 border-green-200 hover:bg-green-50 h-10 sm:h-9"
+                            >
+                              <PenTool className="h-4 w-4 mr-2" />
+                              Complete Writing Excellence
+                            </Button>
+                          )}
+
+                          {!task.completed && task.title === 'Communication System Improvement' && (
+                            <Button
+                              onClick={() => toggleForm(task.id)}
+                              variant="outline"
+                              size="sm"
+                              className="w-full sm:w-auto text-indigo-600 border-indigo-200 hover:bg-indigo-50 h-10 sm:h-9"
+                            >
+                              <RefreshCw className="h-4 w-4 mr-2" />
+                              Complete System Improvement
+                            </Button>
+                          )}
+
+                          {!task.completed && task.title === 'Communication Leadership Philosophy' && (
+                            <Button
+                              onClick={() => toggleForm(task.id)}
+                              variant="outline"
+                              size="sm"
+                              className="w-full sm:w-auto text-purple-600 border-purple-200 hover:bg-purple-50 h-10 sm:h-9"
+                            >
+                              <Heart className="h-4 w-4 mr-2" />
+                              Complete Leadership Philosophy
                             </Button>
                           )}
 
@@ -2039,6 +2637,15 @@ export default function PlanTasks() {
                             '90-Day Strategic Plan',
                             'Long-term Planning and Goal Setting',
                             'Develop Your Restaurant\'s Why',
+                            'Feedback Delivery Practice',
+                            'Body Language Awareness',
+                            'Influence Without Authority',
+                            'Influence Practice Project',
+                            'Difficult Conversations Framework',
+                            'Difficult Conversation Practice',
+                            'Written Communication Excellence',
+                            'Communication System Improvement',
+                            'Communication Leadership Philosophy',
                             'Team Experience Survey',
                             'Culture Leadership Plan',
                             'Team Values Workshop',
@@ -2094,6 +2701,15 @@ export default function PlanTasks() {
                             '90-Day Strategic Plan',
                             'Long-term Planning and Goal Setting',
                             'Develop Your Restaurant\'s Why',
+                            'Feedback Delivery Practice',
+                            'Body Language Awareness',
+                            'Influence Without Authority',
+                            'Influence Practice Project',
+                            'Difficult Conversations Framework',
+                            'Difficult Conversation Practice',
+                            'Written Communication Excellence',
+                            'Communication System Improvement',
+                            'Communication Leadership Philosophy',
                             'Team Experience Survey',
                             'Culture Leadership Plan',
                             'Team Values Workshop',
@@ -2181,6 +2797,36 @@ export default function PlanTasks() {
                             >
                               <MessageSquare className="h-4 w-4 mr-2" />
                               View/Edit Session
+                            </Button>
+                          )}
+
+                          {/* Communication Style Assessment */}
+                          {task.title === 'Communication Style Assessment' && !task.completed && (
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              className="w-full sm:w-auto text-orange-600 border-orange-200 hover:bg-orange-50 h-10 sm:h-9"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                navigate('/leadership/assessments');
+                              }}
+                            >
+                              <Brain className="h-4 w-4 mr-2" />
+                              Take Assessment
+                            </Button>
+                          )}
+                          {task.title === 'Communication Style Assessment' && task.completed && (
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              className="w-full sm:w-auto text-orange-600 border-orange-200 hover:bg-orange-50 h-10 sm:h-9"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                navigate('/leadership/assessments');
+                              }}
+                            >
+                              <Brain className="h-4 w-4 mr-2" />
+                              View Results
                             </Button>
                           )}
                           {task.title === 'Development Plan Creation' && (
@@ -2927,6 +3573,14 @@ export default function PlanTasks() {
                     />
                   )}
 
+                  {/* Feedback Delivery Practice */}
+                  {selectedTask.title === "Feedback Delivery Practice" && (
+                    <FeedbackDeliveryPracticeForm
+                      value={completionEvidence}
+                      onChange={setCompletionEvidence}
+                    />
+                  )}
+
                   {/* Default textarea for tasks without a custom form */}
                   {![
                     "Character vs. Capacity Reflection",
@@ -2962,7 +3616,8 @@ export default function PlanTasks() {
                     "Strategic Change Initiative Plan",
                     "90-Day Strategic Plan",
                     "Long-term Planning and Goal Setting",
-                    "Develop Your Restaurant's Why"
+                    "Develop Your Restaurant's Why",
+                    "Feedback Delivery Practice"
                   ].includes(selectedTask.title) && (
                     <div className="space-y-2">
                       <div className="text-xs font-medium">

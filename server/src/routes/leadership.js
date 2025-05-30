@@ -427,6 +427,12 @@ router.get('/plans', auth, async (req, res) => {
         isFree: true
       },
       {
+        id: 'communication-influence',
+        title: 'Communication & Influence Excellence',
+        description: 'Master the art of clear communication and positive influence to inspire teams and drive results. This comprehensive 10-week plan develops both verbal and non-verbal communication skills essential for effective leadership.',
+        isFree: false
+      },
+      {
         id: 'restaurant-culture-builder',
         title: 'Restaurant Culture Builder',
         description: 'Create a positive, high-performing restaurant culture where team members thrive and guests receive exceptional service.',
@@ -436,6 +442,42 @@ router.get('/plans', auth, async (req, res) => {
         id: 'team-development',
         title: 'Team Development Expert',
         description: 'Build a high-performing restaurant team by mastering the art of hiring, training, and developing exceptional team members.',
+        isFree: false
+      },
+      {
+        id: 'strategic-leadership',
+        title: 'Strategic Leadership Mastery',
+        description: 'Develop strategic thinking, vision-setting, and decision-making capabilities to drive organizational success. This comprehensive 12-week plan builds the skills needed to think beyond day-to-day operations and lead with strategic purpose.',
+        isFree: false
+      },
+      {
+        id: 'operational-excellence',
+        title: 'Operational Excellence Leader',
+        description: 'Drive efficiency, quality, and continuous improvement in restaurant operations. This comprehensive 10-week plan equips you with the tools and mindset to optimize processes and deliver consistent results.',
+        isFree: false
+      },
+      {
+        id: 'innovation-change',
+        title: 'Innovation & Change Champion',
+        description: 'Lead innovation initiatives and guide teams through change with confidence. This comprehensive 9-week plan develops the skills needed to foster creativity, adapt to change, and drive continuous improvement.',
+        isFree: false
+      },
+      {
+        id: 'customer-experience',
+        title: 'Customer Experience Leader',
+        description: 'Excel at creating exceptional customer experiences and building a hospitality-focused culture. This comprehensive 8-week plan develops the skills needed to consistently deliver outstanding service and recover from service failures.',
+        isFree: false
+      },
+      {
+        id: 'conflict-resolution',
+        title: 'Conflict Resolution & Problem Solving',
+        description: 'Master the skills to resolve conflicts constructively and solve complex problems effectively. This comprehensive 9-week plan equips you with tools to handle difficult conversations and find win-win solutions.',
+        isFree: false
+      },
+      {
+        id: 'emotional-intelligence',
+        title: 'Emotional Intelligence Leader',
+        description: 'Develop emotional intelligence to better understand yourself and others, build stronger relationships, and lead with empathy. This comprehensive 10-week plan focuses on self-awareness, social skills, and emotional regulation.',
         isFree: false
       }
     ];
@@ -785,6 +827,130 @@ router.post('/plans/:planId/enroll', auth, checkSubscription, async (req, res) =
           estimatedTime: '45 minutes'
         }
       ];
+    } else if (planId === 'communication-influence') {
+      learningTasks = [
+        {
+          id: 'comm-task-1',
+          type: 'video',
+          title: 'Introduction to Effective Communication',
+          description: 'Watch this comprehensive introduction to effective communication for leaders. Focus on understanding the difference between talking and communicating, and how clear communication drives team performance.',
+          resourceUrl: 'https://www.youtube.com/watch?v=HAnw168huqA',
+          estimatedTime: '20 minutes'
+        },
+        {
+          id: 'comm-task-2',
+          type: 'reading',
+          title: 'Crucial Conversations - Core Concepts',
+          description: 'Read the first three chapters of "Crucial Conversations" by Kerry Patterson. Focus on understanding what makes a conversation crucial, how to recognize when safety is at risk, and the importance of creating a safe space for dialogue.',
+          resourceUrl: 'https://www.amazon.com/Crucial-Conversations-Talking-Stakes-Second/dp/0071771328',
+          estimatedTime: '45-60 minutes'
+        },
+        {
+          id: 'comm-task-2-activity',
+          type: 'assessment',
+          title: 'Communication Style Assessment',
+          description: 'Complete our comprehensive 30-question Communication Style Assessment to discover your natural communication preferences across four key dimensions: Direct, Expressive, Supportive, and Analytical communication. This professional-grade assessment will help you identify your primary communication style, understand your strengths, and learn how to adapt your approach for maximum effectiveness with different team members and situations.',
+          resourceUrl: '/leadership/assessments',
+          estimatedTime: '20 minutes'
+        },
+        {
+          id: 'comm-task-3',
+          type: 'video',
+          title: 'Active Listening Mastery',
+          description: 'Watch this detailed training on active listening techniques. Pay special attention to the difference between hearing and listening, and practice the techniques demonstrated.',
+          resourceUrl: 'https://www.youtube.com/watch?v=rzsVh8YwZEQ',
+          estimatedTime: '25 minutes'
+        },
+        {
+          id: 'comm-task-3-activity',
+          type: 'activity',
+          title: 'Active Listening Practice',
+          description: 'During your next three shifts, practice active listening with at least two team members per shift. Use these techniques: 1) Maintain eye contact, 2) Ask clarifying questions, 3) Paraphrase what you heard, 4) Avoid interrupting. Document your observations and what you learned.',
+          estimatedTime: '1 hour (across multiple shifts)'
+        },
+        {
+          id: 'comm-task-4',
+          type: 'reading',
+          title: 'The Art of Feedback',
+          description: 'Read this comprehensive guide on delivering effective feedback in fast-paced environments. Focus on the SBI (Situation-Behavior-Impact) feedback model and practice writing out 3 examples of feedback you need to deliver to team members.',
+          resourceUrl: 'https://www.ccl.org/articles/leading-effectively-articles/closing-the-gap-between-intent-vs-impact-sbii/',
+          estimatedTime: '30 minutes'
+        },
+        {
+          id: 'comm-task-4-activity',
+          type: 'activity',
+          title: 'Feedback Delivery Practice',
+          description: 'Practice delivering feedback using the SBI model with three different team members. For each conversation, document: 1) The situation you addressed, 2) The specific behavior you observed, 3) The impact it had, 4) The team member\'s response, 5) What you learned about your feedback delivery.',
+          estimatedTime: '45 minutes'
+        },
+        {
+          id: 'comm-task-5',
+          type: 'video',
+          title: 'Non-Verbal Communication and Body Language',
+          description: 'Watch Vanessa Van Edwards\' presentation on body language secrets for leaders. Focus on how your non-verbal communication affects your leadership presence and team interactions.',
+          resourceUrl: 'https://www.youtube.com/watch?v=ZZZ7k8cMA-4',
+          estimatedTime: '18 minutes'
+        },
+        {
+          id: 'comm-task-5-activity',
+          type: 'activity',
+          title: 'Body Language Awareness',
+          description: 'For one week, focus on your non-verbal communication during team interactions. Ask a trusted team member to observe and provide feedback on your body language, tone, and presence. Identify 2-3 specific improvements to make.',
+          estimatedTime: '1 week of observation + 30 minutes reflection'
+        },
+        {
+          id: 'comm-task-6',
+          type: 'reading',
+          title: 'Influence Without Authority',
+          description: 'Read this Harvard Business Review article on influencing others when you don\'t have formal authority. Focus on the six principles of influence and how to apply them in restaurant leadership.',
+          resourceUrl: 'https://hbr.org/2005/02/influence-without-authority-2',
+          estimatedTime: '25 minutes'
+        },
+        {
+          id: 'comm-task-6-activity',
+          type: 'activity',
+          title: 'Influence Practice Project',
+          description: 'Identify a change or improvement you want to implement that requires team buy-in but you don\'t have direct authority to mandate. Use influence techniques (reciprocity, commitment, social proof, etc.) to gain support. Document your approach and results.',
+          estimatedTime: '1-2 hours'
+        },
+        {
+          id: 'comm-task-7',
+          type: 'video',
+          title: 'Difficult Conversations Framework',
+          description: 'Watch this TED Talk on how to have difficult conversations. Learn the framework for approaching challenging discussions with team members while maintaining relationships.',
+          resourceUrl: 'https://www.youtube.com/watch?v=l3QEXLzWbZU',
+          estimatedTime: '15 minutes'
+        },
+        {
+          id: 'comm-task-7-activity',
+          type: 'activity',
+          title: 'Difficult Conversation Practice',
+          description: 'Prepare for and conduct a difficult conversation you\'ve been avoiding with a team member. Use the framework from the video: 1) Prepare your mindset, 2) Start with facts, 3) Share your story, 4) Ask for their perspective, 5) Work together on solutions. Reflect on the outcome.',
+          estimatedTime: '45 minutes preparation + conversation time'
+        },
+        {
+          id: 'comm-task-8',
+          type: 'reading',
+          title: 'Written Communication Excellence',
+          description: 'Read this guide on clear, professional written communication. Focus on techniques for emails, schedules, and team communications that reduce confusion and improve efficiency.',
+          resourceUrl: 'https://www.grammarly.com/blog/business-writing-tips/',
+          estimatedTime: '20 minutes'
+        },
+        {
+          id: 'comm-task-8-activity',
+          type: 'activity',
+          title: 'Communication System Improvement',
+          description: 'Audit your current written communication methods (schedules, announcements, emails, etc.). Identify 3 areas for improvement and implement changes. Create templates for common communications to ensure consistency and clarity.',
+          estimatedTime: '1 hour'
+        },
+        {
+          id: 'comm-task-9',
+          type: 'reflection',
+          title: 'Communication Leadership Philosophy',
+          description: 'Write a 1-page statement describing your communication leadership philosophy. Include your beliefs about: the role of communication in leadership, how you will create psychological safety for open dialogue, your approach to giving and receiving feedback, and how you will continue developing your communication skills.',
+          estimatedTime: '45 minutes'
+        }
+      ];
     } else if (planId === 'strategic-leadership') {
       learningTasks = [
         {
@@ -922,6 +1088,356 @@ router.post('/plans/:planId/enroll', auth, checkSubscription, async (req, res) =
           estimatedTime: '45 minutes'
         }
       ];
+    } else if (planId === 'operational-excellence') {
+      learningTasks = [
+        {
+          id: 'ops-task-1',
+          type: 'video',
+          title: 'Introduction to Operational Excellence',
+          description: 'Watch this comprehensive introduction to operational excellence in restaurants. Focus on understanding the principles of efficiency, quality, and continuous improvement.',
+          resourceUrl: 'https://www.youtube.com/watch?v=2Ub9_rzez_E',
+          estimatedTime: '20 minutes'
+        },
+        {
+          id: 'ops-task-2',
+          type: 'reading',
+          title: 'Lean Principles for Restaurants',
+          description: 'Read this guide on applying Lean principles to restaurant operations. Focus on identifying waste, improving flow, and creating value for customers.',
+          resourceUrl: 'https://www.lean.org/lexicon-terms/lean-thinking/',
+          estimatedTime: '30 minutes'
+        },
+        {
+          id: 'ops-task-2-activity',
+          type: 'activity',
+          title: 'Process Mapping Exercise',
+          description: 'Map out one key process in your restaurant (e.g., order taking, food preparation, cleaning). Identify bottlenecks, waste, and opportunities for improvement. Create a visual map showing current state and proposed improvements.',
+          estimatedTime: '45 minutes'
+        },
+        {
+          id: 'ops-task-3',
+          type: 'video',
+          title: 'Quality Management Systems',
+          description: 'Learn about quality management principles and how to implement quality control systems in restaurant operations.',
+          resourceUrl: 'https://www.youtube.com/watch?v=gTczYiWWN9g',
+          estimatedTime: '25 minutes'
+        },
+        {
+          id: 'ops-task-3-activity',
+          type: 'activity',
+          title: 'Quality Standards Development',
+          description: 'Create quality standards for three key areas in your restaurant. Define what "good" looks like, how to measure it, and what corrective actions to take when standards aren\'t met.',
+          estimatedTime: '1 hour'
+        },
+        {
+          id: 'ops-task-4',
+          type: 'reading',
+          title: 'Performance Metrics and KPIs',
+          description: 'Read about key performance indicators for restaurant operations. Learn how to select, track, and use metrics to drive operational improvements.',
+          resourceUrl: 'https://www.restaurantowner.com/public/Restaurant-Key-Performance-Indicators.cfm',
+          estimatedTime: '25 minutes'
+        },
+        {
+          id: 'ops-task-4-activity',
+          type: 'activity',
+          title: 'KPI Dashboard Creation',
+          description: 'Identify 5-7 key performance indicators for your restaurant and create a simple dashboard to track them. Include targets, current performance, and action plans for improvement.',
+          estimatedTime: '45 minutes'
+        },
+        {
+          id: 'ops-task-5',
+          type: 'activity',
+          title: 'Continuous Improvement Project',
+          description: 'Implement a small continuous improvement project in your restaurant. Use the Plan-Do-Check-Act cycle to test and refine the improvement. Document results and lessons learned.',
+          estimatedTime: '2 hours (across multiple days)'
+        },
+        {
+          id: 'ops-task-6',
+          type: 'reflection',
+          title: 'Operational Excellence Philosophy',
+          description: 'Write a 1-page statement describing your operational excellence philosophy. Include your beliefs about efficiency, quality, customer value, and continuous improvement.',
+          estimatedTime: '30 minutes'
+        }
+      ];
+    } else if (planId === 'innovation-change') {
+      learningTasks = [
+        {
+          id: 'innovation-task-1',
+          type: 'video',
+          title: 'Leading Change in Organizations',
+          description: 'Watch John Kotter\'s presentation on the 8-step process for leading change. Focus on how to create urgency, build coalitions, and sustain change initiatives.',
+          resourceUrl: 'https://www.youtube.com/watch?v=Gc_FMz5_RCE',
+          estimatedTime: '25 minutes'
+        },
+        {
+          id: 'innovation-task-2',
+          type: 'reading',
+          title: 'Innovation Mindset Development',
+          description: 'Read about developing an innovation mindset in fast-paced environments. Focus on techniques for encouraging creativity and managing resistance to new ideas.',
+          resourceUrl: 'https://hbr.org/2019/11/the-hard-truth-about-innovative-cultures',
+          estimatedTime: '20 minutes'
+        },
+        {
+          id: 'innovation-task-2-activity',
+          type: 'activity',
+          title: 'Innovation Audit',
+          description: 'Assess your restaurant\'s current innovation culture. Identify barriers to innovation, existing creative practices, and opportunities to foster more innovative thinking among your team.',
+          estimatedTime: '45 minutes'
+        },
+        {
+          id: 'innovation-task-3',
+          type: 'video',
+          title: 'Creative Problem Solving Techniques',
+          description: 'Learn creative problem-solving techniques that can be applied in restaurant operations. Focus on brainstorming, design thinking, and rapid prototyping.',
+          resourceUrl: 'https://www.youtube.com/watch?v=muqvsLabtfM',
+          estimatedTime: '18 minutes'
+        },
+        {
+          id: 'innovation-task-3-activity',
+          type: 'activity',
+          title: 'Innovation Workshop',
+          description: 'Conduct a 30-minute innovation workshop with your team. Use creative problem-solving techniques to generate ideas for improving one aspect of your restaurant operations.',
+          estimatedTime: '1 hour'
+        },
+        {
+          id: 'innovation-task-4',
+          type: 'reading',
+          title: 'Change Management Strategies',
+          description: 'Read about effective change management strategies for restaurants. Learn how to communicate change, address resistance, and ensure successful implementation.',
+          resourceUrl: 'https://www.mckinsey.com/capabilities/people-and-organizational-performance/our-insights/the-psychology-of-change-management',
+          estimatedTime: '25 minutes'
+        },
+        {
+          id: 'innovation-task-4-activity',
+          type: 'activity',
+          title: 'Change Implementation Plan',
+          description: 'Create a detailed plan for implementing one change or innovation in your restaurant. Include communication strategy, timeline, success metrics, and contingency plans.',
+          estimatedTime: '45 minutes'
+        },
+        {
+          id: 'innovation-task-5',
+          type: 'activity',
+          title: 'Continuous Improvement System',
+          description: 'Design and implement a system for capturing and evaluating improvement ideas from your team. Include idea submission, evaluation criteria, and feedback processes.',
+          estimatedTime: '1 hour'
+        },
+        {
+          id: 'innovation-task-6',
+          type: 'reflection',
+          title: 'Innovation Leadership Philosophy',
+          description: 'Write a 1-page statement describing your approach to innovation and change leadership. Include your beliefs about creativity, risk-taking, and continuous improvement.',
+          estimatedTime: '30 minutes'
+        }
+      ];
+    } else if (planId === 'customer-experience') {
+      learningTasks = [
+        {
+          id: 'cx-task-1',
+          type: 'video',
+          title: 'Customer Experience Excellence',
+          description: 'Watch this comprehensive guide to creating exceptional customer experiences in restaurants. Focus on understanding customer journey mapping and touchpoint optimization.',
+          resourceUrl: 'https://www.youtube.com/watch?v=4cCOCUHPHqA',
+          estimatedTime: '22 minutes'
+        },
+        {
+          id: 'cx-task-2',
+          type: 'reading',
+          title: 'Service Recovery Strategies',
+          description: 'Read about effective service recovery techniques. Learn the LAST method (Listen, Apologize, Solve, Thank) and how to turn complaints into opportunities.',
+          resourceUrl: 'https://www.restaurantowner.com/public/Service-Recovery-in-Restaurants.cfm',
+          estimatedTime: '25 minutes'
+        },
+        {
+          id: 'cx-task-2-activity',
+          type: 'activity',
+          title: 'Customer Journey Mapping',
+          description: 'Create a detailed customer journey map for your restaurant. Identify all touchpoints from arrival to departure and note opportunities to enhance the experience at each stage.',
+          estimatedTime: '45 minutes'
+        },
+        {
+          id: 'cx-task-3',
+          type: 'video',
+          title: 'Building a Hospitality Culture',
+          description: 'Learn how to build a culture focused on hospitality and customer care. Understand the difference between service and hospitality.',
+          resourceUrl: 'https://www.youtube.com/watch?v=QTWJGy7Jw_U',
+          estimatedTime: '18 minutes'
+        },
+        {
+          id: 'cx-task-3-activity',
+          type: 'activity',
+          title: 'Service Standards Development',
+          description: 'Create specific, measurable service standards for your restaurant. Include greeting protocols, response times, and quality expectations. Train your team on these standards.',
+          estimatedTime: '1 hour'
+        },
+        {
+          id: 'cx-task-4',
+          type: 'reading',
+          title: 'Customer Feedback and Measurement',
+          description: 'Read about effective methods for collecting and analyzing customer feedback. Learn how to use feedback to drive continuous improvement.',
+          resourceUrl: 'https://blog.hubspot.com/service/how-to-collect-customer-feedback',
+          estimatedTime: '20 minutes'
+        },
+        {
+          id: 'cx-task-4-activity',
+          type: 'activity',
+          title: 'Customer Feedback System',
+          description: 'Implement a system for regularly collecting customer feedback. This could include surveys, comment cards, or digital feedback tools. Analyze initial results and create action plans.',
+          estimatedTime: '1 hour'
+        },
+        {
+          id: 'cx-task-5',
+          type: 'activity',
+          title: 'Service Recovery Training',
+          description: 'Conduct a training session with your team on service recovery techniques. Practice handling different types of customer complaints and turning negative experiences into positive ones.',
+          estimatedTime: '45 minutes'
+        },
+        {
+          id: 'cx-task-6',
+          type: 'reflection',
+          title: 'Customer Experience Philosophy',
+          description: 'Write a 1-page statement describing your customer experience philosophy. Include your beliefs about hospitality, service excellence, and creating memorable experiences.',
+          estimatedTime: '30 minutes'
+        }
+      ];
+    } else if (planId === 'conflict-resolution') {
+      learningTasks = [
+        {
+          id: 'conflict-task-1',
+          type: 'video',
+          title: 'Conflict Resolution Fundamentals',
+          description: 'Learn the fundamentals of conflict resolution in workplace settings. Focus on understanding different types of conflict and when to intervene.',
+          resourceUrl: 'https://www.youtube.com/watch?v=tbLEqIjBWAU',
+          estimatedTime: '20 minutes'
+        },
+        {
+          id: 'conflict-task-2',
+          type: 'reading',
+          title: 'Active Listening in Conflict Situations',
+          description: 'Read about the critical role of active listening in resolving conflicts. Learn techniques for truly understanding all parties\' perspectives.',
+          resourceUrl: 'https://www.mindtools.com/pages/article/newLDR_81.htm',
+          estimatedTime: '25 minutes'
+        },
+        {
+          id: 'conflict-task-2-activity',
+          type: 'activity',
+          title: 'Conflict Assessment Exercise',
+          description: 'Identify current or recent conflicts in your restaurant. Analyze the root causes, stakeholders involved, and potential resolution strategies for each situation.',
+          estimatedTime: '45 minutes'
+        },
+        {
+          id: 'conflict-task-3',
+          type: 'video',
+          title: 'Mediation and Facilitation Skills',
+          description: 'Learn mediation techniques for helping team members resolve conflicts. Focus on remaining neutral and guiding parties to their own solutions.',
+          resourceUrl: 'https://www.youtube.com/watch?v=KY5TWVz5ZDU',
+          estimatedTime: '18 minutes'
+        },
+        {
+          id: 'conflict-task-3-activity',
+          type: 'activity',
+          title: 'Mediation Practice',
+          description: 'Practice mediating a conflict between team members (real or role-played). Use structured mediation techniques and document the process and outcomes.',
+          estimatedTime: '1 hour'
+        },
+        {
+          id: 'conflict-task-4',
+          type: 'reading',
+          title: 'Problem-Solving Frameworks',
+          description: 'Read about structured problem-solving approaches. Learn the 5 Whys technique, root cause analysis, and collaborative problem-solving methods.',
+          resourceUrl: 'https://asq.org/quality-resources/problem-solving',
+          estimatedTime: '30 minutes'
+        },
+        {
+          id: 'conflict-task-4-activity',
+          type: 'activity',
+          title: 'Problem-Solving Workshop',
+          description: 'Lead a problem-solving session with your team to address a recurring operational challenge. Use structured techniques to identify root causes and develop solutions.',
+          estimatedTime: '45 minutes'
+        },
+        {
+          id: 'conflict-task-5',
+          type: 'activity',
+          title: 'Conflict Prevention System',
+          description: 'Develop a system for preventing conflicts in your restaurant. Include clear communication protocols, regular check-ins, and early intervention strategies.',
+          estimatedTime: '45 minutes'
+        },
+        {
+          id: 'conflict-task-6',
+          type: 'reflection',
+          title: 'Conflict Resolution Philosophy',
+          description: 'Write a 1-page statement describing your approach to conflict resolution and problem-solving. Include your beliefs about fairness, collaboration, and maintaining relationships.',
+          estimatedTime: '30 minutes'
+        }
+      ];
+    } else if (planId === 'emotional-intelligence') {
+      learningTasks = [
+        {
+          id: 'eq-task-1',
+          type: 'video',
+          title: 'Introduction to Emotional Intelligence',
+          description: 'Learn about the four domains of emotional intelligence: self-awareness, self-management, social awareness, and relationship management.',
+          resourceUrl: 'https://www.youtube.com/watch?v=Y7m9eNoB3NU',
+          estimatedTime: '18 minutes'
+        },
+        {
+          id: 'eq-task-2',
+          type: 'reading',
+          title: 'Self-Awareness Development',
+          description: 'Read about developing self-awareness as a leader. Learn techniques for understanding your emotions, triggers, and impact on others.',
+          resourceUrl: 'https://hbr.org/2018/01/what-self-awareness-really-is-and-how-to-cultivate-it',
+          estimatedTime: '25 minutes'
+        },
+        {
+          id: 'eq-task-2-activity',
+          type: 'activity',
+          title: 'Emotional Intelligence Assessment',
+          description: 'Complete a comprehensive EQ assessment and reflect on your results. Identify your strongest and weakest areas, and create a development plan for improvement.',
+          estimatedTime: '45 minutes'
+        },
+        {
+          id: 'eq-task-3',
+          type: 'video',
+          title: 'Empathy and Social Skills',
+          description: 'Learn about developing empathy and social skills for better leadership. Focus on reading non-verbal cues and responding appropriately to others\' emotions.',
+          resourceUrl: 'https://www.youtube.com/watch?v=1Evwgu369Jw',
+          estimatedTime: '20 minutes'
+        },
+        {
+          id: 'eq-task-3-activity',
+          type: 'activity',
+          title: 'Empathy Practice Exercise',
+          description: 'For one week, practice empathy-building exercises with your team. Focus on understanding their perspectives, acknowledging their emotions, and responding with compassion.',
+          estimatedTime: '1 week of practice + 30 minutes reflection'
+        },
+        {
+          id: 'eq-task-4',
+          type: 'reading',
+          title: 'Emotional Regulation Techniques',
+          description: 'Read about techniques for managing your emotions under pressure. Learn stress management strategies and how to maintain composure in challenging situations.',
+          resourceUrl: 'https://www.apa.org/topics/stress/manage',
+          estimatedTime: '20 minutes'
+        },
+        {
+          id: 'eq-task-4-activity',
+          type: 'activity',
+          title: 'Stress Management Plan',
+          description: 'Create a personal stress management plan for high-pressure situations in your restaurant. Include breathing techniques, mindfulness practices, and coping strategies.',
+          estimatedTime: '30 minutes'
+        },
+        {
+          id: 'eq-task-5',
+          type: 'activity',
+          title: 'Team Emotional Climate Assessment',
+          description: 'Assess the emotional climate of your team. Identify sources of stress, positive energy, and opportunities to improve team emotional well-being.',
+          estimatedTime: '45 minutes'
+        },
+        {
+          id: 'eq-task-6',
+          type: 'reflection',
+          title: 'Emotional Intelligence Leadership Philosophy',
+          description: 'Write a 1-page statement describing your approach to emotional intelligence in leadership. Include your beliefs about emotions in the workplace and how you will continue developing your EQ.',
+          estimatedTime: '30 minutes'
+        }
+      ];
     }
 
     // Create enrollment with learning tasks
@@ -974,6 +1490,12 @@ router.get('/my-plans', auth, async (req, res) => {
         isFree: true
       },
       {
+        id: 'communication-influence',
+        title: 'Communication & Influence Excellence',
+        description: 'Master the art of clear communication and positive influence to inspire teams and drive results. This comprehensive 10-week plan develops both verbal and non-verbal communication skills essential for effective leadership.',
+        isFree: false
+      },
+      {
         id: 'restaurant-culture-builder',
         title: 'Restaurant Culture Builder',
         description: 'Create a positive, high-performing restaurant culture where team members thrive and guests receive exceptional service.',
@@ -989,6 +1511,36 @@ router.get('/my-plans', auth, async (req, res) => {
         id: 'strategic-leadership',
         title: 'Strategic Leadership Mastery',
         description: 'Develop strategic thinking, vision-setting, and decision-making capabilities to drive organizational success. This comprehensive plan builds the skills needed to think beyond day-to-day operations and lead with strategic purpose.',
+        isFree: false
+      },
+      {
+        id: 'operational-excellence',
+        title: 'Operational Excellence Leader',
+        description: 'Drive efficiency, quality, and continuous improvement in restaurant operations. This comprehensive 10-week plan equips you with the tools and mindset to optimize processes and deliver consistent results.',
+        isFree: false
+      },
+      {
+        id: 'innovation-change',
+        title: 'Innovation & Change Champion',
+        description: 'Lead innovation initiatives and guide teams through change with confidence. This comprehensive 9-week plan develops the skills needed to foster creativity, adapt to change, and drive continuous improvement.',
+        isFree: false
+      },
+      {
+        id: 'customer-experience',
+        title: 'Customer Experience Leader',
+        description: 'Excel at creating exceptional customer experiences and building a hospitality-focused culture. This comprehensive 8-week plan develops the skills needed to consistently deliver outstanding service and recover from service failures.',
+        isFree: false
+      },
+      {
+        id: 'conflict-resolution',
+        title: 'Conflict Resolution & Problem Solving',
+        description: 'Master the skills to resolve conflicts constructively and solve complex problems effectively. This comprehensive 9-week plan equips you with tools to handle difficult conversations and find win-win solutions.',
+        isFree: false
+      },
+      {
+        id: 'emotional-intelligence',
+        title: 'Emotional Intelligence Leader',
+        description: 'Develop emotional intelligence to better understand yourself and others, build stronger relationships, and lead with empathy. This comprehensive 10-week plan focuses on self-awareness, social skills, and emotional regulation.',
         isFree: false
       }
     ];
