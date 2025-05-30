@@ -138,7 +138,8 @@ const leadershipProgressSchema = new Schema({
       default: false
     },
     completedAt: Date,
-    notes: String
+    notes: String,
+    evidence: String  // Add evidence field for task completion proof
   }],
   completedAt: Date,
   mentor: {

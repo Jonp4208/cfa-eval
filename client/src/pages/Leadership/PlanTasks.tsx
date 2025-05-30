@@ -16,11 +16,16 @@ import {
   PenTool,
   Brain,
   ClipboardList,
+  ClipboardCheck,
   Loader2,
   ExternalLink,
   FileCheck,
+  FileText,
+  Users,
   X,
-  RefreshCw
+  RefreshCw,
+  MessageSquare,
+  AlertCircle
 } from 'lucide-react'
 import api from '@/lib/axios'
 
@@ -41,6 +46,13 @@ import HigherExpectationsForm from '@/components/leadership/HigherExpectationsFo
 import CourageousConversationForm from '@/components/leadership/CourageousConversationForm'
 import LeadershipSelfAssessmentForm from '@/components/leadership/LeadershipSelfAssessmentForm'
 import ServantLeadershipActionForm from '@/components/leadership/ServantLeadershipActionForm'
+import SBIFeedbackForm from '@/components/leadership/SBIFeedbackForm'
+import GROWCoachingForm from '@/components/leadership/GROWCoachingForm'
+import DevelopmentPlanForm from '@/components/leadership/DevelopmentPlanForm'
+import DevelopmentPlanPDFDownload from '@/components/leadership/DevelopmentPlanPDFDownload'
+import TrainingEffectivenessAuditForm from '@/components/leadership/TrainingEffectivenessAuditForm'
+import SkillBuildingWorkshopForm from '@/components/leadership/SkillBuildingWorkshopForm'
+import TeamDevelopmentPhilosophyForm from '@/components/leadership/TeamDevelopmentPhilosophyForm'
 
 interface Task {
   id: string
@@ -53,6 +65,77 @@ interface Task {
   completedAt?: string
   notes?: string
   evidence?: string
+}
+
+// Component to render the enhanced Talent Assessment description
+const TalentAssessmentDescription = ({ description, completed }: { description: string, completed: boolean }) => {
+  const formatDescription = (text: string) => {
+    // Split by double newlines to get sections
+    const sections = text.split('\n\n')
+
+    return sections.map((section, index) => {
+      // Handle bold headers like **QUADRANT EXAMPLES & DEVELOPMENT ACTIONS:**
+      if (section.includes('**') && section.includes(':**')) {
+        const boldText = section.replace(/\*\*(.*?)\*\*/g, '$1')
+        return (
+          <div key={index} className="mb-4">
+            <h4 className="font-bold text-gray-800 text-lg mb-2">{boldText}</h4>
+          </div>
+        )
+      }
+
+      // Handle quadrant sections like **1. HIGH PERFORMANCE/HIGH POTENTIAL (Stars)**
+      if (section.startsWith('**') && section.includes('**')) {
+        const lines = section.split('\n')
+        const header = lines[0].replace(/\*\*(.*?)\*\*/g, '$1')
+        const content = lines.slice(1).join('\n')
+
+        return (
+          <div key={index} className="mb-6 p-4 bg-gray-50 rounded-lg border-l-4 border-blue-500">
+            <h5 className="font-bold text-blue-800 mb-3">{header}</h5>
+            <div className="space-y-2">
+              {content.split('\n').map((line, lineIndex) => {
+                if (line.startsWith('Example:')) {
+                  return (
+                    <p key={lineIndex} className="text-gray-700 italic">
+                      <span className="font-medium">Example:</span> {line.replace('Example:', '').trim()}
+                    </p>
+                  )
+                } else if (line.startsWith('• Development Actions:')) {
+                  return (
+                    <div key={lineIndex} className="mt-2">
+                      <p className="font-medium text-gray-800 mb-1">Development Actions:</p>
+                      <p className="text-gray-700 ml-4">{line.replace('• Development Actions:', '').trim()}</p>
+                    </div>
+                  )
+                } else if (line.trim()) {
+                  return <p key={lineIndex} className="text-gray-700">{line}</p>
+                }
+                return null
+              })}
+            </div>
+          </div>
+        )
+      }
+
+      // Handle regular paragraphs
+      if (section.trim()) {
+        return (
+          <p key={index} className={`text-gray-600 ${completed ? 'text-gray-400' : ''} mb-3`}>
+            {section}
+          </p>
+        )
+      }
+
+      return null
+    }).filter(Boolean)
+  }
+
+  return (
+    <div className="space-y-2">
+      {formatDescription(description)}
+    </div>
+  )
 }
 
 export default function PlanTasks() {
@@ -73,6 +156,9 @@ export default function PlanTasks() {
   const [updatingTasks, setUpdatingTasks] = useState(false)
   const [unenrollDialog, setUnenrollDialog] = useState(false)
   const [unenrolling, setUnenrolling] = useState(false)
+  const [talentExamplesDialog, setTalentExamplesDialog] = useState(false)
+  const [growExamplesDialog, setGrowExamplesDialog] = useState(false)
+  const [developmentPlanExamplesDialog, setDevelopmentPlanExamplesDialog] = useState(false)
 
   useEffect(() => {
     if (planId) {
@@ -92,21 +178,14 @@ export default function PlanTasks() {
   const fetchTasks = async () => {
     try {
       setLoading(true)
-      // Get plan details including title
-      try {
-        const planResponse = await api.get(`/api/leadership/my-plans/${planId}`)
-        if (planResponse.data && planResponse.data.title) {
-          setPlanTitle(planResponse.data.title)
-        } else {
-          setFallbackTitle()
-        }
-      } catch (error) {
-        console.error('Error fetching plan details:', error)
-        setFallbackTitle()
-      }
+      // Set plan title using fallback since there's no individual plan endpoint
+      setFallbackTitle()
 
       // Get tasks
       const response = await api.get(`/api/leadership/my-plans/${planId}/tasks`)
+
+      // Debug logging to see what we get from server
+      console.log('Fetched tasks from server:', response.data.tasks)
 
       // Sort tasks by ID to ensure correct order
       const sortedTasks = [...(response.data.tasks || [])].sort((a, b) => {
@@ -236,8 +315,11 @@ export default function PlanTasks() {
   const handleTaskCompletion = async () => {
     if (!selectedTask) return
 
-    // Validate that evidence is provided for tasks that require it
-    const requiresEvidence = ['reading', 'video', 'reflection', 'assessment'].includes(selectedTask.type)
+    // For "The Art of Feedback" task, we save progress but don't mark as completed unless they have substantial content
+    const isFeedbackTask = selectedTask.title === 'The Art of Feedback'
+
+    // Validate that evidence is provided for tasks that require it (except feedback task)
+    const requiresEvidence = !isFeedbackTask && ['reading', 'video', 'reflection', 'assessment'].includes(selectedTask.type)
     if (requiresEvidence && !completionEvidence.trim()) {
       toast({
         title: 'Evidence Required',
@@ -247,21 +329,53 @@ export default function PlanTasks() {
       return
     }
 
+    // For feedback task, check if they have at least one complete example
+    let shouldMarkComplete = !isFeedbackTask
+    if (isFeedbackTask && completionEvidence.trim()) {
+      try {
+        const parsed = JSON.parse(completionEvidence)
+        // Mark complete if they have at least one complete SBI example
+        const hasCompleteExample = (parsed.situation1 && parsed.behavior1 && parsed.impact1) ||
+                                  (parsed.situation2 && parsed.behavior2 && parsed.impact2) ||
+                                  (parsed.situation3 && parsed.behavior3 && parsed.impact3)
+        shouldMarkComplete = hasCompleteExample
+      } catch (e) {
+        // If parsing fails, don't mark as complete
+        shouldMarkComplete = false
+      }
+    }
+
     try {
       setUpdatingTask(selectedTask.id)
-      await api.patch(`/api/leadership/my-plans/${planId}/tasks/${selectedTask.id}`, {
-        completed: true,
+
+      // Debug logging
+      console.log('Sending task update:', {
+        completed: shouldMarkComplete,
         notes: completionNotes,
-        evidence: completionEvidence
+        evidence: completionEvidence,
+        shouldMarkComplete,
+        completionNotes,
+        completionEvidence
       })
+
+      // Ensure we're sending the correct data types
+      const requestBody = {
+        completed: Boolean(shouldMarkComplete),
+        notes: String(completionNotes || ''),
+        evidence: String(completionEvidence || '')
+      }
+
+      console.log('Final request body:', requestBody)
+
+      await api.patch(`/api/leadership/my-plans/${planId}/tasks/${selectedTask.id}`, requestBody)
 
       // Update local state
       setTasks(tasks.map(task =>
         task.id === selectedTask.id
           ? {
               ...task,
-              completed: true,
-              completedAt: new Date().toISOString(),
+              completed: shouldMarkComplete,
+              completedAt: shouldMarkComplete ? new Date().toISOString() : task.completedAt,
               notes: completionNotes,
               evidence: completionEvidence
             }
@@ -274,14 +388,16 @@ export default function PlanTasks() {
       setStatus(response.data.status || '')
 
       toast({
-        title: 'Task Completed',
-        description: 'Great job! You\'ve completed this task.',
+        title: isFeedbackTask ? 'Progress Saved' : 'Task Completed',
+        description: isFeedbackTask ?
+          (shouldMarkComplete ? 'Great job! Your feedback examples have been saved and the task is marked complete.' : 'Your progress has been saved. You can come back to add more examples later.') :
+          'Great job! You\'ve completed this task.',
       })
 
       closeCompletionDialog()
     } catch (error) {
       console.error('Error completing task:', error)
-      const errorMessage = error.response?.data?.message || 'Failed to complete task. Please try again.'
+      const errorMessage = error.response?.data?.message || 'Failed to save progress. Please try again.'
       toast({
         title: 'Error',
         description: errorMessage,
@@ -293,50 +409,28 @@ export default function PlanTasks() {
   }
 
   const handleTaskToggle = async (taskId: string, completed: boolean) => {
-    // If marking as complete, open the completion dialog
-    if (completed) {
-      const task = tasks.find(t => t.id === taskId)
-      if (task) {
-        openCompletionDialog(task)
-      }
+    // Find the task to check its current state
+    const task = tasks.find(t => t.id === taskId)
+    if (!task) return
+
+    // If task is already completed, prevent unchecking
+    if (task.completed && !completed) {
+      toast({
+        title: 'Task Already Completed',
+        description: 'Completed tasks cannot be unchecked. Use the edit buttons to modify your work.',
+        variant: 'default'
+      })
       return
     }
 
-    // If marking as incomplete, proceed as before
-    try {
-      setUpdatingTask(taskId)
-      await api.patch(`/api/leadership/my-plans/${planId}/tasks/${taskId}`, {
-        completed: false,
-        notes: '',
-        evidence: ''
-      })
-
-      // Update local state
-      setTasks(tasks.map(task =>
-        task.id === taskId
-          ? { ...task, completed: false, completedAt: undefined, notes: '', evidence: '' }
-          : task
-      ))
-
-      // Fetch updated progress
-      const response = await api.get(`/api/leadership/my-plans/${planId}/tasks`)
-      setProgress(response.data.progress || 0)
-      setStatus(response.data.status || '')
-
-      toast({
-        title: 'Task Marked as Incomplete',
-        description: 'Task has been marked as incomplete.',
-      })
-    } catch (error) {
-      console.error('Error updating task:', error)
-      toast({
-        title: 'Error',
-        description: 'Failed to update task. Please try again.',
-        variant: 'destructive'
-      })
-    } finally {
-      setUpdatingTask(null)
+    // If marking as complete, open the completion dialog
+    if (completed) {
+      openCompletionDialog(task)
+      return
     }
+
+    // This code should never be reached now, but keeping for safety
+    console.warn('Unexpected task toggle state:', { taskId, completed, taskCompleted: task.completed })
   }
 
   const getTaskIcon = (type: string) => {
@@ -433,6 +527,9 @@ export default function PlanTasks() {
 
         case 'Servant Leadership in Action':
           return 'Document an operational challenge, team input, implementation plan, and results...'
+
+        case 'The Art of Feedback':
+          return 'Complete the form to practice the SBI feedback model with 3 real examples from your restaurant...'
       }
     }
 
@@ -504,6 +601,24 @@ export default function PlanTasks() {
 
         case 'Servant Leadership in Action':
           return 'Collaborative Problem Solving'
+
+        case 'The Art of Feedback':
+          return 'SBI Feedback Examples'
+
+        case 'GROW Coaching Conversation':
+          return 'GROW Coaching Session Documentation'
+
+        case 'Development Plan Creation':
+          return '90-Day Development Plan'
+
+        case 'Training Effectiveness Audit':
+          return 'Training Effectiveness Audit Report'
+
+        case 'Skill-Building Workshop':
+          return 'Skill-Building Workshop Documentation'
+
+        case 'Team Development Philosophy':
+          return 'Team Development Philosophy Statement'
       }
     }
 
@@ -575,6 +690,24 @@ export default function PlanTasks() {
 
         case 'Servant Leadership in Action':
           return 'Identify an operational challenge, gather input from team members closest to the issue, implement their ideas, and document the results.'
+
+        case 'The Art of Feedback':
+          return 'Read the article on the SBI feedback model, then practice by writing 3 specific examples of feedback you need to deliver to team members using the Situation-Behavior-Impact format.'
+
+        case 'GROW Coaching Conversation':
+          return 'Conduct a coaching conversation with a team member using the GROW model. Document each stage of the conversation and reflect on your coaching effectiveness.'
+
+        case 'Development Plan Creation':
+          return 'Create a comprehensive 90-day development plan for a high-potential team member. Include specific skills, resources, experiences, timeline, and check-in points. Share the plan with the team member and refine it based on their input.'
+
+        case 'Training Effectiveness Audit':
+          return 'Observe 3 different team members who were recently trained on a procedure. Note variations in execution and identify potential gaps in the training approach. Create a plan to address these gaps and standardize training outcomes.'
+
+        case 'Skill-Building Workshop':
+          return 'Design and deliver a 15-minute skill-building session for your team on a topic where performance could be improved. Use the "Tell, Show, Do, Review" training method and document the outcomes.'
+
+        case 'Team Development Philosophy':
+          return 'Write a comprehensive statement describing your philosophy on team development. Include your beliefs about how people learn and grow, your role as a developer of others, and the connection between team development and business results.'
       }
     }
 
@@ -701,7 +834,12 @@ export default function PlanTasks() {
                         <Checkbox
                           checked={task.completed}
                           onCheckedChange={(checked) => handleTaskToggle(task.id, checked === true)}
-                          className="h-7 w-7 rounded-md border-2 border-gray-300 focus:ring-2 focus:ring-[#E51636] focus:ring-offset-2"
+                          disabled={task.completed}
+                          className={`h-7 w-7 rounded-md border-2 focus:ring-2 focus:ring-[#E51636] focus:ring-offset-2 ${
+                            task.completed
+                              ? 'border-green-300 bg-green-50 cursor-not-allowed'
+                              : 'border-gray-300'
+                          }`}
                         />
                       )}
                     </div>
@@ -717,7 +855,7 @@ export default function PlanTasks() {
                           {task.type.charAt(0).toUpperCase() + task.type.slice(1)}
                         </span>
                         <span className="text-sm font-medium text-gray-600">
-                          {task.completed ? 'Completed' : 'Tap to complete'}
+                          {task.completed ? 'Completed ✓' : 'Tap to complete'}
                         </span>
                       </div>
                     </div>
@@ -725,9 +863,16 @@ export default function PlanTasks() {
 
                   {/* Task content - full width on all devices */}
                   <div className="w-full space-y-3 pl-0 sm:pl-10">
-                    <p className={`text-gray-600 ${task.completed ? 'text-gray-400' : ''} whitespace-pre-wrap`}>
-                      {task.description}
-                    </p>
+                    {task.title === 'Talent Assessment' ? (
+                      <TalentAssessmentDescription
+                        description={task.description}
+                        completed={task.completed}
+                      />
+                    ) : (
+                      <p className={`text-gray-600 ${task.completed ? 'text-gray-400' : ''} whitespace-pre-wrap`}>
+                        {task.description}
+                      </p>
+                    )}
 
                     <div className="flex flex-wrap gap-x-4 gap-y-2">
                       {task.estimatedTime && (
@@ -748,9 +893,127 @@ export default function PlanTasks() {
                       <div className={`mt-2 p-3 rounded-md ${getTaskTypeColor(task.type).replace('text-', 'bg-').replace('800', '50')}`}>
                         <div className="flex items-center gap-2 mb-1 text-sm font-medium text-gray-700">
                           <FileCheck className="h-4 w-4 flex-shrink-0 text-green-600" />
-                          <span>{getCompletionTitle(task.type)}</span>
+                          <span>{getCompletionTitle(task.type, task.title)}</span>
                         </div>
-                        <p className="text-sm text-gray-600 whitespace-pre-wrap">{task.evidence}</p>
+                        {task.title === 'The Art of Feedback' ? (
+                          <div className="space-y-3">
+                            {(() => {
+                              try {
+                                const parsed = JSON.parse(task.evidence)
+                                return (
+                                  <>
+                                    {parsed.keyInsights && (
+                                      <div>
+                                        <h5 className="text-xs font-medium text-gray-700 mb-1">Key Insights</h5>
+                                        <p className="text-sm text-gray-600">{parsed.keyInsights}</p>
+                                      </div>
+                                    )}
+
+                                    {/* Example 1 */}
+                                    {(parsed.situation1 || parsed.behavior1 || parsed.impact1) && (
+                                      <div className="border-l-4 border-l-blue-500 pl-3">
+                                        <h5 className="text-xs font-medium text-gray-700 mb-2">Example 1</h5>
+                                        {parsed.situation1 && (
+                                          <div className="mb-2">
+                                            <span className="text-xs font-medium text-gray-600">Situation:</span>
+                                            <p className="text-sm text-gray-600">{parsed.situation1}</p>
+                                          </div>
+                                        )}
+                                        {parsed.behavior1 && (
+                                          <div className="mb-2">
+                                            <span className="text-xs font-medium text-gray-600">Behavior:</span>
+                                            <p className="text-sm text-gray-600">{parsed.behavior1}</p>
+                                          </div>
+                                        )}
+                                        {parsed.impact1 && (
+                                          <div>
+                                            <span className="text-xs font-medium text-gray-600">Impact:</span>
+                                            <p className="text-sm text-gray-600">{parsed.impact1}</p>
+                                          </div>
+                                        )}
+                                      </div>
+                                    )}
+
+                                    {/* Example 2 */}
+                                    {(parsed.situation2 || parsed.behavior2 || parsed.impact2) && (
+                                      <div className="border-l-4 border-l-green-500 pl-3">
+                                        <h5 className="text-xs font-medium text-gray-700 mb-2">Example 2</h5>
+                                        {parsed.situation2 && (
+                                          <div className="mb-2">
+                                            <span className="text-xs font-medium text-gray-600">Situation:</span>
+                                            <p className="text-sm text-gray-600">{parsed.situation2}</p>
+                                          </div>
+                                        )}
+                                        {parsed.behavior2 && (
+                                          <div className="mb-2">
+                                            <span className="text-xs font-medium text-gray-600">Behavior:</span>
+                                            <p className="text-sm text-gray-600">{parsed.behavior2}</p>
+                                          </div>
+                                        )}
+                                        {parsed.impact2 && (
+                                          <div>
+                                            <span className="text-xs font-medium text-gray-600">Impact:</span>
+                                            <p className="text-sm text-gray-600">{parsed.impact2}</p>
+                                          </div>
+                                        )}
+                                      </div>
+                                    )}
+
+                                    {/* Example 3 */}
+                                    {(parsed.situation3 || parsed.behavior3 || parsed.impact3) && (
+                                      <div className="border-l-4 border-l-purple-500 pl-3">
+                                        <h5 className="text-xs font-medium text-gray-700 mb-2">Example 3</h5>
+                                        {parsed.situation3 && (
+                                          <div className="mb-2">
+                                            <span className="text-xs font-medium text-gray-600">Situation:</span>
+                                            <p className="text-sm text-gray-600">{parsed.situation3}</p>
+                                          </div>
+                                        )}
+                                        {parsed.behavior3 && (
+                                          <div className="mb-2">
+                                            <span className="text-xs font-medium text-gray-600">Behavior:</span>
+                                            <p className="text-sm text-gray-600">{parsed.behavior3}</p>
+                                          </div>
+                                        )}
+                                        {parsed.impact3 && (
+                                          <div>
+                                            <span className="text-xs font-medium text-gray-600">Impact:</span>
+                                            <p className="text-sm text-gray-600">{parsed.impact3}</p>
+                                          </div>
+                                        )}
+                                      </div>
+                                    )}
+                                  </>
+                                )
+                              } catch (e) {
+                                // Fallback for non-JSON evidence
+                                return <p className="text-sm text-gray-600 whitespace-pre-wrap">{task.evidence}</p>
+                              }
+                            })()}
+                          </div>
+                        ) : task.title === 'Development Plan Creation' ? (
+                          <div className="text-sm text-gray-600">
+                            <p>Development plan completed. Use the buttons above to view, edit, or download the plan.</p>
+                          </div>
+                        ) : task.title === 'GROW Coaching Conversation' ? (
+                          <div className="text-sm text-gray-600">
+                            <p>GROW coaching conversation documented. Use the buttons above to view or edit the session details.</p>
+                          </div>
+                        ) : task.title === 'Training Effectiveness Audit' ? (
+                          <div className="text-sm text-gray-600">
+                            <p>Training effectiveness audit completed. Use the buttons above to view or edit the audit report.</p>
+                          </div>
+                        ) : task.title === 'Skill-Building Workshop' ? (
+                          <div className="text-sm text-gray-600">
+                            <p>Skill-building workshop documented. Use the buttons above to view or edit the workshop details.</p>
+                          </div>
+                        ) : task.title === 'Team Development Philosophy' ? (
+                          <div className="text-sm text-gray-600">
+                            <p>Team development philosophy completed. Use the buttons above to view or edit your philosophy statement.</p>
+                          </div>
+                        ) : (
+                          <p className="text-sm text-gray-600 whitespace-pre-wrap">{task.evidence}</p>
+                        )}
                       </div>
                     )}
 
@@ -764,20 +1027,182 @@ export default function PlanTasks() {
                       </div>
                     )}
 
+
+
                     <div className="flex flex-col sm:flex-row gap-2 mt-2">
-                      {task.resourceUrl && (
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          className="w-full sm:w-auto text-blue-600 border-blue-200 hover:bg-blue-50 h-10 sm:h-9"
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            window.open(task.resourceUrl, '_blank');
-                          }}
-                        >
-                          <ExternalLink className="h-4 w-4 mr-2" />
-                          Open Resource
-                        </Button>
+                      {task.title === 'Team Experience Survey' ? (
+                        <>
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            className="w-full sm:w-auto text-[#E51636] border-[#E51636]/20 hover:bg-[#E51636]/5 h-10 sm:h-9"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              navigate('/team-surveys/new');
+                            }}
+                          >
+                            <MessageSquare className="h-4 w-4 mr-2" />
+                            Create Survey
+                          </Button>
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            className="w-full sm:w-auto text-blue-600 border-blue-200 hover:bg-blue-50 h-10 sm:h-9"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              navigate('/team-surveys');
+                            }}
+                          >
+                            <ClipboardList className="h-4 w-4 mr-2" />
+                            View Surveys
+                          </Button>
+                        </>
+                      ) : (
+                        <>
+                          {task.resourceUrl && (
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              className="w-full sm:w-auto text-blue-600 border-blue-200 hover:bg-blue-50 h-10 sm:h-9"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                window.open(task.resourceUrl, '_blank');
+                              }}
+                            >
+                              <ExternalLink className="h-4 w-4 mr-2" />
+                              Open Resource
+                            </Button>
+                          )}
+                          {task.title === 'The Art of Feedback' && !task.completed && (
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              className="w-full sm:w-auto text-green-600 border-green-200 hover:bg-green-50 h-10 sm:h-9"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                openCompletionDialog(task);
+                              }}
+                            >
+                              <PenTool className="h-4 w-4 mr-2" />
+                              Complete Task
+                            </Button>
+                          )}
+                          {task.title === 'The Art of Feedback' && task.completed && (
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              className="w-full sm:w-auto text-blue-600 border-blue-200 hover:bg-blue-50 h-10 sm:h-9"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                openCompletionDialog(task);
+                              }}
+                            >
+                              <PenTool className="h-4 w-4 mr-2" />
+                              Edit Examples
+                            </Button>
+                          )}
+                          {task.title === 'GROW Coaching Conversation' && (
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              className="w-full sm:w-auto text-blue-600 border-blue-200 hover:bg-blue-50 h-10 sm:h-9"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                setGrowExamplesDialog(true);
+                              }}
+                            >
+                              <ExternalLink className="h-4 w-4 mr-2" />
+                              View Example
+                            </Button>
+                          )}
+                          {task.title === 'GROW Coaching Conversation' && !task.completed && (
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              className="w-full sm:w-auto text-green-600 border-green-200 hover:bg-green-50 h-10 sm:h-9"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                openCompletionDialog(task);
+                              }}
+                            >
+                              <MessageSquare className="h-4 w-4 mr-2" />
+                              Complete Coaching Session
+                            </Button>
+                          )}
+                          {task.title === 'GROW Coaching Conversation' && task.completed && (
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              className="w-full sm:w-auto text-blue-600 border-blue-200 hover:bg-blue-50 h-10 sm:h-9"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                openCompletionDialog(task);
+                              }}
+                            >
+                              <MessageSquare className="h-4 w-4 mr-2" />
+                              View/Edit Session
+                            </Button>
+                          )}
+                          {task.title === 'Development Plan Creation' && (
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              className="w-full sm:w-auto text-blue-600 border-blue-200 hover:bg-blue-50 h-10 sm:h-9"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                setDevelopmentPlanExamplesDialog(true);
+                              }}
+                            >
+                              <ExternalLink className="h-4 w-4 mr-2" />
+                              View Example
+                            </Button>
+                          )}
+                          {task.title === 'Development Plan Creation' && !task.completed && (
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              className="w-full sm:w-auto text-green-600 border-green-200 hover:bg-green-50 h-10 sm:h-9"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                openCompletionDialog(task);
+                              }}
+                            >
+                              <PenTool className="h-4 w-4 mr-2" />
+                              Create Development Plan
+                            </Button>
+                          )}
+                          {task.title === 'Development Plan Creation' && task.completed && (
+                            <>
+                              <Button
+                                variant="outline"
+                                size="sm"
+                                className="w-full sm:w-auto text-blue-600 border-blue-200 hover:bg-blue-50 h-10 sm:h-9"
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  openCompletionDialog(task);
+                                }}
+                              >
+                                <PenTool className="h-4 w-4 mr-2" />
+                                View/Edit Plan
+                              </Button>
+                              {task.evidence && (() => {
+                                try {
+                                  const parsedData = JSON.parse(task.evidence)
+                                  return (
+                                    <DevelopmentPlanPDFDownload
+                                      data={parsedData}
+                                      className="w-full sm:w-auto h-10 sm:h-9"
+                                      variant="outline"
+                                      size="sm"
+                                    />
+                                  )
+                                } catch (e) {
+                                  return null
+                                }
+                              })()}
+                            </>
+                          )}
+                        </>
                       )}
                       {task.title === 'Culture Leadership Plan' && (
                         <Button
@@ -807,6 +1232,107 @@ export default function PlanTasks() {
                           Example Workshop
                         </Button>
                       )}
+                      {task.title === 'Talent Assessment' && (
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          className="w-full sm:w-auto text-green-600 border-green-200 hover:bg-green-50 h-10 sm:h-9"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            setTalentExamplesDialog(true);
+                          }}
+                        >
+                          <ClipboardList className="h-4 w-4 mr-2" />
+                          View Examples
+                        </Button>
+                      )}
+                      {/* Training Effectiveness Audit */}
+                      {task.title === 'Training Effectiveness Audit' && !task.completed && (
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          className="w-full sm:w-auto text-green-600 border-green-200 hover:bg-green-50 h-10 sm:h-9"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            openCompletionDialog(task);
+                          }}
+                        >
+                          <ClipboardCheck className="h-4 w-4 mr-2" />
+                          Complete Audit
+                        </Button>
+                      )}
+                      {task.title === 'Training Effectiveness Audit' && task.completed && (
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          className="w-full sm:w-auto text-blue-600 border-blue-200 hover:bg-blue-50 h-10 sm:h-9"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            openCompletionDialog(task);
+                          }}
+                        >
+                          <ClipboardCheck className="h-4 w-4 mr-2" />
+                          View/Edit Audit
+                        </Button>
+                      )}
+                      {/* Skill-Building Workshop */}
+                      {task.title === 'Skill-Building Workshop' && !task.completed && (
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          className="w-full sm:w-auto text-green-600 border-green-200 hover:bg-green-50 h-10 sm:h-9"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            openCompletionDialog(task);
+                          }}
+                        >
+                          <Users className="h-4 w-4 mr-2" />
+                          Document Workshop
+                        </Button>
+                      )}
+                      {task.title === 'Skill-Building Workshop' && task.completed && (
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          className="w-full sm:w-auto text-blue-600 border-blue-200 hover:bg-blue-50 h-10 sm:h-9"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            openCompletionDialog(task);
+                          }}
+                        >
+                          <Users className="h-4 w-4 mr-2" />
+                          View/Edit Workshop
+                        </Button>
+                      )}
+                      {/* Team Development Philosophy */}
+                      {task.title === 'Team Development Philosophy' && !task.completed && (
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          className="w-full sm:w-auto text-green-600 border-green-200 hover:bg-green-50 h-10 sm:h-9"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            openCompletionDialog(task);
+                          }}
+                        >
+                          <FileText className="h-4 w-4 mr-2" />
+                          Write Philosophy
+                        </Button>
+                      )}
+                      {task.title === 'Team Development Philosophy' && task.completed && (
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          className="w-full sm:w-auto text-blue-600 border-blue-200 hover:bg-blue-50 h-10 sm:h-9"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            openCompletionDialog(task);
+                          }}
+                        >
+                          <FileText className="h-4 w-4 mr-2" />
+                          View/Edit Philosophy
+                        </Button>
+                      )}
                     </div>
                   </div>
                 </div>
@@ -818,17 +1344,20 @@ export default function PlanTasks() {
 
       {/* Task Completion Dialog - Mobile Optimized */}
       <Dialog open={completionDialog} onOpenChange={setCompletionDialog}>
-        <DialogContent className="sm:max-w-md max-h-[90vh] overflow-y-auto p-4 sm:p-6">
+        <DialogContent className="sm:max-w-4xl max-h-[95vh] overflow-y-auto p-4 sm:p-6">
           <DialogHeader className="pb-3">
             <DialogTitle className="text-base sm:text-lg">
               <div className="flex items-center gap-2">
                 {selectedTask && getTaskIcon(selectedTask.type)}
-                <span className="line-clamp-2">Complete: {selectedTask?.title}</span>
+                <span className="line-clamp-2">{selectedTask?.title === 'The Art of Feedback' ? 'SBI Feedback Practice' : `Complete: ${selectedTask?.title}`}</span>
               </div>
             </DialogTitle>
             <DialogDescription className="text-xs sm:text-sm mt-2">
-              {selectedTask && getCompletionPrompt(selectedTask.type, selectedTask.title)}
-              {selectedTask && ['reading', 'video', 'reflection', 'assessment'].includes(selectedTask.type) && (
+              {selectedTask?.title === 'The Art of Feedback' ?
+                'Practice the SBI feedback model with real examples from your restaurant. You can save your progress and come back to add more examples later.' :
+                selectedTask && getCompletionPrompt(selectedTask.type, selectedTask.title)
+              }
+              {selectedTask && selectedTask.title !== 'The Art of Feedback' && ['reading', 'video', 'reflection', 'assessment'].includes(selectedTask.type) && (
                 <div className="mt-2 p-2 bg-amber-50 border border-amber-200 rounded-md">
                   <div className="flex items-center gap-2 text-amber-800">
                     <AlertCircle className="h-4 w-4 flex-shrink-0" />
@@ -838,7 +1367,7 @@ export default function PlanTasks() {
               )}
             </DialogDescription>
           </DialogHeader>
-          <div className="space-y-4 py-2 max-h-[60vh] overflow-y-auto pr-1">
+          <div className="space-y-4 py-2">
             <div className="space-y-2">
               <h4 className="text-sm font-medium">{selectedTask && getCompletionTitle(selectedTask.type, selectedTask.title)}</h4>
 
@@ -967,6 +1496,54 @@ export default function PlanTasks() {
                     />
                   )}
 
+                  {/* SBI Feedback */}
+                  {selectedTask.title === "The Art of Feedback" && (
+                    <SBIFeedbackForm
+                      value={completionEvidence}
+                      onChange={setCompletionEvidence}
+                    />
+                  )}
+
+                  {/* GROW Coaching Conversation */}
+                  {selectedTask.title === "GROW Coaching Conversation" && (
+                    <GROWCoachingForm
+                      value={completionEvidence}
+                      onChange={setCompletionEvidence}
+                    />
+                  )}
+
+                  {/* Development Plan Creation */}
+                  {selectedTask.title === "Development Plan Creation" && (
+                    <DevelopmentPlanForm
+                      value={completionEvidence}
+                      onChange={setCompletionEvidence}
+                    />
+                  )}
+
+                  {/* Training Effectiveness Audit */}
+                  {selectedTask.title === "Training Effectiveness Audit" && (
+                    <TrainingEffectivenessAuditForm
+                      value={completionEvidence}
+                      onChange={setCompletionEvidence}
+                    />
+                  )}
+
+                  {/* Skill-Building Workshop */}
+                  {selectedTask.title === "Skill-Building Workshop" && (
+                    <SkillBuildingWorkshopForm
+                      value={completionEvidence}
+                      onChange={setCompletionEvidence}
+                    />
+                  )}
+
+                  {/* Team Development Philosophy */}
+                  {selectedTask.title === "Team Development Philosophy" && (
+                    <TeamDevelopmentPhilosophyForm
+                      value={completionEvidence}
+                      onChange={setCompletionEvidence}
+                    />
+                  )}
+
                   {/* Default textarea for tasks without a custom form */}
                   {![
                     "Character vs. Capacity Reflection",
@@ -985,7 +1562,13 @@ export default function PlanTasks() {
                     "Setting Higher Expectations",
                     "Courageous Conversation Plan",
                     "Leadership Self-Assessment",
-                    "Servant Leadership in Action"
+                    "Servant Leadership in Action",
+                    "The Art of Feedback",
+                    "GROW Coaching Conversation",
+                    "Development Plan Creation",
+                    "Training Effectiveness Audit",
+                    "Skill-Building Workshop",
+                    "Team Development Philosophy"
                   ].includes(selectedTask.title) && (
                     <div className="space-y-2">
                       <div className="text-xs font-medium">
@@ -1026,7 +1609,7 @@ export default function PlanTasks() {
               onClick={handleTaskCompletion}
               disabled={
                 updatingTask === selectedTask?.id ||
-                (selectedTask && ['reading', 'video', 'reflection', 'assessment'].includes(selectedTask.type) && !completionEvidence.trim())
+                (selectedTask && selectedTask.title !== 'The Art of Feedback' && ['reading', 'video', 'reflection', 'assessment'].includes(selectedTask.type) && !completionEvidence.trim())
               }
               className="w-full sm:w-auto order-1 sm:order-2 bg-green-600 hover:bg-green-700 h-11 sm:h-10"
             >
@@ -1034,6 +1617,11 @@ export default function PlanTasks() {
                 <>
                   <Loader2 className="h-5 w-5 mr-2 animate-spin" />
                   Saving...
+                </>
+              ) : selectedTask?.title === 'The Art of Feedback' ? (
+                <>
+                  <CheckCircle className="h-5 w-5 mr-2" />
+                  Save Progress
                 </>
               ) : (
                 <>
@@ -1080,6 +1668,371 @@ export default function PlanTasks() {
                   Unenroll
                 </>
               )}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Talent Assessment Examples Dialog */}
+      <Dialog open={talentExamplesDialog} onOpenChange={setTalentExamplesDialog}>
+        <DialogContent className="sm:max-w-4xl max-h-[95vh] overflow-y-auto p-4 sm:p-6">
+          <DialogHeader className="pb-3">
+            <DialogTitle className="text-lg font-semibold text-[#E51636]">
+              Talent Assessment Examples
+            </DialogTitle>
+            <DialogDescription className="text-sm mt-2">
+              Use these examples to help you assess and categorize your team members into the four talent quadrants.
+            </DialogDescription>
+          </DialogHeader>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 py-4">
+            {/* High Performance / High Potential */}
+            <div className="p-4 bg-blue-50 rounded-lg border-l-4 border-blue-500">
+              <h3 className="font-bold text-blue-800 mb-3">HIGH PERFORMANCE / HIGH POTENTIAL</h3>
+              <p className="text-sm font-medium text-blue-700 mb-2">Stars - Your Future Leaders</p>
+              <div className="bg-white p-3 rounded border-l-2 border-blue-300 mb-3">
+                <p className="text-sm text-gray-700">
+                  <span className="font-medium">Example:</span> Sarah consistently exceeds guest service standards, shows leadership during rush periods, asks thoughtful questions about operations, and other team members naturally look to her for guidance.
+                </p>
+              </div>
+              <div>
+                <h4 className="font-medium text-blue-800 mb-2 text-sm">Development Actions:</h4>
+                <ul className="text-sm text-gray-700 space-y-1">
+                  <li>• Cross-train in multiple positions</li>
+                  <li>• Assign mentoring responsibilities</li>
+                  <li>• Include in leadership meetings</li>
+                  <li>• Provide stretch assignments like leading team huddles</li>
+                  <li>• Consider for promotion track</li>
+                </ul>
+              </div>
+            </div>
+
+            {/* High Performance / Lower Potential */}
+            <div className="p-4 bg-green-50 rounded-lg border-l-4 border-green-500">
+              <h3 className="font-bold text-green-800 mb-3">HIGH PERFORMANCE / LOWER POTENTIAL</h3>
+              <p className="text-sm font-medium text-green-700 mb-2">Solid Performers - Your Reliable Foundation</p>
+              <div className="bg-white p-3 rounded border-l-2 border-green-300 mb-3">
+                <p className="text-sm text-gray-700">
+                  <span className="font-medium">Example:</span> Mike is a reliable team member who consistently meets all standards, shows up on time, follows procedures perfectly, but prefers routine tasks and doesn't seek additional responsibilities.
+                </p>
+              </div>
+              <div>
+                <h4 className="font-medium text-green-800 mb-2 text-sm">Development Actions:</h4>
+                <ul className="text-sm text-gray-700 space-y-1">
+                  <li>• Recognize and reward consistency</li>
+                  <li>• Use as trainer for new hires</li>
+                  <li>• Provide opportunities to specialize in strength areas</li>
+                  <li>• Focus on job enrichment rather than advancement</li>
+                </ul>
+              </div>
+            </div>
+
+            {/* Lower Performance / High Potential */}
+            <div className="p-4 bg-amber-50 rounded-lg border-l-4 border-amber-500">
+              <h3 className="font-bold text-amber-800 mb-3">LOWER PERFORMANCE / HIGH POTENTIAL</h3>
+              <p className="text-sm font-medium text-amber-700 mb-2">Diamonds in the Rough - Your Investment Opportunities</p>
+              <div className="bg-white p-3 rounded border-l-2 border-amber-300 mb-3">
+                <p className="text-sm text-gray-700">
+                  <span className="font-medium">Example:</span> Jessica is a new team member who sometimes struggles with speed during rush but shows great attitude, asks lots of questions, volunteers for extra tasks, and demonstrates strong problem-solving when given time.
+                </p>
+              </div>
+              <div>
+                <h4 className="font-medium text-amber-800 mb-2 text-sm">Development Actions:</h4>
+                <ul className="text-sm text-gray-700 space-y-1">
+                  <li>• Provide intensive coaching and mentoring</li>
+                  <li>• Pair with high performers</li>
+                  <li>• Set clear short-term goals</li>
+                  <li>• Give frequent feedback</li>
+                  <li>• Invest in additional training</li>
+                  <li>• Be patient with development timeline</li>
+                </ul>
+              </div>
+            </div>
+
+            {/* Lower Performance / Lower Potential */}
+            <div className="p-4 bg-red-50 rounded-lg border-l-4 border-red-500">
+              <h3 className="font-bold text-red-800 mb-3">LOWER PERFORMANCE / LOWER POTENTIAL</h3>
+              <p className="text-sm font-medium text-red-700 mb-2">Needs Basic Development - Your Coaching Focus</p>
+              <div className="bg-white p-3 rounded border-l-2 border-red-300 mb-3">
+                <p className="text-sm text-gray-700">
+                  <span className="font-medium">Example:</span> Alex struggles to meet basic job requirements, frequently late, needs constant reminders about procedures, shows little initiative or interest in improvement.
+                </p>
+              </div>
+              <div>
+                <h4 className="font-medium text-red-800 mb-2 text-sm">Development Actions:</h4>
+                <ul className="text-sm text-gray-700 space-y-1">
+                  <li>• Provide clear expectations and consequences</li>
+                  <li>• Implement performance improvement plan</li>
+                  <li>• Consider role fit assessment</li>
+                  <li>• Provide basic skills training</li>
+                  <li>• Set minimum performance standards with timeline</li>
+                </ul>
+              </div>
+            </div>
+          </div>
+
+
+
+          <DialogFooter className="pt-4 border-t border-gray-100">
+            <Button
+              onClick={() => setTalentExamplesDialog(false)}
+              className="w-full bg-[#E51636] hover:bg-[#c41230] text-white"
+            >
+              Close
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* GROW Coaching Examples Dialog */}
+      <Dialog open={growExamplesDialog} onOpenChange={setGrowExamplesDialog}>
+        <DialogContent className="sm:max-w-4xl max-h-[95vh] overflow-y-auto p-4 sm:p-6">
+          <DialogHeader className="pb-3">
+            <DialogTitle className="text-lg font-semibold text-[#E51636]">
+              GROW Coaching Conversation Example
+            </DialogTitle>
+            <DialogDescription className="text-sm mt-2">
+              This example shows how to conduct a complete GROW coaching conversation with a team member.
+            </DialogDescription>
+          </DialogHeader>
+
+          <div className="space-y-6 py-4">
+            {/* Conversation Details */}
+            <div className="bg-gray-50 p-4 rounded-lg">
+              <h3 className="font-semibold text-gray-800 mb-3">Conversation Details</h3>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-sm">
+                <div>
+                  <span className="font-medium text-gray-600">Team Member:</span>
+                  <p className="text-gray-800">Sarah Johnson</p>
+                </div>
+                <div>
+                  <span className="font-medium text-gray-600">Date:</span>
+                  <p className="text-gray-800">March 15, 2024</p>
+                </div>
+              </div>
+            </div>
+
+            {/* GROW Model Sections */}
+            <div className="space-y-4">
+              {/* Goal */}
+              <div className="border-l-4 border-l-blue-500 pl-4 bg-blue-50 p-4 rounded-r-lg">
+                <h3 className="font-bold text-blue-800 mb-2">GOAL - What does the team member want to achieve?</h3>
+                <p className="text-sm text-gray-700">
+                  "I want to become more confident when handling difficult guest complaints. My goal is to be able to resolve most guest issues without needing to call a manager, and to feel more comfortable during these interactions within the next month."
+                </p>
+              </div>
+
+              {/* Reality */}
+              <div className="border-l-4 border-l-green-500 pl-4 bg-green-50 p-4 rounded-r-lg">
+                <h3 className="font-bold text-green-800 mb-2">REALITY - What is the current situation?</h3>
+                <p className="text-sm text-gray-700">
+                  "Currently, when a guest complains, I feel anxious and immediately call for a manager. I've handled about 3 guest complaints in the past month, and each time I felt overwhelmed. I know the basic service recovery steps, but I get nervous about making decisions on my own, especially when it involves comping items or offering solutions. I'm worried about making the wrong decision and making the situation worse."
+                </p>
+              </div>
+
+              {/* Options */}
+              <div className="border-l-4 border-l-amber-500 pl-4 bg-amber-50 p-4 rounded-r-lg">
+                <h3 className="font-bold text-amber-800 mb-2">OPTIONS - What are the possible solutions or approaches?</h3>
+                <p className="text-sm text-gray-700">
+                  "We discussed several options: 1) Role-playing different complaint scenarios during slower periods, 2) Shadowing experienced team members when they handle complaints, 3) Creating a quick reference guide with common solutions and my authority limits, 4) Starting with smaller complaints and gradually working up to more complex issues, 5) Having a manager nearby for support initially but trying to handle it first, 6) Practicing the LAST method (Listen, Apologize, Solve, Thank) until it becomes natural."
+                </p>
+              </div>
+
+              {/* Will/Way Forward */}
+              <div className="border-l-4 border-l-purple-500 pl-4 bg-purple-50 p-4 rounded-r-lg">
+                <h3 className="font-bold text-purple-800 mb-2">WILL/WAY FORWARD - What specific actions will be taken?</h3>
+                <p className="text-sm text-gray-700">
+                  "Sarah committed to: 1) Practice role-playing with me for 15 minutes twice this week using different complaint scenarios, 2) Create her own quick reference card with common solutions and her authority limits ($25 comp limit), 3) Shadow Jessica (our most experienced team member) during her next two shifts to observe how she handles complaints, 4) Handle the next minor complaint independently while I observe from nearby, 5) Check in with me after each complaint she handles to discuss what went well and what could be improved. We scheduled our follow-up meeting for March 29th to review her progress and adjust the plan if needed."
+                </p>
+              </div>
+            </div>
+
+            {/* Reflection */}
+            <div className="bg-gray-50 p-4 rounded-lg">
+              <h3 className="font-semibold text-gray-800 mb-3">Coaching Reflection</h3>
+              <div className="space-y-3">
+                <div>
+                  <h4 className="font-medium text-gray-700 mb-1">What went well in this coaching conversation?</h4>
+                  <p className="text-sm text-gray-600">
+                    Sarah was very open about her anxiety and specific concerns. She came up with most of the solutions herself when I asked the right questions. The GROW structure helped keep the conversation focused and productive. She seemed genuinely excited about the action plan by the end of our conversation.
+                  </p>
+                </div>
+                <div>
+                  <h4 className="font-medium text-gray-700 mb-1">What would you do differently next time?</h4>
+                  <p className="text-sm text-gray-600">
+                    I could have spent more time in the Reality phase to really understand her specific fears. I also realized I should have asked about her past successes with difficult situations to build her confidence. Next time, I'll make sure to celebrate small wins more and ask more open-ended questions in the Options phase.
+                  </p>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <DialogFooter className="pt-4 border-t border-gray-100">
+            <Button
+              onClick={() => setGrowExamplesDialog(false)}
+              className="w-full bg-[#E51636] hover:bg-[#c41230] text-white"
+            >
+              Close
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Development Plan Examples Dialog */}
+      <Dialog open={developmentPlanExamplesDialog} onOpenChange={setDevelopmentPlanExamplesDialog}>
+        <DialogContent className="sm:max-w-5xl max-h-[95vh] overflow-y-auto p-4 sm:p-6">
+          <DialogHeader className="pb-3">
+            <DialogTitle className="text-lg font-semibold text-[#E51636]">
+              90-Day Development Plan Example
+            </DialogTitle>
+            <DialogDescription className="text-sm mt-2">
+              This example shows how to create a comprehensive development plan for a high-potential team member.
+            </DialogDescription>
+          </DialogHeader>
+
+          <div className="space-y-6 py-4">
+            {/* Team Member Information */}
+            <div className="bg-gray-50 p-4 rounded-lg">
+              <h3 className="font-semibold text-gray-800 mb-3">Team Member Information</h3>
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 text-sm">
+                <div>
+                  <span className="font-medium text-gray-600">Team Member:</span>
+                  <p className="text-gray-800">Alex Rodriguez</p>
+                </div>
+                <div>
+                  <span className="font-medium text-gray-600">Current Position:</span>
+                  <p className="text-gray-800">Team Member</p>
+                </div>
+                <div>
+                  <span className="font-medium text-gray-600">Plan Created:</span>
+                  <p className="text-gray-800">March 1, 2024</p>
+                </div>
+              </div>
+            </div>
+
+            {/* Skills Development */}
+            <div className="space-y-4">
+              <div className="border-l-4 border-l-blue-500 pl-4 bg-blue-50 p-4 rounded-r-lg">
+                <h3 className="font-bold text-blue-800 mb-2">Skills to Develop</h3>
+                <div className="text-sm text-gray-700 space-y-1">
+                  <p>• <strong>Guest Service Recovery:</strong> Handle complaints confidently and turn negative experiences into positive ones</p>
+                  <p>• <strong>Training & Mentoring:</strong> Effectively train new team members and provide ongoing support</p>
+                  <p>• <strong>Shift Leadership:</strong> Lead team during busy periods and make operational decisions</p>
+                  <p>• <strong>Inventory Management:</strong> Understand food costs, waste reduction, and ordering processes</p>
+                  <p>• <strong>Conflict Resolution:</strong> Address team member disagreements professionally and fairly</p>
+                </div>
+              </div>
+
+              <div className="border-l-4 border-l-green-500 pl-4 bg-green-50 p-4 rounded-r-lg">
+                <h3 className="font-bold text-green-800 mb-2">Learning Resources</h3>
+                <div className="text-sm text-gray-700 space-y-1">
+                  <p>• <strong>Chick-fil-A Pathway:</strong> Leadership modules and Guest Experience training</p>
+                  <p>• <strong>Book:</strong> "The One Minute Manager" by Ken Blanchard (available at local library)</p>
+                  <p>• <strong>Online:</strong> Harvard Business Review articles on conflict resolution</p>
+                  <p>• <strong>Internal:</strong> Training videos on service recovery and food safety</p>
+                  <p>• <strong>Mentoring:</strong> Weekly sessions with Jessica (experienced shift leader)</p>
+                </div>
+              </div>
+
+              <div className="border-l-4 border-l-amber-500 pl-4 bg-amber-50 p-4 rounded-r-lg">
+                <h3 className="font-bold text-amber-800 mb-2">On-the-Job Experiences</h3>
+                <div className="text-sm text-gray-700 space-y-1">
+                  <p>• <strong>Team Huddles:</strong> Lead pre-shift huddles twice per week</p>
+                  <p>• <strong>Training Responsibility:</strong> Train 2 new hires on register operations</p>
+                  <p>• <strong>Guest Recovery:</strong> Handle complaints independently (with manager nearby initially)</p>
+                  <p>• <strong>Inventory Tasks:</strong> Assist with weekly inventory counts and waste tracking</p>
+                  <p>• <strong>Leadership Shadowing:</strong> Shadow different shift leaders to observe various styles</p>
+                  <p>• <strong>Improvement Project:</strong> Lead initiative to reduce average order time by 30 seconds</p>
+                </div>
+              </div>
+            </div>
+
+            {/* 90-Day Timeline */}
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+              <div className="border-l-4 border-l-purple-500 pl-4 bg-purple-50 p-4 rounded-r-lg">
+                <h3 className="font-bold text-purple-800 mb-2">30-Day Goals</h3>
+                <div className="text-sm text-gray-700 space-y-1">
+                  <p>• Complete guest service recovery training</p>
+                  <p>• Handle 5 guest complaints with minimal intervention</p>
+                  <p>• Lead 8 team huddles confidently</p>
+                  <p>• Begin training first new hire on register</p>
+                  <p>• Shadow 3 different shift leaders</p>
+                </div>
+              </div>
+
+              <div className="border-l-4 border-l-indigo-500 pl-4 bg-indigo-50 p-4 rounded-r-lg">
+                <h3 className="font-bold text-indigo-800 mb-2">60-Day Goals</h3>
+                <div className="text-sm text-gray-700 space-y-1">
+                  <p>• Train 2 new hires completely through certification</p>
+                  <p>• Handle all guest complaints independently</p>
+                  <p>• Lead team improvement initiative</p>
+                  <p>• Complete conflict resolution training</p>
+                  <p>• Assist with inventory management weekly</p>
+                </div>
+              </div>
+
+              <div className="border-l-4 border-l-pink-500 pl-4 bg-pink-50 p-4 rounded-r-lg">
+                <h3 className="font-bold text-pink-800 mb-2">90-Day Goals</h3>
+                <div className="text-sm text-gray-700 space-y-1">
+                  <p>• Ready for promotion to Shift Leader</p>
+                  <p>• Mentor other team members effectively</p>
+                  <p>• Lead shifts independently during breaks</p>
+                  <p>• Complete leadership assessment</p>
+                  <p>• Develop next-level development plan</p>
+                </div>
+              </div>
+            </div>
+
+            {/* Check-ins & Support */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div className="bg-gray-50 p-4 rounded-lg">
+                <h3 className="font-semibold text-gray-800 mb-3">Check-in Schedule</h3>
+                <div className="text-sm text-gray-700 space-y-1">
+                  <p>• <strong>Weekly:</strong> 15-minute one-on-ones every Tuesday at 2 PM</p>
+                  <p>• <strong>Bi-weekly:</strong> Progress reviews with goal assessment</p>
+                  <p>• <strong>Monthly:</strong> Formal evaluation with written feedback</p>
+                  <p>• <strong>Daily:</strong> Informal check-ins during shifts for coaching</p>
+                </div>
+              </div>
+
+              <div className="bg-gray-50 p-4 rounded-lg">
+                <h3 className="font-semibold text-gray-800 mb-3">Support & Resources</h3>
+                <div className="text-sm text-gray-700 space-y-1">
+                  <p>• Access to Pathway modules during slower periods</p>
+                  <p>• Pairing with Jessica as mentor</p>
+                  <p>• Manager backup for guest complaints initially</p>
+                  <p>• Budget approval for leadership book</p>
+                  <p>• Flexible scheduling for training sessions</p>
+                </div>
+              </div>
+            </div>
+
+            {/* Team Member Input */}
+            <div className="bg-gray-50 p-4 rounded-lg">
+              <h3 className="font-semibold text-gray-800 mb-3">Team Member Input & Refinements</h3>
+              <div className="space-y-3">
+                <div>
+                  <h4 className="font-medium text-gray-700 mb-1">Alex's Feedback on the Plan:</h4>
+                  <p className="text-sm text-gray-600">
+                    "I'm excited about the opportunity to grow into leadership! I'm a bit nervous about handling guest complaints, but I appreciate that you'll be nearby initially. I'd like to focus extra time on the conflict resolution training since I've seen some team disagreements that I wasn't sure how to handle. Could we also include some time shadowing during weekend rushes to see how leaders handle high-pressure situations?"
+                  </p>
+                </div>
+                <div>
+                  <h4 className="font-medium text-gray-700 mb-1">Plan Refinements Based on Input:</h4>
+                  <p className="text-sm text-gray-600">
+                    "Based on Alex's feedback, I added extra conflict resolution resources and scheduled shadowing time specifically during weekend rush periods. I also moved the conflict resolution training earlier in the timeline (30-day goals) since this was a priority concern. We agreed to start with smaller guest issues and gradually work up to more complex complaints to build confidence."
+                  </p>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <DialogFooter className="pt-4 border-t border-gray-100">
+            <Button
+              onClick={() => setDevelopmentPlanExamplesDialog(false)}
+              className="w-full bg-[#E51636] hover:bg-[#c41230] text-white"
+            >
+              Close
             </Button>
           </DialogFooter>
         </DialogContent>

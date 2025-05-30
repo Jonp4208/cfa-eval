@@ -372,13 +372,7 @@ export default function Layout({ children }: { children: React.ReactNode }) {
           color: pendingEvaluations > 0 ? 'text-red-600' : undefined
         }] : []),
 
-        // Only include Documentation if the feature is enabled
-        ...(isFeatureEnabled('documentation') ? [{
-          icon: FileText,
-          label: 'Documentation',
-          href: '/documentation',
-          badge: null
-        }] : []),
+
 
         // Only include Leadership if the feature is enabled
         ...(isFeatureEnabled('leadership') ? [{

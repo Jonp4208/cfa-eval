@@ -686,8 +686,8 @@ router.post('/plans/:planId/enroll', auth, checkSubscription, async (req, res) =
           id: 'culture-task-4',
           type: 'assessment',
           title: 'Team Experience Survey',
-          description: 'Create and distribute a brief anonymous survey to team members asking about their experience working in your restaurant. Include questions about team support, leadership accessibility, growth opportunities, and overall satisfaction. Analyze results and identify 3 key insights.',
-          resourceUrl: 'https://www.surveymonkey.com/mp/employee-engagement-survey-template/',
+          description: 'Create and distribute a brief anonymous survey to team members asking about their experience working in your restaurant. Include questions about team support, leadership accessibility, growth opportunities, and overall satisfaction. Analyze results and identify 3 key insights.\n\n🎯 Use our built-in Team Experience Survey feature to create, distribute, and analyze your survey results.',
+          resourceUrl: '/team-surveys/new',
           estimatedTime: '2 hours'
         },
         {
@@ -730,22 +730,22 @@ router.post('/plans/:planId/enroll', auth, checkSubscription, async (req, res) =
           type: 'video',
           title: 'Effective Coaching Techniques',
           description: 'Watch this video on coaching techniques specifically designed for restaurant team development. Focus on the difference between directing, coaching, and mentoring approaches and when to use each one.',
-          resourceUrl: 'https://www.youtube.com/watch?v=oHIR3gp-tXU',
+          resourceUrl: 'https://www.youtube.com/watch?v=R3sHXrjbT2s',
           estimatedTime: '25 minutes'
         },
         {
           id: 'team-task-2',
           type: 'reading',
           title: 'The Art of Feedback',
-          description: 'Read this article on delivering effective feedback in fast-paced environments. Practice the SBI (Situation-Behavior-Impact) feedback model by writing out 3 examples of feedback you need to deliver to team members.',
-          resourceUrl: 'https://www.mindtools.com/a3mi95b/the-situation-behavior-impact-sbi-feedback-tool',
+          description: 'Read this article on delivering effective feedback in fast-paced environments. Then practice the SBI (Situation-Behavior-Impact) feedback model by writing out 3 examples of feedback you need to deliver to team members. For each example, clearly identify: 1) The Situation (when/where), 2) The Behavior (what you observed), and 3) The Impact (effect on team/guests/operations). Write your 3 examples in the evidence section when marking this task complete.',
+          resourceUrl: 'https://www.ccl.org/articles/leading-effectively-articles/closing-the-gap-between-intent-vs-impact-sbii/',
           estimatedTime: '30 minutes'
         },
         {
           id: 'team-task-3',
           type: 'activity',
           title: 'Talent Assessment',
-          description: 'Create a talent map of your team by placing each team member in one of four quadrants: 1) High performance/High potential, 2) High performance/Lower potential, 3) Lower performance/High potential, 4) Lower performance/Lower potential. Identify specific development actions for each quadrant.',
+          description: 'Create a talent map of your team by placing each team member in one of four quadrants: 1) High performance/High potential, 2) High performance/Lower potential, 3) Lower performance/High potential, 4) Lower performance/Lower potential. Identify specific development actions for each quadrant.\n\n**QUADRANT EXAMPLES & DEVELOPMENT ACTIONS:**\n\n**1. HIGH PERFORMANCE/HIGH POTENTIAL (Stars)**\nExample: Sarah - Consistently exceeds guest service standards, shows leadership during rush periods, asks thoughtful questions about operations, and other team members naturally look to her for guidance.\n• Development Actions: Cross-train in multiple positions, assign mentoring responsibilities, include in leadership meetings, provide stretch assignments like leading team huddles, consider for promotion track\n\n**2. HIGH PERFORMANCE/LOWER POTENTIAL (Solid Performers)**\nExample: Mike - Reliable team member who consistently meets all standards, shows up on time, follows procedures perfectly, but prefers routine tasks and doesn\'t seek additional responsibilities.\n• Development Actions: Recognize and reward consistency, use as trainer for new hires, provide opportunities to specialize in their strength areas, focus on job enrichment rather than advancement\n\n**3. LOWER PERFORMANCE/HIGH POTENTIAL (Diamonds in the Rough)**\nExample: Jessica - New team member who sometimes struggles with speed during rush but shows great attitude, asks lots of questions, volunteers for extra tasks, and demonstrates strong problem-solving when given time.\n• Development Actions: Provide intensive coaching and mentoring, pair with high performers, set clear short-term goals, give frequent feedback, invest in additional training, be patient with development timeline\n\n**4. LOWER PERFORMANCE/LOWER POTENTIAL (Needs Basic Development)**\nExample: Alex - Struggles to meet basic job requirements, frequently late, needs constant reminders about procedures, shows little initiative or interest in improvement.\n• Development Actions: Provide clear expectations and consequences, implement performance improvement plan, consider role fit assessment, provide basic skills training, set minimum performance standards with timeline',
           estimatedTime: '1 hour'
         },
         {
@@ -967,6 +967,17 @@ router.patch('/my-plans/:planId/tasks/:taskId', auth, async (req, res) => {
     const { planId, taskId } = req.params;
     const { completed, notes, evidence } = req.body;
 
+    // Debug logging
+    console.log('Server received request body:', {
+      completed,
+      notes,
+      evidence,
+      completedType: typeof completed,
+      notesType: typeof notes,
+      evidenceType: typeof evidence,
+      fullBody: req.body
+    });
+
     // Extract the store ID using the utility function
     const storeId = extractStoreId(req.user);
 
@@ -1000,7 +1011,12 @@ router.patch('/my-plans/:planId/tasks/:taskId', auth, async (req, res) => {
     if (completed) {
       // When marking as complete, require evidence for certain task types
       const taskType = enrollment.learningTasks[taskIndex].type;
-      if (['reading', 'video', 'reflection', 'assessment'].includes(taskType) && !evidence) {
+      const taskTitle = enrollment.learningTasks[taskIndex].title;
+
+      // Special handling for "The Art of Feedback" task - allow saving progress without evidence
+      const isFeedbackTask = taskTitle === 'The Art of Feedback';
+
+      if (['reading', 'video', 'reflection', 'assessment'].includes(taskType) && !evidence && !isFeedbackTask) {
         return res.status(400).json({
           message: `Evidence of completion is required for ${taskType} tasks`
         });
@@ -1143,6 +1159,9 @@ router.post('/my-plans/:planId/update-tasks', auth, async (req, res) => {
         notes: task.notes
       };
     });
+
+    // Debug logging
+    console.log('Completion status before update:', JSON.stringify(completionStatus, null, 2));
 
     // Define new learning tasks based on the plan
     let learningTasks = [];
@@ -1313,8 +1332,8 @@ router.post('/my-plans/:planId/update-tasks', auth, async (req, res) => {
           id: 'culture-task-4',
           type: 'assessment',
           title: 'Team Experience Survey',
-          description: 'Create and distribute a brief anonymous survey to team members asking about their experience working in your restaurant. Include questions about team support, leadership accessibility, growth opportunities, and overall satisfaction. Analyze results and identify 3 key insights.',
-          resourceUrl: 'https://www.surveymonkey.com/mp/employee-engagement-survey-template/',
+          description: 'Create and distribute a brief anonymous survey to team members asking about their experience working in your restaurant. Include questions about team support, leadership accessibility, growth opportunities, and overall satisfaction. Analyze results and identify 3 key insights.\n\n🎯 Use our built-in Team Experience Survey feature to create, distribute, and analyze your survey results.',
+          resourceUrl: '/team-surveys/new',
           estimatedTime: '2 hours'
         },
         {
@@ -1357,22 +1376,22 @@ router.post('/my-plans/:planId/update-tasks', auth, async (req, res) => {
           type: 'video',
           title: 'Effective Coaching Techniques',
           description: 'Watch this video on coaching techniques specifically designed for restaurant team development. Focus on the difference between directing, coaching, and mentoring approaches and when to use each one.',
-          resourceUrl: 'https://www.youtube.com/watch?v=oHIR3gp-tXU',
+          resourceUrl: 'https://www.youtube.com/watch?v=R3sHXrjbT2s',
           estimatedTime: '25 minutes'
         },
         {
           id: 'team-task-2',
           type: 'reading',
           title: 'The Art of Feedback',
-          description: 'Read this article on delivering effective feedback in fast-paced environments. Practice the SBI (Situation-Behavior-Impact) feedback model by writing out 3 examples of feedback you need to deliver to team members.',
-          resourceUrl: 'https://www.mindtools.com/a3mi95b/the-situation-behavior-impact-sbi-feedback-tool',
+          description: 'Read this article on delivering effective feedback in fast-paced environments. Then practice the SBI (Situation-Behavior-Impact) feedback model by writing out 3 examples of feedback you need to deliver to team members. For each example, clearly identify: 1) The Situation (when/where), 2) The Behavior (what you observed), and 3) The Impact (effect on team/guests/operations). Write your 3 examples in the evidence section when marking this task complete.',
+          resourceUrl: 'https://www.ccl.org/articles/leading-effectively-articles/closing-the-gap-between-intent-vs-impact-sbii/',
           estimatedTime: '30 minutes'
         },
         {
           id: 'team-task-3',
           type: 'activity',
           title: 'Talent Assessment',
-          description: 'Create a talent map of your team by placing each team member in one of four quadrants: 1) High performance/High potential, 2) High performance/Lower potential, 3) Lower performance/High potential, 4) Lower performance/Lower potential. Identify specific development actions for each quadrant.',
+          description: 'Create a talent map of your team by placing each team member in one of four quadrants: 1) High performance/High potential, 2) High performance/Lower potential, 3) Lower performance/High potential, 4) Lower performance/Lower potential. Identify specific development actions for each quadrant.\n\n**QUADRANT EXAMPLES & DEVELOPMENT ACTIONS:**\n\n**1. HIGH PERFORMANCE/HIGH POTENTIAL (Stars)**\nExample: Sarah - Consistently exceeds guest service standards, shows leadership during rush periods, asks thoughtful questions about operations, and other team members naturally look to her for guidance.\n• Development Actions: Cross-train in multiple positions, assign mentoring responsibilities, include in leadership meetings, provide stretch assignments like leading team huddles, consider for promotion track\n\n**2. HIGH PERFORMANCE/LOWER POTENTIAL (Solid Performers)**\nExample: Mike - Reliable team member who consistently meets all standards, shows up on time, follows procedures perfectly, but prefers routine tasks and doesn\'t seek additional responsibilities.\n• Development Actions: Recognize and reward consistency, use as trainer for new hires, provide opportunities to specialize in their strength areas, focus on job enrichment rather than advancement\n\n**3. LOWER PERFORMANCE/HIGH POTENTIAL (Diamonds in the Rough)**\nExample: Jessica - New team member who sometimes struggles with speed during rush but shows great attitude, asks lots of questions, volunteers for extra tasks, and demonstrates strong problem-solving when given time.\n• Development Actions: Provide intensive coaching and mentoring, pair with high performers, set clear short-term goals, give frequent feedback, invest in additional training, be patient with development timeline\n\n**4. LOWER PERFORMANCE/LOWER POTENTIAL (Needs Basic Development)**\nExample: Alex - Struggles to meet basic job requirements, frequently late, needs constant reminders about procedures, shows little initiative or interest in improvement.\n• Development Actions: Provide clear expectations and consequences, implement performance improvement plan, consider role fit assessment, provide basic skills training, set minimum performance standards with timeline',
           estimatedTime: '1 hour'
         },
         {
@@ -1416,13 +1435,23 @@ router.post('/my-plans/:planId/update-tasks', auth, async (req, res) => {
     // Preserve completion status for existing tasks
     learningTasks = learningTasks.map(task => {
       if (completionStatus[task.id]) {
-        return {
+        const restoredTask = {
           ...task,
           completed: completionStatus[task.id].completed,
           completedAt: completionStatus[task.id].completedAt,
           evidence: completionStatus[task.id].evidence,
           notes: completionStatus[task.id].notes
         };
+
+        // Debug logging for specific task
+        if (task.id === 'team-task-2') {
+          console.log('Restoring team-task-2:', {
+            originalEvidence: completionStatus[task.id].evidence,
+            restoredEvidence: restoredTask.evidence
+          });
+        }
+
+        return restoredTask;
       }
       return task;
     });
