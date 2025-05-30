@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react'
+import React, { useState, useEffect, useCallback, useRef } from 'react'
 import { useNavigate, useParams, useLocation } from 'react-router-dom'
 import { Card } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
@@ -25,7 +25,11 @@ import {
   X,
   RefreshCw,
   MessageSquare,
-  AlertCircle
+  AlertCircle,
+  Target,
+  TrendingUp,
+  Calendar,
+  Heart
 } from 'lucide-react'
 import api from '@/lib/axios'
 
@@ -53,6 +57,17 @@ import DevelopmentPlanPDFDownload from '@/components/leadership/DevelopmentPlanP
 import TrainingEffectivenessAuditForm from '@/components/leadership/TrainingEffectivenessAuditForm'
 import SkillBuildingWorkshopForm from '@/components/leadership/SkillBuildingWorkshopForm'
 import TeamDevelopmentPhilosophyForm from '@/components/leadership/TeamDevelopmentPhilosophyForm'
+import RestaurantStrategyDiagnosisForm from '@/components/leadership/RestaurantStrategyDiagnosisForm'
+import RestaurantSWOTAnalysisForm from '@/components/leadership/RestaurantSWOTAnalysisForm'
+import StrategicDecisionFrameworkForm from '@/components/leadership/StrategicDecisionFrameworkForm'
+import CompetitiveAnalysisForm from '@/components/leadership/CompetitiveAnalysisForm'
+import StrategicLeadershipSelfAssessmentForm from '@/components/leadership/StrategicLeadershipSelfAssessmentForm'
+import StrategicCommunicationPracticeForm from '@/components/leadership/StrategicCommunicationPracticeForm'
+import StrategicLeadershipPhilosophyForm from '@/components/leadership/StrategicLeadershipPhilosophyForm'
+import StrategicChangeInitiativePlanForm from '@/components/leadership/StrategicChangeInitiativePlanForm'
+import NinetyDayStrategicPlanForm from '@/components/leadership/NinetyDayStrategicPlanForm'
+import LongTermPlanningForm from '@/components/leadership/LongTermPlanningForm'
+import RestaurantWhyStatementForm from '@/components/leadership/RestaurantWhyStatementForm'
 
 interface Task {
   id: string
@@ -159,6 +174,81 @@ export default function PlanTasks() {
   const [talentExamplesDialog, setTalentExamplesDialog] = useState(false)
   const [growExamplesDialog, setGrowExamplesDialog] = useState(false)
   const [developmentPlanExamplesDialog, setDevelopmentPlanExamplesDialog] = useState(false)
+
+  // Debounced auto-save refs
+  const autoSaveTimeouts = useRef<{ [key: string]: NodeJS.Timeout }>({})
+
+  // Track which interactive forms are open
+  const [openForms, setOpenForms] = useState<{ [key: string]: boolean }>({})
+
+  // Toggle form visibility
+  const toggleForm = (taskId: string) => {
+    setOpenForms(prev => ({
+      ...prev,
+      [taskId]: !prev[taskId]
+    }))
+  }
+
+  // Debounced auto-save function
+  const debouncedAutoSave = useCallback(async (taskId: string, evidence: string) => {
+    // Clear existing timeout for this task
+    if (autoSaveTimeouts.current[taskId]) {
+      clearTimeout(autoSaveTimeouts.current[taskId])
+    }
+
+    // Only auto-save if there's meaningful content
+    let hasContent = false
+    if (evidence && evidence.trim() && evidence !== '{}') {
+      try {
+        const parsed = JSON.parse(evidence)
+        // Check if any field has actual content
+        hasContent = Object.values(parsed).some(value =>
+          typeof value === 'string' && value.trim().length > 0
+        )
+      } catch (e) {
+        // If not JSON, check if there's any content
+        hasContent = evidence.trim().length > 0
+      }
+    }
+
+    if (!hasContent) {
+      return
+    }
+
+    // Set new timeout
+    autoSaveTimeouts.current[taskId] = setTimeout(async () => {
+      try {
+        const task = tasks.find(t => t.id === taskId)
+        if (!task) return
+
+        await api.patch(`/api/leadership/my-plans/${planId}/tasks/${taskId}`, {
+          completed: false,
+          notes: task.notes || '',
+          evidence: evidence
+        })
+
+        // Update local state
+        setTasks(prevTasks => prevTasks.map(t =>
+          t.id === taskId
+            ? { ...t, evidence: evidence }
+            : t
+        ))
+
+        console.log('Auto-saved evidence for task:', taskId)
+      } catch (error) {
+        console.error('Error auto-saving evidence:', error)
+      }
+    }, 1000) // Wait 1 second after user stops typing
+  }, [tasks, planId])
+
+  // Cleanup timeouts on unmount
+  useEffect(() => {
+    return () => {
+      Object.values(autoSaveTimeouts.current).forEach(timeout => {
+        clearTimeout(timeout)
+      })
+    }
+  }, [])
 
   useEffect(() => {
     if (planId) {
@@ -276,7 +366,8 @@ export default function PlanTasks() {
       'restaurant-culture-builder': 'Restaurant Culture Builder',
       'team-development': 'Team Development Expert',
       'operational-excellence': 'Operational Excellence',
-      'guest-experience-mastery': 'Guest Experience Mastery'
+      'guest-experience-mastery': 'Guest Experience Mastery',
+      'strategic-leadership': 'Strategic Leadership Mastery'
     }
     setPlanTitle(fallbackTitles[planId as keyof typeof fallbackTitles] || 'Leadership Plan')
   }
@@ -708,6 +799,33 @@ export default function PlanTasks() {
 
         case 'Team Development Philosophy':
           return 'Write a comprehensive statement describing your philosophy on team development. Include your beliefs about how people learn and grow, your role as a developer of others, and the connection between team development and business results.'
+
+        case 'Strategic Decision Framework':
+          return 'Apply a structured decision-making framework to a significant restaurant decision. Work through each step: define the decision, gather information, identify alternatives, evaluate pros/cons, make the decision, and plan implementation.'
+
+        case 'Competitive Landscape Mapping':
+          return 'Complete a comprehensive competitive analysis of your 5 most direct competitors. Analyze their menu offerings, pricing, service style, target customers, strengths, and weaknesses. Identify market gaps and strategic opportunities for your restaurant.'
+
+        case 'Strategic Leadership Self-Assessment':
+          return 'Evaluate your strategic leadership capabilities across five key areas: strategic thinking, vision communication, decision making, change leadership, and long-term planning. Create a development action plan based on your assessment.'
+
+        case 'Strategic Communication Practice':
+          return 'Practice communicating a strategic initiative from your 90-day plan to team members. Prepare a 5-minute presentation, deliver it to at least 3 team members, gather feedback, and reflect on your communication effectiveness.'
+
+        case 'Strategic Leadership Philosophy':
+          return 'Develop your personal strategic leadership philosophy statement. This comprehensive document will serve as your guiding framework for making strategic decisions and leading with long-term vision in your restaurant.'
+
+        case 'Strategic Change Initiative Plan':
+          return 'Create a comprehensive change management plan using Kotter\'s 8-step process. Identify a strategic change for your restaurant and plan how to communicate, implement, and sustain the change while addressing potential resistance.'
+
+        case '90-Day Strategic Plan':
+          return 'Create a comprehensive 90-day strategic plan with 3-5 strategic objectives. For each objective, define specific outcomes, key milestones, resources needed, potential obstacles, and success metrics. Include both team development and operational improvement goals.'
+
+        case 'Long-term Planning and Goal Setting':
+          return 'Apply the concepts from your reading to create a comprehensive long-term strategic plan. Set strategic goals that differ from operational goals and build accountability systems for strategic initiatives.'
+
+        case 'Develop Your Restaurant\'s Why':
+          return 'Create a clear "Why" statement for your restaurant that goes beyond making money. Define the purpose that drives your team and the impact you want to have on guests and the community. Test this with 2-3 team members to ensure it resonates.'
       }
     }
 
@@ -874,6 +992,705 @@ export default function PlanTasks() {
                       </p>
                     )}
 
+                    {/* Interactive Forms for Strategic Leadership Tasks */}
+                    {!task.completed && task.title === 'Restaurant Strategy Diagnosis' && (
+                      <div className="mt-4">
+                        {!openForms[task.id] ? (
+                          <Button
+                            onClick={() => toggleForm(task.id)}
+                            variant="outline"
+                            className="w-full text-blue-600 border-blue-200 hover:bg-blue-50 h-12"
+                          >
+                            <Target className="h-4 w-4 mr-2" />
+                            Complete Strategic Diagnosis
+                          </Button>
+                        ) : (
+                          <div className="p-4 bg-blue-50 rounded-lg border border-blue-200">
+                            <div className="flex items-center justify-between mb-3">
+                              <div className="flex items-center gap-2">
+                                <Target className="h-5 w-5 text-blue-600" />
+                                <h4 className="font-semibold text-blue-800">Complete Your Strategic Diagnosis</h4>
+                              </div>
+                              <Button
+                                onClick={() => toggleForm(task.id)}
+                                variant="ghost"
+                                size="sm"
+                                className="text-blue-600 hover:text-blue-800"
+                              >
+                                <X className="h-4 w-4" />
+                              </Button>
+                            </div>
+                            <RestaurantStrategyDiagnosisForm
+                              value={task.evidence || ''}
+                              onChange={(value) => {
+                                // Update local state immediately for responsive UI
+                                setTasks(prevTasks => prevTasks.map(t =>
+                                  t.id === task.id
+                                    ? { ...t, evidence: value }
+                                    : t
+                                ))
+                                // Debounced auto-save
+                                debouncedAutoSave(task.id, value);
+                              }}
+                            />
+                            <div className="mt-3 pt-3 border-t border-blue-200 flex gap-2">
+                              <Button
+                                onClick={() => {
+                                  if (task.evidence && task.evidence.trim()) {
+                                    handleTaskToggle(task.id, true);
+                                  }
+                                }}
+                                disabled={!task.evidence || !task.evidence.trim()}
+                                className="flex-1 bg-blue-600 hover:bg-blue-700 text-white"
+                              >
+                                <CheckCircle className="h-4 w-4 mr-2" />
+                                Complete Task
+                              </Button>
+                              <Button
+                                onClick={() => toggleForm(task.id)}
+                                variant="outline"
+                                className="text-gray-600 border-gray-200 hover:bg-gray-50"
+                              >
+                                Save & Close
+                              </Button>
+                            </div>
+                          </div>
+                        )}
+                      </div>
+                    )}
+
+                    {!task.completed && task.title === 'Restaurant SWOT Analysis' && (
+                      <div className="mt-4">
+                        {!openForms[task.id] ? (
+                          <Button
+                            onClick={() => toggleForm(task.id)}
+                            variant="outline"
+                            className="w-full text-purple-600 border-purple-200 hover:bg-purple-50 h-12"
+                          >
+                            <TrendingUp className="h-4 w-4 mr-2" />
+                            Complete SWOT Analysis
+                          </Button>
+                        ) : (
+                          <div className="p-4 bg-purple-50 rounded-lg border border-purple-200">
+                            <div className="flex items-center justify-between mb-3">
+                              <div className="flex items-center gap-2">
+                                <TrendingUp className="h-5 w-5 text-purple-600" />
+                                <h4 className="font-semibold text-purple-800">Complete Your SWOT Analysis</h4>
+                              </div>
+                              <Button
+                                onClick={() => toggleForm(task.id)}
+                                variant="ghost"
+                                size="sm"
+                                className="text-purple-600 hover:text-purple-800"
+                              >
+                                <X className="h-4 w-4" />
+                              </Button>
+                            </div>
+                            <RestaurantSWOTAnalysisForm
+                              value={task.evidence || ''}
+                              onChange={(value) => {
+                                // Update local state immediately for responsive UI
+                                setTasks(prevTasks => prevTasks.map(t =>
+                                  t.id === task.id
+                                    ? { ...t, evidence: value }
+                                    : t
+                                ))
+                                // Debounced auto-save
+                                debouncedAutoSave(task.id, value);
+                              }}
+                            />
+                            <div className="mt-3 pt-3 border-t border-purple-200 flex gap-2">
+                              <Button
+                                onClick={() => {
+                                  if (task.evidence && task.evidence.trim()) {
+                                    handleTaskToggle(task.id, true);
+                                  }
+                                }}
+                                disabled={!task.evidence || !task.evidence.trim()}
+                                className="flex-1 bg-purple-600 hover:bg-purple-700 text-white"
+                              >
+                                <CheckCircle className="h-4 w-4 mr-2" />
+                                Complete Task
+                              </Button>
+                              <Button
+                                onClick={() => toggleForm(task.id)}
+                                variant="outline"
+                                className="text-gray-600 border-gray-200 hover:bg-gray-50"
+                              >
+                                Save & Close
+                              </Button>
+                            </div>
+                          </div>
+                        )}
+                      </div>
+                    )}
+
+                    {!task.completed && task.title === 'Strategic Decision Framework' && (
+                      <div className="mt-4">
+                        {!openForms[task.id] ? (
+                          <Button
+                            onClick={() => toggleForm(task.id)}
+                            variant="outline"
+                            className="w-full text-indigo-600 border-indigo-200 hover:bg-indigo-50 h-12"
+                          >
+                            <Brain className="h-4 w-4 mr-2" />
+                            Apply Decision Framework
+                          </Button>
+                        ) : (
+                          <div className="p-4 bg-indigo-50 rounded-lg border border-indigo-200">
+                            <div className="flex items-center justify-between mb-3">
+                              <div className="flex items-center gap-2">
+                                <Brain className="h-5 w-5 text-indigo-600" />
+                                <h4 className="font-semibold text-indigo-800">Strategic Decision Framework</h4>
+                              </div>
+                              <Button
+                                onClick={() => toggleForm(task.id)}
+                                variant="ghost"
+                                size="sm"
+                                className="text-indigo-600 hover:text-indigo-800"
+                              >
+                                <X className="h-4 w-4" />
+                              </Button>
+                            </div>
+                            <StrategicDecisionFrameworkForm
+                              value={task.evidence || ''}
+                              onChange={(value) => {
+                                // Update local state immediately for responsive UI
+                                setTasks(prevTasks => prevTasks.map(t =>
+                                  t.id === task.id
+                                    ? { ...t, evidence: value }
+                                    : t
+                                ))
+                                // Debounced auto-save
+                                debouncedAutoSave(task.id, value);
+                              }}
+                            />
+                            <div className="mt-3 pt-3 border-t border-indigo-200 flex gap-2">
+                              <Button
+                                onClick={() => {
+                                  if (task.evidence && task.evidence.trim()) {
+                                    handleTaskToggle(task.id, true);
+                                  }
+                                }}
+                                disabled={!task.evidence || !task.evidence.trim()}
+                                className="flex-1 bg-indigo-600 hover:bg-indigo-700 text-white"
+                              >
+                                <CheckCircle className="h-4 w-4 mr-2" />
+                                Complete Framework
+                              </Button>
+                              <Button
+                                onClick={() => toggleForm(task.id)}
+                                variant="outline"
+                                className="text-gray-600 border-gray-200 hover:bg-gray-50"
+                              >
+                                Save & Close
+                              </Button>
+                            </div>
+                          </div>
+                        )}
+                      </div>
+                    )}
+
+                    {!task.completed && task.title === 'Competitive Landscape Mapping' && (
+                      <div className="mt-4">
+                        {!openForms[task.id] ? (
+                          <Button
+                            onClick={() => toggleForm(task.id)}
+                            variant="outline"
+                            className="w-full text-orange-600 border-orange-200 hover:bg-orange-50 h-12"
+                          >
+                            <Target className="h-4 w-4 mr-2" />
+                            Complete Competitive Analysis
+                          </Button>
+                        ) : (
+                          <div className="p-4 bg-orange-50 rounded-lg border border-orange-200">
+                            <div className="flex items-center justify-between mb-3">
+                              <div className="flex items-center gap-2">
+                                <Target className="h-5 w-5 text-orange-600" />
+                                <h4 className="font-semibold text-orange-800">Competitive Landscape Analysis</h4>
+                              </div>
+                              <Button
+                                onClick={() => toggleForm(task.id)}
+                                variant="ghost"
+                                size="sm"
+                                className="text-orange-600 hover:text-orange-800"
+                              >
+                                <X className="h-4 w-4" />
+                              </Button>
+                            </div>
+                            <CompetitiveAnalysisForm
+                              value={task.evidence || ''}
+                              onChange={(value) => {
+                                // Update local state immediately for responsive UI
+                                setTasks(prevTasks => prevTasks.map(t =>
+                                  t.id === task.id
+                                    ? { ...t, evidence: value }
+                                    : t
+                                ))
+                                // Debounced auto-save
+                                debouncedAutoSave(task.id, value);
+                              }}
+                            />
+                            <div className="mt-3 pt-3 border-t border-orange-200 flex gap-2">
+                              <Button
+                                onClick={() => {
+                                  if (task.evidence && task.evidence.trim()) {
+                                    handleTaskToggle(task.id, true);
+                                  }
+                                }}
+                                disabled={!task.evidence || !task.evidence.trim()}
+                                className="flex-1 bg-orange-600 hover:bg-orange-700 text-white"
+                              >
+                                <CheckCircle className="h-4 w-4 mr-2" />
+                                Complete Analysis
+                              </Button>
+                              <Button
+                                onClick={() => toggleForm(task.id)}
+                                variant="outline"
+                                className="text-gray-600 border-gray-200 hover:bg-gray-50"
+                              >
+                                Save & Close
+                              </Button>
+                            </div>
+                          </div>
+                        )}
+                      </div>
+                    )}
+
+                    {!task.completed && task.title === 'Strategic Leadership Self-Assessment' && (
+                      <div className="mt-4">
+                        {!openForms[task.id] ? (
+                          <Button
+                            onClick={() => toggleForm(task.id)}
+                            variant="outline"
+                            className="w-full text-green-600 border-green-200 hover:bg-green-50 h-12"
+                          >
+                            <Brain className="h-4 w-4 mr-2" />
+                            Complete Self-Assessment
+                          </Button>
+                        ) : (
+                          <div className="p-4 bg-green-50 rounded-lg border border-green-200">
+                            <div className="flex items-center justify-between mb-3">
+                              <div className="flex items-center gap-2">
+                                <Brain className="h-5 w-5 text-green-600" />
+                                <h4 className="font-semibold text-green-800">Strategic Leadership Self-Assessment</h4>
+                              </div>
+                              <Button
+                                onClick={() => toggleForm(task.id)}
+                                variant="ghost"
+                                size="sm"
+                                className="text-green-600 hover:text-green-800"
+                              >
+                                <X className="h-4 w-4" />
+                              </Button>
+                            </div>
+                            <StrategicLeadershipSelfAssessmentForm
+                              value={task.evidence || ''}
+                              onChange={(value) => {
+                                setTasks(prevTasks => prevTasks.map(t =>
+                                  t.id === task.id ? { ...t, evidence: value } : t
+                                ))
+                                debouncedAutoSave(task.id, value);
+                              }}
+                            />
+                            <div className="mt-3 pt-3 border-t border-green-200 flex gap-2">
+                              <Button
+                                onClick={() => {
+                                  if (task.evidence && task.evidence.trim()) {
+                                    handleTaskToggle(task.id, true);
+                                  }
+                                }}
+                                disabled={!task.evidence || !task.evidence.trim()}
+                                className="flex-1 bg-green-600 hover:bg-green-700 text-white"
+                              >
+                                <CheckCircle className="h-4 w-4 mr-2" />
+                                Complete Assessment
+                              </Button>
+                              <Button
+                                onClick={() => toggleForm(task.id)}
+                                variant="outline"
+                                className="text-gray-600 border-gray-200 hover:bg-gray-50"
+                              >
+                                Save & Close
+                              </Button>
+                            </div>
+                          </div>
+                        )}
+                      </div>
+                    )}
+
+                    {!task.completed && task.title === 'Strategic Communication Practice' && (
+                      <div className="mt-4">
+                        {!openForms[task.id] ? (
+                          <Button
+                            onClick={() => toggleForm(task.id)}
+                            variant="outline"
+                            className="w-full text-purple-600 border-purple-200 hover:bg-purple-50 h-12"
+                          >
+                            <MessageSquare className="h-4 w-4 mr-2" />
+                            Practice Strategic Communication
+                          </Button>
+                        ) : (
+                          <div className="p-4 bg-purple-50 rounded-lg border border-purple-200">
+                            <div className="flex items-center justify-between mb-3">
+                              <div className="flex items-center gap-2">
+                                <MessageSquare className="h-5 w-5 text-purple-600" />
+                                <h4 className="font-semibold text-purple-800">Strategic Communication Practice</h4>
+                              </div>
+                              <Button
+                                onClick={() => toggleForm(task.id)}
+                                variant="ghost"
+                                size="sm"
+                                className="text-purple-600 hover:text-purple-800"
+                              >
+                                <X className="h-4 w-4" />
+                              </Button>
+                            </div>
+                            <StrategicCommunicationPracticeForm
+                              value={task.evidence || ''}
+                              onChange={(value) => {
+                                setTasks(prevTasks => prevTasks.map(t =>
+                                  t.id === task.id ? { ...t, evidence: value } : t
+                                ))
+                                debouncedAutoSave(task.id, value);
+                              }}
+                            />
+                            <div className="mt-3 pt-3 border-t border-purple-200 flex gap-2">
+                              <Button
+                                onClick={() => {
+                                  if (task.evidence && task.evidence.trim()) {
+                                    handleTaskToggle(task.id, true);
+                                  }
+                                }}
+                                disabled={!task.evidence || !task.evidence.trim()}
+                                className="flex-1 bg-purple-600 hover:bg-purple-700 text-white"
+                              >
+                                <CheckCircle className="h-4 w-4 mr-2" />
+                                Complete Practice
+                              </Button>
+                              <Button
+                                onClick={() => toggleForm(task.id)}
+                                variant="outline"
+                                className="text-gray-600 border-gray-200 hover:bg-gray-50"
+                              >
+                                Save & Close
+                              </Button>
+                            </div>
+                          </div>
+                        )}
+                      </div>
+                    )}
+
+                    {!task.completed && task.title === 'Strategic Leadership Philosophy' && (
+                      <div className="mt-4">
+                        {!openForms[task.id] ? (
+                          <Button
+                            onClick={() => toggleForm(task.id)}
+                            variant="outline"
+                            className="w-full text-red-600 border-red-200 hover:bg-red-50 h-12"
+                          >
+                            <Target className="h-4 w-4 mr-2" />
+                            Write Leadership Philosophy
+                          </Button>
+                        ) : (
+                          <div className="p-4 bg-red-50 rounded-lg border border-red-200">
+                            <div className="flex items-center justify-between mb-3">
+                              <div className="flex items-center gap-2">
+                                <Target className="h-5 w-5 text-red-600" />
+                                <h4 className="font-semibold text-red-800">Strategic Leadership Philosophy</h4>
+                              </div>
+                              <Button
+                                onClick={() => toggleForm(task.id)}
+                                variant="ghost"
+                                size="sm"
+                                className="text-red-600 hover:text-red-800"
+                              >
+                                <X className="h-4 w-4" />
+                              </Button>
+                            </div>
+                            <StrategicLeadershipPhilosophyForm
+                              value={task.evidence || ''}
+                              onChange={(value) => {
+                                setTasks(prevTasks => prevTasks.map(t =>
+                                  t.id === task.id ? { ...t, evidence: value } : t
+                                ))
+                                debouncedAutoSave(task.id, value);
+                              }}
+                            />
+                            <div className="mt-3 pt-3 border-t border-red-200 flex gap-2">
+                              <Button
+                                onClick={() => {
+                                  if (task.evidence && task.evidence.trim()) {
+                                    handleTaskToggle(task.id, true);
+                                  }
+                                }}
+                                disabled={!task.evidence || !task.evidence.trim()}
+                                className="flex-1 bg-red-600 hover:bg-red-700 text-white"
+                              >
+                                <CheckCircle className="h-4 w-4 mr-2" />
+                                Complete Philosophy
+                              </Button>
+                              <Button
+                                onClick={() => toggleForm(task.id)}
+                                variant="outline"
+                                className="text-gray-600 border-gray-200 hover:bg-gray-50"
+                              >
+                                Save & Close
+                              </Button>
+                            </div>
+                          </div>
+                        )}
+                      </div>
+                    )}
+
+                    {!task.completed && task.title === 'Strategic Change Initiative Plan' && (
+                      <div className="mt-4">
+                        {!openForms[task.id] ? (
+                          <Button
+                            onClick={() => toggleForm(task.id)}
+                            variant="outline"
+                            className="w-full text-orange-600 border-orange-200 hover:bg-orange-50 h-12"
+                          >
+                            <TrendingUp className="h-4 w-4 mr-2" />
+                            Create Change Plan
+                          </Button>
+                        ) : (
+                          <div className="p-4 bg-orange-50 rounded-lg border border-orange-200">
+                            <div className="flex items-center justify-between mb-3">
+                              <div className="flex items-center gap-2">
+                                <TrendingUp className="h-5 w-5 text-orange-600" />
+                                <h4 className="font-semibold text-orange-800">Strategic Change Initiative Plan</h4>
+                              </div>
+                              <Button
+                                onClick={() => toggleForm(task.id)}
+                                variant="ghost"
+                                size="sm"
+                                className="text-orange-600 hover:text-orange-800"
+                              >
+                                <X className="h-4 w-4" />
+                              </Button>
+                            </div>
+                            <StrategicChangeInitiativePlanForm
+                              value={task.evidence || ''}
+                              onChange={(value) => {
+                                setTasks(prevTasks => prevTasks.map(t =>
+                                  t.id === task.id ? { ...t, evidence: value } : t
+                                ))
+                                debouncedAutoSave(task.id, value);
+                              }}
+                            />
+                            <div className="mt-3 pt-3 border-t border-orange-200 flex gap-2">
+                              <Button
+                                onClick={() => {
+                                  if (task.evidence && task.evidence.trim()) {
+                                    handleTaskToggle(task.id, true);
+                                  }
+                                }}
+                                disabled={!task.evidence || !task.evidence.trim()}
+                                className="flex-1 bg-orange-600 hover:bg-orange-700 text-white"
+                              >
+                                <CheckCircle className="h-4 w-4 mr-2" />
+                                Complete Change Plan
+                              </Button>
+                              <Button
+                                onClick={() => toggleForm(task.id)}
+                                variant="outline"
+                                className="text-gray-600 border-gray-200 hover:bg-gray-50"
+                              >
+                                Save & Close
+                              </Button>
+                            </div>
+                          </div>
+                        )}
+                      </div>
+                    )}
+
+                    {!task.completed && task.title === '90-Day Strategic Plan' && (
+                      <div className="mt-4">
+                        {!openForms[task.id] ? (
+                          <Button
+                            onClick={() => toggleForm(task.id)}
+                            variant="outline"
+                            className="w-full text-blue-600 border-blue-200 hover:bg-blue-50 h-12"
+                          >
+                            <Calendar className="h-4 w-4 mr-2" />
+                            Create 90-Day Plan
+                          </Button>
+                        ) : (
+                          <div className="p-4 bg-blue-50 rounded-lg border border-blue-200">
+                            <div className="flex items-center justify-between mb-3">
+                              <div className="flex items-center gap-2">
+                                <Calendar className="h-5 w-5 text-blue-600" />
+                                <h4 className="font-semibold text-blue-800">90-Day Strategic Plan</h4>
+                              </div>
+                              <Button
+                                onClick={() => toggleForm(task.id)}
+                                variant="ghost"
+                                size="sm"
+                                className="text-blue-600 hover:text-blue-800"
+                              >
+                                <X className="h-4 w-4" />
+                              </Button>
+                            </div>
+                            <NinetyDayStrategicPlanForm
+                              value={task.evidence || ''}
+                              onChange={(value) => {
+                                setTasks(prevTasks => prevTasks.map(t =>
+                                  t.id === task.id ? { ...t, evidence: value } : t
+                                ))
+                                debouncedAutoSave(task.id, value);
+                              }}
+                            />
+                            <div className="mt-3 pt-3 border-t border-blue-200 flex gap-2">
+                              <Button
+                                onClick={() => {
+                                  if (task.evidence && task.evidence.trim()) {
+                                    handleTaskToggle(task.id, true);
+                                  }
+                                }}
+                                disabled={!task.evidence || !task.evidence.trim()}
+                                className="flex-1 bg-blue-600 hover:bg-blue-700 text-white"
+                              >
+                                <CheckCircle className="h-4 w-4 mr-2" />
+                                Complete Strategic Plan
+                              </Button>
+                              <Button
+                                onClick={() => toggleForm(task.id)}
+                                variant="outline"
+                                className="text-gray-600 border-gray-200 hover:bg-gray-50"
+                              >
+                                Save & Close
+                              </Button>
+                            </div>
+                          </div>
+                        )}
+                      </div>
+                    )}
+
+                    {!task.completed && task.title === 'Long-term Planning and Goal Setting' && (
+                      <div className="mt-4">
+                        {!openForms[task.id] ? (
+                          <Button
+                            onClick={() => toggleForm(task.id)}
+                            variant="outline"
+                            className="w-full text-green-600 border-green-200 hover:bg-green-50 h-12"
+                          >
+                            <Target className="h-4 w-4 mr-2" />
+                            Apply Long-term Planning
+                          </Button>
+                        ) : (
+                          <div className="p-4 bg-green-50 rounded-lg border border-green-200">
+                            <div className="flex items-center justify-between mb-3">
+                              <div className="flex items-center gap-2">
+                                <Target className="h-5 w-5 text-green-600" />
+                                <h4 className="font-semibold text-green-800">Long-term Planning and Goal Setting</h4>
+                              </div>
+                              <Button
+                                onClick={() => toggleForm(task.id)}
+                                variant="ghost"
+                                size="sm"
+                                className="text-green-600 hover:text-green-800"
+                              >
+                                <X className="h-4 w-4" />
+                              </Button>
+                            </div>
+                            <LongTermPlanningForm
+                              value={task.evidence || ''}
+                              onChange={(value) => {
+                                setTasks(prevTasks => prevTasks.map(t =>
+                                  t.id === task.id ? { ...t, evidence: value } : t
+                                ))
+                                debouncedAutoSave(task.id, value);
+                              }}
+                            />
+                            <div className="mt-3 pt-3 border-t border-green-200 flex gap-2">
+                              <Button
+                                onClick={() => {
+                                  if (task.evidence && task.evidence.trim()) {
+                                    handleTaskToggle(task.id, true);
+                                  }
+                                }}
+                                disabled={!task.evidence || !task.evidence.trim()}
+                                className="flex-1 bg-green-600 hover:bg-green-700 text-white"
+                              >
+                                <CheckCircle className="h-4 w-4 mr-2" />
+                                Complete Long-term Plan
+                              </Button>
+                              <Button
+                                onClick={() => toggleForm(task.id)}
+                                variant="outline"
+                                className="text-gray-600 border-gray-200 hover:bg-gray-50"
+                              >
+                                Save & Close
+                              </Button>
+                            </div>
+                          </div>
+                        )}
+                      </div>
+                    )}
+
+                    {!task.completed && task.title === 'Develop Your Restaurant\'s Why' && (
+                      <div className="mt-4">
+                        {!openForms[task.id] ? (
+                          <Button
+                            onClick={() => toggleForm(task.id)}
+                            variant="outline"
+                            className="w-full text-purple-600 border-purple-200 hover:bg-purple-50 h-12"
+                          >
+                            <Heart className="h-4 w-4 mr-2" />
+                            Create Why Statement
+                          </Button>
+                        ) : (
+                          <div className="p-4 bg-purple-50 rounded-lg border border-purple-200">
+                            <div className="flex items-center justify-between mb-3">
+                              <div className="flex items-center gap-2">
+                                <Heart className="h-5 w-5 text-purple-600" />
+                                <h4 className="font-semibold text-purple-800">Develop Your Restaurant's Why</h4>
+                              </div>
+                              <Button
+                                onClick={() => toggleForm(task.id)}
+                                variant="ghost"
+                                size="sm"
+                                className="text-purple-600 hover:text-purple-800"
+                              >
+                                <X className="h-4 w-4" />
+                              </Button>
+                            </div>
+                            <RestaurantWhyStatementForm
+                              value={task.evidence || ''}
+                              onChange={(value) => {
+                                setTasks(prevTasks => prevTasks.map(t =>
+                                  t.id === task.id ? { ...t, evidence: value } : t
+                                ))
+                                debouncedAutoSave(task.id, value);
+                              }}
+                            />
+                            <div className="mt-3 pt-3 border-t border-purple-200 flex gap-2">
+                              <Button
+                                onClick={() => {
+                                  if (task.evidence && task.evidence.trim()) {
+                                    handleTaskToggle(task.id, true);
+                                  }
+                                }}
+                                disabled={!task.evidence || !task.evidence.trim()}
+                                className="flex-1 bg-purple-600 hover:bg-purple-700 text-white"
+                              >
+                                <CheckCircle className="h-4 w-4 mr-2" />
+                                Complete Why Statement
+                              </Button>
+                              <Button
+                                onClick={() => toggleForm(task.id)}
+                                variant="outline"
+                                className="text-gray-600 border-gray-200 hover:bg-gray-50"
+                              >
+                                Save & Close
+                              </Button>
+                            </div>
+                          </div>
+                        )}
+                      </div>
+                    )}
+
                     <div className="flex flex-wrap gap-x-4 gap-y-2">
                       {task.estimatedTime && (
                         <div className="flex items-center gap-2 text-sm text-gray-500">
@@ -1011,6 +1828,50 @@ export default function PlanTasks() {
                           <div className="text-sm text-gray-600">
                             <p>Team development philosophy completed. Use the buttons above to view or edit your philosophy statement.</p>
                           </div>
+                        ) : task.title === 'Restaurant Strategy Diagnosis' ? (
+                          <div className="text-sm text-gray-600">
+                            <p>Strategic diagnosis completed. Use the buttons above to view or edit your analysis.</p>
+                          </div>
+                        ) : task.title === 'Restaurant SWOT Analysis' ? (
+                          <div className="text-sm text-gray-600">
+                            <p>SWOT analysis completed. Use the buttons above to view or edit your analysis.</p>
+                          </div>
+                        ) : task.title === 'Strategic Decision Framework' ? (
+                          <div className="text-sm text-gray-600">
+                            <p>Strategic decision framework completed. Use the buttons above to view or edit your decision analysis.</p>
+                          </div>
+                        ) : task.title === 'Competitive Landscape Mapping' ? (
+                          <div className="text-sm text-gray-600">
+                            <p>Competitive analysis completed. Use the buttons above to view or edit your competitive landscape analysis.</p>
+                          </div>
+                        ) : task.title === 'Strategic Leadership Self-Assessment' ? (
+                          <div className="text-sm text-gray-600">
+                            <p>Strategic leadership self-assessment completed. Use the buttons above to view or edit your assessment and development plan.</p>
+                          </div>
+                        ) : task.title === 'Strategic Communication Practice' ? (
+                          <div className="text-sm text-gray-600">
+                            <p>Strategic communication practice completed. Use the buttons above to view or edit your presentation and feedback.</p>
+                          </div>
+                        ) : task.title === 'Strategic Leadership Philosophy' ? (
+                          <div className="text-sm text-gray-600">
+                            <p>Strategic leadership philosophy completed. Use the buttons above to view or edit your philosophy statement.</p>
+                          </div>
+                        ) : task.title === 'Strategic Change Initiative Plan' ? (
+                          <div className="text-sm text-gray-600">
+                            <p>Strategic change initiative plan completed. Use the buttons above to view or edit your change management plan.</p>
+                          </div>
+                        ) : task.title === '90-Day Strategic Plan' ? (
+                          <div className="text-sm text-gray-600">
+                            <p>90-day strategic plan completed. Use the buttons above to view or edit your strategic objectives and implementation plan.</p>
+                          </div>
+                        ) : task.title === 'Long-term Planning and Goal Setting' ? (
+                          <div className="text-sm text-gray-600">
+                            <p>Long-term planning and goal setting completed. Use the buttons above to view or edit your strategic goals and accountability system.</p>
+                          </div>
+                        ) : task.title === 'Develop Your Restaurant\'s Why' ? (
+                          <div className="text-sm text-gray-600">
+                            <p>Restaurant Why statement completed. Use the buttons above to view or edit your purpose statement and team feedback.</p>
+                          </div>
                         ) : (
                           <p className="text-sm text-gray-600 whitespace-pre-wrap">{task.evidence}</p>
                         )}
@@ -1073,6 +1934,185 @@ export default function PlanTasks() {
                               Open Resource
                             </Button>
                           )}
+
+                          {/* Generic completion buttons for tasks with custom forms */}
+                          {[
+                            'Character vs. Capacity Reflection',
+                            'Introduction to Servant Leadership',
+                            'The Heart of Leadership: Introduction & Chapter 1',
+                            'The Heart of Leadership: Respond with Courage',
+                            'The Heart of Leadership: Final Chapters & Application',
+                            'The Heart of Leadership: Think Others First',
+                            'The Heart of Leadership: Expect the Best',
+                            'Selfless Leadership in Action',
+                            '30-Day Leadership Character Plan',
+                            'Leadership Values Exercise',
+                            'The Power of Vulnerability in Leadership',
+                            'Leadership Legacy Statement',
+                            'Active Listening Practice',
+                            'Setting Higher Expectations',
+                            'Courageous Conversation Plan',
+                            'Leadership Self-Assessment',
+                            'Servant Leadership in Action'
+                          ].includes(task.title) && !task.completed && (
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              className="w-full sm:w-auto text-green-600 border-green-200 hover:bg-green-50 h-10 sm:h-9"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                openCompletionDialog(task);
+                              }}
+                            >
+                              <CheckCircle className="h-4 w-4 mr-2" />
+                              Complete Task
+                            </Button>
+                          )}
+
+                          {/* Generic view/edit buttons for completed tasks with custom forms */}
+                          {[
+                            'Character vs. Capacity Reflection',
+                            'Introduction to Servant Leadership',
+                            'The Heart of Leadership: Introduction & Chapter 1',
+                            'The Heart of Leadership: Respond with Courage',
+                            'The Heart of Leadership: Final Chapters & Application',
+                            'The Heart of Leadership: Think Others First',
+                            'The Heart of Leadership: Expect the Best',
+                            'Selfless Leadership in Action',
+                            '30-Day Leadership Character Plan',
+                            'Leadership Values Exercise',
+                            'The Power of Vulnerability in Leadership',
+                            'Leadership Legacy Statement',
+                            'Active Listening Practice',
+                            'Setting Higher Expectations',
+                            'Courageous Conversation Plan',
+                            'Leadership Self-Assessment',
+                            'Servant Leadership in Action'
+                          ].includes(task.title) && task.completed && (
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              className="w-full sm:w-auto text-blue-600 border-blue-200 hover:bg-blue-50 h-10 sm:h-9"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                openCompletionDialog(task);
+                              }}
+                            >
+                              <FileText className="h-4 w-4 mr-2" />
+                              View/Edit
+                            </Button>
+                          )}
+
+                          {/* Completion buttons for tasks without specific custom forms but need completion */}
+                          {![
+                            'Character vs. Capacity Reflection',
+                            'Introduction to Servant Leadership',
+                            'The Heart of Leadership: Introduction & Chapter 1',
+                            'The Heart of Leadership: Respond with Courage',
+                            'The Heart of Leadership: Final Chapters & Application',
+                            'The Heart of Leadership: Think Others First',
+                            'The Heart of Leadership: Expect the Best',
+                            'Selfless Leadership in Action',
+                            '30-Day Leadership Character Plan',
+                            'Leadership Values Exercise',
+                            'The Power of Vulnerability in Leadership',
+                            'Leadership Legacy Statement',
+                            'Active Listening Practice',
+                            'Setting Higher Expectations',
+                            'Courageous Conversation Plan',
+                            'Leadership Self-Assessment',
+                            'Servant Leadership in Action',
+                            'The Art of Feedback',
+                            'GROW Coaching Conversation',
+                            'Development Plan Creation',
+                            'Training Effectiveness Audit',
+                            'Skill-Building Workshop',
+                            'Team Development Philosophy',
+                            'Restaurant Strategy Diagnosis',
+                            'Restaurant SWOT Analysis',
+                            'Strategic Decision Framework',
+                            'Competitive Landscape Mapping',
+                            'Strategic Leadership Self-Assessment',
+                            'Strategic Communication Practice',
+                            'Strategic Leadership Philosophy',
+                            'Strategic Change Initiative Plan',
+                            '90-Day Strategic Plan',
+                            'Long-term Planning and Goal Setting',
+                            'Develop Your Restaurant\'s Why',
+                            'Team Experience Survey',
+                            'Culture Leadership Plan',
+                            'Team Values Workshop',
+                            'Talent Assessment'
+                          ].includes(task.title) && !task.completed && ['reading', 'video', 'reflection', 'assessment', 'activity', 'task'].includes(task.type) && (
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              className="w-full sm:w-auto text-green-600 border-green-200 hover:bg-green-50 h-10 sm:h-9"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                openCompletionDialog(task);
+                              }}
+                            >
+                              <CheckCircle className="h-4 w-4 mr-2" />
+                              Complete Task
+                            </Button>
+                          )}
+
+                          {/* View/Edit buttons for completed tasks without specific custom forms */}
+                          {![
+                            'Character vs. Capacity Reflection',
+                            'Introduction to Servant Leadership',
+                            'The Heart of Leadership: Introduction & Chapter 1',
+                            'The Heart of Leadership: Respond with Courage',
+                            'The Heart of Leadership: Final Chapters & Application',
+                            'The Heart of Leadership: Think Others First',
+                            'The Heart of Leadership: Expect the Best',
+                            'Selfless Leadership in Action',
+                            '30-Day Leadership Character Plan',
+                            'Leadership Values Exercise',
+                            'The Power of Vulnerability in Leadership',
+                            'Leadership Legacy Statement',
+                            'Active Listening Practice',
+                            'Setting Higher Expectations',
+                            'Courageous Conversation Plan',
+                            'Leadership Self-Assessment',
+                            'Servant Leadership in Action',
+                            'The Art of Feedback',
+                            'GROW Coaching Conversation',
+                            'Development Plan Creation',
+                            'Training Effectiveness Audit',
+                            'Skill-Building Workshop',
+                            'Team Development Philosophy',
+                            'Restaurant Strategy Diagnosis',
+                            'Restaurant SWOT Analysis',
+                            'Strategic Decision Framework',
+                            'Competitive Landscape Mapping',
+                            'Strategic Leadership Self-Assessment',
+                            'Strategic Communication Practice',
+                            'Strategic Leadership Philosophy',
+                            'Strategic Change Initiative Plan',
+                            '90-Day Strategic Plan',
+                            'Long-term Planning and Goal Setting',
+                            'Develop Your Restaurant\'s Why',
+                            'Team Experience Survey',
+                            'Culture Leadership Plan',
+                            'Team Values Workshop',
+                            'Talent Assessment'
+                          ].includes(task.title) && task.completed && ['reading', 'video', 'reflection', 'assessment', 'activity', 'task'].includes(task.type) && (
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              className="w-full sm:w-auto text-blue-600 border-blue-200 hover:bg-blue-50 h-10 sm:h-9"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                openCompletionDialog(task);
+                              }}
+                            >
+                              <FileText className="h-4 w-4 mr-2" />
+                              View/Edit
+                            </Button>
+                          )}
+
                           {task.title === 'The Art of Feedback' && !task.completed && (
                             <Button
                               variant="outline"
@@ -1205,46 +2245,136 @@ export default function PlanTasks() {
                         </>
                       )}
                       {task.title === 'Culture Leadership Plan' && (
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          className="w-full sm:w-auto text-green-600 border-green-200 hover:bg-green-50 h-10 sm:h-9"
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            window.open('/templates/90-day-culture-leadership-plan-example.html', '_blank');
-                          }}
-                        >
-                          <ExternalLink className="h-4 w-4 mr-2" />
-                          Example Plan
-                        </Button>
+                        <>
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            className="w-full sm:w-auto text-blue-600 border-blue-200 hover:bg-blue-50 h-10 sm:h-9"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              window.open('/templates/90-day-culture-leadership-plan-example.html', '_blank');
+                            }}
+                          >
+                            <ExternalLink className="h-4 w-4 mr-2" />
+                            View Example
+                          </Button>
+                          {!task.completed && (
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              className="w-full sm:w-auto text-green-600 border-green-200 hover:bg-green-50 h-10 sm:h-9"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                openCompletionDialog(task);
+                              }}
+                            >
+                              <CheckCircle className="h-4 w-4 mr-2" />
+                              Complete Task
+                            </Button>
+                          )}
+                          {task.completed && (
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              className="w-full sm:w-auto text-blue-600 border-blue-200 hover:bg-blue-50 h-10 sm:h-9"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                openCompletionDialog(task);
+                              }}
+                            >
+                              <FileText className="h-4 w-4 mr-2" />
+                              View/Edit Plan
+                            </Button>
+                          )}
+                        </>
                       )}
                       {task.title === 'Team Values Workshop' && (
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          className="w-full sm:w-auto text-green-600 border-green-200 hover:bg-green-50 h-10 sm:h-9"
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            window.open('/templates/team-values-workshop-example.html', '_blank');
-                          }}
-                        >
-                          <ExternalLink className="h-4 w-4 mr-2" />
-                          Example Workshop
-                        </Button>
+                        <>
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            className="w-full sm:w-auto text-blue-600 border-blue-200 hover:bg-blue-50 h-10 sm:h-9"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              window.open('/templates/team-values-workshop-example.html', '_blank');
+                            }}
+                          >
+                            <ExternalLink className="h-4 w-4 mr-2" />
+                            View Example
+                          </Button>
+                          {!task.completed && (
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              className="w-full sm:w-auto text-green-600 border-green-200 hover:bg-green-50 h-10 sm:h-9"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                openCompletionDialog(task);
+                              }}
+                            >
+                              <CheckCircle className="h-4 w-4 mr-2" />
+                              Complete Task
+                            </Button>
+                          )}
+                          {task.completed && (
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              className="w-full sm:w-auto text-blue-600 border-blue-200 hover:bg-blue-50 h-10 sm:h-9"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                openCompletionDialog(task);
+                              }}
+                            >
+                              <FileText className="h-4 w-4 mr-2" />
+                              View/Edit Workshop
+                            </Button>
+                          )}
+                        </>
                       )}
                       {task.title === 'Talent Assessment' && (
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          className="w-full sm:w-auto text-green-600 border-green-200 hover:bg-green-50 h-10 sm:h-9"
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            setTalentExamplesDialog(true);
-                          }}
-                        >
-                          <ClipboardList className="h-4 w-4 mr-2" />
-                          View Examples
-                        </Button>
+                        <>
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            className="w-full sm:w-auto text-blue-600 border-blue-200 hover:bg-blue-50 h-10 sm:h-9"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              setTalentExamplesDialog(true);
+                            }}
+                          >
+                            <ClipboardList className="h-4 w-4 mr-2" />
+                            View Examples
+                          </Button>
+                          {!task.completed && (
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              className="w-full sm:w-auto text-green-600 border-green-200 hover:bg-green-50 h-10 sm:h-9"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                openCompletionDialog(task);
+                              }}
+                            >
+                              <CheckCircle className="h-4 w-4 mr-2" />
+                              Complete Assessment
+                            </Button>
+                          )}
+                          {task.completed && (
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              className="w-full sm:w-auto text-blue-600 border-blue-200 hover:bg-blue-50 h-10 sm:h-9"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                openCompletionDialog(task);
+                              }}
+                            >
+                              <FileText className="h-4 w-4 mr-2" />
+                              View/Edit Assessment
+                            </Button>
+                          )}
+                        </>
                       )}
                       {/* Training Effectiveness Audit */}
                       {task.title === 'Training Effectiveness Audit' && !task.completed && (
@@ -1331,6 +2461,171 @@ export default function PlanTasks() {
                         >
                           <FileText className="h-4 w-4 mr-2" />
                           View/Edit Philosophy
+                        </Button>
+                      )}
+                      {/* Restaurant Strategy Diagnosis */}
+                      {task.title === 'Restaurant Strategy Diagnosis' && task.completed && (
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          className="w-full sm:w-auto text-blue-600 border-blue-200 hover:bg-blue-50 h-10 sm:h-9"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            openCompletionDialog(task);
+                          }}
+                        >
+                          <Target className="h-4 w-4 mr-2" />
+                          View/Edit Diagnosis
+                        </Button>
+                      )}
+                      {/* Restaurant SWOT Analysis */}
+                      {task.title === 'Restaurant SWOT Analysis' && task.completed && (
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          className="w-full sm:w-auto text-purple-600 border-purple-200 hover:bg-purple-50 h-10 sm:h-9"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            openCompletionDialog(task);
+                          }}
+                        >
+                          <TrendingUp className="h-4 w-4 mr-2" />
+                          View/Edit SWOT
+                        </Button>
+                      )}
+                      {/* Strategic Decision Framework */}
+                      {task.title === 'Strategic Decision Framework' && task.completed && (
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          className="w-full sm:w-auto text-indigo-600 border-indigo-200 hover:bg-indigo-50 h-10 sm:h-9"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            openCompletionDialog(task);
+                          }}
+                        >
+                          <Brain className="h-4 w-4 mr-2" />
+                          View/Edit Framework
+                        </Button>
+                      )}
+                      {/* Competitive Landscape Mapping */}
+                      {task.title === 'Competitive Landscape Mapping' && task.completed && (
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          className="w-full sm:w-auto text-orange-600 border-orange-200 hover:bg-orange-50 h-10 sm:h-9"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            openCompletionDialog(task);
+                          }}
+                        >
+                          <Target className="h-4 w-4 mr-2" />
+                          View/Edit Analysis
+                        </Button>
+                      )}
+                      {/* Strategic Leadership Self-Assessment */}
+                      {task.title === 'Strategic Leadership Self-Assessment' && task.completed && (
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          className="w-full sm:w-auto text-green-600 border-green-200 hover:bg-green-50 h-10 sm:h-9"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            openCompletionDialog(task);
+                          }}
+                        >
+                          <Brain className="h-4 w-4 mr-2" />
+                          View/Edit Assessment
+                        </Button>
+                      )}
+                      {/* Strategic Communication Practice */}
+                      {task.title === 'Strategic Communication Practice' && task.completed && (
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          className="w-full sm:w-auto text-purple-600 border-purple-200 hover:bg-purple-50 h-10 sm:h-9"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            openCompletionDialog(task);
+                          }}
+                        >
+                          <MessageSquare className="h-4 w-4 mr-2" />
+                          View/Edit Practice
+                        </Button>
+                      )}
+                      {/* Strategic Leadership Philosophy */}
+                      {task.title === 'Strategic Leadership Philosophy' && task.completed && (
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          className="w-full sm:w-auto text-red-600 border-red-200 hover:bg-red-50 h-10 sm:h-9"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            openCompletionDialog(task);
+                          }}
+                        >
+                          <Target className="h-4 w-4 mr-2" />
+                          View/Edit Philosophy
+                        </Button>
+                      )}
+                      {/* Strategic Change Initiative Plan */}
+                      {task.title === 'Strategic Change Initiative Plan' && task.completed && (
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          className="w-full sm:w-auto text-orange-600 border-orange-200 hover:bg-orange-50 h-10 sm:h-9"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            openCompletionDialog(task);
+                          }}
+                        >
+                          <TrendingUp className="h-4 w-4 mr-2" />
+                          View/Edit Change Plan
+                        </Button>
+                      )}
+                      {/* 90-Day Strategic Plan */}
+                      {task.title === '90-Day Strategic Plan' && task.completed && (
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          className="w-full sm:w-auto text-blue-600 border-blue-200 hover:bg-blue-50 h-10 sm:h-9"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            openCompletionDialog(task);
+                          }}
+                        >
+                          <Calendar className="h-4 w-4 mr-2" />
+                          View/Edit Strategic Plan
+                        </Button>
+                      )}
+                      {/* Long-term Planning and Goal Setting */}
+                      {task.title === 'Long-term Planning and Goal Setting' && task.completed && (
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          className="w-full sm:w-auto text-green-600 border-green-200 hover:bg-green-50 h-10 sm:h-9"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            openCompletionDialog(task);
+                          }}
+                        >
+                          <Target className="h-4 w-4 mr-2" />
+                          View/Edit Long-term Plan
+                        </Button>
+                      )}
+                      {/* Develop Your Restaurant's Why */}
+                      {task.title === 'Develop Your Restaurant\'s Why' && task.completed && (
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          className="w-full sm:w-auto text-purple-600 border-purple-200 hover:bg-purple-50 h-10 sm:h-9"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            openCompletionDialog(task);
+                          }}
+                        >
+                          <Heart className="h-4 w-4 mr-2" />
+                          View/Edit Why Statement
                         </Button>
                       )}
                     </div>
@@ -1536,9 +2831,97 @@ export default function PlanTasks() {
                     />
                   )}
 
+                  {/* Restaurant Strategy Diagnosis */}
+                  {selectedTask.title === "Restaurant Strategy Diagnosis" && (
+                    <RestaurantStrategyDiagnosisForm
+                      value={completionEvidence}
+                      onChange={setCompletionEvidence}
+                    />
+                  )}
+
+                  {/* Restaurant SWOT Analysis */}
+                  {selectedTask.title === "Restaurant SWOT Analysis" && (
+                    <RestaurantSWOTAnalysisForm
+                      value={completionEvidence}
+                      onChange={setCompletionEvidence}
+                    />
+                  )}
+
                   {/* Team Development Philosophy */}
                   {selectedTask.title === "Team Development Philosophy" && (
                     <TeamDevelopmentPhilosophyForm
+                      value={completionEvidence}
+                      onChange={setCompletionEvidence}
+                    />
+                  )}
+
+                  {/* Strategic Decision Framework */}
+                  {selectedTask.title === "Strategic Decision Framework" && (
+                    <StrategicDecisionFrameworkForm
+                      value={completionEvidence}
+                      onChange={setCompletionEvidence}
+                    />
+                  )}
+
+                  {/* Competitive Landscape Mapping */}
+                  {selectedTask.title === "Competitive Landscape Mapping" && (
+                    <CompetitiveAnalysisForm
+                      value={completionEvidence}
+                      onChange={setCompletionEvidence}
+                    />
+                  )}
+
+                  {/* Strategic Leadership Self-Assessment */}
+                  {selectedTask.title === "Strategic Leadership Self-Assessment" && (
+                    <StrategicLeadershipSelfAssessmentForm
+                      value={completionEvidence}
+                      onChange={setCompletionEvidence}
+                    />
+                  )}
+
+                  {/* Strategic Communication Practice */}
+                  {selectedTask.title === "Strategic Communication Practice" && (
+                    <StrategicCommunicationPracticeForm
+                      value={completionEvidence}
+                      onChange={setCompletionEvidence}
+                    />
+                  )}
+
+                  {/* Strategic Leadership Philosophy */}
+                  {selectedTask.title === "Strategic Leadership Philosophy" && (
+                    <StrategicLeadershipPhilosophyForm
+                      value={completionEvidence}
+                      onChange={setCompletionEvidence}
+                    />
+                  )}
+
+                  {/* Strategic Change Initiative Plan */}
+                  {selectedTask.title === "Strategic Change Initiative Plan" && (
+                    <StrategicChangeInitiativePlanForm
+                      value={completionEvidence}
+                      onChange={setCompletionEvidence}
+                    />
+                  )}
+
+                  {/* 90-Day Strategic Plan */}
+                  {selectedTask.title === "90-Day Strategic Plan" && (
+                    <NinetyDayStrategicPlanForm
+                      value={completionEvidence}
+                      onChange={setCompletionEvidence}
+                    />
+                  )}
+
+                  {/* Long-term Planning and Goal Setting */}
+                  {selectedTask.title === "Long-term Planning and Goal Setting" && (
+                    <LongTermPlanningForm
+                      value={completionEvidence}
+                      onChange={setCompletionEvidence}
+                    />
+                  )}
+
+                  {/* Develop Your Restaurant's Why */}
+                  {selectedTask.title === "Develop Your Restaurant's Why" && (
+                    <RestaurantWhyStatementForm
                       value={completionEvidence}
                       onChange={setCompletionEvidence}
                     />
@@ -1568,7 +2951,18 @@ export default function PlanTasks() {
                     "Development Plan Creation",
                     "Training Effectiveness Audit",
                     "Skill-Building Workshop",
-                    "Team Development Philosophy"
+                    "Team Development Philosophy",
+                    "Restaurant Strategy Diagnosis",
+                    "Restaurant SWOT Analysis",
+                    "Strategic Decision Framework",
+                    "Competitive Landscape Mapping",
+                    "Strategic Leadership Self-Assessment",
+                    "Strategic Communication Practice",
+                    "Strategic Leadership Philosophy",
+                    "Strategic Change Initiative Plan",
+                    "90-Day Strategic Plan",
+                    "Long-term Planning and Goal Setting",
+                    "Develop Your Restaurant's Why"
                   ].includes(selectedTask.title) && (
                     <div className="space-y-2">
                       <div className="text-xs font-medium">

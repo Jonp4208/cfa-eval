@@ -200,7 +200,8 @@ function getPlanTitle(planId) {
     'restaurant-culture-builder': 'Restaurant Culture Builder',
     'operational-excellence': 'Operational Excellence',
     'team-development': 'Team Development',
-    'guest-experience-mastery': 'Guest Experience Mastery'
+    'guest-experience-mastery': 'Guest Experience Mastery',
+    'strategic-leadership': 'Strategic Leadership Mastery'
   };
 
   return planTitles[planId] || 'Leadership Plan';
@@ -784,6 +785,143 @@ router.post('/plans/:planId/enroll', auth, checkSubscription, async (req, res) =
           estimatedTime: '45 minutes'
         }
       ];
+    } else if (planId === 'strategic-leadership') {
+      learningTasks = [
+        {
+          id: 'strategic-task-1',
+          type: 'video',
+          title: 'Introduction to Strategic Thinking',
+          description: 'Watch this comprehensive introduction to strategic thinking for leaders. Focus on understanding the difference between operational thinking and strategic thinking, and how to develop a strategic mindset in your daily leadership role.',
+          resourceUrl: 'https://www.youtube.com/watch?v=iuYlGRnC7J8',
+          estimatedTime: '20 minutes'
+        },
+        {
+          id: 'strategic-task-2',
+          type: 'reading',
+          title: 'Good Strategy Bad Strategy - Core Concepts',
+          description: 'Read the first three chapters of "Good Strategy Bad Strategy" by Richard Rumelt. Focus on understanding what makes a strategy good versus bad, and the kernel of good strategy (diagnosis, guiding policy, coherent action). Take notes on how these concepts apply to restaurant leadership.',
+          resourceUrl: 'https://www.amazon.com/Good-Strategy-Bad-Strategy-Difference/dp/0307886239',
+          estimatedTime: '45-60 minutes'
+        },
+        {
+          id: 'strategic-task-2-activity',
+          type: 'activity',
+          title: 'Restaurant Strategy Diagnosis',
+          description: 'Apply the strategic diagnosis framework to your restaurant. Identify the key challenges and opportunities your restaurant faces. Write a clear diagnosis of your current situation, including competitive position, operational challenges, and market opportunities.',
+          estimatedTime: '45 minutes'
+        },
+        {
+          id: 'strategic-task-3',
+          type: 'video',
+          title: 'Start with Why - Vision and Purpose',
+          description: 'Watch Simon Sinek\'s famous TED Talk "Start with Why" and reflect on how purpose-driven leadership creates strategic advantage. Consider how you can apply the "Golden Circle" concept to your restaurant leadership.',
+          resourceUrl: 'https://www.ted.com/talks/simon_sinek_how_great_leaders_inspire_action',
+          estimatedTime: '18 minutes'
+        },
+        {
+          id: 'strategic-task-3-activity',
+          type: 'activity',
+          title: 'Develop Your Restaurant\'s Why',
+          description: 'Create a clear "Why" statement for your restaurant that goes beyond making money. Define the purpose that drives your team and the impact you want to have on guests and the community. Test this with 2-3 team members to ensure it resonates.',
+          estimatedTime: '30 minutes'
+        },
+        {
+          id: 'strategic-task-4',
+          type: 'reading',
+          title: 'Strategic Planning Fundamentals',
+          description: 'Read this comprehensive guide on strategic planning for small businesses. Focus on the sections about environmental scanning, SWOT analysis, and setting strategic objectives. Adapt the concepts to restaurant operations.',
+          resourceUrl: 'https://www.sba.gov/business-guide/plan-your-business/write-your-business-plan',
+          estimatedTime: '30 minutes'
+        },
+        {
+          id: 'strategic-task-4-activity',
+          type: 'activity',
+          title: 'Restaurant SWOT Analysis',
+          description: 'Conduct a thorough SWOT analysis for your restaurant: Strengths (what you do well), Weaknesses (areas for improvement), Opportunities (external factors you can leverage), and Threats (external challenges). Include input from at least two team members for different perspectives.',
+          estimatedTime: '45 minutes'
+        },
+        {
+          id: 'strategic-task-5',
+          type: 'video',
+          title: 'Decision Making Under Uncertainty',
+          description: 'Watch this Harvard Business Review video on making strategic decisions when you don\'t have all the information. Learn frameworks for decision-making in uncertain environments, which is common in restaurant operations.',
+          resourceUrl: 'https://www.youtube.com/watch?v=7VB_PqEQ4zY',
+          estimatedTime: '15 minutes'
+        },
+        {
+          id: 'strategic-task-5-activity',
+          type: 'activity',
+          title: 'Strategic Decision Framework',
+          description: 'Identify a significant decision you need to make in your restaurant (staffing, menu, operations, etc.). Apply a structured decision-making framework: 1) Define the decision clearly, 2) Gather relevant information, 3) Identify alternatives, 4) Evaluate pros/cons, 5) Make the decision, 6) Plan implementation. Document your process.',
+          estimatedTime: '1 hour'
+        },
+        {
+          id: 'strategic-task-6',
+          type: 'reading',
+          title: 'Competitive Analysis and Market Positioning',
+          description: 'Read this guide on competitive analysis for restaurants. Learn how to systematically analyze your competition and identify your unique positioning in the market.',
+          resourceUrl: 'https://www.restaurantowner.com/public/How-to-Analyze-Your-Restaurant-Competition.cfm',
+          estimatedTime: '25 minutes'
+        },
+        {
+          id: 'strategic-task-6-activity',
+          type: 'activity',
+          title: 'Competitive Landscape Mapping',
+          description: 'Create a competitive analysis of the 5 restaurants that compete most directly with yours. For each competitor, analyze: menu offerings, pricing, service style, target customers, strengths, and weaknesses. Identify gaps in the market that your restaurant could fill.',
+          estimatedTime: '1.5 hours'
+        },
+        {
+          id: 'strategic-task-7',
+          type: 'video',
+          title: 'Leading Change and Innovation',
+          description: 'Watch John Kotter\'s presentation on leading change. Focus on the 8-step process for leading change and how to overcome resistance to strategic initiatives.',
+          resourceUrl: 'https://www.youtube.com/watch?v=Gc_FMz5_RCE',
+          estimatedTime: '25 minutes'
+        },
+        {
+          id: 'strategic-task-7-activity',
+          type: 'activity',
+          title: 'Strategic Change Initiative Plan',
+          description: 'Identify one strategic change you want to implement in your restaurant (new process, service improvement, team development initiative, etc.). Create a change management plan using Kotter\'s 8-step process, including how you will communicate the change and address potential resistance.',
+          estimatedTime: '45 minutes'
+        },
+        {
+          id: 'strategic-task-8',
+          type: 'reading',
+          title: 'Long-term Planning and Goal Setting',
+          description: 'Read this article on setting and achieving long-term strategic goals. Focus on the difference between strategic goals and operational goals, and how to create accountability systems for strategic initiatives.',
+          resourceUrl: 'https://hbr.org/2017/01/how-to-set-goals-that-actually-get-achieved',
+          estimatedTime: '20 minutes'
+        },
+        {
+          id: 'strategic-task-8-activity',
+          type: 'activity',
+          title: '90-Day Strategic Plan',
+          description: 'Create a 90-day strategic plan for your restaurant with 3-5 strategic objectives. For each objective, define: specific outcomes, key milestones, resources needed, potential obstacles, and success metrics. Include both team development and operational improvement goals.',
+          estimatedTime: '1 hour'
+        },
+        {
+          id: 'strategic-task-9',
+          type: 'reflection',
+          title: 'Strategic Leadership Self-Assessment',
+          description: 'Complete a comprehensive self-assessment of your strategic leadership capabilities. Evaluate yourself on: strategic thinking, vision communication, decision-making, change leadership, and long-term planning. Identify your top 3 strategic leadership development priorities for the next 6 months.',
+          estimatedTime: '30 minutes'
+        },
+        {
+          id: 'strategic-task-10',
+          type: 'activity',
+          title: 'Strategic Communication Practice',
+          description: 'Practice communicating strategic concepts to your team. Choose one strategic initiative from your 90-day plan and create a 5-minute presentation explaining: why it matters, what success looks like, and how team members contribute. Deliver this to at least 3 team members and gather feedback.',
+          estimatedTime: '1 hour'
+        },
+        {
+          id: 'strategic-task-11',
+          type: 'reflection',
+          title: 'Strategic Leadership Philosophy',
+          description: 'Write a 1-page strategic leadership philosophy statement. Include your beliefs about: the role of strategy in restaurant leadership, how you balance short-term operations with long-term thinking, your approach to strategic decision-making, and how you will continue developing strategic thinking skills.',
+          estimatedTime: '45 minutes'
+        }
+      ];
     }
 
     // Create enrollment with learning tasks
@@ -845,6 +983,12 @@ router.get('/my-plans', auth, async (req, res) => {
         id: 'team-development',
         title: 'Team Development Expert',
         description: 'Build a high-performing restaurant team by mastering the art of hiring, training, and developing exceptional team members.',
+        isFree: false
+      },
+      {
+        id: 'strategic-leadership',
+        title: 'Strategic Leadership Mastery',
+        description: 'Develop strategic thinking, vision-setting, and decision-making capabilities to drive organizational success. This comprehensive plan builds the skills needed to think beyond day-to-day operations and lead with strategic purpose.',
         isFree: false
       }
     ];
