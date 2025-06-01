@@ -103,6 +103,12 @@ import CustomerExperienceExcellenceForm from '@/components/leadership/CustomerEx
 import ServiceRecoveryStrategiesForm from '@/components/leadership/ServiceRecoveryStrategiesForm'
 import HospitalityCultureForm from '@/components/leadership/HospitalityCultureForm'
 import CustomerExperiencePhilosophyForm from '@/components/leadership/CustomerExperiencePhilosophyForm'
+import CustomerJourneyMappingForm from '@/components/leadership/CustomerJourneyMappingForm'
+import RitzCarltonServiceCultureForm from '@/components/leadership/RitzCarltonServiceCultureForm'
+import ServiceStandardsDevelopmentForm from '@/components/leadership/ServiceStandardsDevelopmentForm'
+import CustomerFeedbackMeasurementForm from '@/components/leadership/CustomerFeedbackMeasurementForm'
+import CustomerFeedbackSystemForm from '@/components/leadership/CustomerFeedbackSystemForm'
+import ServiceRecoveryTrainingForm from '@/components/leadership/ServiceRecoveryTrainingForm'
 
 interface Task {
   id: string
@@ -4330,6 +4336,48 @@ export default function PlanTasks() {
                     />
                   )}
 
+                  {selectedTask.title === "Customer Journey Mapping" && (
+                    <CustomerJourneyMappingForm
+                      value={completionEvidence}
+                      onChange={setCompletionEvidence}
+                    />
+                  )}
+
+                  {selectedTask.title === "Creating Ritz-Carlton Service Culture" && (
+                    <RitzCarltonServiceCultureForm
+                      value={completionEvidence}
+                      onChange={setCompletionEvidence}
+                    />
+                  )}
+
+                  {selectedTask.title === "Service Standards Development" && (
+                    <ServiceStandardsDevelopmentForm
+                      value={completionEvidence}
+                      onChange={setCompletionEvidence}
+                    />
+                  )}
+
+                  {selectedTask.title === "Customer Feedback and Measurement" && (
+                    <CustomerFeedbackMeasurementForm
+                      value={completionEvidence}
+                      onChange={setCompletionEvidence}
+                    />
+                  )}
+
+                  {selectedTask.title === "Customer Feedback System" && (
+                    <CustomerFeedbackSystemForm
+                      value={completionEvidence}
+                      onChange={setCompletionEvidence}
+                    />
+                  )}
+
+                  {selectedTask.title === "Service Recovery Training" && (
+                    <ServiceRecoveryTrainingForm
+                      value={completionEvidence}
+                      onChange={setCompletionEvidence}
+                    />
+                  )}
+
                   {/* Default textarea for tasks without a custom form */}
                   {![
                     "Character vs. Capacity Reflection",
@@ -4379,7 +4427,13 @@ export default function PlanTasks() {
                     "Customer Experience Excellence",
                     "Service Recovery Strategies",
                     "Building a Hospitality Culture",
-                    "Customer Experience Philosophy"
+                    "Customer Experience Philosophy",
+                    "Customer Journey Mapping",
+                    "Creating Ritz-Carlton Service Culture",
+                    "Service Standards Development",
+                    "Customer Feedback and Measurement",
+                    "Customer Feedback System",
+                    "Service Recovery Training"
                   ].includes(selectedTask.title) && (
                     <div className="space-y-2">
                       <div className="text-xs font-medium">
