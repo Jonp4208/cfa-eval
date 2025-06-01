@@ -98,6 +98,12 @@ import KPIDashboardForm from '@/components/leadership/KPIDashboardForm'
 import ContinuousImprovementForm from '@/components/leadership/ContinuousImprovementForm'
 import OperationalExcellencePhilosophyForm from '@/components/leadership/OperationalExcellencePhilosophyForm'
 
+// Customer Experience Forms
+import CustomerExperienceExcellenceForm from '@/components/leadership/CustomerExperienceExcellenceForm'
+import ServiceRecoveryStrategiesForm from '@/components/leadership/ServiceRecoveryStrategiesForm'
+import HospitalityCultureForm from '@/components/leadership/HospitalityCultureForm'
+import CustomerExperiencePhilosophyForm from '@/components/leadership/CustomerExperiencePhilosophyForm'
+
 interface Task {
   id: string
   type: 'video' | 'reading' | 'activity' | 'reflection' | 'assessment' | 'task'
@@ -377,7 +383,8 @@ export default function PlanTasks() {
       'operational-excellence': 'Operational Excellence',
       'guest-experience-mastery': 'Guest Experience Mastery',
       'strategic-leadership': 'Strategic Leadership Mastery',
-      'innovation-change': 'Innovation & Change Champion'
+      'innovation-change': 'Innovation & Change Champion',
+      'customer-experience': 'Customer Experience Leader'
     }
     setPlanTitle(fallbackTitles[planId as keyof typeof fallbackTitles] || 'Leadership Plan')
   }
@@ -4294,6 +4301,35 @@ export default function PlanTasks() {
                     />
                   )}
 
+                  {/* Customer Experience Forms */}
+                  {selectedTask.title === "Customer Experience Excellence" && (
+                    <CustomerExperienceExcellenceForm
+                      value={completionEvidence}
+                      onChange={setCompletionEvidence}
+                    />
+                  )}
+
+                  {selectedTask.title === "Service Recovery Strategies" && (
+                    <ServiceRecoveryStrategiesForm
+                      value={completionEvidence}
+                      onChange={setCompletionEvidence}
+                    />
+                  )}
+
+                  {selectedTask.title === "Building a Hospitality Culture" && (
+                    <HospitalityCultureForm
+                      value={completionEvidence}
+                      onChange={setCompletionEvidence}
+                    />
+                  )}
+
+                  {selectedTask.title === "Customer Experience Philosophy" && (
+                    <CustomerExperiencePhilosophyForm
+                      value={completionEvidence}
+                      onChange={setCompletionEvidence}
+                    />
+                  )}
+
                   {/* Default textarea for tasks without a custom form */}
                   {![
                     "Character vs. Capacity Reflection",
@@ -4339,7 +4375,11 @@ export default function PlanTasks() {
                     "Change Management Strategies",
                     "Change Implementation Plan",
                     "Continuous Improvement System",
-                    "Innovation Leadership Philosophy"
+                    "Innovation Leadership Philosophy",
+                    "Customer Experience Excellence",
+                    "Service Recovery Strategies",
+                    "Building a Hospitality Culture",
+                    "Customer Experience Philosophy"
                   ].includes(selectedTask.title) && (
                     <div className="space-y-2">
                       <div className="text-xs font-medium">

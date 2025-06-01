@@ -1234,9 +1234,9 @@ router.post('/plans/:planId/enroll', auth, checkSubscription, async (req, res) =
           id: 'cx-task-1',
           type: 'video',
           title: 'Customer Experience Excellence',
-          description: 'Watch this comprehensive guide to creating exceptional customer experiences in restaurants. Focus on understanding customer journey mapping and touchpoint optimization.',
-          resourceUrl: 'https://www.youtube.com/watch?v=4cCOCUHPHqA',
-          estimatedTime: '22 minutes'
+          description: 'Watch this inspiring presentation on creating exceptional customer experiences. Learn how great leaders build service cultures that create lasting customer loyalty and team engagement.',
+          resourceUrl: 'https://www.youtube.com/watch?v=GH1TXfQSwUQ',
+          estimatedTime: '18 minutes'
         },
         {
           id: 'cx-task-2',
@@ -1257,9 +1257,17 @@ router.post('/plans/:planId/enroll', auth, checkSubscription, async (req, res) =
           id: 'cx-task-3',
           type: 'video',
           title: 'Building a Hospitality Culture',
-          description: 'Learn how to build a culture focused on hospitality and customer care. Understand the difference between service and hospitality.',
-          resourceUrl: 'https://www.youtube.com/watch?v=QTWJGy7Jw_U',
-          estimatedTime: '18 minutes'
+          description: 'Learn the secret ingredients of great hospitality from Will Guidara, who transformed Eleven Madison Park into the world\'s best restaurant. Discover how to create unreasonable hospitality that turns customers into raving fans.',
+          resourceUrl: 'https://www.youtube.com/watch?v=bwcyXcOpWVs',
+          estimatedTime: '16 minutes'
+        },
+        {
+          id: 'cx-task-3b',
+          type: 'video',
+          title: 'Creating Ritz-Carlton Service Culture',
+          description: 'Learn from Horst Schulze, former president of The Ritz-Carlton, about building a world-class service culture. Discover the systems and mindset that made Ritz-Carlton the gold standard for hospitality excellence.',
+          resourceUrl: 'https://www.youtube.com/watch?v=gSjaK9qrWws',
+          estimatedTime: '25 minutes'
         },
         {
           id: 'cx-task-3-activity',
