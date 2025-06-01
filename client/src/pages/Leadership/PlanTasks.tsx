@@ -110,6 +110,18 @@ import CustomerFeedbackMeasurementForm from '@/components/leadership/CustomerFee
 import CustomerFeedbackSystemForm from '@/components/leadership/CustomerFeedbackSystemForm'
 import ServiceRecoveryTrainingForm from '@/components/leadership/ServiceRecoveryTrainingForm'
 
+// Emotional Intelligence Forms
+import EmotionalIntelligenceIntroForm from '@/components/leadership/EmotionalIntelligenceIntroForm'
+import SelfAwarenessDevelopmentForm from '@/components/leadership/SelfAwarenessDevelopmentForm'
+import EmotionalIntelligenceAssessmentForm from '@/components/leadership/EmotionalIntelligenceAssessmentForm'
+import EmpathyPracticeExerciseForm from '@/components/leadership/EmpathyPracticeExerciseForm'
+import EmotionalRegulationTechniquesForm from '@/components/leadership/EmotionalRegulationTechniquesForm'
+
+// Conflict Resolution Forms
+import ConflictResolutionFundamentalsForm from '@/components/leadership/ConflictResolutionFundamentalsForm'
+import ActiveListeningConflictForm from '@/components/leadership/ActiveListeningConflictForm'
+import MediationFacilitationForm from '@/components/leadership/MediationFacilitationForm'
+
 interface Task {
   id: string
   type: 'video' | 'reading' | 'activity' | 'reflection' | 'assessment' | 'task'
@@ -390,7 +402,9 @@ export default function PlanTasks() {
       'guest-experience-mastery': 'Guest Experience Mastery',
       'strategic-leadership': 'Strategic Leadership Mastery',
       'innovation-change': 'Innovation & Change Champion',
-      'customer-experience': 'Customer Experience Leader'
+      'customer-experience': 'Customer Experience Leader',
+      'conflict-resolution': 'Conflict Resolution & Problem Solving',
+      'emotional-intelligence': 'Emotional Intelligence Leader'
     }
     setPlanTitle(fallbackTitles[planId as keyof typeof fallbackTitles] || 'Leadership Plan')
   }
@@ -4378,6 +4392,64 @@ export default function PlanTasks() {
                     />
                   )}
 
+                  {/* Emotional Intelligence Forms */}
+                  {selectedTask.title === "Introduction to Emotional Intelligence" && (
+                    <EmotionalIntelligenceIntroForm
+                      value={completionEvidence}
+                      onChange={setCompletionEvidence}
+                    />
+                  )}
+
+                  {selectedTask.title === "Self-Awareness Development" && (
+                    <SelfAwarenessDevelopmentForm
+                      value={completionEvidence}
+                      onChange={setCompletionEvidence}
+                    />
+                  )}
+
+                  {selectedTask.title === "Emotional Intelligence Assessment" && (
+                    <EmotionalIntelligenceAssessmentForm
+                      value={completionEvidence}
+                      onChange={setCompletionEvidence}
+                    />
+                  )}
+
+                  {selectedTask.title === "Empathy Practice Exercise" && (
+                    <EmpathyPracticeExerciseForm
+                      value={completionEvidence}
+                      onChange={setCompletionEvidence}
+                    />
+                  )}
+
+                  {selectedTask.title === "Emotional Regulation Techniques" && (
+                    <EmotionalRegulationTechniquesForm
+                      value={completionEvidence}
+                      onChange={setCompletionEvidence}
+                    />
+                  )}
+
+                  {/* Conflict Resolution Forms */}
+                  {selectedTask.title === "Conflict Resolution Fundamentals" && (
+                    <ConflictResolutionFundamentalsForm
+                      value={completionEvidence}
+                      onChange={setCompletionEvidence}
+                    />
+                  )}
+
+                  {selectedTask.title === "Active Listening in Conflict Situations" && (
+                    <ActiveListeningConflictForm
+                      value={completionEvidence}
+                      onChange={setCompletionEvidence}
+                    />
+                  )}
+
+                  {selectedTask.title === "Mediation and Facilitation Skills" && (
+                    <MediationFacilitationForm
+                      value={completionEvidence}
+                      onChange={setCompletionEvidence}
+                    />
+                  )}
+
                   {/* Default textarea for tasks without a custom form */}
                   {![
                     "Character vs. Capacity Reflection",
@@ -4433,7 +4505,15 @@ export default function PlanTasks() {
                     "Service Standards Development",
                     "Customer Feedback and Measurement",
                     "Customer Feedback System",
-                    "Service Recovery Training"
+                    "Service Recovery Training",
+                    "Introduction to Emotional Intelligence",
+                    "Self-Awareness Development",
+                    "Emotional Intelligence Assessment",
+                    "Empathy Practice Exercise",
+                    "Emotional Regulation Techniques",
+                    "Conflict Resolution Fundamentals",
+                    "Active Listening in Conflict Situations",
+                    "Mediation and Facilitation Skills"
                   ].includes(selectedTask.title) && (
                     <div className="space-y-2">
                       <div className="text-xs font-medium">

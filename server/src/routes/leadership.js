@@ -1312,9 +1312,9 @@ router.post('/plans/:planId/enroll', auth, checkSubscription, async (req, res) =
           id: 'conflict-task-1',
           type: 'video',
           title: 'Conflict Resolution Fundamentals',
-          description: 'Learn the fundamentals of conflict resolution in workplace settings. Focus on understanding different types of conflict and when to intervene.',
-          resourceUrl: 'https://www.youtube.com/watch?v=tbLEqIjBWAU',
-          estimatedTime: '20 minutes'
+          description: 'Learn practical strategies for managing team conflict effectively in restaurant settings. Discover how to resolve conflicts between team members and create a harmonious workplace.',
+          resourceUrl: 'https://www.youtube.com/watch?v=T6ifEvvNEDg',
+          estimatedTime: '12 minutes'
         },
         {
           id: 'conflict-task-2',
@@ -1335,9 +1335,9 @@ router.post('/plans/:planId/enroll', auth, checkSubscription, async (req, res) =
           id: 'conflict-task-3',
           type: 'video',
           title: 'Mediation and Facilitation Skills',
-          description: 'Learn mediation techniques for helping team members resolve conflicts. Focus on remaining neutral and guiding parties to their own solutions.',
-          resourceUrl: 'https://www.youtube.com/watch?v=KY5TWVz5ZDU',
-          estimatedTime: '18 minutes'
+          description: 'Learn the 5 essential steps to manage conflict between team members effectively. Discover how to facilitate resolution and prevent workplace conflicts from escalating.',
+          resourceUrl: 'https://www.youtube.com/watch?v=EDMY39JE1sY',
+          estimatedTime: '15 minutes'
         },
         {
           id: 'conflict-task-3-activity',
@@ -1382,9 +1382,9 @@ router.post('/plans/:planId/enroll', auth, checkSubscription, async (req, res) =
           id: 'eq-task-1',
           type: 'video',
           title: 'Introduction to Emotional Intelligence',
-          description: 'Learn about the four domains of emotional intelligence: self-awareness, self-management, social awareness, and relationship management.',
-          resourceUrl: 'https://www.youtube.com/watch?v=Y7m9eNoB3NU',
-          estimatedTime: '18 minutes'
+          description: 'Learn from Daniel Goleman, the father of emotional intelligence, about managing emotions in the workplace and the four key domains of EQ for effective leadership.',
+          resourceUrl: 'https://www.youtube.com/watch?v=xVs4zho8srY',
+          estimatedTime: '20 minutes'
         },
         {
           id: 'eq-task-2',
@@ -1405,9 +1405,9 @@ router.post('/plans/:planId/enroll', auth, checkSubscription, async (req, res) =
           id: 'eq-task-3',
           type: 'video',
           title: 'Empathy and Social Skills',
-          description: 'Learn about developing empathy and social skills for better leadership. Focus on reading non-verbal cues and responding appropriately to others\' emotions.',
-          resourceUrl: 'https://www.youtube.com/watch?v=1Evwgu369Jw',
-          estimatedTime: '20 minutes'
+          description: 'Learn practical strategies to become more emotionally intelligent from Daniel Goleman. Discover how to develop empathy, social awareness, and relationship management skills for restaurant leadership.',
+          resourceUrl: 'https://www.youtube.com/watch?v=pt74vK9pgIA',
+          estimatedTime: '15 minutes'
         },
         {
           id: 'eq-task-3-activity',
