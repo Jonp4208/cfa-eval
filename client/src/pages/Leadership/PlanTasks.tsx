@@ -43,6 +43,16 @@ import CourageResponseForm from '@/components/leadership/CourageResponseForm'
 import LeadershipCharacterPlanForm from '@/components/leadership/LeadershipCharacterPlanForm'
 import LeadershipValuesForm from '@/components/leadership/LeadershipValuesForm'
 import VulnerabilityLeadershipForm from '@/components/leadership/VulnerabilityLeadershipForm'
+// Innovation & Change Champion forms
+import LeadingChangeVideoForm from '@/components/leadership/LeadingChangeVideoForm'
+import CreativeConfidenceBookForm from '@/components/leadership/CreativeConfidenceBookForm'
+import DesignThinkingVideoForm from '@/components/leadership/DesignThinkingVideoForm'
+import InnovationAuditForm from '@/components/leadership/InnovationAuditForm'
+import InnovationWorkshopForm from '@/components/leadership/InnovationWorkshopForm'
+import ChangeManagementStrategiesForm from '@/components/leadership/ChangeManagementStrategiesForm'
+import ChangeImplementationPlanForm from '@/components/leadership/ChangeImplementationPlanForm'
+import ContinuousImprovementSystemForm from '@/components/leadership/ContinuousImprovementSystemForm'
+import InnovationLeadershipPhilosophyForm from '@/components/leadership/InnovationLeadershipPhilosophyForm'
 import LeadershipLegacyForm from '@/components/leadership/LeadershipLegacyForm'
 import ActiveListeningForm from '@/components/leadership/ActiveListeningForm'
 import ThinkOthersFirstForm from '@/components/leadership/ThinkOthersFirstForm'
@@ -366,7 +376,8 @@ export default function PlanTasks() {
       'team-development': 'Team Development Expert',
       'operational-excellence': 'Operational Excellence',
       'guest-experience-mastery': 'Guest Experience Mastery',
-      'strategic-leadership': 'Strategic Leadership Mastery'
+      'strategic-leadership': 'Strategic Leadership Mastery',
+      'innovation-change': 'Innovation & Change Champion'
     }
     setPlanTitle(fallbackTitles[planId as keyof typeof fallbackTitles] || 'Leadership Plan')
   }
@@ -847,53 +858,105 @@ export default function PlanTasks() {
 
   return (
     <div className="space-y-6 pb-20 sm:pb-6">
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 sm:gap-4">
-        <div>
-          <h1 className="text-xl sm:text-2xl font-bold text-[#27251F]">{planTitle}</h1>
-          <p className="text-sm sm:text-base text-gray-500">Complete these tasks to progress through your development plan</p>
-        </div>
-        <Button
-          variant="outline"
-          onClick={() => navigate('/leadership/my-plans')}
-          className="flex items-center justify-center gap-2 w-full sm:w-auto h-10 sm:h-9"
-        >
-          <ArrowLeft className="h-4 w-4" />
-          Back to My Plans
-        </Button>
-      </div>
-
-      <Card className="bg-white p-4 sm:p-6">
-        <div className="space-y-4">
-          <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-2 sm:gap-0">
-            <h2 className="text-lg font-semibold">Your Progress</h2>
-            <div className="flex items-center gap-2 bg-gray-50 px-3 py-1.5 rounded-md sm:bg-transparent sm:p-0">
-              {status === 'completed' ? (
-                <CheckCircle className="h-5 w-5 text-green-500" />
-              ) : (
-                <Clock className="h-5 w-5 text-blue-500" />
-              )}
-              <span className="font-medium text-sm sm:text-base">
-                {status === 'completed' ? 'Completed' : status === 'in-progress' ? 'In Progress' : 'Not Started'}
-              </span>
+      {/* Compact Plan Header & Progress */}
+      <Card className="bg-white shadow-md border-0 overflow-hidden">
+        {/* Plan Title Section */}
+        <div className="bg-gradient-to-br from-gray-50 via-white to-gray-50 p-4 border-b border-gray-100">
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+            <div className="flex items-center gap-3 flex-1">
+              <div className="bg-gradient-to-br from-[#E51636] to-[#c41230] p-2 rounded-lg shadow-md">
+                <Target className="h-5 w-5 text-white" />
+              </div>
+              <div className="flex-1">
+                <h1 className="text-xl sm:text-2xl font-bold text-gray-900 leading-tight">{planTitle}</h1>
+                <div className="flex items-center gap-2 mt-1">
+                  <div className="h-0.5 w-6 bg-gradient-to-r from-[#E51636] to-[#c41230] rounded-full"></div>
+                  <p className="text-[#E51636] text-xs font-semibold uppercase tracking-wide">Leadership Development Plan</p>
+                </div>
+              </div>
             </div>
-          </div>
-          <div className="space-y-2">
-            <div className="flex justify-between">
-              <span className="text-sm font-medium">Overall Completion</span>
-              <span className="text-sm font-medium">{progress}%</span>
-            </div>
-            <Progress value={progress} className="h-3 sm:h-2" />
-          </div>
-          <div className="pt-2 flex flex-col sm:flex-row gap-2 justify-end">
             <Button
               variant="outline"
-              size="sm"
-              onClick={openUnenrollDialog}
-              className="text-red-600 border-red-200 hover:bg-red-50 hover:text-red-700 w-full sm:w-auto h-10"
+              onClick={() => navigate('/leadership/my-plans')}
+              className="flex items-center gap-2 w-full sm:w-auto h-9 border-gray-200 hover:border-gray-300 hover:bg-gray-50 transition-all duration-200 text-sm"
             >
-              <X className="h-4 w-4 mr-2" />
-              Unenroll from Plan
+              <ArrowLeft className="h-4 w-4" />
+              Back to My Plans
             </Button>
+          </div>
+        </div>
+
+        {/* Compact Progress Section */}
+        <div className="p-4">
+          <div className="space-y-3">
+            {/* Progress Header */}
+            <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-3">
+              <div className="flex items-center gap-2">
+                <div className="bg-gradient-to-br from-blue-50 to-indigo-50 p-1.5 rounded border border-blue-100">
+                  <BarChart3 className="h-4 w-4 text-blue-600" />
+                </div>
+                <h2 className="text-lg font-bold text-gray-900">Your Progress</h2>
+              </div>
+              <div className={`flex items-center gap-2 px-3 py-1.5 rounded-full text-xs font-semibold ${
+                status === 'completed'
+                  ? 'bg-green-50 border border-green-200 text-green-700'
+                  : status === 'in-progress'
+                    ? 'bg-blue-50 border border-blue-200 text-blue-700'
+                    : 'bg-gray-50 border border-gray-200 text-gray-600'
+              }`}>
+                {status === 'completed' ? (
+                  <CheckCircle className="h-4 w-4 text-green-600" />
+                ) : status === 'in-progress' ? (
+                  <Clock className="h-4 w-4 text-blue-600" />
+                ) : (
+                  <Clock className="h-4 w-4 text-gray-500" />
+                )}
+                <span>{status === 'completed' ? 'Completed' : status === 'in-progress' ? 'In Progress' : 'Not Started'}</span>
+              </div>
+            </div>
+
+            {/* Compact Progress Bar */}
+            <div className="bg-gray-50 p-3 rounded-lg border border-gray-100">
+              <div className="flex justify-between items-center mb-2">
+                <span className="text-sm font-medium text-gray-700">Overall Completion</span>
+                <span className="text-lg font-bold bg-gradient-to-r from-[#E51636] to-[#c41230] bg-clip-text text-transparent">
+                  {progress}%
+                </span>
+              </div>
+
+              <div className="relative">
+                <div className="h-2.5 bg-gray-200 rounded-full overflow-hidden">
+                  <div
+                    className="h-full bg-gradient-to-r from-[#E51636] to-[#c41230] rounded-full transition-all duration-500 ease-out"
+                    style={{ width: `${progress}%` }}
+                  ></div>
+                </div>
+                {progress > 0 && (
+                  <div
+                    className="absolute top-1/2 -translate-y-1/2 w-2 h-2 bg-white border border-[#E51636] rounded-full shadow transition-all duration-500 ease-out"
+                    style={{ left: `calc(${progress}% - 4px)` }}
+                  ></div>
+                )}
+              </div>
+
+              <div className="flex justify-between text-xs text-gray-500 mt-1">
+                <span>0%</span>
+                <span>100%</span>
+              </div>
+            </div>
+
+            {/* Compact Action Button */}
+            <div className="flex justify-end">
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={openUnenrollDialog}
+                className="text-red-600 border-red-200 hover:bg-red-50 hover:text-red-700 hover:border-red-300 transition-all duration-200 text-xs h-8"
+              >
+                <X className="h-3 w-3 mr-1" />
+                Unenroll from Plan
+              </Button>
+            </div>
           </div>
         </div>
       </Card>
@@ -4167,6 +4230,70 @@ export default function PlanTasks() {
                     />
                   )}
 
+                  {/* Innovation & Change Champion Forms */}
+                  {selectedTask.title === "Leading Change in Organizations" && (
+                    <LeadingChangeVideoForm
+                      value={completionEvidence}
+                      onChange={setCompletionEvidence}
+                    />
+                  )}
+
+                  {selectedTask.title === "Innovation Mindset Development" && (
+                    <CreativeConfidenceBookForm
+                      value={completionEvidence}
+                      onChange={setCompletionEvidence}
+                    />
+                  )}
+
+                  {selectedTask.title === "Creative Problem Solving Techniques" && (
+                    <DesignThinkingVideoForm
+                      value={completionEvidence}
+                      onChange={setCompletionEvidence}
+                    />
+                  )}
+
+                  {selectedTask.title === "Innovation Audit" && (
+                    <InnovationAuditForm
+                      value={completionEvidence}
+                      onChange={setCompletionEvidence}
+                    />
+                  )}
+
+                  {selectedTask.title === "Innovation Workshop" && (
+                    <InnovationWorkshopForm
+                      value={completionEvidence}
+                      onChange={setCompletionEvidence}
+                    />
+                  )}
+
+                  {selectedTask.title === "Change Management Strategies" && (
+                    <ChangeManagementStrategiesForm
+                      value={completionEvidence}
+                      onChange={setCompletionEvidence}
+                    />
+                  )}
+
+                  {selectedTask.title === "Change Implementation Plan" && (
+                    <ChangeImplementationPlanForm
+                      value={completionEvidence}
+                      onChange={setCompletionEvidence}
+                    />
+                  )}
+
+                  {selectedTask.title === "Continuous Improvement System" && (
+                    <ContinuousImprovementSystemForm
+                      value={completionEvidence}
+                      onChange={setCompletionEvidence}
+                    />
+                  )}
+
+                  {selectedTask.title === "Innovation Leadership Philosophy" && (
+                    <InnovationLeadershipPhilosophyForm
+                      value={completionEvidence}
+                      onChange={setCompletionEvidence}
+                    />
+                  )}
+
                   {/* Default textarea for tasks without a custom form */}
                   {![
                     "Character vs. Capacity Reflection",
@@ -4203,7 +4330,16 @@ export default function PlanTasks() {
                     "90-Day Strategic Plan",
                     "Long-term Planning and Goal Setting",
                     "Develop Your Restaurant's Why",
-                    "Feedback Delivery Practice"
+                    "Feedback Delivery Practice",
+                    "Leading Change in Organizations",
+                    "Innovation Mindset Development",
+                    "Creative Problem Solving Techniques",
+                    "Innovation Audit",
+                    "Innovation Workshop",
+                    "Change Management Strategies",
+                    "Change Implementation Plan",
+                    "Continuous Improvement System",
+                    "Innovation Leadership Philosophy"
                   ].includes(selectedTask.title) && (
                     <div className="space-y-2">
                       <div className="text-xs font-medium">

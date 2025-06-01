@@ -1165,16 +1165,16 @@ router.post('/plans/:planId/enroll', auth, checkSubscription, async (req, res) =
           type: 'video',
           title: 'Leading Change in Organizations',
           description: 'Watch John Kotter\'s presentation on the 8-step process for leading change. Focus on how to create urgency, build coalitions, and sustain change initiatives.',
-          resourceUrl: 'https://www.youtube.com/watch?v=Gc_FMz5_RCE',
+          resourceUrl: 'https://www.youtube.com/watch?v=1QWiMkXyTP4',
           estimatedTime: '25 minutes'
         },
         {
           id: 'innovation-task-2',
           type: 'reading',
           title: 'Innovation Mindset Development',
-          description: 'Read about developing an innovation mindset in fast-paced environments. Focus on techniques for encouraging creativity and managing resistance to new ideas.',
-          resourceUrl: 'https://hbr.org/2019/11/the-hard-truth-about-innovative-cultures',
-          estimatedTime: '20 minutes'
+          description: 'Read "Creative Confidence" by Tom and David Kelley (IDEO founders). Focus on Chapter 1-2 which cover overcoming creative blocks and building confidence in your ability to innovate. Apply the concepts to your restaurant environment and consider how to help your team develop creative confidence.',
+          resourceUrl: 'https://www.amazon.com/Creative-Confidence-Unleashing-Potential-Within/dp/038534936X',
+          estimatedTime: '45-60 minutes'
         },
         {
           id: 'innovation-task-2-activity',
@@ -1187,8 +1187,8 @@ router.post('/plans/:planId/enroll', auth, checkSubscription, async (req, res) =
           id: 'innovation-task-3',
           type: 'video',
           title: 'Creative Problem Solving Techniques',
-          description: 'Learn creative problem-solving techniques that can be applied in restaurant operations. Focus on brainstorming, design thinking, and rapid prototyping.',
-          resourceUrl: 'https://www.youtube.com/watch?v=muqvsLabtfM',
+          description: 'Watch Tim Brown\'s TED talk on design thinking and creative problem-solving. Focus on how design thinking can be applied to restaurant operations, brainstorming techniques, and developing innovative solutions to operational challenges.',
+          resourceUrl: 'https://www.youtube.com/watch?v=UAinLaT42xY',
           estimatedTime: '18 minutes'
         },
         {
