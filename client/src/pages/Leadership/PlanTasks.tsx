@@ -116,11 +116,19 @@ import SelfAwarenessDevelopmentForm from '@/components/leadership/SelfAwarenessD
 import EmotionalIntelligenceAssessmentForm from '@/components/leadership/EmotionalIntelligenceAssessmentForm'
 import EmpathyPracticeExerciseForm from '@/components/leadership/EmpathyPracticeExerciseForm'
 import EmotionalRegulationTechniquesForm from '@/components/leadership/EmotionalRegulationTechniquesForm'
+import EmpathySocialSkillsForm from '@/components/leadership/EmpathySocialSkillsForm'
+import StressManagementPlanForm from '@/components/leadership/StressManagementPlanForm'
+import TeamEmotionalClimateForm from '@/components/leadership/TeamEmotionalClimateForm'
+import EmotionalIntelligencePhilosophyForm from '@/components/leadership/EmotionalIntelligencePhilosophyForm'
 
 // Conflict Resolution Forms
 import ConflictResolutionFundamentalsForm from '@/components/leadership/ConflictResolutionFundamentalsForm'
 import ActiveListeningConflictForm from '@/components/leadership/ActiveListeningConflictForm'
 import MediationFacilitationForm from '@/components/leadership/MediationFacilitationForm'
+import ConflictAssessmentExerciseForm from '@/components/leadership/ConflictAssessmentExerciseForm'
+import ProblemSolvingFrameworksForm from '@/components/leadership/ProblemSolvingFrameworksForm'
+import ConflictPreventionSystemForm from '@/components/leadership/ConflictPreventionSystemForm'
+import ConflictResolutionPhilosophyForm from '@/components/leadership/ConflictResolutionPhilosophyForm'
 
 interface Task {
   id: string
@@ -4450,6 +4458,62 @@ export default function PlanTasks() {
                     />
                   )}
 
+                  {selectedTask.title === "Empathy and Social Skills" && (
+                    <EmpathySocialSkillsForm
+                      value={completionEvidence}
+                      onChange={setCompletionEvidence}
+                    />
+                  )}
+
+                  {selectedTask.title === "Stress Management Plan" && (
+                    <StressManagementPlanForm
+                      value={completionEvidence}
+                      onChange={setCompletionEvidence}
+                    />
+                  )}
+
+                  {selectedTask.title === "Team Emotional Climate Assessment" && (
+                    <TeamEmotionalClimateForm
+                      value={completionEvidence}
+                      onChange={setCompletionEvidence}
+                    />
+                  )}
+
+                  {selectedTask.title === "Emotional Intelligence Leadership Philosophy" && (
+                    <EmotionalIntelligencePhilosophyForm
+                      value={completionEvidence}
+                      onChange={setCompletionEvidence}
+                    />
+                  )}
+
+                  {selectedTask.title === "Conflict Assessment Exercise" && (
+                    <ConflictAssessmentExerciseForm
+                      value={completionEvidence}
+                      onChange={setCompletionEvidence}
+                    />
+                  )}
+
+                  {selectedTask.title === "Problem-Solving Frameworks" && (
+                    <ProblemSolvingFrameworksForm
+                      value={completionEvidence}
+                      onChange={setCompletionEvidence}
+                    />
+                  )}
+
+                  {selectedTask.title === "Conflict Prevention System" && (
+                    <ConflictPreventionSystemForm
+                      value={completionEvidence}
+                      onChange={setCompletionEvidence}
+                    />
+                  )}
+
+                  {selectedTask.title === "Conflict Resolution Philosophy" && (
+                    <ConflictResolutionPhilosophyForm
+                      value={completionEvidence}
+                      onChange={setCompletionEvidence}
+                    />
+                  )}
+
                   {/* Default textarea for tasks without a custom form */}
                   {![
                     "Character vs. Capacity Reflection",
@@ -4511,9 +4575,17 @@ export default function PlanTasks() {
                     "Emotional Intelligence Assessment",
                     "Empathy Practice Exercise",
                     "Emotional Regulation Techniques",
+                    "Empathy and Social Skills",
+                    "Stress Management Plan",
+                    "Team Emotional Climate Assessment",
+                    "Emotional Intelligence Leadership Philosophy",
                     "Conflict Resolution Fundamentals",
                     "Active Listening in Conflict Situations",
-                    "Mediation and Facilitation Skills"
+                    "Mediation and Facilitation Skills",
+                    "Conflict Assessment Exercise",
+                    "Problem-Solving Frameworks",
+                    "Conflict Prevention System",
+                    "Conflict Resolution Philosophy"
                   ].includes(selectedTask.title) && (
                     <div className="space-y-2">
                       <div className="text-xs font-medium">
