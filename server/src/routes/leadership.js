@@ -1095,7 +1095,7 @@ router.post('/plans/:planId/enroll', auth, checkSubscription, async (req, res) =
           type: 'video',
           title: 'Introduction to Operational Excellence',
           description: 'Watch this comprehensive introduction to operational excellence in restaurants. Focus on understanding the principles of efficiency, quality, and continuous improvement.',
-          resourceUrl: 'https://www.youtube.com/watch?v=2Ub9_rzez_E',
+          resourceUrl: 'https://www.youtube.com/watch?v=RWy998r37oM',
           estimatedTime: '20 minutes'
         },
         {
@@ -1118,7 +1118,7 @@ router.post('/plans/:planId/enroll', auth, checkSubscription, async (req, res) =
           type: 'video',
           title: 'Quality Management Systems',
           description: 'Learn about quality management principles and how to implement quality control systems in restaurant operations.',
-          resourceUrl: 'https://www.youtube.com/watch?v=gTczYiWWN9g',
+          resourceUrl: 'https://www.youtube.com/watch?v=9rzzkw4KX8E',
           estimatedTime: '25 minutes'
         },
         {
@@ -1133,7 +1133,7 @@ router.post('/plans/:planId/enroll', auth, checkSubscription, async (req, res) =
           type: 'reading',
           title: 'Performance Metrics and KPIs',
           description: 'Read about key performance indicators for restaurant operations. Learn how to select, track, and use metrics to drive operational improvements.',
-          resourceUrl: 'https://www.restaurantowner.com/public/Restaurant-Key-Performance-Indicators.cfm',
+          resourceUrl: 'https://www.lightspeedhq.com/blog/restaurant-kpis/',
           estimatedTime: '25 minutes'
         },
         {

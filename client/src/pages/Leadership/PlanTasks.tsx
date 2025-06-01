@@ -23,13 +23,14 @@ import {
   FileText,
   Users,
   X,
-  RefreshCw,
   MessageSquare,
   AlertCircle,
   Target,
   TrendingUp,
   Calendar,
-  Heart
+  Heart,
+  BarChart3,
+  RefreshCw
 } from 'lucide-react'
 import api from '@/lib/axios'
 
@@ -77,6 +78,15 @@ import DifficultConversationPracticeForm from '@/components/leadership/Difficult
 import WrittenCommunicationExcellenceForm from '@/components/leadership/WrittenCommunicationExcellenceForm'
 import CommunicationSystemImprovementForm from '@/components/leadership/CommunicationSystemImprovementForm'
 import CommunicationLeadershipPhilosophyForm from '@/components/leadership/CommunicationLeadershipPhilosophyForm'
+
+// Operational Excellence Forms
+import OperationalExcellenceVideoForm from '@/components/leadership/OperationalExcellenceVideoForm'
+import LeanPrinciplesReadingForm from '@/components/leadership/LeanPrinciplesReadingForm'
+import ProcessMappingExerciseForm from '@/components/leadership/ProcessMappingExerciseForm'
+import QualityStandardsForm from '@/components/leadership/QualityStandardsForm'
+import KPIDashboardForm from '@/components/leadership/KPIDashboardForm'
+import ContinuousImprovementForm from '@/components/leadership/ContinuousImprovementForm'
+import OperationalExcellencePhilosophyForm from '@/components/leadership/OperationalExcellencePhilosophyForm'
 
 interface Task {
   id: string
@@ -177,7 +187,7 @@ export default function PlanTasks() {
   const [completionDialog, setCompletionDialog] = useState(false)
   const [completionNotes, setCompletionNotes] = useState('')
   const [completionEvidence, setCompletionEvidence] = useState('')
-  const [updatingTasks, setUpdatingTasks] = useState(false)
+
   const [unenrollDialog, setUnenrollDialog] = useState(false)
   const [unenrolling, setUnenrolling] = useState(false)
   const [talentExamplesDialog, setTalentExamplesDialog] = useState(false)
@@ -332,27 +342,7 @@ export default function PlanTasks() {
     }
   }
 
-  const updateTasks = async () => {
-    try {
-      setUpdatingTasks(true)
-      await api.post(`/api/leadership/my-plans/${planId}/update-tasks`)
-      toast({
-        title: 'Tasks Updated',
-        description: 'Your tasks have been updated successfully.',
-      })
-      // Fetch the updated tasks
-      await fetchTasks()
-    } catch (error) {
-      console.error('Error updating tasks:', error)
-      toast({
-        title: 'Error',
-        description: 'Failed to update tasks. Please try again.',
-        variant: 'destructive'
-      })
-    } finally {
-      setUpdatingTasks(false)
-    }
-  }
+
 
   const openCompletionDialog = (task: Task) => {
     setSelectedTask(task)
@@ -895,25 +885,6 @@ export default function PlanTasks() {
             <Progress value={progress} className="h-3 sm:h-2" />
           </div>
           <div className="pt-2 flex flex-col sm:flex-row gap-2 justify-end">
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={updateTasks}
-              disabled={updatingTasks}
-              className="text-blue-600 border-blue-200 hover:bg-blue-50 hover:text-blue-700 w-full sm:w-auto h-10"
-            >
-              {updatingTasks ? (
-                <>
-                  <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                  Updating...
-                </>
-              ) : (
-                <>
-                  <RefreshCw className="h-4 w-4 mr-2" />
-                  Update Tasks
-                </>
-              )}
-            </Button>
             <Button
               variant="outline"
               size="sm"
@@ -2156,6 +2127,567 @@ export default function PlanTasks() {
                           </div>
                     )}
 
+                    {/* Operational Excellence Forms */}
+                    {!task.completed && task.title === 'Introduction to Operational Excellence' && (
+                      <div className="mt-4">
+                        {!openForms[task.id] ? (
+                          <Button
+                            onClick={() => toggleForm(task.id)}
+                            variant="outline"
+                            className="w-full sm:w-auto text-blue-600 border-blue-200 hover:bg-blue-50 h-10 sm:h-9"
+                          >
+                            <Video className="h-4 w-4 mr-2" />
+                            Complete Video Reflection
+                          </Button>
+                        ) : (
+                          <div className="p-4 bg-blue-50 rounded-lg border border-blue-200">
+                            <div className="flex items-center justify-between mb-3">
+                              <div className="flex items-center gap-2">
+                                <Video className="h-5 w-5 text-blue-600" />
+                                <h4 className="font-semibold text-blue-800">Video Learning Reflection</h4>
+                              </div>
+                              <Button
+                                onClick={() => toggleForm(task.id)}
+                                variant="ghost"
+                                size="sm"
+                                className="text-blue-600 hover:text-blue-800"
+                              >
+                                <X className="h-4 w-4" />
+                              </Button>
+                            </div>
+                            <OperationalExcellenceVideoForm
+                              value={task.evidence || ''}
+                              onChange={(value) => {
+                                setTasks(prevTasks => prevTasks.map(t =>
+                                  t.id === task.id ? { ...t, evidence: value } : t
+                                ))
+                                debouncedAutoSave(task.id, value);
+                              }}
+                              videoTitle="Introduction to Operational Excellence"
+                            />
+                            <div className="mt-3 pt-3 border-t border-blue-200 flex gap-2">
+                              <Button
+                                onClick={() => {
+                                  if (task.evidence && task.evidence.trim()) {
+                                    handleTaskToggle(task.id, true);
+                                  }
+                                }}
+                                disabled={!task.evidence || !task.evidence.trim()}
+                                className="flex-1 bg-blue-600 hover:bg-blue-700 text-white"
+                              >
+                                <CheckCircle className="h-4 w-4 mr-2" />
+                                Complete Reflection
+                              </Button>
+                              <Button
+                                onClick={() => toggleForm(task.id)}
+                                variant="outline"
+                                className="text-gray-600 border-gray-200 hover:bg-gray-50"
+                              >
+                                Save & Close
+                              </Button>
+                            </div>
+                          </div>
+                        )}
+                      </div>
+                    )}
+
+                    {!task.completed && task.title === 'Quality Management Systems' && (
+                      <div className="mt-4">
+                        {!openForms[task.id] ? (
+                          <Button
+                            onClick={() => toggleForm(task.id)}
+                            variant="outline"
+                            className="w-full sm:w-auto text-blue-600 border-blue-200 hover:bg-blue-50 h-10 sm:h-9"
+                          >
+                            <Video className="h-4 w-4 mr-2" />
+                            Complete Video Reflection
+                          </Button>
+                        ) : (
+                          <div className="p-4 bg-blue-50 rounded-lg border border-blue-200">
+                            <div className="flex items-center justify-between mb-3">
+                              <div className="flex items-center gap-2">
+                                <Video className="h-5 w-5 text-blue-600" />
+                                <h4 className="font-semibold text-blue-800">Video Learning Reflection</h4>
+                              </div>
+                              <Button
+                                onClick={() => toggleForm(task.id)}
+                                variant="ghost"
+                                size="sm"
+                                className="text-blue-600 hover:text-blue-800"
+                              >
+                                <X className="h-4 w-4" />
+                              </Button>
+                            </div>
+                            <OperationalExcellenceVideoForm
+                              value={task.evidence || ''}
+                              onChange={(value) => {
+                                setTasks(prevTasks => prevTasks.map(t =>
+                                  t.id === task.id ? { ...t, evidence: value } : t
+                                ))
+                                debouncedAutoSave(task.id, value);
+                              }}
+                              videoTitle="Quality Management Systems"
+                            />
+                            <div className="mt-3 pt-3 border-t border-blue-200 flex gap-2">
+                              <Button
+                                onClick={() => {
+                                  if (task.evidence && task.evidence.trim()) {
+                                    handleTaskToggle(task.id, true);
+                                  }
+                                }}
+                                disabled={!task.evidence || !task.evidence.trim()}
+                                className="flex-1 bg-blue-600 hover:bg-blue-700 text-white"
+                              >
+                                <CheckCircle className="h-4 w-4 mr-2" />
+                                Complete Reflection
+                              </Button>
+                              <Button
+                                onClick={() => toggleForm(task.id)}
+                                variant="outline"
+                                className="text-gray-600 border-gray-200 hover:bg-gray-50"
+                              >
+                                Save & Close
+                              </Button>
+                            </div>
+                          </div>
+                        )}
+                      </div>
+                    )}
+
+                    {!task.completed && task.title === 'Lean Principles for Restaurants' && (
+                      <div className="mt-4">
+                        {!openForms[task.id] ? (
+                          <Button
+                            onClick={() => toggleForm(task.id)}
+                            variant="outline"
+                            className="w-full sm:w-auto text-green-600 border-green-200 hover:bg-green-50 h-10 sm:h-9"
+                          >
+                            <BookOpen className="h-4 w-4 mr-2" />
+                            Complete Reading Reflection
+                          </Button>
+                        ) : (
+                          <div className="p-4 bg-green-50 rounded-lg border border-green-200">
+                            <div className="flex items-center justify-between mb-3">
+                              <div className="flex items-center gap-2">
+                                <BookOpen className="h-5 w-5 text-green-600" />
+                                <h4 className="font-semibold text-green-800">Reading Reflection</h4>
+                              </div>
+                              <Button
+                                onClick={() => toggleForm(task.id)}
+                                variant="ghost"
+                                size="sm"
+                                className="text-green-600 hover:text-green-800"
+                              >
+                                <X className="h-4 w-4" />
+                              </Button>
+                            </div>
+                            <LeanPrinciplesReadingForm
+                              value={task.evidence || ''}
+                              onChange={(value) => {
+                                setTasks(prevTasks => prevTasks.map(t =>
+                                  t.id === task.id ? { ...t, evidence: value } : t
+                                ))
+                                debouncedAutoSave(task.id, value);
+                              }}
+                            />
+                            <div className="mt-3 pt-3 border-t border-green-200 flex gap-2">
+                              <Button
+                                onClick={() => {
+                                  if (task.evidence && task.evidence.trim()) {
+                                    handleTaskToggle(task.id, true);
+                                  }
+                                }}
+                                disabled={!task.evidence || !task.evidence.trim()}
+                                className="flex-1 bg-green-600 hover:bg-green-700 text-white"
+                              >
+                                <CheckCircle className="h-4 w-4 mr-2" />
+                                Complete Reflection
+                              </Button>
+                              <Button
+                                onClick={() => toggleForm(task.id)}
+                                variant="outline"
+                                className="text-gray-600 border-gray-200 hover:bg-gray-50"
+                              >
+                                Save & Close
+                              </Button>
+                            </div>
+                          </div>
+                        )}
+                      </div>
+                    )}
+
+                    {!task.completed && task.title === 'Performance Metrics and KPIs' && (
+                      <div className="mt-4">
+                        {!openForms[task.id] ? (
+                          <Button
+                            onClick={() => toggleForm(task.id)}
+                            variant="outline"
+                            className="w-full sm:w-auto text-green-600 border-green-200 hover:bg-green-50 h-10 sm:h-9"
+                          >
+                            <BookOpen className="h-4 w-4 mr-2" />
+                            Complete Reading Reflection
+                          </Button>
+                        ) : (
+                          <div className="p-4 bg-green-50 rounded-lg border border-green-200">
+                            <div className="flex items-center justify-between mb-3">
+                              <div className="flex items-center gap-2">
+                                <BookOpen className="h-5 w-5 text-green-600" />
+                                <h4 className="font-semibold text-green-800">Reading Reflection</h4>
+                              </div>
+                              <Button
+                                onClick={() => toggleForm(task.id)}
+                                variant="ghost"
+                                size="sm"
+                                className="text-green-600 hover:text-green-800"
+                              >
+                                <X className="h-4 w-4" />
+                              </Button>
+                            </div>
+                            <LeanPrinciplesReadingForm
+                              value={task.evidence || ''}
+                              onChange={(value) => {
+                                setTasks(prevTasks => prevTasks.map(t =>
+                                  t.id === task.id ? { ...t, evidence: value } : t
+                                ))
+                                debouncedAutoSave(task.id, value);
+                              }}
+                            />
+                            <div className="mt-3 pt-3 border-t border-green-200 flex gap-2">
+                              <Button
+                                onClick={() => {
+                                  if (task.evidence && task.evidence.trim()) {
+                                    handleTaskToggle(task.id, true);
+                                  }
+                                }}
+                                disabled={!task.evidence || !task.evidence.trim()}
+                                className="flex-1 bg-green-600 hover:bg-green-700 text-white"
+                              >
+                                <CheckCircle className="h-4 w-4 mr-2" />
+                                Complete Reflection
+                              </Button>
+                              <Button
+                                onClick={() => toggleForm(task.id)}
+                                variant="outline"
+                                className="text-gray-600 border-gray-200 hover:bg-gray-50"
+                              >
+                                Save & Close
+                              </Button>
+                            </div>
+                          </div>
+                        )}
+                      </div>
+                    )}
+
+                    {!task.completed && task.title === 'Process Mapping Exercise' && (
+                      <div className="mt-4">
+                        {!openForms[task.id] ? (
+                          <Button
+                            onClick={() => toggleForm(task.id)}
+                            variant="outline"
+                            className="w-full sm:w-auto text-purple-600 border-purple-200 hover:bg-purple-50 h-10 sm:h-9"
+                          >
+                            <PenTool className="h-4 w-4 mr-2" />
+                            Complete Process Mapping
+                          </Button>
+                        ) : (
+                          <div className="p-4 bg-purple-50 rounded-lg border border-purple-200">
+                            <div className="flex items-center justify-between mb-3">
+                              <div className="flex items-center gap-2">
+                                <PenTool className="h-5 w-5 text-purple-600" />
+                                <h4 className="font-semibold text-purple-800">Process Mapping Exercise</h4>
+                              </div>
+                              <Button
+                                onClick={() => toggleForm(task.id)}
+                                variant="ghost"
+                                size="sm"
+                                className="text-purple-600 hover:text-purple-800"
+                              >
+                                <X className="h-4 w-4" />
+                              </Button>
+                            </div>
+                            <ProcessMappingExerciseForm
+                              value={task.evidence || ''}
+                              onChange={(value) => {
+                                setTasks(prevTasks => prevTasks.map(t =>
+                                  t.id === task.id ? { ...t, evidence: value } : t
+                                ))
+                                debouncedAutoSave(task.id, value);
+                              }}
+                            />
+                            <div className="mt-3 pt-3 border-t border-purple-200 flex gap-2">
+                              <Button
+                                onClick={() => {
+                                  if (task.evidence && task.evidence.trim()) {
+                                    handleTaskToggle(task.id, true);
+                                  }
+                                }}
+                                disabled={!task.evidence || !task.evidence.trim()}
+                                className="flex-1 bg-purple-600 hover:bg-purple-700 text-white"
+                              >
+                                <CheckCircle className="h-4 w-4 mr-2" />
+                                Complete Exercise
+                              </Button>
+                              <Button
+                                onClick={() => toggleForm(task.id)}
+                                variant="outline"
+                                className="text-gray-600 border-gray-200 hover:bg-gray-50"
+                              >
+                                Save & Close
+                              </Button>
+                            </div>
+                          </div>
+                        )}
+                      </div>
+                    )}
+
+                    {!task.completed && task.title === 'Quality Standards Development' && (
+                      <div className="mt-4">
+                        {!openForms[task.id] ? (
+                          <Button
+                            onClick={() => toggleForm(task.id)}
+                            variant="outline"
+                            className="w-full sm:w-auto text-blue-600 border-blue-200 hover:bg-blue-50 h-10 sm:h-9"
+                          >
+                            <Target className="h-4 w-4 mr-2" />
+                            Develop Quality Standards
+                          </Button>
+                        ) : (
+                          <div className="p-4 bg-blue-50 rounded-lg border border-blue-200">
+                            <div className="flex items-center justify-between mb-3">
+                              <div className="flex items-center gap-2">
+                                <Target className="h-5 w-5 text-blue-600" />
+                                <h4 className="font-semibold text-blue-800">Quality Standards Development</h4>
+                              </div>
+                              <Button
+                                onClick={() => toggleForm(task.id)}
+                                variant="ghost"
+                                size="sm"
+                                className="text-blue-600 hover:text-blue-800"
+                              >
+                                <X className="h-4 w-4" />
+                              </Button>
+                            </div>
+                            <QualityStandardsForm
+                              value={task.evidence || ''}
+                              onChange={(value) => {
+                                setTasks(prevTasks => prevTasks.map(t =>
+                                  t.id === task.id ? { ...t, evidence: value } : t
+                                ))
+                                debouncedAutoSave(task.id, value);
+                              }}
+                            />
+                            <div className="mt-3 pt-3 border-t border-blue-200 flex gap-2">
+                              <Button
+                                onClick={() => {
+                                  if (task.evidence && task.evidence.trim()) {
+                                    handleTaskToggle(task.id, true);
+                                  }
+                                }}
+                                disabled={!task.evidence || !task.evidence.trim()}
+                                className="flex-1 bg-blue-600 hover:bg-blue-700 text-white"
+                              >
+                                <CheckCircle className="h-4 w-4 mr-2" />
+                                Complete Standards
+                              </Button>
+                              <Button
+                                onClick={() => toggleForm(task.id)}
+                                variant="outline"
+                                className="text-gray-600 border-gray-200 hover:bg-gray-50"
+                              >
+                                Save & Close
+                              </Button>
+                            </div>
+                          </div>
+                        )}
+                      </div>
+                    )}
+
+                    {!task.completed && task.title === 'KPI Dashboard Creation' && (
+                      <div className="mt-4">
+                        {!openForms[task.id] ? (
+                          <Button
+                            onClick={() => toggleForm(task.id)}
+                            variant="outline"
+                            className="w-full sm:w-auto text-green-600 border-green-200 hover:bg-green-50 h-10 sm:h-9"
+                          >
+                            <BarChart3 className="h-4 w-4 mr-2" />
+                            Create KPI Dashboard
+                          </Button>
+                        ) : (
+                          <div className="p-4 bg-green-50 rounded-lg border border-green-200">
+                            <div className="flex items-center justify-between mb-3">
+                              <div className="flex items-center gap-2">
+                                <BarChart3 className="h-5 w-5 text-green-600" />
+                                <h4 className="font-semibold text-green-800">KPI Dashboard Creation</h4>
+                              </div>
+                              <Button
+                                onClick={() => toggleForm(task.id)}
+                                variant="ghost"
+                                size="sm"
+                                className="text-green-600 hover:text-green-800"
+                              >
+                                <X className="h-4 w-4" />
+                              </Button>
+                            </div>
+                            <KPIDashboardForm
+                              value={task.evidence || ''}
+                              onChange={(value) => {
+                                setTasks(prevTasks => prevTasks.map(t =>
+                                  t.id === task.id ? { ...t, evidence: value } : t
+                                ))
+                                debouncedAutoSave(task.id, value);
+                              }}
+                            />
+                            <div className="mt-3 pt-3 border-t border-green-200 flex gap-2">
+                              <Button
+                                onClick={() => {
+                                  if (task.evidence && task.evidence.trim()) {
+                                    handleTaskToggle(task.id, true);
+                                  }
+                                }}
+                                disabled={!task.evidence || !task.evidence.trim()}
+                                className="flex-1 bg-green-600 hover:bg-green-700 text-white"
+                              >
+                                <CheckCircle className="h-4 w-4 mr-2" />
+                                Complete Dashboard
+                              </Button>
+                              <Button
+                                onClick={() => toggleForm(task.id)}
+                                variant="outline"
+                                className="text-gray-600 border-gray-200 hover:bg-gray-50"
+                              >
+                                Save & Close
+                              </Button>
+                            </div>
+                          </div>
+                        )}
+                      </div>
+                    )}
+
+                    {!task.completed && task.title === 'Continuous Improvement Project' && (
+                      <div className="mt-4">
+                        {!openForms[task.id] ? (
+                          <Button
+                            onClick={() => toggleForm(task.id)}
+                            variant="outline"
+                            className="w-full sm:w-auto text-indigo-600 border-indigo-200 hover:bg-indigo-50 h-10 sm:h-9"
+                          >
+                            <TrendingUp className="h-4 w-4 mr-2" />
+                            Complete PDCA Project
+                          </Button>
+                        ) : (
+                          <div className="p-4 bg-indigo-50 rounded-lg border border-indigo-200">
+                            <div className="flex items-center justify-between mb-3">
+                              <div className="flex items-center gap-2">
+                                <TrendingUp className="h-5 w-5 text-indigo-600" />
+                                <h4 className="font-semibold text-indigo-800">Continuous Improvement Project</h4>
+                              </div>
+                              <Button
+                                onClick={() => toggleForm(task.id)}
+                                variant="ghost"
+                                size="sm"
+                                className="text-indigo-600 hover:text-indigo-800"
+                              >
+                                <X className="h-4 w-4" />
+                              </Button>
+                            </div>
+                            <ContinuousImprovementForm
+                              value={task.evidence || ''}
+                              onChange={(value) => {
+                                setTasks(prevTasks => prevTasks.map(t =>
+                                  t.id === task.id ? { ...t, evidence: value } : t
+                                ))
+                                debouncedAutoSave(task.id, value);
+                              }}
+                            />
+                            <div className="mt-3 pt-3 border-t border-indigo-200 flex gap-2">
+                              <Button
+                                onClick={() => {
+                                  if (task.evidence && task.evidence.trim()) {
+                                    handleTaskToggle(task.id, true);
+                                  }
+                                }}
+                                disabled={!task.evidence || !task.evidence.trim()}
+                                className="flex-1 bg-indigo-600 hover:bg-indigo-700 text-white"
+                              >
+                                <CheckCircle className="h-4 w-4 mr-2" />
+                                Complete Project
+                              </Button>
+                              <Button
+                                onClick={() => toggleForm(task.id)}
+                                variant="outline"
+                                className="text-gray-600 border-gray-200 hover:bg-gray-50"
+                              >
+                                Save & Close
+                              </Button>
+                            </div>
+                          </div>
+                        )}
+                      </div>
+                    )}
+
+                    {!task.completed && task.title === 'Operational Excellence Philosophy' && (
+                      <div className="mt-4">
+                        {!openForms[task.id] ? (
+                          <Button
+                            onClick={() => toggleForm(task.id)}
+                            variant="outline"
+                            className="w-full sm:w-auto text-red-600 border-red-200 hover:bg-red-50 h-10 sm:h-9"
+                          >
+                            <Heart className="h-4 w-4 mr-2" />
+                            Write Philosophy Statement
+                          </Button>
+                        ) : (
+                          <div className="p-4 bg-red-50 rounded-lg border border-red-200">
+                            <div className="flex items-center justify-between mb-3">
+                              <div className="flex items-center gap-2">
+                                <Heart className="h-5 w-5 text-red-600" />
+                                <h4 className="font-semibold text-red-800">Operational Excellence Philosophy</h4>
+                              </div>
+                              <Button
+                                onClick={() => toggleForm(task.id)}
+                                variant="ghost"
+                                size="sm"
+                                className="text-red-600 hover:text-red-800"
+                              >
+                                <X className="h-4 w-4" />
+                              </Button>
+                            </div>
+                            <OperationalExcellencePhilosophyForm
+                              value={task.evidence || ''}
+                              onChange={(value) => {
+                                setTasks(prevTasks => prevTasks.map(t =>
+                                  t.id === task.id ? { ...t, evidence: value } : t
+                                ))
+                                debouncedAutoSave(task.id, value);
+                              }}
+                            />
+                            <div className="mt-3 pt-3 border-t border-red-200 flex gap-2">
+                              <Button
+                                onClick={() => {
+                                  if (task.evidence && task.evidence.trim()) {
+                                    handleTaskToggle(task.id, true);
+                                  }
+                                }}
+                                disabled={!task.evidence || !task.evidence.trim()}
+                                className="flex-1 bg-red-600 hover:bg-red-700 text-white"
+                              >
+                                <CheckCircle className="h-4 w-4 mr-2" />
+                                Complete Philosophy
+                              </Button>
+                              <Button
+                                onClick={() => toggleForm(task.id)}
+                                variant="outline"
+                                className="text-gray-600 border-gray-200 hover:bg-gray-50"
+                              >
+                                Save & Close
+                              </Button>
+                            </div>
+                          </div>
+                        )}
+                      </div>
+                    )}
+
                     <div className="flex flex-wrap gap-x-4 gap-y-2">
                       {task.estimatedTime && (
                         <div className="flex items-center gap-2 text-sm text-gray-500">
@@ -2372,6 +2904,42 @@ export default function PlanTasks() {
                         ) : task.title === 'Communication Leadership Philosophy' ? (
                           <div className="text-sm text-gray-600">
                             <p>Communication leadership philosophy completed. You've developed your personal approach to leading through effective communication. Use the buttons above to view or edit your philosophy statement.</p>
+                          </div>
+                        ) : task.title === 'Introduction to Operational Excellence' ? (
+                          <div className="text-sm text-gray-600">
+                            <p>Operational excellence video reflection completed. You've analyzed key concepts and developed insights for implementing operational excellence in your restaurant. Use the buttons above to view or edit your reflection.</p>
+                          </div>
+                        ) : task.title === 'Quality Management Systems' ? (
+                          <div className="text-sm text-gray-600">
+                            <p>Quality management systems video reflection completed. You've explored quality frameworks and their application to restaurant operations. Use the buttons above to view or edit your reflection.</p>
+                          </div>
+                        ) : task.title === 'Lean Principles for Restaurants' ? (
+                          <div className="text-sm text-gray-600">
+                            <p>Lean principles reading reflection completed. You've studied waste elimination and efficiency principles with specific restaurant applications. Use the buttons above to view or edit your reflection.</p>
+                          </div>
+                        ) : task.title === 'Performance Metrics and KPIs' ? (
+                          <div className="text-sm text-gray-600">
+                            <p>Performance metrics and KPIs reading reflection completed. You've learned about measuring operational performance and tracking key indicators. Use the buttons above to view or edit your reflection.</p>
+                          </div>
+                        ) : task.title === 'Process Mapping Exercise' ? (
+                          <div className="text-sm text-gray-600">
+                            <p>Process mapping exercise completed. You've documented and analyzed key restaurant processes to identify improvement opportunities. Use the buttons above to view or edit your process maps.</p>
+                          </div>
+                        ) : task.title === 'Quality Standards Development' ? (
+                          <div className="text-sm text-gray-600">
+                            <p>Quality standards development completed. You've created comprehensive quality standards and procedures for your restaurant operations. Use the buttons above to view or edit your standards.</p>
+                          </div>
+                        ) : task.title === 'KPI Dashboard Creation' ? (
+                          <div className="text-sm text-gray-600">
+                            <p>KPI dashboard creation completed. You've designed a comprehensive performance tracking system with key metrics and monitoring processes. Use the buttons above to view or edit your dashboard.</p>
+                          </div>
+                        ) : task.title === 'Continuous Improvement Project' ? (
+                          <div className="text-sm text-gray-600">
+                            <p>Continuous improvement project completed. You've executed a complete PDCA cycle project with measurable results and lessons learned. Use the buttons above to view or edit your project documentation.</p>
+                          </div>
+                        ) : task.title === 'Operational Excellence Philosophy' ? (
+                          <div className="text-sm text-gray-600">
+                            <p>Operational excellence philosophy completed. You've developed your comprehensive approach to driving efficiency, quality, and continuous improvement. Use the buttons above to view or edit your philosophy statement.</p>
                           </div>
                         ) : (
                           <p className="text-sm text-gray-600 whitespace-pre-wrap">{task.evidence}</p>
@@ -2649,7 +3217,16 @@ export default function PlanTasks() {
                             'Team Experience Survey',
                             'Culture Leadership Plan',
                             'Team Values Workshop',
-                            'Talent Assessment'
+                            'Talent Assessment',
+                            'Introduction to Operational Excellence',
+                            'Lean Principles for Restaurants',
+                            'Process Mapping Exercise',
+                            'Quality Management Systems',
+                            'Quality Standards Development',
+                            'Performance Metrics and KPIs',
+                            'KPI Dashboard Creation',
+                            'Continuous Improvement Project',
+                            'Operational Excellence Philosophy'
                           ].includes(task.title) && !task.completed && ['reading', 'video', 'reflection', 'assessment', 'activity', 'task'].includes(task.type) && (
                             <Button
                               variant="outline"
@@ -2713,7 +3290,16 @@ export default function PlanTasks() {
                             'Team Experience Survey',
                             'Culture Leadership Plan',
                             'Team Values Workshop',
-                            'Talent Assessment'
+                            'Talent Assessment',
+                            'Introduction to Operational Excellence',
+                            'Lean Principles for Restaurants',
+                            'Process Mapping Exercise',
+                            'Quality Management Systems',
+                            'Quality Standards Development',
+                            'Performance Metrics and KPIs',
+                            'KPI Dashboard Creation',
+                            'Continuous Improvement Project',
+                            'Operational Excellence Philosophy'
                           ].includes(task.title) && task.completed && ['reading', 'video', 'reflection', 'assessment', 'activity', 'task'].includes(task.type) && (
                             <Button
                               variant="outline"
