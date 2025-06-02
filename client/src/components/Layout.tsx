@@ -57,6 +57,7 @@ import { useNotification } from '@/contexts/NotificationContext';
 import { NotificationList } from './NotificationList';
 import { requestNotificationPermission } from '@/utils/notificationPermission';
 import StoreSelector from './StoreSelector';
+import { Toaster } from '@/components/ui/toaster';
 
 interface MenuItem {
   icon: LucideIcon;
@@ -961,6 +962,9 @@ export default function Layout({ children }: { children: React.ReactNode }) {
           ? "100px"
           : undefined
       }}></div>
+
+      {/* Global Toast Notifications */}
+      <Toaster />
     </div>
   );
 }

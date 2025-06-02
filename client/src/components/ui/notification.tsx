@@ -60,7 +60,7 @@ export function Notification({
 
   return (
     <div className={cn(
-      'fixed top-4 right-4 w-96 rounded-lg border p-4 shadow-lg',
+      'fixed bottom-4 right-4 w-96 rounded-lg border p-4 shadow-lg',
       isClosing ? 'animate-slide-out' : 'animate-slide-in',
       backgrounds[type]
     )}>
@@ -116,4 +116,4 @@ export function NotificationContainer({ notifications, onClose }: NotificationCo
       ))}
     </div>
   );
-} 
+}

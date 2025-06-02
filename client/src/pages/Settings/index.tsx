@@ -22,6 +22,7 @@ import { handleError } from '@/lib/utils/error-handler';
 import { useNavigate, useLocation } from 'react-router-dom';
 import PageHeader, { headerButtonClass } from '@/components/PageHeader';
 import GradingScales from './components/GradingScales';
+import { useToast } from '@/components/ui/use-toast';
 
 const SettingsPage = () => {
   // Get the tab from URL query parameter
@@ -40,6 +41,7 @@ const SettingsPage = () => {
   const { user } = useAuth();
   const { t, language, setLanguage } = useTranslation();
   const isAdmin = user?.role === 'admin';
+  const { toast } = useToast();
 
   // State to track form changes
   const [formState, setFormState] = useState({
@@ -68,9 +70,10 @@ const SettingsPage = () => {
   const updateUserPreferencesMutation = useMutation({
     mutationFn: userPreferencesService.updateUserPreferences,
     onSuccess: (data) => {
-      setSuccess(t('settings.settingsSaved'));
-      setTimeout(() => setSuccess(''), 3000);
-      setError('');
+      toast({
+        title: "Settings saved",
+        description: t('settings.settingsSaved'),
+      });
 
       // Update the cache directly with the returned data
       queryClient.setQueryData(['userPreferences'], data);
@@ -79,7 +82,11 @@ const SettingsPage = () => {
       queryClient.invalidateQueries({ queryKey: ['userPreferences'] });
     },
     onError: (error) => {
-      setError(t('settings.errorSavingSettings'));
+      toast({
+        variant: "destructive",
+        title: "Error",
+        description: t('settings.errorSavingSettings'),
+      });
       handleError(error, 'Error updating user preferences');
     }
   });
@@ -161,18 +168,32 @@ const SettingsPage = () => {
     onSuccess: (data) => {
       // If this was an auto-schedule enable, show scheduling results
       if (data.schedulingResults) {
-        setSuccess(`Auto-scheduling enabled successfully. ${data.schedulingResults.scheduled} employees scheduled for evaluation.`);
+        toast({
+          title: "Auto-scheduling enabled",
+          description: `Auto-scheduling enabled successfully. ${data.schedulingResults.scheduled} employees scheduled for evaluation.`,
+        });
       } else {
-        setSuccess(t('settings.settingsSaved'));
+        toast({
+          title: "Settings saved",
+          description: t('settings.settingsSaved'),
+        });
       }
-      setTimeout(() => setSuccess(''), 3000);
-      setError('');
 
       // Update the cache directly with the returned data
       queryClient.setQueryData(['settings'], data);
 
       // Then invalidate to ensure fresh data on next fetch
       queryClient.invalidateQueries({ queryKey: ['settings'] });
+
+      // If store information was updated, also invalidate store-related caches
+      const storeFields = ['storeName', 'storeAddress', 'storePhone', 'storeEmail'];
+      const hasStoreUpdates = Object.keys(data).some(key => storeFields.includes(key));
+      if (hasStoreUpdates) {
+        queryClient.invalidateQueries({ queryKey: ['admin-stores'] });
+        queryClient.invalidateQueries({ queryKey: ['admin-stores-selector'] });
+        queryClient.invalidateQueries({ queryKey: ['current-store'] });
+        queryClient.invalidateQueries({ queryKey: ['user'] });
+      }
     },
     onError: (error: any) => {
       const errorMessage = error.response?.data?.message || error.response?.data?.error || t('settings.updateError');
@@ -190,11 +211,17 @@ const SettingsPage = () => {
       }
 
       console.error('Settings mutation error:', errorMessage, issues);
-      setError(errorMessage);
+
+      let description = errorMessage;
       if (issues.length > 0) {
-        setError(`${errorMessage}:\n${issues.join('\n')}`);
+        description = `${errorMessage}: ${issues.join(', ')}`;
       }
-      setSuccess('');
+
+      toast({
+        variant: "destructive",
+        title: "Error updating settings",
+        description: description,
+      });
     }
   });
 
@@ -204,14 +231,24 @@ const SettingsPage = () => {
       return response.data;
     },
     onSuccess: () => {
-      setSuccess(t('settings.settingsSaved'));
-      setTimeout(() => setSuccess(''), 3000);
-      setError('');
+      toast({
+        title: "Store information saved",
+        description: t('settings.settingsSaved'),
+      });
+
+      // Invalidate all relevant caches to ensure store info updates are reflected everywhere
       queryClient.invalidateQueries({ queryKey: ['settings'] });
+      queryClient.invalidateQueries({ queryKey: ['admin-stores'] });
+      queryClient.invalidateQueries({ queryKey: ['admin-stores-selector'] });
+      queryClient.invalidateQueries({ queryKey: ['current-store'] });
+      queryClient.invalidateQueries({ queryKey: ['user'] });
     },
     onError: (error: any) => {
-      setError(error.response?.data?.message || t('settings.updateError'));
-      setSuccess('');
+      toast({
+        variant: "destructive",
+        title: "Error saving store information",
+        description: error.response?.data?.message || t('settings.updateError'),
+      });
     }
   });
 
@@ -222,14 +259,18 @@ const SettingsPage = () => {
       return response.data;
     },
     onSuccess: () => {
-      setSuccess(t('settings.resetSuccess'));
-      setTimeout(() => setSuccess(''), 3000);
-      setError('');
+      toast({
+        title: "Settings reset",
+        description: t('settings.resetSuccess'),
+      });
       queryClient.invalidateQueries({ queryKey: ['settings'] });
     },
     onError: (error: any) => {
-      setError(error.response?.data?.message || t('settings.updateError'));
-      setSuccess('');
+      toast({
+        variant: "destructive",
+        title: "Error resetting settings",
+        description: error.response?.data?.message || t('settings.updateError'),
+      });
     }
   });
 
@@ -237,6 +278,7 @@ const SettingsPage = () => {
     e.preventDefault();
 
     try {
+      // Use the store update endpoint for store information
       if (isAdmin) {
         await updateStoreInfoMutation.mutateAsync({
           name: formState.storeName,
@@ -246,21 +288,12 @@ const SettingsPage = () => {
           storeEmail: formState.storeEmail
         });
       }
-
-      await updateSettingsMutation.mutateAsync({
-        storeName: formState.storeName,
-        // storeNumber is intentionally omitted to prevent changes
-        storeAddress: formState.storeAddress,
-        storePhone: formState.storePhone,
-        storeEmail: formState.storeEmail
-      });
     } catch (error) {
-      console.error('Failed to save settings:', error);
+      console.error('Failed to save store information:', error);
     }
   };
 
-  const [error, setError] = useState('');
-  const [success, setSuccess] = useState('');
+
 
   // Handle language change
   const handleLanguageChange = (value: 'en' | 'es') => {
@@ -292,35 +325,7 @@ const SettingsPage = () => {
           }
         />
 
-        {/* Error and Success Messages */}
-        {error && (
-          <div className="bg-red-50 border border-red-200 text-red-700 px-6 py-4 rounded-[20px] shadow-sm">
-            <div className="flex items-start gap-3">
-              <div className="shrink-0 mt-1">
-                <svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
-                  <path d="M10 0C4.48 0 0 4.48 0 10C0 15.52 4.48 20 10 20C15.52 20 20 15.52 20 10C20 4.48 15.52 0 10 0ZM11 15H9V13H11V15ZM11 11H9V5H11V11Z" fill="currentColor"/>
-                </svg>
-              </div>
-              <div>
-                {error.split('\n').map((line, index) => (
-                  <p key={index} className={index === 0 ? 'font-medium text-base' : 'mt-1 text-sm'}>
-                    {line}
-                  </p>
-                ))}
-              </div>
-            </div>
-          </div>
-        )}
-        {success && (
-          <div className="bg-green-50 border border-green-200 text-green-700 px-6 py-4 rounded-[20px] shadow-sm">
-            <div className="flex items-center gap-3">
-              <svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
-                <path d="M10 0C4.48 0 0 4.48 0 10C0 15.52 4.48 20 10 20C15.52 20 20 15.52 20 10C20 4.48 15.52 0 10 0ZM8 15L3 10L4.41 8.59L8 12.17L15.59 4.58L17 6L8 15Z" fill="currentColor"/>
-              </svg>
-              <p>{success}</p>
-            </div>
-          </div>
-        )}
+
 
         {/* Settings Content */}
         <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">

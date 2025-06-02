@@ -65,7 +65,25 @@ export const getSettings = async (req, res) => {
       console.log('Settings validation warnings:', validation.warnings);
     }
 
-    res.json(validation.settings);
+    // Get store info to include in the response
+    const store = await Store.findById(req.user.store);
+    if (!store) {
+      return res.status(404).json({ error: 'Store not found' });
+    }
+
+    // Combine settings with store info
+    const response = {
+      ...validation.settings.toObject(),
+      storeName: store.name,
+      storeNumber: store.storeNumber,
+      storeAddress: store.storeAddress,
+      storePhone: store.storePhone,
+      storeEmail: store.storeEmail,
+      visionStatement: store.visionStatement,
+      missionStatement: store.missionStatement
+    };
+
+    res.json(response);
   } catch (error) {
     handleError(error, ErrorCategory.SETTINGS, {
       storeId: req.user?.store,
@@ -247,9 +265,24 @@ export const updateSettings = async (req, res) => {
     // Save the settings
     await settings.save();
 
+    // Get store info to include in the response
+    const store = await Store.findById(req.user.store);
+    if (!store) {
+      return res.status(404).json({ error: 'Store not found' });
+    }
+
     // Only run validation if we're updating evaluation settings
     // Skip validation for UI preferences and other non-evaluation updates
-    let response = settings.toObject();
+    let response = {
+      ...settings.toObject(),
+      storeName: store.name,
+      storeNumber: store.storeNumber,
+      storeAddress: store.storeAddress,
+      storePhone: store.storePhone,
+      storeEmail: store.storeEmail,
+      visionStatement: store.visionStatement,
+      missionStatement: store.missionStatement
+    };
 
     if (req.body.evaluations) {
       // Get final validation state including configuration issues
@@ -362,9 +395,14 @@ export const updateStoreInfo = async (req, res) => {
       return res.status(403).json({ error: 'Only admins can update store information' });
     }
 
-    // Only allow updating vision and mission statements
-    const { visionStatement, missionStatement } = req.body;
+    // Allow updating all store fields except storeNumber (which should be immutable)
+    const { name, storeAddress, storePhone, storeEmail, visionStatement, missionStatement } = req.body;
     const updates = {};
+
+    if (name !== undefined) updates.name = name;
+    if (storeAddress !== undefined) updates.storeAddress = storeAddress;
+    if (storePhone !== undefined) updates.storePhone = storePhone;
+    if (storeEmail !== undefined) updates.storeEmail = storeEmail;
     if (visionStatement !== undefined) updates.visionStatement = visionStatement;
     if (missionStatement !== undefined) updates.missionStatement = missionStatement;
 
