@@ -24,7 +24,8 @@ const ALL_NAV_ITEMS = [
   { key: 'teamSurveys', label: 'Team Surveys', icon: 'MessageSquare' },
   { key: 'teamDevelopment', label: 'Team Development', icon: 'TrendingUp' },
   { key: 'analytics', label: 'Analytics', icon: 'BarChart' },
-  { key: 'users', label: 'Team Members', icon: 'Users' }
+  { key: 'users', label: 'Team Members', icon: 'Users' },
+  { key: 'howTo', label: 'How To', icon: 'HelpCircle' }
 ];
 
 interface MobileNavigationSettingsProps {

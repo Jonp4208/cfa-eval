@@ -111,6 +111,7 @@ import { EditTemplate } from '@/pages/EditTemplate';
 import InvoicesPage from '@/pages/Invoices';
 import AdminPage from '@/pages/Admin';
 import SubscriptionManagementPage from '@/pages/Admin/SubscriptionManagement';
+import HowTo from '@/pages/HowTo';
 
 
 interface PrivateRouteProps {
@@ -298,6 +299,9 @@ export default function AppRoutes() {
 
       {/* Redirect /goals to /leadership/goals since goals feature has been moved */}
       <Route path="/goals" element={<Navigate to="/leadership/goals" replace />} />
+
+      {/* Help and Documentation */}
+      <Route path="/how-to" element={<PrivateRoute><HowTo /></PrivateRoute>} />
 
       {/* Admin Pages - Restricted Access */}
       <Route path="/admin/invoices" element={<PrivateRoute><InvoicesPage /></PrivateRoute>} />

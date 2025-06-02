@@ -20,7 +20,8 @@ import {
   Users,
   TrendingUp,
   BarChart,
-  MessageSquare
+  MessageSquare,
+  HelpCircle
 } from 'lucide-react';
 
 // Define all available navigation items with their configurations
@@ -115,6 +116,12 @@ const ALL_NAV_ITEMS = {
     href: (user: any) => user?.position === 'Team Member' ? '/team-development/my-plans' : '/team-development/overview',
     defaultShow: true,
     requiresFeature: 'leadership'
+  },
+  howTo: {
+    icon: HelpCircle,
+    label: 'How To',
+    href: '/how-to',
+    defaultShow: false
   }
 };
 

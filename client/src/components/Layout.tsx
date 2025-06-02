@@ -41,7 +41,8 @@ import {
   CalendarDays,
   Plus,
   Building,
-  MessageSquare
+  MessageSquare,
+  HelpCircle
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import api from '@/lib/axios';
@@ -682,6 +683,14 @@ export default function Layout({ children }: { children: React.ReactNode }) {
               </DropdownMenuTrigger>
               <DropdownMenuContent align="end" className="w-56">
                 <DropdownMenuItem
+                  onClick={() => navigate('/how-to')}
+                  className="flex items-center gap-2 min-h-[44px] cursor-pointer"
+                >
+                  <HelpCircle className="w-4 h-4 text-gray-400" />
+                  <span>How To</span>
+                </DropdownMenuItem>
+
+                <DropdownMenuItem
                   onClick={() => navigate('/settings')}
                   className="flex items-center gap-2 min-h-[44px] cursor-pointer"
                 >
@@ -890,6 +899,17 @@ export default function Layout({ children }: { children: React.ReactNode }) {
 
             {/* Settings and Logout */}
             <div className="p-3 border-t pb-safe safe-area-bottom">
+              <button
+                onClick={() => {
+                  navigate('/how-to');
+                  setIsMobileMenuOpen(false);
+                }}
+                className="w-full px-3 py-2 flex items-center gap-2 rounded-lg mb-1 hover:bg-gray-50"
+              >
+                <HelpCircle className="w-5 h-5 text-gray-500" />
+                <span className="font-medium">How To</span>
+              </button>
+
               <button
                 onClick={() => {
                   navigate('/settings');
