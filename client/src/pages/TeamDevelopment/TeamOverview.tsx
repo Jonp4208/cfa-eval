@@ -3,10 +3,12 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Progress } from '@/components/ui/progress'
+import { Input } from '@/components/ui/input'
 import { useToast } from '@/components/ui/use-toast'
-import { Users, BookOpen, TrendingUp, Award, Plus, Eye } from 'lucide-react'
+import { Users, BookOpen, TrendingUp, Award, Plus, Eye, Target, Brain, Heart, Shield, Zap, GraduationCap, Rocket, Star, Sparkles, Trophy, BarChart3, PieChart, Activity, Calendar, Clock, CheckCircle, ArrowUp, ArrowDown, Minus, Search } from 'lucide-react'
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
+import { useNavigate } from 'react-router-dom'
 import { api } from '@/lib/api'
 
 interface TeamMember {
@@ -57,7 +59,12 @@ const TeamOverview: React.FC = () => {
   const [selectedTeamMember, setSelectedTeamMember] = useState<string>('')
   const [selectedPlan, setSelectedPlan] = useState<string>('')
   const [enrolling, setEnrolling] = useState(false)
+  const [progressDialogOpen, setProgressDialogOpen] = useState(false)
+  const [analyticsDialogOpen, setAnalyticsDialogOpen] = useState(false)
+  const [progressSearchTerm, setProgressSearchTerm] = useState('')
+  const [analyticsSearchTerm, setAnalyticsSearchTerm] = useState('')
   const { toast } = useToast()
+  const navigate = useNavigate()
 
   useEffect(() => {
     fetchTeamOverview()
@@ -142,6 +149,61 @@ const TeamOverview: React.FC = () => {
     return plan?.title || planId
   }
 
+  const getPlanIcon = (planId: string) => {
+    switch (planId) {
+      case 'growth-mindset-champion':
+        return <Brain className="h-5 w-5" />
+      case 'second-mile-service':
+        return <Heart className="h-5 w-5" />
+      case 'team-unity-builder':
+        return <Users className="h-5 w-5" />
+      case 'ownership-initiative':
+        return <Shield className="h-5 w-5" />
+      case 'continuous-improvement':
+        return <TrendingUp className="h-5 w-5" />
+      case 'positive-energy-creator':
+        return <Zap className="h-5 w-5" />
+      default:
+        return <Target className="h-5 w-5" />
+    }
+  }
+
+  const getPlanGradient = (planId: string) => {
+    switch (planId) {
+      case 'growth-mindset-champion':
+        return 'from-purple-500 to-pink-500'
+      case 'second-mile-service':
+        return 'from-red-500 to-orange-500'
+      case 'team-unity-builder':
+        return 'from-blue-500 to-cyan-500'
+      case 'ownership-initiative':
+        return 'from-green-500 to-emerald-500'
+      case 'continuous-improvement':
+        return 'from-indigo-500 to-purple-500'
+      case 'positive-energy-creator':
+        return 'from-yellow-500 to-orange-500'
+      default:
+        return 'from-gray-500 to-gray-600'
+    }
+  }
+
+  // Calculate plan distribution
+  const getPlanDistribution = () => {
+    const planCounts: { [key: string]: number } = {}
+    overviewData?.teamMembers.forEach(member => {
+      member.enrollments.forEach(enrollment => {
+        planCounts[enrollment.planId] = (planCounts[enrollment.planId] || 0) + 1
+      })
+    })
+    return Object.entries(planCounts).map(([planId, count]) => ({
+      planId,
+      title: getPlanTitle(planId),
+      count,
+      icon: getPlanIcon(planId),
+      gradient: getPlanGradient(planId)
+    })).sort((a, b) => b.count - a.count)
+  }
+
   if (loading) {
     return (
       <div className="flex items-center justify-center h-64">
@@ -158,176 +220,684 @@ const TeamOverview: React.FC = () => {
     )
   }
 
+  const planDistribution = getPlanDistribution()
+  const completionRate = overviewData.summary.totalEnrollments > 0
+    ? Math.round((overviewData.summary.completedPlans / overviewData.summary.totalEnrollments) * 100)
+    : 0
+  const enrollmentRate = Math.round((overviewData.summary.enrolledMembers / overviewData.summary.totalTeamMembers) * 100)
+
   return (
-    <div className="space-y-6">
-      {/* Summary Cards */}
-      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Total Team Members</CardTitle>
-            <Users className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">{overviewData.summary.totalTeamMembers}</div>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Enrolled Members</CardTitle>
-            <BookOpen className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">{overviewData.summary.enrolledMembers}</div>
-            <p className="text-xs text-muted-foreground">
-              {Math.round((overviewData.summary.enrolledMembers / overviewData.summary.totalTeamMembers) * 100)}% of team
-            </p>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Active Plans</CardTitle>
-            <TrendingUp className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">{overviewData.summary.totalEnrollments}</div>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Completed Plans</CardTitle>
-            <Award className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">{overviewData.summary.completedPlans}</div>
-          </CardContent>
-        </Card>
-      </div>
-
-      {/* Enroll Team Member Button */}
-      <div className="flex justify-between items-center">
-        <h2 className="text-2xl font-semibold text-gray-900">Team Member Progress</h2>
-
-        <Dialog open={enrollDialogOpen} onOpenChange={setEnrollDialogOpen}>
-          <DialogTrigger asChild>
-            <Button>
-              <Plus className="h-4 w-4 mr-2" />
-              Enroll Team Member
-            </Button>
-          </DialogTrigger>
-          <DialogContent>
-            <DialogHeader>
-              <DialogTitle>Enroll Team Member in Development Plan</DialogTitle>
-              <DialogDescription>
-                Select a team member and development plan to get started.
-              </DialogDescription>
-            </DialogHeader>
-
-            <div className="space-y-4">
-              <div>
-                <label className="text-sm font-medium">Team Member</label>
-                <Select value={selectedTeamMember} onValueChange={setSelectedTeamMember}>
-                  <SelectTrigger>
-                    <SelectValue placeholder="Select a team member" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {overviewData.teamMembers.map((member) => (
-                      <SelectItem key={member.teamMember._id} value={member.teamMember._id}>
-                        {member.teamMember.name}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
+    <div className="min-h-screen">
+      {/* Hero Header */}
+      <div className="relative overflow-hidden bg-gradient-to-r from-blue-600 via-purple-600 to-indigo-600 text-white">
+        <div className="absolute inset-0 bg-black/20"></div>
+        <div className="relative px-6 py-16">
+          <div className="max-w-7xl mx-auto">
+            <div className="flex items-center gap-6 mb-8">
+              <div className="p-4 bg-white/20 rounded-2xl backdrop-blur-sm">
+                <BarChart3 className="h-12 w-12" />
               </div>
-
-              <div>
-                <label className="text-sm font-medium">Development Plan</label>
-                <Select value={selectedPlan} onValueChange={setSelectedPlan}>
-                  <SelectTrigger>
-                    <SelectValue placeholder="Select a development plan" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {availablePlans.map((plan) => (
-                      <SelectItem key={plan.id} value={plan.id}>
-                        {plan.title} ({plan.estimatedWeeks} weeks)
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
+              <div className="flex-1">
+                <h1 className="text-4xl md:text-5xl font-bold mb-3">
+                  Team Development Analytics
+                </h1>
+                <p className="text-xl text-white/90 mb-6">
+                  Track your team's growth journey and development progress across all leadership plans
+                </p>
               </div>
-
-              <Button
-                onClick={handleEnrollTeamMember}
-                disabled={enrolling || !selectedTeamMember || !selectedPlan}
-                className="w-full"
-              >
-                {enrolling ? 'Enrolling...' : 'Enroll Team Member'}
-              </Button>
             </div>
-          </DialogContent>
-        </Dialog>
+
+            {/* Hero Stats */}
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
+              <div className="text-center">
+                <div className="text-3xl font-bold mb-1">{overviewData.summary.totalTeamMembers}</div>
+                <div className="text-white/80 text-sm">Team Members</div>
+              </div>
+              <div className="text-center">
+                <div className="text-3xl font-bold mb-1">{enrollmentRate}%</div>
+                <div className="text-white/80 text-sm">Enrollment Rate</div>
+              </div>
+              <div className="text-center">
+                <div className="text-3xl font-bold mb-1">{overviewData.summary.totalEnrollments}</div>
+                <div className="text-white/80 text-sm">Active Plans</div>
+              </div>
+              <div className="text-center">
+                <div className="text-3xl font-bold mb-1">{completionRate}%</div>
+                <div className="text-white/80 text-sm">Completion Rate</div>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div className="absolute bottom-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-white/30 to-transparent"></div>
       </div>
 
-      {/* Team Member Cards */}
-      <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
-        {overviewData.teamMembers.map((member) => (
-          <Card key={member.teamMember._id}>
-            <CardHeader>
-              <CardTitle className="text-lg">{member.teamMember.name}</CardTitle>
-              <CardDescription>{member.teamMember.email}</CardDescription>
-            </CardHeader>
-
-            <CardContent className="space-y-4">
-              {/* Stats */}
-              <div className="grid grid-cols-3 gap-2 text-center">
-                <div>
-                  <div className="text-lg font-semibold text-blue-600">{member.totalPlans}</div>
-                  <div className="text-xs text-gray-500">Total Plans</div>
+      <div className="max-w-7xl mx-auto px-6 py-12 space-y-12">
+        {/* Key Metrics Cards */}
+        <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4">
+          <Card className="border-0 shadow-xl bg-gradient-to-br from-blue-50 to-cyan-50 overflow-hidden">
+            <div className="h-2 bg-gradient-to-r from-blue-500 to-cyan-500"></div>
+            <CardContent className="p-6">
+              <div className="flex items-center gap-4">
+                <div className="p-3 bg-gradient-to-r from-blue-500 to-cyan-500 rounded-xl text-white shadow-lg">
+                  <Users className="h-6 w-6" />
                 </div>
                 <div>
-                  <div className="text-lg font-semibold text-yellow-600">{member.inProgressPlans}</div>
-                  <div className="text-xs text-gray-500">In Progress</div>
-                </div>
-                <div>
-                  <div className="text-lg font-semibold text-green-600">{member.completedPlans}</div>
-                  <div className="text-xs text-gray-500">Completed</div>
+                  <div className="text-2xl font-bold text-gray-900">{overviewData.summary.enrolledMembers}</div>
+                  <div className="text-sm text-gray-600">Enrolled Members</div>
+                  <div className="text-xs text-blue-600 font-medium">
+                    {enrollmentRate}% of team engaged
+                  </div>
                 </div>
               </div>
-
-              {/* Recent Enrollments */}
-              {member.enrollments.length > 0 ? (
-                <div className="space-y-2">
-                  <h4 className="text-sm font-medium">Recent Plans</h4>
-                  {member.enrollments.slice(0, 2).map((enrollment) => (
-                    <div key={enrollment._id} className="flex items-center justify-between text-sm">
-                      <span className="truncate flex-1">{getPlanTitle(enrollment.planId)}</span>
-                      <Badge className={`ml-2 ${getStatusColor(enrollment.status)}`}>
-                        {enrollment.status}
-                      </Badge>
-                    </div>
-                  ))}
-                  {member.enrollments.length > 2 && (
-                    <p className="text-xs text-gray-500">
-                      +{member.enrollments.length - 2} more plans
-                    </p>
-                  )}
-                </div>
-              ) : (
-                <div className="text-center py-4">
-                  <p className="text-sm text-gray-500">No development plans yet</p>
-                </div>
-              )}
-
-              <Button variant="outline" size="sm" className="w-full">
-                <Eye className="h-4 w-4 mr-2" />
-                View Details
-              </Button>
             </CardContent>
           </Card>
-        ))}
+
+          <Card className="border-0 shadow-xl bg-gradient-to-br from-green-50 to-emerald-50 overflow-hidden">
+            <div className="h-2 bg-gradient-to-r from-green-500 to-emerald-500"></div>
+            <CardContent className="p-6">
+              <div className="flex items-center gap-4">
+                <div className="p-3 bg-gradient-to-r from-green-500 to-emerald-500 rounded-xl text-white shadow-lg">
+                  <Trophy className="h-6 w-6" />
+                </div>
+                <div>
+                  <div className="text-2xl font-bold text-gray-900">{overviewData.summary.completedPlans}</div>
+                  <div className="text-sm text-gray-600">Completed Plans</div>
+                  <div className="text-xs text-green-600 font-medium">
+                    {completionRate}% success rate
+                  </div>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+
+          <Card className="border-0 shadow-xl bg-gradient-to-br from-purple-50 to-pink-50 overflow-hidden">
+            <div className="h-2 bg-gradient-to-r from-purple-500 to-pink-500"></div>
+            <CardContent className="p-6">
+              <div className="flex items-center gap-4">
+                <div className="p-3 bg-gradient-to-r from-purple-500 to-pink-500 rounded-xl text-white shadow-lg">
+                  <Activity className="h-6 w-6" />
+                </div>
+                <div>
+                  <div className="text-2xl font-bold text-gray-900">{overviewData.summary.totalEnrollments}</div>
+                  <div className="text-sm text-gray-600">Active Plans</div>
+                  <div className="text-xs text-purple-600 font-medium">
+                    Currently in progress
+                  </div>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+
+          <Card className="border-0 shadow-xl bg-gradient-to-br from-orange-50 to-red-50 overflow-hidden">
+            <div className="h-2 bg-gradient-to-r from-orange-500 to-red-500"></div>
+            <CardContent className="p-6">
+              <div className="flex items-center gap-4">
+                <div className="p-3 bg-gradient-to-r from-orange-500 to-red-500 rounded-xl text-white shadow-lg">
+                  <Target className="h-6 w-6" />
+                </div>
+                <div>
+                  <div className="text-2xl font-bold text-gray-900">{availablePlans.length}</div>
+                  <div className="text-sm text-gray-600">Available Plans</div>
+                  <div className="text-xs text-orange-600 font-medium">
+                    Ready for enrollment
+                  </div>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+
+        {/* Plan Distribution Analytics */}
+        <div>
+          <div className="flex items-center gap-3 mb-8">
+            <div className="p-2 bg-gradient-to-r from-indigo-500 to-purple-500 rounded-lg">
+              <PieChart className="h-6 w-6 text-white" />
+            </div>
+            <div>
+              <h2 className="text-3xl font-bold text-gray-900">Plan Popularity</h2>
+              <p className="text-gray-600">See which development plans your team prefers</p>
+            </div>
+          </div>
+
+          <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+            {planDistribution.map((plan, index) => (
+              <Card key={plan.planId} className="border-0 shadow-xl hover:shadow-2xl transition-all duration-300 hover:-translate-y-1 bg-white overflow-hidden">
+                <div className={`h-2 bg-gradient-to-r ${plan.gradient}`}></div>
+                <CardContent className="p-6">
+                  <div className="flex items-center gap-4 mb-4">
+                    <div className={`p-3 bg-gradient-to-r ${plan.gradient} rounded-xl text-white shadow-lg`}>
+                      {plan.icon}
+                    </div>
+                    <div className="flex-1">
+                      <h3 className="font-bold text-gray-900 mb-1">{plan.title}</h3>
+                      <div className="flex items-center gap-2">
+                        <Badge className="bg-gray-100 text-gray-800 border-0">
+                          #{index + 1} Most Popular
+                        </Badge>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="space-y-3">
+                    <div className="flex items-center justify-between">
+                      <span className="text-sm text-gray-600">Enrollments</span>
+                      <span className="text-2xl font-bold text-gray-900">{plan.count}</span>
+                    </div>
+
+                    <div className="w-full bg-gray-200 rounded-full h-2">
+                      <div
+                        className={`h-2 rounded-full bg-gradient-to-r ${plan.gradient}`}
+                        style={{
+                          width: `${Math.min((plan.count / Math.max(...planDistribution.map(p => p.count))) * 100, 100)}%`
+                        }}
+                      ></div>
+                    </div>
+
+                    <div className="text-xs text-gray-500">
+                      {Math.round((plan.count / overviewData.summary.totalEnrollments) * 100)}% of all enrollments
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+            ))}
+          </div>
+        </div>
+
+        {/* Quick Actions */}
+        <div>
+          <div className="flex items-center gap-3 mb-8">
+            <div className="p-2 bg-gradient-to-r from-green-500 to-emerald-500 rounded-lg">
+              <Rocket className="h-6 w-6 text-white" />
+            </div>
+            <div>
+              <h2 className="text-3xl font-bold text-gray-900">Quick Actions</h2>
+              <p className="text-gray-600">Manage your team's development journey</p>
+            </div>
+          </div>
+
+          <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+            {/* Enroll Team Member Card */}
+            <Card className="border-0 shadow-xl hover:shadow-2xl transition-all duration-300 hover:-translate-y-1 bg-gradient-to-br from-blue-50 to-cyan-50 overflow-hidden group cursor-pointer">
+              <div className="h-2 bg-gradient-to-r from-blue-500 to-cyan-500"></div>
+              <Dialog open={enrollDialogOpen} onOpenChange={setEnrollDialogOpen}>
+                <DialogTrigger asChild>
+                  <CardContent className="p-6 h-full">
+                    <div className="flex items-center gap-4 mb-4">
+                      <div className="p-3 bg-gradient-to-r from-blue-500 to-cyan-500 rounded-xl text-white shadow-lg group-hover:scale-110 transition-transform">
+                        <Plus className="h-6 w-6" />
+                      </div>
+                      <div>
+                        <h3 className="text-xl font-bold text-gray-900 mb-1">Enroll Team Member</h3>
+                        <p className="text-sm text-gray-600">Assign development plans to your team</p>
+                      </div>
+                    </div>
+                    <Button className="w-full bg-gradient-to-r from-blue-500 to-cyan-500 hover:from-blue-600 hover:to-cyan-600 border-0 shadow-lg">
+                      <Plus className="h-4 w-4 mr-2" />
+                      Start Enrollment
+                    </Button>
+                  </CardContent>
+                </DialogTrigger>
+                <DialogContent>
+                  <DialogHeader>
+                    <DialogTitle>Enroll Team Member in Development Plan</DialogTitle>
+                    <DialogDescription>
+                      Select a team member and development plan to get started.
+                    </DialogDescription>
+                  </DialogHeader>
+
+                  <div className="space-y-4">
+                    <div>
+                      <label className="text-sm font-medium">Team Member</label>
+                      <Select value={selectedTeamMember} onValueChange={setSelectedTeamMember}>
+                        <SelectTrigger>
+                          <SelectValue placeholder="Select a team member" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {overviewData.teamMembers.map((member) => (
+                            <SelectItem key={member.teamMember._id} value={member.teamMember._id}>
+                              {member.teamMember.name}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </div>
+
+                    <div>
+                      <label className="text-sm font-medium">Development Plan</label>
+                      <Select value={selectedPlan} onValueChange={setSelectedPlan}>
+                        <SelectTrigger>
+                          <SelectValue placeholder="Select a development plan" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {availablePlans.map((plan) => (
+                            <SelectItem key={plan.id} value={plan.id}>
+                              {plan.title} ({plan.estimatedWeeks} weeks)
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </div>
+
+                    <Button
+                      onClick={handleEnrollTeamMember}
+                      disabled={enrolling || !selectedTeamMember || !selectedPlan}
+                      className="w-full"
+                    >
+                      {enrolling ? 'Enrolling...' : 'Enroll Team Member'}
+                    </Button>
+                  </div>
+                </DialogContent>
+              </Dialog>
+            </Card>
+
+            {/* View Team Progress Card */}
+            <Dialog
+              open={progressDialogOpen}
+              onOpenChange={(open) => {
+                setProgressDialogOpen(open)
+                if (!open) setProgressSearchTerm('')
+              }}
+            >
+              <DialogTrigger asChild>
+                <Card className="border-0 shadow-xl hover:shadow-2xl transition-all duration-300 hover:-translate-y-1 bg-gradient-to-br from-purple-50 to-pink-50 overflow-hidden group cursor-pointer">
+                  <div className="h-2 bg-gradient-to-r from-purple-500 to-pink-500"></div>
+                  <CardContent className="p-6">
+                    <div className="flex items-center gap-4 mb-4">
+                      <div className="p-3 bg-gradient-to-r from-purple-500 to-pink-500 rounded-xl text-white shadow-lg group-hover:scale-110 transition-transform">
+                        <Eye className="h-6 w-6" />
+                      </div>
+                      <div>
+                        <h3 className="text-xl font-bold text-gray-900 mb-1">View Team Progress</h3>
+                        <p className="text-sm text-gray-600">Detailed progress tracking</p>
+                      </div>
+                    </div>
+                    <Button className="w-full bg-gradient-to-r from-purple-500 to-pink-500 hover:from-purple-600 hover:to-pink-600 border-0 shadow-lg">
+                      <Eye className="h-4 w-4 mr-2" />
+                      View Details
+                    </Button>
+                  </CardContent>
+                </Card>
+              </DialogTrigger>
+              <DialogContent className="max-w-4xl max-h-[80vh] overflow-y-auto">
+                <DialogHeader>
+                  <DialogTitle className="flex items-center gap-2">
+                    <Eye className="h-5 w-5" />
+                    Team Development Progress
+                  </DialogTitle>
+                  <DialogDescription>
+                    Detailed view of each team member's development journey and progress
+                  </DialogDescription>
+                </DialogHeader>
+
+                {/* Search Bar */}
+                <div className="relative">
+                  <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
+                  <Input
+                    placeholder="Search team members by name or email..."
+                    value={progressSearchTerm}
+                    onChange={(e) => setProgressSearchTerm(e.target.value)}
+                    className="pl-10"
+                  />
+                </div>
+
+                <div className="space-y-6">
+                  {(() => {
+                    const enrolledMembers = overviewData?.teamMembers.filter(member => member.enrollments.length > 0) || []
+                    const filteredMembers = enrolledMembers.filter(member =>
+                      member.teamMember.name.toLowerCase().includes(progressSearchTerm.toLowerCase()) ||
+                      member.teamMember.email.toLowerCase().includes(progressSearchTerm.toLowerCase())
+                    )
+
+                    if (enrolledMembers.length === 0) {
+                      return (
+                        <div className="text-center py-12">
+                          <div className="p-4 bg-gray-100 rounded-full w-fit mx-auto mb-4">
+                            <Users className="h-12 w-12 text-gray-400" />
+                          </div>
+                          <h3 className="text-lg font-semibold text-gray-900 mb-2">No Team Members Enrolled Yet</h3>
+                          <p className="text-gray-600 mb-4">
+                            Start by enrolling team members in development plans to see their progress here.
+                          </p>
+                          <Button
+                            onClick={() => {
+                              setProgressDialogOpen(false)
+                              setEnrollDialogOpen(true)
+                            }}
+                            className="bg-gradient-to-r from-blue-500 to-purple-500"
+                          >
+                            <Plus className="h-4 w-4 mr-2" />
+                            Enroll Team Member
+                          </Button>
+                        </div>
+                      )
+                    }
+
+                    if (filteredMembers.length === 0) {
+                      return (
+                        <div className="text-center py-12">
+                          <div className="p-4 bg-gray-100 rounded-full w-fit mx-auto mb-4">
+                            <Search className="h-12 w-12 text-gray-400" />
+                          </div>
+                          <h3 className="text-lg font-semibold text-gray-900 mb-2">No Results Found</h3>
+                          <p className="text-gray-600 mb-4">
+                            No team members match your search criteria. Try adjusting your search terms.
+                          </p>
+                          <Button
+                            onClick={() => setProgressSearchTerm('')}
+                            variant="outline"
+                          >
+                            Clear Search
+                          </Button>
+                        </div>
+                      )
+                    }
+
+                    return filteredMembers.map((member) => (
+                      <Card key={member.teamMember._id} className="border border-gray-200">
+                        <CardHeader className="pb-3">
+                          <div className="flex items-center justify-between">
+                            <div>
+                              <CardTitle className="text-lg">{member.teamMember.name}</CardTitle>
+                              <CardDescription>{member.teamMember.email}</CardDescription>
+                            </div>
+                            <div className="flex gap-2">
+                              <Badge className="bg-blue-100 text-blue-800">
+                                {member.totalPlans} Plans
+                              </Badge>
+                              <Badge className="bg-green-100 text-green-800">
+                                {member.completedPlans} Completed
+                              </Badge>
+                            </div>
+                          </div>
+                        </CardHeader>
+                        <CardContent>
+                          <div className="space-y-3">
+                            {member.enrollments.map((enrollment) => (
+                              <div key={enrollment._id} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
+                                <div className="flex items-center gap-3">
+                                  <div className={`p-2 bg-gradient-to-r ${getPlanGradient(enrollment.planId)} rounded-lg text-white`}>
+                                    {getPlanIcon(enrollment.planId)}
+                                  </div>
+                                  <div>
+                                    <p className="font-medium text-gray-900">{getPlanTitle(enrollment.planId)}</p>
+                                    <p className="text-sm text-gray-600">
+                                      {enrollment.learningTasks.filter(t => t.completed).length} of {enrollment.learningTasks.length} tasks completed
+                                    </p>
+                                  </div>
+                                </div>
+                                <div className="flex items-center gap-3">
+                                  <div className="text-right">
+                                    <div className="text-lg font-bold text-gray-900">{enrollment.progress}%</div>
+                                    <Badge className={`text-xs ${getStatusColor(enrollment.status)}`}>
+                                      {enrollment.status}
+                                    </Badge>
+                                  </div>
+                                  <div className="w-20">
+                                    <Progress value={enrollment.progress} className="h-2" />
+                                  </div>
+                                </div>
+                              </div>
+                            ))}
+                          </div>
+                        </CardContent>
+                      </Card>
+                    ))
+                  })()}
+                </div>
+              </DialogContent>
+            </Dialog>
+
+            {/* Analytics Card */}
+            <Dialog
+              open={analyticsDialogOpen}
+              onOpenChange={(open) => {
+                setAnalyticsDialogOpen(open)
+                if (!open) setAnalyticsSearchTerm('')
+              }}
+            >
+              <DialogTrigger asChild>
+                <Card className="border-0 shadow-xl hover:shadow-2xl transition-all duration-300 hover:-translate-y-1 bg-gradient-to-br from-green-50 to-emerald-50 overflow-hidden group cursor-pointer">
+                  <div className="h-2 bg-gradient-to-r from-green-500 to-emerald-500"></div>
+                  <CardContent className="p-6">
+                    <div className="flex items-center gap-4 mb-4">
+                      <div className="p-3 bg-gradient-to-r from-green-500 to-emerald-500 rounded-xl text-white shadow-lg group-hover:scale-110 transition-transform">
+                        <BarChart3 className="h-6 w-6" />
+                      </div>
+                      <div>
+                        <h3 className="text-xl font-bold text-gray-900 mb-1">Advanced Analytics</h3>
+                        <p className="text-sm text-gray-600">Deep insights and reports</p>
+                      </div>
+                    </div>
+                    <Button className="w-full bg-gradient-to-r from-green-500 to-emerald-500 hover:from-green-600 hover:to-emerald-600 border-0 shadow-lg">
+                      <BarChart3 className="h-4 w-4 mr-2" />
+                      View Analytics
+                    </Button>
+                  </CardContent>
+                </Card>
+              </DialogTrigger>
+              <DialogContent className="max-w-6xl max-h-[90vh] overflow-y-auto">
+                <DialogHeader>
+                  <DialogTitle className="flex items-center gap-2">
+                    <BarChart3 className="h-5 w-5" />
+                    Advanced Team Development Analytics
+                  </DialogTitle>
+                  <DialogDescription>
+                    Comprehensive insights and metrics for your team's development journey
+                  </DialogDescription>
+                </DialogHeader>
+
+                <div className="space-y-8">
+                  {/* Key Performance Indicators */}
+                  <div>
+                    <h3 className="text-lg font-semibold mb-4 flex items-center gap-2">
+                      <Trophy className="h-5 w-5 text-yellow-500" />
+                      Key Performance Indicators
+                    </h3>
+                    <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                      <Card className="p-4 text-center">
+                        <div className="text-2xl font-bold text-blue-600">{enrollmentRate}%</div>
+                        <div className="text-sm text-gray-600">Team Engagement</div>
+                        <div className="text-xs text-gray-500 mt-1">
+                          {enrollmentRate >= 80 ? '🟢 Excellent' : enrollmentRate >= 60 ? '🟡 Good' : '🔴 Needs Improvement'}
+                        </div>
+                      </Card>
+                      <Card className="p-4 text-center">
+                        <div className="text-2xl font-bold text-green-600">{completionRate}%</div>
+                        <div className="text-sm text-gray-600">Completion Rate</div>
+                        <div className="text-xs text-gray-500 mt-1">
+                          {completionRate >= 70 ? '🟢 Excellent' : completionRate >= 50 ? '🟡 Good' : '🔴 Needs Improvement'}
+                        </div>
+                      </Card>
+                      <Card className="p-4 text-center">
+                        <div className="text-2xl font-bold text-purple-600">
+                          {overviewData?.summary.totalEnrollments ? Math.round(overviewData.summary.totalEnrollments / overviewData.summary.enrolledMembers * 10) / 10 : 0}
+                        </div>
+                        <div className="text-sm text-gray-600">Avg Plans/Member</div>
+                        <div className="text-xs text-gray-500 mt-1">
+                          Plans per enrolled member
+                        </div>
+                      </Card>
+                      <Card className="p-4 text-center">
+                        <div className="text-2xl font-bold text-orange-600">
+                          {planDistribution.length > 0 ? planDistribution[0].count : 0}
+                        </div>
+                        <div className="text-sm text-gray-600">Most Popular Plan</div>
+                        <div className="text-xs text-gray-500 mt-1">
+                          {planDistribution.length > 0 ? planDistribution[0].title.split(' ').slice(0, 2).join(' ') : 'None'}
+                        </div>
+                      </Card>
+                    </div>
+                  </div>
+
+                  {/* Plan Performance Analysis */}
+                  <div>
+                    <h3 className="text-lg font-semibold mb-4 flex items-center gap-2">
+                      <PieChart className="h-5 w-5 text-blue-500" />
+                      Plan Performance Analysis
+                    </h3>
+                    <div className="grid gap-4">
+                      {planDistribution.map((plan, index) => {
+                        const completedCount = overviewData?.teamMembers.reduce((acc, member) => {
+                          return acc + member.enrollments.filter(e => e.planId === plan.planId && e.status === 'completed').length
+                        }, 0) || 0
+                        const planCompletionRate = plan.count > 0 ? Math.round((completedCount / plan.count) * 100) : 0
+
+                        return (
+                          <Card key={plan.planId} className="p-4">
+                            <div className="flex items-center justify-between mb-3">
+                              <div className="flex items-center gap-3">
+                                <div className={`p-2 bg-gradient-to-r ${plan.gradient} rounded-lg text-white`}>
+                                  {plan.icon}
+                                </div>
+                                <div>
+                                  <h4 className="font-semibold">{plan.title}</h4>
+                                  <p className="text-sm text-gray-600">#{index + 1} Most Popular</p>
+                                </div>
+                              </div>
+                              <div className="text-right">
+                                <div className="text-lg font-bold">{planCompletionRate}%</div>
+                                <div className="text-sm text-gray-600">Completion Rate</div>
+                              </div>
+                            </div>
+                            <div className="grid grid-cols-3 gap-4 text-center text-sm">
+                              <div>
+                                <div className="font-semibold text-blue-600">{plan.count}</div>
+                                <div className="text-gray-600">Enrolled</div>
+                              </div>
+                              <div>
+                                <div className="font-semibold text-yellow-600">
+                                  {plan.count - completedCount}
+                                </div>
+                                <div className="text-gray-600">In Progress</div>
+                              </div>
+                              <div>
+                                <div className="font-semibold text-green-600">{completedCount}</div>
+                                <div className="text-gray-600">Completed</div>
+                              </div>
+                            </div>
+                            <Progress value={planCompletionRate} className="mt-3 h-2" />
+                          </Card>
+                        )
+                      })}
+                    </div>
+                  </div>
+
+                  {/* Team Member Performance Rankings */}
+                  <div>
+                    <div className="flex items-center justify-between mb-4">
+                      <h3 className="text-lg font-semibold flex items-center gap-2">
+                        <Award className="h-5 w-5 text-yellow-500" />
+                        Team Member Performance Rankings
+                      </h3>
+                      <div className="relative w-64">
+                        <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
+                        <Input
+                          placeholder="Search rankings..."
+                          value={analyticsSearchTerm}
+                          onChange={(e) => setAnalyticsSearchTerm(e.target.value)}
+                          className="pl-10"
+                        />
+                      </div>
+                    </div>
+                    <div className="space-y-3">
+                      {(() => {
+                        const enrolledMembers = overviewData?.teamMembers.filter(member => member.enrollments.length > 0) || []
+                        const filteredMembers = enrolledMembers.filter(member =>
+                          member.teamMember.name.toLowerCase().includes(analyticsSearchTerm.toLowerCase()) ||
+                          member.teamMember.email.toLowerCase().includes(analyticsSearchTerm.toLowerCase())
+                        )
+
+                        if (enrolledMembers.length === 0) {
+                          return (
+                            <div className="text-center py-12">
+                              <div className="p-4 bg-gray-100 rounded-full w-fit mx-auto mb-4">
+                                <Award className="h-12 w-12 text-gray-400" />
+                              </div>
+                              <h3 className="text-lg font-semibold text-gray-900 mb-2">No Performance Data Yet</h3>
+                              <p className="text-gray-600">
+                                Team member rankings will appear here once development plans are assigned and progress is made.
+                              </p>
+                            </div>
+                          )
+                        }
+
+                        if (filteredMembers.length === 0) {
+                          return (
+                            <div className="text-center py-12">
+                              <div className="p-4 bg-gray-100 rounded-full w-fit mx-auto mb-4">
+                                <Search className="h-12 w-12 text-gray-400" />
+                              </div>
+                              <h3 className="text-lg font-semibold text-gray-900 mb-2">No Results Found</h3>
+                              <p className="text-gray-600 mb-4">
+                                No team members match your search criteria in the rankings.
+                              </p>
+                              <Button
+                                onClick={() => setAnalyticsSearchTerm('')}
+                                variant="outline"
+                              >
+                                Clear Search
+                              </Button>
+                            </div>
+                          )
+                        }
+
+                        return filteredMembers
+                          .sort((a, b) => {
+                            const aAvgProgress = a.enrollments.length > 0
+                              ? a.enrollments.reduce((sum, e) => sum + e.progress, 0) / a.enrollments.length
+                              : 0
+                            const bAvgProgress = b.enrollments.length > 0
+                              ? b.enrollments.reduce((sum, e) => sum + e.progress, 0) / b.enrollments.length
+                              : 0
+                            return bAvgProgress - aAvgProgress
+                          })
+                          .slice(0, 10)
+                          .map((member, index) => {
+                            const avgProgress = member.enrollments.length > 0
+                              ? Math.round(member.enrollments.reduce((sum, e) => sum + e.progress, 0) / member.enrollments.length)
+                              : 0
+
+                            return (
+                              <Card key={member.teamMember._id} className="p-4">
+                                <div className="flex items-center justify-between">
+                                  <div className="flex items-center gap-3">
+                                    <div className={`w-8 h-8 rounded-full flex items-center justify-center font-bold text-white ${
+                                      index === 0 ? 'bg-yellow-500' :
+                                      index === 1 ? 'bg-gray-400' :
+                                      index === 2 ? 'bg-orange-600' : 'bg-blue-500'
+                                    }`}>
+                                      {index + 1}
+                                    </div>
+                                    <div>
+                                      <p className="font-semibold">{member.teamMember.name}</p>
+                                      <p className="text-sm text-gray-600">
+                                        {member.totalPlans} plans • {member.completedPlans} completed
+                                      </p>
+                                    </div>
+                                  </div>
+                                  <div className="flex items-center gap-3">
+                                    <div className="text-right">
+                                      <div className="text-lg font-bold">{avgProgress}%</div>
+                                      <div className="text-sm text-gray-600">Avg Progress</div>
+                                    </div>
+                                    <div className="w-20">
+                                      <Progress value={avgProgress} className="h-2" />
+                                    </div>
+                                  </div>
+                                </div>
+                              </Card>
+                            )
+                          })
+                      })()}
+                    </div>
+                  </div>
+                </div>
+              </DialogContent>
+            </Dialog>
+          </div>
+        </div>
       </div>
+
     </div>
   )
 }
