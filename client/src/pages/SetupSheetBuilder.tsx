@@ -50,6 +50,7 @@ export function SetupSheetBuilder() {
   const [setupEndDate, setSetupEndDate] = useState('')
   const [isShared, setIsShared] = useState(false)
   const [isUploading, setIsUploading] = useState(false)
+  const [isSaving, setIsSaving] = useState(false)
   const [previewData, setPreviewData] = useState<any[] | null>(null)
   const [columnMappings] = useState({
     name: 'Employee Name',
@@ -98,12 +99,32 @@ export function SetupSheetBuilder() {
         const worksheet = workbook.worksheets[0]
         console.log('Worksheet name:', worksheet.name)
 
+        // Helper function to extract text from Excel cell values
+        const extractCellText = (cellValue: any): string => {
+          if (!cellValue) return '';
+
+          // Handle rich text objects
+          if (typeof cellValue === 'object' && cellValue.richText) {
+            return cellValue.richText.map((part: any) => part.text || '').join('');
+          }
+
+          // Handle regular text
+          if (typeof cellValue === 'string') {
+            return cellValue;
+          }
+
+          // Handle other types
+          return String(cellValue);
+        };
+
         // Convert worksheet to array of arrays
         const rawData: any[][] = []
         worksheet.eachRow((row, rowNumber) => {
           const rowData: any[] = []
           row.eachCell((cell, colNumber) => {
-            rowData[colNumber - 1] = cell.value
+            // Extract text from cell value, handling rich text objects
+            const cellValue = cell.value;
+            rowData[colNumber - 1] = extractCellText(cellValue);
           })
           rawData.push(rowData)
         })
@@ -147,11 +168,14 @@ export function SetupSheetBuilder() {
       const columnNames = Object.keys(firstRow)
       const hasDateColumns = columnNames.some(col => {
         const colLower = col.toLowerCase()
-        return colLower.includes('5/18') || colLower.includes('5/19') || colLower.includes('5/20') ||
-               colLower.includes('5/21') || colLower.includes('5/22') || colLower.includes('5/23') ||
-               colLower.includes('5/24') || colLower.includes('may') ||
-               /\d{1,2}\/\d{1,2}\/\d{2,4}/.test(col) || // Date pattern like 5/18/25
-               /\w+,\s*\d{1,2}\/\d{1,2}\/\d{2,4}/.test(col) // Day, date pattern
+        // Check for various date patterns
+        return /\d{1,2}\/\d{1,2}\/\d{2,4}/.test(col) || // Date pattern like 5/18/25 or 6/1/25
+               /\w+,\s*\d{1,2}\/\d{1,2}\/\d{2,4}/.test(col) || // Day, date pattern like "Sun, 6/1/25"
+               /\d{1,2}\/\d{1,2}/.test(col) || // Short date pattern like 6/1
+               colLower.includes('jan') || colLower.includes('feb') || colLower.includes('mar') ||
+               colLower.includes('apr') || colLower.includes('may') || colLower.includes('jun') ||
+               colLower.includes('jul') || colLower.includes('aug') || colLower.includes('sep') ||
+               colLower.includes('oct') || colLower.includes('nov') || colLower.includes('dec')
       })
 
       // Check for day names at the start of column headers (like "Sun, 5/18/25")
@@ -163,18 +187,33 @@ export function SetupSheetBuilder() {
       // Check if this looks like a weekly roster based on multiple employees and time data
       const hasMultipleEmployees = jsonData.length > 1
       const hasTimeData = columnNames.some(col => {
-        const sampleData = firstRow[col]
+        let sampleData = firstRow[col]
+
+        // Handle rich text objects
+        if (sampleData && typeof sampleData === 'object' && sampleData.richText) {
+          sampleData = sampleData.richText.map((part: any) => part.text || '').join('');
+        }
+
         return sampleData && typeof sampleData === 'string' &&
                (sampleData.includes('AM') || sampleData.includes('PM') || sampleData.includes(':'))
       })
 
       const isWeeklyRoster = hasWeeklyFormat || hasDateColumns || hasDayHeaders || (hasMultipleEmployees && hasTimeData)
 
+      console.log('=== Weekly Roster Detection Debug ===')
+      console.log('Column names:', columnNames)
       console.log('Weekly format detected:', hasWeeklyFormat)
       console.log('Date columns detected:', hasDateColumns)
+      console.log('Day headers detected:', hasDayHeaders)
+      console.log('Has multiple employees:', hasMultipleEmployees)
       console.log('Time data detected:', hasTimeData)
       console.log('Is weekly roster:', isWeeklyRoster)
       console.log('Day columns found:', dayColumns.filter(day => day in firstRow))
+      console.log('Date columns found:', columnNames.filter(col => {
+        const colLower = col.toLowerCase()
+        return /\d{1,2}\/\d{1,2}\/\d{2,4}/.test(col) || /\w+,\s*\d{1,2}\/\d{1,2}\/\d{2,4}/.test(col) || /\d{1,2}\/\d{1,2}/.test(col)
+      }))
+      console.log('=====================================')
 
       if (isWeeklyRoster) {
         // This is a weekly roster format - validate differently
@@ -267,22 +306,44 @@ export function SetupSheetBuilder() {
           const employeeName = cleanEmployeeName(rawEmployeeName);
 
           // Get all date columns (skip the employee name column)
-          const dateColumns = Object.keys(row).filter(key =>
-            key !== 'Employee' && key !== 'employee' && key !== 'Name' && key !== 'name' &&
-            key !== 'Employee Name' && (key.includes('/') || key.includes(','))
-          );
+          const dateColumns = Object.keys(row).filter(key => {
+            // Skip employee name columns
+            if (key === 'Employee' || key === 'employee' || key === 'Name' || key === 'name' || key === 'Employee Name') {
+              return false;
+            }
+
+            // Check for date patterns
+            return /\d{1,2}\/\d{1,2}\/\d{2,4}/.test(key) || // Date pattern like 5/18/25 or 6/1/25
+                   /\w+,\s*\d{1,2}\/\d{1,2}\/\d{2,4}/.test(key) || // Day, date pattern like "Sun, 6/1/25"
+                   /\d{1,2}\/\d{1,2}/.test(key) || // Short date pattern like 6/1
+                   key.includes('/') || key.includes(','); // Fallback for other date-like patterns
+          });
+
+          console.log(`Processing employee: ${employeeName}, found date columns:`, dateColumns);
 
           // Process each date column to extract shifts
           dateColumns.forEach(dateCol => {
-            const cellValue = row[dateCol];
+            let cellValue = row[dateCol];
+
+            // Handle rich text objects in cell values
+            if (cellValue && typeof cellValue === 'object' && cellValue.richText) {
+              cellValue = cellValue.richText.map((part: any) => part.text || '').join('');
+            }
+
             if (!cellValue || cellValue.toString().trim() === '') return;
 
 
 
-            // Parse the day from column header (e.g., "Sun, 5/18/25" -> "Sun")
+            // Parse the day from column header (e.g., "Sun, 6/1/25" -> "Sun")
             let dayOfWeek = '';
             if (dateCol.includes(',')) {
               dayOfWeek = dateCol.split(',')[0].trim();
+            } else {
+              // Try to extract day from the beginning of the column name
+              const dayMatch = dateCol.match(/^(Sun|Mon|Tue|Wed|Thu|Fri|Sat)/i);
+              if (dayMatch) {
+                dayOfWeek = dayMatch[1];
+              }
             }
 
             // Convert short day names to full day names for consistency with daily view
@@ -296,6 +357,8 @@ export function SetupSheetBuilder() {
               'Sat': 'saturday'
             }
             dayOfWeek = dayMap[dayOfWeek] || dayOfWeek.toLowerCase()
+
+            console.log(`Processing column: ${dateCol}, extracted day: ${dayOfWeek}, cell value:`, cellValue)
 
             // Split cell value by newlines to handle multiple shifts
             const shifts = cellValue.toString().split(/\r?\n/).filter(shift => shift.trim());
