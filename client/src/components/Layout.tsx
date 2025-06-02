@@ -698,27 +698,18 @@ export default function Layout({ children }: { children: React.ReactNode }) {
                   <span>{t('navigation.settings')}</span>
                 </DropdownMenuItem>
 
-                {/* Admin links - only visible to Jonathon Pope */}
+                {/* Admin link - only visible to Jonathon Pope */}
                 {user?.email === 'jonp4208@gmail.com' && (
                   <>
                     <DropdownMenuLabel className="font-medium text-xs text-gray-500 mt-1">
                       Admin
                     </DropdownMenuLabel>
-                    {/* Store Selector */}
-                    <StoreSelector />
                     <DropdownMenuItem
-                      onClick={() => navigate('/admin/stores')}
+                      onClick={() => navigate('/admin')}
                       className="flex items-center gap-2 min-h-[44px] cursor-pointer"
                     >
-                      <Building className="w-4 h-4 text-gray-400" />
-                      <span>Manage Stores</span>
-                    </DropdownMenuItem>
-                    <DropdownMenuItem
-                      onClick={() => navigate('/admin/invoices')}
-                      className="flex items-center gap-2 min-h-[44px] cursor-pointer"
-                    >
-                      <FileText className="w-4 h-4 text-gray-400" />
-                      <span>Invoices</span>
+                      <ShieldCheck className="w-4 h-4 text-gray-400" />
+                      <span>Admin Dashboard</span>
                     </DropdownMenuItem>
                   </>
                 )}
@@ -921,35 +912,21 @@ export default function Layout({ children }: { children: React.ReactNode }) {
                 <span className="font-medium">{t('navigation.settings')}</span>
               </button>
 
-              {/* Admin links - only visible to Jonathon Pope */}
+              {/* Admin link - only visible to Jonathon Pope */}
               {user?.email === 'jonp4208@gmail.com' && (
                 <>
                   <div className="mt-2 mb-1 px-3">
                     <div className="text-xs font-medium text-gray-500">Admin</div>
                   </div>
-                  {/* Mobile Store Selector */}
-                  <div className="px-3 mb-1">
-                    <StoreSelector />
-                  </div>
                   <button
                     onClick={() => {
-                      navigate('/admin/stores');
+                      navigate('/admin');
                       setIsMobileMenuOpen(false);
                     }}
                     className="w-full px-3 py-2 flex items-center gap-2 rounded-lg mb-1 hover:bg-gray-50"
                   >
-                    <Building className="w-5 h-5 text-gray-500" />
-                    <span className="font-medium">Manage Stores</span>
-                  </button>
-                  <button
-                    onClick={() => {
-                      navigate('/admin/invoices');
-                      setIsMobileMenuOpen(false);
-                    }}
-                    className="w-full px-3 py-2 flex items-center gap-2 rounded-lg mb-1 hover:bg-gray-50"
-                  >
-                    <FileText className="w-5 h-5 text-gray-500" />
-                    <span className="font-medium">Invoices</span>
+                    <ShieldCheck className="w-5 h-5 text-gray-500" />
+                    <span className="font-medium">Admin Dashboard</span>
                   </button>
                 </>
               )}

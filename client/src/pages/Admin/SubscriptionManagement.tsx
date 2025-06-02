@@ -26,6 +26,7 @@ import {
 } from 'lucide-react';
 import adminService, { SubscriptionFeatures, StoreSubscription } from '@/services/adminService';
 import { formatCurrency } from '@/lib/utils/formatters';
+import PageHeader, { headerButtonClass } from '@/components/PageHeader';
 import {
   Dialog,
   DialogContent,
@@ -256,34 +257,31 @@ export default function SubscriptionManagementPage() {
   }
 
   return (
-    <div className="container mx-auto py-6">
-      <div className="flex items-center mb-6">
-        <Button
-          variant="outline"
-          size="sm"
-          onClick={() => navigate('/admin/stores')}
-          className="mr-4"
-        >
-          <ArrowLeft className="h-4 w-4 mr-2" />
-          Back to Stores
-        </Button>
-        <h1 className="text-2xl font-bold">
-          {data?.store?.name ? `${data.store.name} Subscription` : 'Store Subscription'}
-        </h1>
-        <Button
-          variant="outline"
-          size="sm"
-          onClick={handleRefresh}
-          disabled={refreshing || isLoading}
-          className="ml-auto"
-        >
-          {refreshing || isLoading ? (
-            <Loader2 className="h-4 w-4 animate-spin" />
-          ) : (
-            <RefreshCw className="h-4 w-4" />
-          )}
-        </Button>
-      </div>
+    <div className="min-h-screen p-4 md:p-6">
+      <div className="max-w-7xl mx-auto space-y-4 sm:space-y-6">
+        {/* Use PageHeader component */}
+        <PageHeader
+          title={data?.store?.name ? `${data.store.name} Subscription` : 'Store Subscription'}
+          subtitle="Manage subscription features and billing"
+          icon={<CreditCard className="h-5 w-5" />}
+          showBackButton={true}
+          actions={
+            <div className="flex flex-col md:flex-row gap-2 w-full">
+              <Button
+                className={headerButtonClass}
+                onClick={handleRefresh}
+                disabled={refreshing || isLoading}
+              >
+                {refreshing || isLoading ? (
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                ) : (
+                  <RefreshCw className="h-4 w-4" />
+                )}
+                <span>Refresh</span>
+              </Button>
+            </div>
+          }
+        />
 
       {isLoading ? (
         <Card>
@@ -610,6 +608,7 @@ export default function SubscriptionManagementPage() {
           </CardContent>
         </Card>
       )}
+      </div>
     </div>
   );
 }

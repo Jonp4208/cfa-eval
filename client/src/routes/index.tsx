@@ -112,6 +112,7 @@ import { SetupView } from '@/pages/SetupView';
 import { EditTemplate } from '@/pages/EditTemplate';
 import InvoicesPage from '@/pages/Invoices';
 import AdminPage from '@/pages/Admin';
+import AdminDashboard from '@/pages/Admin/Dashboard';
 import SubscriptionManagementPage from '@/pages/Admin/SubscriptionManagement';
 import HowTo from '@/pages/HowTo';
 
@@ -308,6 +309,7 @@ export default function AppRoutes() {
       <Route path="/how-to" element={<PrivateRoute><HowTo /></PrivateRoute>} />
 
       {/* Admin Pages - Restricted Access */}
+      <Route path="/admin" element={<PrivateRoute><AdminDashboard /></PrivateRoute>} />
       <Route path="/admin/invoices" element={<PrivateRoute><InvoicesPage /></PrivateRoute>} />
       <Route path="/admin/stores" element={<PrivateRoute><AdminPage /></PrivateRoute>} />
       <Route path="/admin/stores/:storeId/subscription" element={<PrivateRoute><SubscriptionManagementPage /></PrivateRoute>} />

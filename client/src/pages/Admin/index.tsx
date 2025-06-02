@@ -21,11 +21,16 @@ import {
   Edit,
   KeyRound,
   MoreHorizontal,
-  CreditCard
+  CreditCard,
+  ArrowLeft,
+  ArrowUpDown,
+  ArrowUp,
+  ArrowDown
 } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import adminService, { Store, NewStoreData, StoreUser, NewUserData } from '@/services/adminService';
 import { format } from 'date-fns';
+import PageHeader, { headerButtonClass } from '@/components/PageHeader';
 import {
   Dialog,
   DialogContent,
@@ -107,6 +112,10 @@ export default function AdminPage() {
   const [showSubscriptionDialog, setShowSubscriptionDialog] = useState(false)
   const [selectedSubscriptionStore, setSelectedSubscriptionStore] = useState<Store | null>(null)
   const [newSubscriptionStatus, setNewSubscriptionStatus] = useState<'active' | 'expired' | 'trial' | 'none' | ''>('')
+
+  // Sorting state
+  const [sortField, setSortField] = useState<'storeNumber' | 'name' | 'userCount' | 'createdAt' | 'status'>('storeNumber')
+  const [sortDirection, setSortDirection] = useState<'asc' | 'desc'>('asc')
 
   // Check if user is Jonathon Pope
   const isJonathonPope = user?.email === 'jonp4208@gmail.com';
@@ -447,6 +456,54 @@ export default function AdminPage() {
     }
   }
 
+  // Handle sorting
+  const handleSort = (field: 'storeNumber' | 'name' | 'userCount' | 'createdAt' | 'status') => {
+    if (sortField === field) {
+      setSortDirection(sortDirection === 'asc' ? 'desc' : 'asc')
+    } else {
+      setSortField(field)
+      setSortDirection('asc')
+    }
+  }
+
+  // Sort stores
+  const sortedStores = stores ? [...stores].sort((a, b) => {
+    let aValue: any = a[sortField]
+    let bValue: any = b[sortField]
+
+    // Handle special cases
+    if (sortField === 'userCount') {
+      aValue = a.userCount || 0
+      bValue = b.userCount || 0
+    } else if (sortField === 'createdAt') {
+      aValue = a.createdAt ? new Date(a.createdAt).getTime() : 0
+      bValue = b.createdAt ? new Date(b.createdAt).getTime() : 0
+    } else if (sortField === 'status') {
+      aValue = a.status || 'active'
+      bValue = b.status || 'active'
+    } else if (sortField === 'storeNumber') {
+      // Convert to numbers for proper numeric sorting
+      aValue = parseInt(a.storeNumber) || 0
+      bValue = parseInt(b.storeNumber) || 0
+    }
+
+    if (sortDirection === 'asc') {
+      return aValue > bValue ? 1 : -1
+    } else {
+      return aValue < bValue ? 1 : -1
+    }
+  }) : []
+
+  // Get sort icon
+  const getSortIcon = (field: string) => {
+    if (sortField !== field) {
+      return <ArrowUpDown className="h-4 w-4 text-gray-400" />
+    }
+    return sortDirection === 'asc'
+      ? <ArrowUp className="h-4 w-4 text-gray-600" />
+      : <ArrowDown className="h-4 w-4 text-gray-600" />
+  }
+
   // If user is not Jonathon Pope, show access denied
   if (!isJonathonPope) {
     return (
@@ -464,29 +521,97 @@ export default function AdminPage() {
   }
 
   return (
-    <div className="container mx-auto py-6">
-      <Card className="mb-6">
-        <CardHeader className="flex flex-col sm:flex-row items-start sm:items-center justify-between pb-2 gap-4">
-          <CardTitle className="text-2xl font-bold">Store Management</CardTitle>
-          <div className="flex space-x-2 w-full sm:w-auto justify-end">
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => refetch()}
-              disabled={isLoading}
-            >
-              <RefreshCw className="h-4 w-4 mr-2" />
-              <span className="sm:inline">Refresh</span>
-            </Button>
-            <Button
-              onClick={() => setShowAddStoreDialog(true)}
-              size="sm"
-            >
-              <Plus className="h-4 w-4 mr-2" />
-              <span className="sm:inline">Add Store</span>
-            </Button>
-          </div>
-        </CardHeader>
+    <div className="min-h-screen p-4 md:p-6">
+      <div className="max-w-7xl mx-auto space-y-4 sm:space-y-6">
+        {/* Use PageHeader component */}
+        <PageHeader
+          title="Store Management"
+          subtitle="Manage stores, users, and subscriptions"
+          icon={<Building className="h-5 w-5" />}
+          showBackButton={true}
+          actions={
+            <div className="flex flex-col md:flex-row gap-2 w-full">
+              <Button
+                className={headerButtonClass}
+                onClick={() => refetch()}
+                disabled={isLoading}
+              >
+                <RefreshCw className={`h-4 w-4 ${isLoading ? 'animate-spin' : ''}`} />
+                <span>Refresh</span>
+              </Button>
+              <Button
+                className={headerButtonClass}
+                onClick={() => setShowAddStoreDialog(true)}
+              >
+                <Plus className="h-4 w-4" />
+                <span>Add Store</span>
+              </Button>
+            </div>
+          }
+        />
+
+        {/* Store Statistics */}
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+          <Card className="bg-gradient-to-br from-red-50 to-red-100 border-red-200">
+            <CardContent className="p-4">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-sm font-medium text-red-600">Total Stores</p>
+                  <p className="text-2xl font-bold text-red-700">{stores?.length || 0}</p>
+                </div>
+                <Building className="h-8 w-8 text-red-500" />
+              </div>
+            </CardContent>
+          </Card>
+
+          <Card className="bg-gradient-to-br from-green-50 to-green-100 border-green-200">
+            <CardContent className="p-4">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-sm font-medium text-green-600">Active Stores</p>
+                  <p className="text-2xl font-bold text-green-700">
+                    {stores?.filter(store => store.subscription?.status === 'active').length || 0}
+                  </p>
+                </div>
+                <CheckCircle className="h-8 w-8 text-green-500" />
+              </div>
+            </CardContent>
+          </Card>
+
+          <Card className="bg-gradient-to-br from-blue-50 to-blue-100 border-blue-200">
+            <CardContent className="p-4">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-sm font-medium text-blue-600">Total Users</p>
+                  <p className="text-2xl font-bold text-blue-700">
+                    {stores?.reduce((sum, store) => sum + (store.userCount || 0), 0) || 0}
+                  </p>
+                </div>
+                <Users className="h-8 w-8 text-blue-500" />
+              </div>
+            </CardContent>
+          </Card>
+
+          <Card className="bg-gradient-to-br from-purple-50 to-purple-100 border-purple-200">
+            <CardContent className="p-4">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-sm font-medium text-purple-600">Subscriptions</p>
+                  <p className="text-2xl font-bold text-purple-700">
+                    {stores?.filter(store => store.subscription).length || 0}
+                  </p>
+                </div>
+                <CreditCard className="h-8 w-8 text-purple-500" />
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+
+        {/* Stores List */}
+        <Card>
+          <CardHeader>
+            <CardTitle className="text-lg">All Stores</CardTitle>
+          </CardHeader>
         <CardContent>
           {isLoading ? (
             <div className="text-center py-4">Loading stores...</div>
@@ -494,122 +619,202 @@ export default function AdminPage() {
             <>
               {/* Desktop view - Table */}
               <div className="hidden md:block overflow-x-auto">
-                <table className="w-full border-collapse">
-                  <thead>
-                    <tr className="bg-muted">
-                      <th className="text-left p-2">Store #</th>
-                      <th className="text-left p-2">Name</th>
-                      <th className="text-left p-2">Address</th>
-                      <th className="text-center p-2">Users</th>
-                      <th className="text-center p-2">Created</th>
-                      <th className="text-center p-2">Subscription</th>
-                      <th className="text-center p-2">Status</th>
-                      <th className="text-right p-2">Actions</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {stores.map((store: Store) => (
-                      <tr key={store._id} className="border-b hover:bg-muted/50">
-                        <td className="p-2">{store.storeNumber}</td>
-                        <td className="p-2">{store.name}</td>
-                        <td className="p-2">{store.storeAddress}</td>
-                        <td className="p-2 text-center">{store.userCount || 0}</td>
-                        <td className="p-2 text-center">
-                          {store.createdAt ? format(new Date(store.createdAt), 'MMM d, yyyy') : 'N/A'}
-                        </td>
-                        <td className="p-2 text-center">
-                          {store.subscription ? (
-                            <Badge
-                              variant={
-                                store.subscription.status === 'active' ? 'default' :
-                                store.subscription.status === 'trial' ? 'secondary' :
-                                'outline'
-                              }
-                              className="cursor-pointer"
-                              onClick={() => handleOpenSubscriptionDialog(store)}
-                            >
-                              {store.subscription.status}
-                            </Badge>
-                          ) : (
-                            <Badge variant="outline" className="cursor-pointer" onClick={() => handleOpenSubscriptionDialog(store)}>none</Badge>
-                          )}
-                        </td>
-                        <td className="p-2 text-center">
-                          <Badge
-                            variant={store.status === 'active' ? 'success' : 'destructive'}
-                            className="cursor-pointer"
-                            onClick={() => handleStatusChange(store._id, store.status || 'active')}
+                <div className="bg-white rounded-lg border border-gray-200 shadow-sm">
+                  <table className="w-full">
+                    <thead>
+                      <tr className="bg-gradient-to-r from-gray-50 to-gray-100 border-b border-gray-200">
+                        <th className="text-left py-4 px-6 font-semibold text-gray-700 text-sm uppercase tracking-wider">
+                          <button
+                            className="flex items-center space-x-1 hover:text-gray-900 transition-colors"
+                            onClick={() => handleSort('storeNumber')}
                           >
-                            {store.status || 'active'}
-                          </Badge>
-                        </td>
-                        <td className="p-2 text-right">
-                          <div className="flex justify-end space-x-1">
-                            <Button
-                              variant="ghost"
-                              size="icon"
-                              title="View Users"
-                              onClick={() => handleViewUsers(store._id)}
-                            >
-                              <Users className="h-4 w-4 text-blue-500" />
-                            </Button>
-                            <Button
-                              variant="ghost"
-                              size="icon"
-                              title="Manage Subscription"
-                              onClick={() => navigate(`/admin/stores/${store._id}/subscription`)}
-                            >
-                              <CreditCard className="h-4 w-4 text-purple-500" />
-                            </Button>
-                            <Button
-                              variant="ghost"
-                              size="icon"
-                              title={store.status === 'inactive' ? 'Activate Store' : 'Deactivate Store'}
+                            <span>Store #</span>
+                            {getSortIcon('storeNumber')}
+                          </button>
+                        </th>
+                        <th className="text-left py-4 px-6 font-semibold text-gray-700 text-sm uppercase tracking-wider">
+                          <button
+                            className="flex items-center space-x-1 hover:text-gray-900 transition-colors"
+                            onClick={() => handleSort('name')}
+                          >
+                            <span>Name</span>
+                            {getSortIcon('name')}
+                          </button>
+                        </th>
+                        <th className="text-center py-4 px-6 font-semibold text-gray-700 text-sm uppercase tracking-wider">
+                          <button
+                            className="flex items-center space-x-1 hover:text-gray-900 transition-colors mx-auto"
+                            onClick={() => handleSort('userCount')}
+                          >
+                            <span>Users</span>
+                            {getSortIcon('userCount')}
+                          </button>
+                        </th>
+                        <th className="text-center py-4 px-6 font-semibold text-gray-700 text-sm uppercase tracking-wider">
+                          <button
+                            className="flex items-center space-x-1 hover:text-gray-900 transition-colors mx-auto"
+                            onClick={() => handleSort('createdAt')}
+                          >
+                            <span>Created</span>
+                            {getSortIcon('createdAt')}
+                          </button>
+                        </th>
+                        <th className="text-center py-4 px-6 font-semibold text-gray-700 text-sm uppercase tracking-wider">Subscription</th>
+                        <th className="text-center py-4 px-6 font-semibold text-gray-700 text-sm uppercase tracking-wider">
+                          <button
+                            className="flex items-center space-x-1 hover:text-gray-900 transition-colors mx-auto"
+                            onClick={() => handleSort('status')}
+                          >
+                            <span>Status</span>
+                            {getSortIcon('status')}
+                          </button>
+                        </th>
+                        <th className="text-right py-4 px-6 font-semibold text-gray-700 text-sm uppercase tracking-wider">Actions</th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-gray-100">
+                      {sortedStores.map((store: Store, index) => (
+                        <tr key={store._id} className={`hover:bg-gray-50 transition-colors duration-150 ${index % 2 === 0 ? 'bg-white' : 'bg-gray-25'}`}>
+                          <td className="py-4 px-6">
+                            <div className="flex items-center">
+                              <div className="flex-shrink-0 w-8 h-8 bg-red-100 rounded-full flex items-center justify-center">
+                                <Building className="w-4 h-4 text-red-600" />
+                              </div>
+                              <div className="ml-3">
+                                <span className="text-sm font-medium text-gray-900">{store.storeNumber}</span>
+                              </div>
+                            </div>
+                          </td>
+                          <td className="py-4 px-6">
+                            <div className="text-sm font-medium text-gray-900">{store.name}</div>
+                            <div className="text-xs text-gray-500 mt-1" title={store.storeAddress}>
+                              {store.storeAddress}
+                            </div>
+                          </td>
+                          <td className="py-4 px-6 text-center">
+                            <div className="flex items-center justify-center">
+                              <div className="flex-shrink-0 w-6 h-6 bg-blue-100 rounded-full flex items-center justify-center mr-2">
+                                <Users className="w-3 h-3 text-blue-600" />
+                              </div>
+                              <span className="text-sm font-medium text-gray-900">{store.userCount || 0}</span>
+                            </div>
+                          </td>
+                          <td className="py-4 px-6 text-center">
+                            <div className="text-sm text-gray-600">
+                              {store.createdAt ? format(new Date(store.createdAt), 'MMM d, yyyy') : 'N/A'}
+                            </div>
+                          </td>
+                          <td className="py-4 px-6 text-center">
+                            {store.subscription ? (
+                              <Badge
+                                variant={
+                                  store.subscription.status === 'active' ? 'default' :
+                                  store.subscription.status === 'trial' ? 'secondary' :
+                                  'outline'
+                                }
+                                className="cursor-pointer hover:shadow-sm transition-shadow"
+                                onClick={() => handleOpenSubscriptionDialog(store)}
+                              >
+                                {store.subscription.status}
+                              </Badge>
+                            ) : (
+                              <Badge
+                                variant="outline"
+                                className="cursor-pointer hover:shadow-sm transition-shadow"
+                                onClick={() => handleOpenSubscriptionDialog(store)}
+                              >
+                                none
+                              </Badge>
+                            )}
+                          </td>
+                          <td className="py-4 px-6 text-center">
+                            <Badge
+                              variant={store.status === 'active' ? 'default' : 'destructive'}
+                              className="cursor-pointer hover:shadow-sm transition-shadow"
                               onClick={() => handleStatusChange(store._id, store.status || 'active')}
                             >
-                              {store.status === 'inactive' ? (
-                                <CheckCircle className="h-4 w-4 text-green-500" />
-                              ) : (
-                                <XCircle className="h-4 w-4 text-red-500" />
-                              )}
-                            </Button>
-                          </div>
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
+                              {store.status || 'active'}
+                            </Badge>
+                          </td>
+                          <td className="py-4 px-6 text-right">
+                            <div className="flex justify-end space-x-2">
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                className="h-8 w-8 p-0 hover:bg-blue-50 hover:text-blue-600 transition-colors"
+                                title="View Users"
+                                onClick={() => handleViewUsers(store._id)}
+                              >
+                                <Users className="h-4 w-4" />
+                              </Button>
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                className="h-8 w-8 p-0 hover:bg-purple-50 hover:text-purple-600 transition-colors"
+                                title="Manage Subscription"
+                                onClick={() => navigate(`/admin/stores/${store._id}/subscription`)}
+                              >
+                                <CreditCard className="h-4 w-4" />
+                              </Button>
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                className="h-8 w-8 p-0 hover:bg-gray-50 hover:text-gray-600 transition-colors"
+                                title={store.status === 'inactive' ? 'Activate Store' : 'Deactivate Store'}
+                                onClick={() => handleStatusChange(store._id, store.status || 'active')}
+                              >
+                                {store.status === 'inactive' ? (
+                                  <CheckCircle className="h-4 w-4 text-green-500" />
+                                ) : (
+                                  <XCircle className="h-4 w-4 text-red-500" />
+                                )}
+                              </Button>
+                            </div>
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
               </div>
 
-              {/* Mobile view - Cards */}
+              {/* Mobile view - Enhanced Cards */}
               <div className="grid grid-cols-1 gap-4 md:hidden">
-                {stores.map((store: Store) => (
-                  <div key={store._id} className="bg-card border rounded-lg p-4 shadow-sm">
-                    <div className="flex justify-between items-start mb-2">
-                      <div>
-                        <h3 className="font-semibold text-lg">{store.name}</h3>
-                        <p className="text-sm text-muted-foreground">#{store.storeNumber}</p>
+                {sortedStores.map((store: Store) => (
+                  <div key={store._id} className="bg-white border border-gray-200 rounded-lg p-4 shadow-sm hover:shadow-md transition-shadow">
+                    <div className="flex justify-between items-start mb-3">
+                      <div className="flex items-center">
+                        <div className="flex-shrink-0 w-10 h-10 bg-red-100 rounded-full flex items-center justify-center mr-3">
+                          <Building className="w-5 h-5 text-red-600" />
+                        </div>
+                        <div>
+                          <h3 className="font-semibold text-lg text-gray-900">{store.name}</h3>
+                          <p className="text-sm text-gray-500">#{store.storeNumber}</p>
+                        </div>
                       </div>
                       <div className="flex space-x-1">
                         <Button
                           variant="ghost"
-                          size="icon"
+                          size="sm"
+                          className="h-8 w-8 p-0 hover:bg-blue-50 hover:text-blue-600 transition-colors"
                           title="View Users"
                           onClick={() => handleViewUsers(store._id)}
                         >
-                          <Users className="h-4 w-4 text-blue-500" />
+                          <Users className="h-4 w-4" />
                         </Button>
                         <Button
                           variant="ghost"
-                          size="icon"
+                          size="sm"
+                          className="h-8 w-8 p-0 hover:bg-purple-50 hover:text-purple-600 transition-colors"
                           title="Manage Subscription"
                           onClick={() => navigate(`/admin/stores/${store._id}/subscription`)}
                         >
-                          <CreditCard className="h-4 w-4 text-purple-500" />
+                          <CreditCard className="h-4 w-4" />
                         </Button>
                         <Button
                           variant="ghost"
-                          size="icon"
+                          size="sm"
+                          className="h-8 w-8 p-0 hover:bg-gray-50 hover:text-gray-600 transition-colors"
                           title={store.status === 'inactive' ? 'Activate Store' : 'Deactivate Store'}
                           onClick={() => handleStatusChange(store._id, store.status || 'active')}
                         >
@@ -622,22 +827,32 @@ export default function AdminPage() {
                       </div>
                     </div>
 
-                    <div className="text-sm mb-2">
-                      <p className="text-muted-foreground">{store.storeAddress}</p>
+                    <div className="text-sm mb-3 p-3 bg-gray-50 rounded-md">
+                      <p className="text-gray-600">{store.storeAddress}</p>
                     </div>
 
-                    <div className="grid grid-cols-2 gap-2 text-sm mb-3">
-                      <div>
-                        <span className="text-muted-foreground">Users:</span> {store.userCount || 0}
+                    <div className="grid grid-cols-2 gap-3 text-sm mb-4">
+                      <div className="flex items-center">
+                        <div className="flex-shrink-0 w-5 h-5 bg-blue-100 rounded-full flex items-center justify-center mr-2">
+                          <Users className="w-3 h-3 text-blue-600" />
+                        </div>
+                        <span className="text-gray-600">Users:</span>
+                        <span className="ml-1 font-medium text-gray-900">{store.userCount || 0}</span>
                       </div>
-                      <div>
-                        <span className="text-muted-foreground">Created:</span> {store.createdAt ? format(new Date(store.createdAt), 'MMM d, yyyy') : 'N/A'}
+                      <div className="flex items-center">
+                        <div className="flex-shrink-0 w-5 h-5 bg-green-100 rounded-full flex items-center justify-center mr-2">
+                          <Calendar className="w-3 h-3 text-green-600" />
+                        </div>
+                        <span className="text-gray-600">Created:</span>
+                        <span className="ml-1 font-medium text-gray-900 text-xs">
+                          {store.createdAt ? format(new Date(store.createdAt), 'MMM d, yyyy') : 'N/A'}
+                        </span>
                       </div>
                     </div>
 
-                    <div className="flex justify-between items-center">
-                      <div>
-                        <span className="text-sm text-muted-foreground mr-2">Subscription:</span>
+                    <div className="flex justify-between items-center pt-3 border-t border-gray-100">
+                      <div className="flex items-center">
+                        <span className="text-sm text-gray-600 mr-2">Subscription:</span>
                         {store.subscription ? (
                           <Badge
                             variant={
@@ -645,19 +860,25 @@ export default function AdminPage() {
                               store.subscription.status === 'trial' ? 'secondary' :
                               'outline'
                             }
-                            className="cursor-pointer"
+                            className="cursor-pointer hover:shadow-sm transition-shadow"
                             onClick={() => handleOpenSubscriptionDialog(store)}
                           >
                             {store.subscription.status}
                           </Badge>
                         ) : (
-                          <Badge variant="outline" className="cursor-pointer" onClick={() => handleOpenSubscriptionDialog(store)}>none</Badge>
+                          <Badge
+                            variant="outline"
+                            className="cursor-pointer hover:shadow-sm transition-shadow"
+                            onClick={() => handleOpenSubscriptionDialog(store)}
+                          >
+                            none
+                          </Badge>
                         )}
                       </div>
                       <div>
                         <Badge
-                          variant={store.status === 'active' ? 'success' : 'destructive'}
-                          className="cursor-pointer"
+                          variant={store.status === 'active' ? 'default' : 'destructive'}
+                          className="cursor-pointer hover:shadow-sm transition-shadow"
                           onClick={() => handleStatusChange(store._id, store.status || 'active')}
                         >
                           {store.status || 'active'}
@@ -1320,6 +1541,7 @@ export default function AdminPage() {
           </form>
         </DialogContent>
       </Dialog>
+      </div>
     </div>
   );
 }

@@ -13,13 +13,17 @@ import {
   Edit,
   Eye,
   Filter,
-  RefreshCw
+  RefreshCw,
+  Clock,
+  CheckCircle,
+  AlertCircle
 } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import invoiceService, { Invoice } from '@/services/invoiceService';
 import { format } from 'date-fns';
 import CreateInvoiceForm from './components/CreateInvoiceForm';
 import InvoiceDetails from './components/InvoiceDetails';
+import PageHeader, { headerButtonClass } from '@/components/PageHeader';
 
 export default function InvoicesPage() {
   const { user } = useAuth();
@@ -165,30 +169,109 @@ export default function InvoicesPage() {
     );
   }
 
+  // Calculate statistics
+  const totalInvoices = invoices?.length || 0;
+  const pendingInvoices = invoices?.filter(invoice => invoice.status === 'pending').length || 0;
+  const paidInvoices = invoices?.filter(invoice => invoice.status === 'paid').length || 0;
+  const overdueInvoices = invoices?.filter(invoice => {
+    if (invoice.status !== 'pending') return false;
+    const dueDate = new Date(invoice.dueDate);
+    return dueDate < new Date();
+  }).length || 0;
+  const totalRevenue = invoices?.filter(invoice => invoice.status === 'paid')
+    .reduce((sum, invoice) => sum + invoice.total, 0) || 0;
+  const pendingRevenue = invoices?.filter(invoice => invoice.status === 'pending')
+    .reduce((sum, invoice) => sum + invoice.total, 0) || 0;
+
   return (
-    <div className="container mx-auto py-6">
-      <Card className="mb-6">
-        <CardHeader className="flex flex-col sm:flex-row items-start sm:items-center justify-between pb-2 gap-4">
-          <CardTitle className="text-2xl font-bold">Invoices</CardTitle>
-          <div className="flex space-x-2 w-full sm:w-auto justify-end">
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => refetch()}
-              disabled={isLoading}
-            >
-              <RefreshCw className="h-4 w-4 mr-2" />
-              <span className="sm:inline">Refresh</span>
-            </Button>
-            <Button
-              onClick={() => setShowCreateForm(true)}
-              size="sm"
-            >
-              <Plus className="h-4 w-4 mr-2" />
-              <span className="sm:inline">Create Invoice</span>
-            </Button>
-          </div>
-        </CardHeader>
+    <div className="min-h-screen p-4 md:p-6">
+      <div className="max-w-7xl mx-auto space-y-4 sm:space-y-6">
+        {/* Use PageHeader component */}
+        <PageHeader
+          title="Invoice Management"
+          subtitle="Create and manage invoices for all stores"
+          icon={<FileText className="h-5 w-5" />}
+          showBackButton={true}
+          actions={
+            <div className="flex flex-col md:flex-row gap-2 w-full">
+              <Button
+                className={headerButtonClass}
+                onClick={() => refetch()}
+                disabled={isLoading}
+              >
+                <RefreshCw className={`h-4 w-4 ${isLoading ? 'animate-spin' : ''}`} />
+                <span>Refresh</span>
+              </Button>
+              <Button
+                className={headerButtonClass}
+                onClick={() => setShowCreateForm(true)}
+              >
+                <Plus className="h-4 w-4" />
+                <span>Create Invoice</span>
+              </Button>
+            </div>
+          }
+        />
+
+        {/* Invoice Statistics */}
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+          <Card className="bg-gradient-to-br from-blue-50 to-blue-100 border-blue-200">
+            <CardContent className="p-4">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-sm font-medium text-blue-600">Total Invoices</p>
+                  <p className="text-2xl font-bold text-blue-700">{totalInvoices}</p>
+                </div>
+                <FileText className="h-8 w-8 text-blue-500" />
+              </div>
+            </CardContent>
+          </Card>
+
+          <Card className="bg-gradient-to-br from-yellow-50 to-yellow-100 border-yellow-200">
+            <CardContent className="p-4">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-sm font-medium text-yellow-600">Pending</p>
+                  <p className="text-2xl font-bold text-yellow-700">{pendingInvoices}</p>
+                  <p className="text-xs text-yellow-600">${pendingRevenue.toLocaleString()}</p>
+                </div>
+                <Clock className="h-8 w-8 text-yellow-500" />
+              </div>
+            </CardContent>
+          </Card>
+
+          <Card className="bg-gradient-to-br from-green-50 to-green-100 border-green-200">
+            <CardContent className="p-4">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-sm font-medium text-green-600">Paid</p>
+                  <p className="text-2xl font-bold text-green-700">{paidInvoices}</p>
+                  <p className="text-xs text-green-600">${totalRevenue.toLocaleString()}</p>
+                </div>
+                <CheckCircle className="h-8 w-8 text-green-500" />
+              </div>
+            </CardContent>
+          </Card>
+
+          <Card className="bg-gradient-to-br from-red-50 to-red-100 border-red-200">
+            <CardContent className="p-4">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-sm font-medium text-red-600">Overdue</p>
+                  <p className="text-2xl font-bold text-red-700">{overdueInvoices}</p>
+                  <p className="text-xs text-red-600">Needs attention</p>
+                </div>
+                <AlertCircle className="h-8 w-8 text-red-500" />
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+
+        {/* Invoices List */}
+        <Card>
+          <CardHeader>
+            <CardTitle className="text-lg">All Invoices</CardTitle>
+          </CardHeader>
         <CardContent>
           <Tabs
             defaultValue="all"
@@ -404,6 +487,7 @@ export default function InvoicesPage() {
           onDelete={handleDeleteInvoice}
         />
       )}
+      </div>
     </div>
   );
 }
