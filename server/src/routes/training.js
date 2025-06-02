@@ -8,7 +8,8 @@ import TrainingProgress from '../models/TrainingProgress.js';
 import * as schedule from 'node-schedule';
 import emailTemplates from '../utils/emailTemplates.js';
 import { handleAsync } from '../utils/errorHandler.js';
-import TrainingSession from '../models/TrainingSession.js'
+import TrainingSession from '../models/TrainingSession.js';
+import CommunityPlan from '../models/CommunityPlan.js';
 
 const router = express.Router();
 
@@ -424,6 +425,41 @@ router.post('/plans', auth, async (req, res) => {
     });
 
     await trainingPlan.save();
+
+    // Automatically share to community by default
+    try {
+      // Determine difficulty based on position and type
+      let difficulty = 'Intermediate'; // Default
+      if (type === 'New Hire' || position === 'Team Member') {
+        difficulty = 'Beginner';
+      } else if (position === 'Manager' || position === 'Director' || type === 'Leadership') {
+        difficulty = 'Advanced';
+      }
+
+      // Create community plan automatically
+      const communityPlan = new CommunityPlan({
+        name: trainingPlan.name,
+        description: trainingPlan.description || `Training plan for ${trainingPlan.position} in ${trainingPlan.department}`,
+        department: trainingPlan.department,
+        position: trainingPlan.position,
+        type: trainingPlan.type,
+        difficulty,
+        days: trainingPlan.days,
+        tags: [], // Can be enhanced later
+        originalPlan: trainingPlan._id,
+        store: trainingPlan.store,
+        author: req.user._id,
+        isActive: true,
+        isPublic: true,
+        moderationStatus: 'approved' // Auto-approve for now
+      });
+
+      await communityPlan.save();
+      console.log(`Training plan "${trainingPlan.name}" automatically shared to community`);
+    } catch (communityError) {
+      console.error('Error auto-sharing to community:', communityError);
+      // Don't fail the request if community sharing fails
+    }
 
     // Return the created plan with populated fields
     const populatedPlan = await TrainingPlan.findById(trainingPlan._id)
@@ -1370,5 +1406,427 @@ router.get('/employees/new-hires', auth, handleAsync(async (req, res) => {
   console.log('Sending new hires data:', transformedHires);
   res.json(transformedHires);
 }));
+
+// ==================== COMMUNITY PLANS API ====================
+
+// Get all community plans with filtering and sorting
+router.get('/community-plans', auth, async (req, res) => {
+  try {
+    const { sortBy = 'popular', search, department, difficulty, page = 1, limit = 20 } = req.query;
+
+    let query = {
+      isActive: true,
+      isPublic: true,
+      moderationStatus: 'approved'
+    };
+
+    // Add search criteria
+    if (search) {
+      query.$text = { $search: search };
+    }
+
+    // Add filters
+    if (department && department !== 'all') {
+      query.department = department;
+    }
+
+    if (difficulty && difficulty !== 'all') {
+      query.difficulty = difficulty;
+    }
+
+    // Build aggregation pipeline
+    let pipeline = [
+      { $match: query },
+      {
+        $addFields: {
+          likeCount: { $size: '$likes' },
+          downloadCount: { $size: '$downloads' },
+          averageRating: {
+            $cond: {
+              if: { $gt: [{ $size: '$ratings' }, 0] },
+              then: { $avg: '$ratings.rating' },
+              else: 0
+            }
+          }
+        }
+      }
+    ];
+
+    // Add sorting
+    let sortCriteria = {};
+    switch (sortBy) {
+      case 'popular':
+        sortCriteria = { likeCount: -1, downloadCount: -1, createdAt: -1 };
+        break;
+      case 'newest':
+        sortCriteria = { createdAt: -1 };
+        break;
+      case 'rating':
+        sortCriteria = { averageRating: -1, likeCount: -1, createdAt: -1 };
+        break;
+      case 'downloads':
+        sortCriteria = { downloadCount: -1, likeCount: -1, createdAt: -1 };
+        break;
+      default:
+        sortCriteria = { createdAt: -1 };
+    }
+
+    pipeline.push({ $sort: sortCriteria });
+
+    // Add pagination
+    const skip = (parseInt(page) - 1) * parseInt(limit);
+    pipeline.push({ $skip: skip }, { $limit: parseInt(limit) });
+
+    // Add lookups for store and author info
+    pipeline.push(
+      {
+        $lookup: {
+          from: 'stores',
+          localField: 'store',
+          foreignField: '_id',
+          as: 'storeInfo'
+        }
+      },
+      {
+        $lookup: {
+          from: 'users',
+          localField: 'author',
+          foreignField: '_id',
+          as: 'authorInfo'
+        }
+      },
+      { $unwind: '$storeInfo' },
+      { $unwind: '$authorInfo' }
+    );
+
+    // Add user-specific fields (isLiked)
+    pipeline.push({
+      $addFields: {
+        isLiked: {
+          $in: [req.user._id, '$likes.user']
+        },
+        store: {
+          name: '$storeInfo.name',
+          location: '$storeInfo.location',
+          id: '$storeInfo._id'
+        },
+        author: {
+          name: '$authorInfo.name',
+          position: '$authorInfo.position'
+        },
+        rating: '$averageRating',
+        downloads: '$downloadCount',
+        likes: '$likeCount'
+      }
+    });
+
+    // Remove sensitive fields
+    pipeline.push({
+      $project: {
+        storeInfo: 0,
+        authorInfo: 0,
+        'likes.user': 0,
+        'downloads.user': 0,
+        'ratings.user': 0
+      }
+    });
+
+    const plans = await CommunityPlan.aggregate(pipeline);
+
+    res.json(plans);
+  } catch (error) {
+    console.error('Error fetching community plans:', error);
+    res.status(500).json({ message: 'Error fetching community plans' });
+  }
+});
+
+// Get a specific community plan by ID
+router.get('/community-plans/:id', auth, async (req, res) => {
+  try {
+    const plan = await CommunityPlan.findById(req.params.id)
+      .populate('store', 'name location')
+      .populate('author', 'name position');
+
+    if (!plan || !plan.isActive || !plan.isPublic || plan.moderationStatus !== 'approved') {
+      return res.status(404).json({ message: 'Community plan not found' });
+    }
+
+    // Add computed fields
+    const planData = plan.toObject();
+    planData.isLiked = plan.likes.some(like => like.user.toString() === req.user._id.toString());
+    planData.rating = plan.averageRating;
+    planData.downloads = plan.downloadCount;
+    planData.likes = plan.likeCount;
+
+    // Format store and author info
+    planData.store = {
+      name: plan.store.name,
+      location: plan.store.location,
+      id: plan.store._id
+    };
+    planData.author = {
+      name: plan.author.name,
+      position: plan.author.position
+    };
+
+    res.json(planData);
+  } catch (error) {
+    console.error('Error fetching community plan:', error);
+    res.status(500).json({ message: 'Error fetching community plan' });
+  }
+});
+
+// Like/Unlike a community plan
+router.post('/community-plans/:id/like', auth, async (req, res) => {
+  try {
+    const plan = await CommunityPlan.findById(req.params.id);
+
+    if (!plan || !plan.isActive || !plan.isPublic || plan.moderationStatus !== 'approved') {
+      return res.status(404).json({ message: 'Community plan not found' });
+    }
+
+    const userId = req.user._id;
+    const existingLikeIndex = plan.likes.findIndex(like => like.user.toString() === userId.toString());
+
+    if (existingLikeIndex > -1) {
+      // Unlike - remove the like
+      plan.likes.splice(existingLikeIndex, 1);
+    } else {
+      // Like - add the like
+      plan.likes.push({ user: userId });
+    }
+
+    await plan.save();
+
+    res.json({
+      isLiked: existingLikeIndex === -1,
+      likeCount: plan.likes.length
+    });
+  } catch (error) {
+    console.error('Error liking community plan:', error);
+    res.status(500).json({ message: 'Error updating like status' });
+  }
+});
+
+// Add a community plan to your store (create a copy)
+router.post('/community-plans/:id/add-to-store', auth, async (req, res) => {
+  try {
+    const communityPlan = await CommunityPlan.findById(req.params.id);
+
+    if (!communityPlan || !communityPlan.isActive || !communityPlan.isPublic || communityPlan.moderationStatus !== 'approved') {
+      return res.status(404).json({ message: 'Community plan not found' });
+    }
+
+    // Check if user already has this plan in their store
+    const existingPlan = await TrainingPlan.findOne({
+      store: req.user.store._id,
+      name: communityPlan.name,
+      department: communityPlan.department,
+      position: communityPlan.position
+    });
+
+    if (existingPlan) {
+      return res.status(400).json({ message: 'You already have a similar plan in your store' });
+    }
+
+    // Create a new training plan based on the community plan
+    const newTrainingPlan = new TrainingPlan({
+      name: `${communityPlan.name} (Community)`,
+      description: `${communityPlan.description}\n\nAdapted from community plan shared by ${communityPlan.store.name}`,
+      department: communityPlan.department,
+      position: communityPlan.position,
+      type: communityPlan.type === 'New Hire' ? 'New Hire' : 'Regular',
+      days: communityPlan.days,
+      createdBy: req.user._id,
+      store: req.user.store._id,
+      selfPaced: false
+    });
+
+    await newTrainingPlan.save();
+
+    // Record the download
+    communityPlan.downloads.push({
+      user: req.user._id,
+      store: req.user.store._id
+    });
+    await communityPlan.save();
+
+    // Send notification to the original author
+    try {
+      console.log('Would send notification to plan author');
+    } catch (notificationError) {
+      console.error('Error sending download notification:', notificationError);
+      // Don't fail the request if notification fails
+    }
+
+    res.json({
+      message: 'Community plan successfully added to your store',
+      trainingPlan: newTrainingPlan,
+      downloadCount: communityPlan.downloads.length
+    });
+  } catch (error) {
+    console.error('Error adding community plan to store:', error);
+    res.status(500).json({ message: 'Error adding plan to your store' });
+  }
+});
+
+// Share an existing training plan to the community
+router.post('/plans/:id/share-to-community', auth, async (req, res) => {
+  try {
+    const { difficulty, tags = [] } = req.body;
+
+    // Validate difficulty
+    if (difficulty && !['Beginner', 'Intermediate', 'Advanced'].includes(difficulty)) {
+      return res.status(400).json({ message: 'Invalid difficulty level' });
+    }
+
+    const trainingPlan = await TrainingPlan.findById(req.params.id)
+      .populate('store', 'name location')
+      .populate('createdBy', 'name position');
+
+    if (!trainingPlan) {
+      return res.status(404).json({ message: 'Training plan not found' });
+    }
+
+    // Check if user has permission to share this plan
+    if (trainingPlan.store._id.toString() !== req.user.store._id.toString()) {
+      return res.status(403).json({ message: 'You can only share plans from your own store' });
+    }
+
+    // Check if this plan is already shared
+    const existingCommunityPlan = await CommunityPlan.findOne({
+      originalPlan: trainingPlan._id
+    });
+
+    if (existingCommunityPlan) {
+      return res.status(400).json({ message: 'This plan is already shared with the community' });
+    }
+
+    // Auto-determine difficulty if not provided
+    let finalDifficulty = difficulty;
+    if (!finalDifficulty) {
+      if (trainingPlan.type === 'New Hire' || trainingPlan.position === 'Team Member') {
+        finalDifficulty = 'Beginner';
+      } else if (trainingPlan.position === 'Manager' || trainingPlan.position === 'Director' || trainingPlan.type === 'Leadership') {
+        finalDifficulty = 'Advanced';
+      } else {
+        finalDifficulty = 'Intermediate';
+      }
+    }
+
+    // Create community plan
+    const communityPlan = new CommunityPlan({
+      name: trainingPlan.name,
+      description: trainingPlan.description || `Training plan for ${trainingPlan.position} in ${trainingPlan.department}`,
+      department: trainingPlan.department,
+      position: trainingPlan.position,
+      type: trainingPlan.type,
+      difficulty: finalDifficulty,
+      days: trainingPlan.days,
+      tags: Array.isArray(tags) ? tags.filter(tag => tag.trim()) : [],
+      originalPlan: trainingPlan._id,
+      store: trainingPlan.store._id,
+      author: req.user._id,
+      isActive: true,
+      isPublic: true,
+      moderationStatus: 'approved' // Auto-approve for now
+    });
+
+    await communityPlan.save();
+
+    res.json({
+      message: 'Training plan successfully shared with the community',
+      communityPlan: {
+        _id: communityPlan._id,
+        name: communityPlan.name,
+        difficulty: communityPlan.difficulty,
+        tags: communityPlan.tags
+      }
+    });
+  } catch (error) {
+    console.error('Error sharing plan to community:', error);
+    res.status(500).json({ message: 'Error sharing plan to community' });
+  }
+});
+
+// Bulk share existing training plans to community (for initial setup)
+router.post('/plans/bulk-share-to-community', auth, async (req, res) => {
+  try {
+    // Only allow Directors to bulk share
+    if (req.user.position !== 'Director') {
+      return res.status(403).json({ message: 'Only Directors can bulk share plans' });
+    }
+
+    // Get all training plans for this store that aren't already shared
+    const trainingPlans = await TrainingPlan.find({
+      store: req.user.store._id
+    });
+
+    const sharedPlans = [];
+    const errors = [];
+
+    for (const trainingPlan of trainingPlans) {
+      try {
+        // Check if already shared
+        const existingCommunityPlan = await CommunityPlan.findOne({
+          originalPlan: trainingPlan._id
+        });
+
+        if (existingCommunityPlan) {
+          continue; // Skip if already shared
+        }
+
+        // Auto-determine difficulty
+        let difficulty = 'Intermediate';
+        if (trainingPlan.type === 'New Hire' || trainingPlan.position === 'Team Member') {
+          difficulty = 'Beginner';
+        } else if (trainingPlan.position === 'Manager' || trainingPlan.position === 'Director' || trainingPlan.type === 'Leadership') {
+          difficulty = 'Advanced';
+        }
+
+        // Create community plan
+        const communityPlan = new CommunityPlan({
+          name: trainingPlan.name,
+          description: trainingPlan.description || `Training plan for ${trainingPlan.position} in ${trainingPlan.department}`,
+          department: trainingPlan.department,
+          position: trainingPlan.position,
+          type: trainingPlan.type,
+          difficulty,
+          days: trainingPlan.days,
+          tags: [],
+          originalPlan: trainingPlan._id,
+          store: trainingPlan.store,
+          author: req.user._id,
+          isActive: true,
+          isPublic: true,
+          moderationStatus: 'approved'
+        });
+
+        await communityPlan.save();
+        sharedPlans.push({
+          name: trainingPlan.name,
+          difficulty,
+          department: trainingPlan.department
+        });
+
+      } catch (error) {
+        errors.push({
+          planName: trainingPlan.name,
+          error: error.message
+        });
+      }
+    }
+
+    res.json({
+      message: `Successfully shared ${sharedPlans.length} training plans to the community`,
+      sharedPlans,
+      errors: errors.length > 0 ? errors : undefined
+    });
+
+  } catch (error) {
+    console.error('Error bulk sharing plans to community:', error);
+    res.status(500).json({ message: 'Error bulk sharing plans to community' });
+  }
+});
 
 export default router;

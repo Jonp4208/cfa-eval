@@ -11,7 +11,7 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table'
-import { Plus, Search, Eye, UserPlus, ClipboardList, Users, ClipboardCheck, CheckCircle2, Clock } from 'lucide-react'
+import { Plus, Search, Eye, UserPlus, ClipboardList, Users, ClipboardCheck, CheckCircle2, Clock, TrendingUp, Target, Award, Calendar as CalendarIcon, BarChart2, BookOpen, GraduationCap } from 'lucide-react'
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog'
 import CreatePlanForm from '../Progress/components/CreatePlanForm'
 import { toast } from '@/components/ui/use-toast'
@@ -32,7 +32,6 @@ import {
   PopoverTrigger,
 } from '@/components/ui/popover'
 import { cn } from '@/lib/utils'
-import { CalendarIcon } from 'lucide-react'
 import { useAuth } from '@/contexts/AuthContext'
 import { useTranslation } from '@/contexts/TranslationContext'
 import PageHeader from '@/components/PageHeader'
@@ -323,80 +322,104 @@ export default function TrainingPlanList() {
 
   return (
     <div className="space-y-6">
-      {/* Dashboard Cards */}
-      <div className="grid grid-cols-2 md:grid-cols-2 lg:grid-cols-4 gap-3 md:gap-4 mb-6">
+      {/* Enhanced Dashboard Cards */}
+      <div className="grid grid-cols-2 md:grid-cols-2 lg:grid-cols-4 gap-4 md:gap-6 mb-8">
         {/* Active Plans Card */}
-        <Card className="bg-white rounded-[20px] p-3 md:p-5 shadow-sm hover:shadow-md transition-shadow">
-          <div className="flex items-start justify-between">
-            <div>
-              <p className="text-[#6B7280] text-xs md:text-sm font-medium">Active Plans</p>
-              <h3 className="text-2xl md:text-[32px] font-bold mt-1 md:mt-1.5 text-[#27251F] leading-none">{activePlansCount}</h3>
-              <p className="text-[#6B7280] text-[11px] md:text-[13px] mt-0.5 md:mt-1">Currently active</p>
+        <Card className="relative overflow-hidden bg-gradient-to-br from-[#E51636] to-[#DD1A21] text-white rounded-[24px] hover:shadow-2xl transition-all duration-500 transform hover:-translate-y-2 hover:scale-105 group">
+          <CardContent className="p-4 md:p-8 relative z-10">
+            <div className="flex items-start justify-between">
+              <div className="space-y-3">
+                <p className="text-white/80 font-medium text-sm uppercase tracking-wide">Active Plans</p>
+                <h3 className="text-4xl font-bold text-white">{activePlansCount}</h3>
+                <div className="flex items-center gap-2 text-white/90">
+                  <Target className="h-4 w-4" />
+                  <span className="text-sm">Currently active</span>
+                </div>
+              </div>
+              <div className="h-16 w-16 bg-white/20 backdrop-blur-sm rounded-3xl flex items-center justify-center group-hover:bg-white/30 transition-all duration-300">
+                <ClipboardCheck className="h-8 w-8 text-white" />
+              </div>
             </div>
-            <div className="h-9 w-9 md:h-12 md:w-12 bg-[#FEE4E2] rounded-full flex items-center justify-center">
-              <ClipboardCheck className="h-4 w-4 md:h-6 md:w-6 text-[#E51636]" />
-            </div>
-          </div>
+          </CardContent>
+          <div className="absolute inset-0 bg-gradient-to-r from-transparent to-white/10 opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
         </Card>
 
         {/* Total Plans Card */}
-        <Card className="bg-white rounded-[20px] p-3 md:p-5 shadow-sm hover:shadow-md transition-shadow">
-          <div className="flex items-start justify-between">
-            <div>
-              <p className="text-[#6B7280] text-xs md:text-sm font-medium">Total Plans</p>
-              <h3 className="text-2xl md:text-[32px] font-bold mt-1 md:mt-1.5 text-[#27251F] leading-none">{plansToDisplay.length}</h3>
-              <p className="text-[#6B7280] text-[11px] md:text-[13px] mt-0.5 md:mt-1">Available plans</p>
+        <Card className="relative overflow-hidden bg-gradient-to-br from-[#004F71] to-[#0066A1] text-white rounded-[24px] hover:shadow-2xl transition-all duration-500 transform hover:-translate-y-2 hover:scale-105 group">
+          <CardContent className="p-4 md:p-8 relative z-10">
+            <div className="flex items-start justify-between">
+              <div className="space-y-3">
+                <p className="text-white/80 font-medium text-sm uppercase tracking-wide">Total Plans</p>
+                <h3 className="text-4xl font-bold text-white">{plansToDisplay.length}</h3>
+                <div className="flex items-center gap-2 text-white/90">
+                  <BookOpen className="h-4 w-4" />
+                  <span className="text-sm">Available plans</span>
+                </div>
+              </div>
+              <div className="h-16 w-16 bg-white/20 backdrop-blur-sm rounded-3xl flex items-center justify-center group-hover:bg-white/30 transition-all duration-300">
+                <GraduationCap className="h-8 w-8 text-white" />
+              </div>
             </div>
-            <div className="h-9 w-9 md:h-12 md:w-12 bg-[#FEE4E2] rounded-full flex items-center justify-center">
-              <Users className="h-4 w-4 md:h-6 md:w-6 text-[#E51636]" />
-            </div>
-          </div>
+          </CardContent>
+          <div className="absolute inset-0 bg-gradient-to-r from-transparent to-white/10 opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
         </Card>
 
         {/* Completed Plans Card */}
-        <Card className="bg-white rounded-[20px] p-3 md:p-5 shadow-sm hover:shadow-md transition-shadow">
-          <div className="flex items-start justify-between">
-            <div>
-              <p className="text-[#6B7280] text-xs md:text-sm font-medium">Completed Plans</p>
-              <h3 className="text-2xl md:text-[32px] font-bold mt-1 md:mt-1.5 text-[#27251F] leading-none">{completedPlansCount}</h3>
-              <p className="text-[#6B7280] text-[11px] md:text-[13px] mt-0.5 md:mt-1">Fully completed</p>
+        <Card className="relative overflow-hidden bg-gradient-to-br from-[#16A34A] to-[#15803D] text-white rounded-[24px] hover:shadow-2xl transition-all duration-500 transform hover:-translate-y-2 hover:scale-105 group">
+          <CardContent className="p-4 md:p-8 relative z-10">
+            <div className="flex items-start justify-between">
+              <div className="space-y-3">
+                <p className="text-white/80 font-medium text-sm uppercase tracking-wide">Completed Plans</p>
+                <h3 className="text-4xl font-bold text-white">{completedPlansCount}</h3>
+                <div className="flex items-center gap-2 text-white/90">
+                  <Award className="h-4 w-4" />
+                  <span className="text-sm">Fully completed</span>
+                </div>
+              </div>
+              <div className="h-16 w-16 bg-white/20 backdrop-blur-sm rounded-3xl flex items-center justify-center group-hover:bg-white/30 transition-all duration-300">
+                <CheckCircle2 className="h-8 w-8 text-white" />
+              </div>
             </div>
-            <div className="h-9 w-9 md:h-12 md:w-12 bg-[#DCFCE7] rounded-full flex items-center justify-center">
-              <CheckCircle2 className="h-4 w-4 md:h-6 md:w-6 text-[#16A34A]" />
-            </div>
-          </div>
+          </CardContent>
+          <div className="absolute inset-0 bg-gradient-to-r from-transparent to-white/10 opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
         </Card>
 
         {/* Average Duration Card */}
-        <Card className="bg-white rounded-[20px] p-3 md:p-5 shadow-sm hover:shadow-md transition-shadow">
-          <div className="flex items-start justify-between">
-            <div>
-              <p className="text-[#6B7280] text-xs md:text-sm font-medium">Avg. Duration</p>
-              <h3 className="text-2xl md:text-[32px] font-bold mt-1 md:mt-1.5 text-[#27251F] leading-none">{calculateAverageDuration()}</h3>
-              <p className="text-[#6B7280] text-[11px] md:text-[13px] mt-0.5 md:mt-1">Days to complete</p>
+        <Card className="relative overflow-hidden bg-gradient-to-br from-[#FDB022] to-[#F39C12] text-white rounded-[24px] hover:shadow-2xl transition-all duration-500 transform hover:-translate-y-2 hover:scale-105 group">
+          <CardContent className="p-4 md:p-8 relative z-10">
+            <div className="flex items-start justify-between">
+              <div className="space-y-3">
+                <p className="text-white/80 font-medium text-sm uppercase tracking-wide">Avg. Duration</p>
+                <h3 className="text-4xl font-bold text-white">{calculateAverageDuration()}</h3>
+                <div className="flex items-center gap-2 text-white/90">
+                  <CalendarIcon className="h-4 w-4" />
+                  <span className="text-sm">Days to complete</span>
+                </div>
+              </div>
+              <div className="h-16 w-16 bg-white/20 backdrop-blur-sm rounded-3xl flex items-center justify-center group-hover:bg-white/30 transition-all duration-300">
+                <Clock className="h-8 w-8 text-white" />
+              </div>
             </div>
-            <div className="h-9 w-9 md:h-12 md:w-12 bg-[#FEE4E2] rounded-full flex items-center justify-center">
-              <Clock className="h-4 w-4 md:h-6 md:w-6 text-[#E51636]" />
-            </div>
-          </div>
+          </CardContent>
+          <div className="absolute inset-0 bg-gradient-to-r from-transparent to-white/10 opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
         </Card>
       </div>
 
-      {/* Search bar and Create Button */}
-      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+      {/* Enhanced Search and Create Section */}
+      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-8">
         <div className="relative w-full sm:w-[300px]">
-          <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-500" />
+          <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-[#27251F]/40" />
           <Input
             placeholder="Search plans..."
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            className="pl-9 w-full"
+            className="pl-10 w-full border-gray-200 focus:border-[#E51636] focus:ring-[#E51636]/20 rounded-xl"
           />
         </div>
         {/* Only show Create Plan button for managers */}
         {isManager && (
           <Button
-            className="gap-2 rounded-full bg-[#E51636] text-white hover:bg-[#E51636]/90 w-full sm:w-auto px-8"
+            className="gap-2 bg-gradient-to-r from-[#E51636] to-[#DD1A21] hover:from-[#DD1A21] hover:to-[#E51636] text-white rounded-xl shadow-lg hover:shadow-xl transition-all duration-300 w-full sm:w-auto px-8"
             onClick={() => setIsCreateDialogOpen(true)}
           >
             <Plus className="h-4 w-4" />
@@ -405,73 +428,104 @@ export default function TrainingPlanList() {
         )}
       </div>
 
-      {/* Plans Grid */}
-      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+      {/* Enhanced Plans Grid */}
+      <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
         {filteredPlans.map((plan) => (
-          <Card key={plan._id} className="overflow-hidden">
+          <Card key={plan._id} className="bg-white rounded-[20px] border-0 shadow-lg hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1 overflow-hidden group">
             <CardContent className="p-6">
               <div className="space-y-4">
                 {/* Plan Info */}
                 <div className="flex items-start justify-between">
-                  <div className="space-y-1">
-                    <h3 className="font-semibold text-lg text-gray-900">{plan.name}</h3>
-                    <p className="text-gray-600">{plan.type}</p>
+                  <div className="space-y-2 flex-1">
+                    <div className="flex items-center gap-3">
+                      <div className="h-12 w-12 bg-gradient-to-br from-[#E51636] to-[#DD1A21] rounded-2xl flex items-center justify-center">
+                        <GraduationCap className="h-6 w-6 text-white" />
+                      </div>
+                      <div>
+                        <h3 className="font-bold text-lg text-[#27251F] group-hover:text-[#E51636] transition-colors duration-200">{plan.name}</h3>
+                        <p className="text-[#27251F]/60 text-sm">{plan.type}</p>
+                      </div>
+                    </div>
 
                     {/* Show status for team members */}
                     {!isManager && plan.status && (
-                      <span className={`inline-flex px-2 py-1 text-xs font-medium rounded-full mt-2 ${
-                        plan.status === 'completed' || plan.status === 'COMPLETED' ? 'bg-green-100 text-green-800' :
-                        plan.status === 'in_progress' || plan.status === 'IN_PROGRESS' ? 'bg-blue-100 text-blue-800' :
-                        'bg-gray-100 text-gray-800'
+                      <span className={`inline-flex items-center px-3 py-1 text-xs font-medium rounded-full border ${
+                        plan.status === 'completed' || plan.status === 'COMPLETED'
+                          ? 'bg-[#16A34A]/10 text-[#16A34A] border-[#16A34A]/20' :
+                        plan.status === 'in_progress' || plan.status === 'IN_PROGRESS'
+                          ? 'bg-[#004F71]/10 text-[#004F71] border-[#004F71]/20' :
+                        'bg-[#FDB022]/10 text-[#FDB022] border-[#FDB022]/20'
                       }`}>
+                        {plan.status === 'completed' || plan.status === 'COMPLETED' && <CheckCircle2 className="h-3 w-3 mr-1" />}
+                        {plan.status === 'in_progress' || plan.status === 'IN_PROGRESS' && <Clock className="h-3 w-3 mr-1" />}
                         {plan.status === 'completed' || plan.status === 'COMPLETED' ? 'Completed' :
                          plan.status === 'in_progress' || plan.status === 'IN_PROGRESS' ? 'In Progress' :
                          'Not Started'}
                       </span>
                     )}
                   </div>
-                  <span className="text-sm font-medium bg-gray-100 px-2 py-1 rounded-full">
-                    {plan.days && plan.days.length > 0 ? calculateDuration(plan.days) : 'N/A'}
-                  </span>
+                  <div className="flex flex-col items-end gap-2">
+                    <span className="text-sm font-medium bg-[#004F71]/10 text-[#004F71] px-3 py-1 rounded-full border border-[#004F71]/20">
+                      {plan.days && plan.days.length > 0 ? calculateDuration(plan.days) : 'N/A'}
+                    </span>
+                  </div>
                 </div>
 
-                {/* Department and Position for managers */}
+                {/* Enhanced Department and Position for managers */}
                 {isManager ? (
                   <div className="grid grid-cols-2 gap-4">
-                    <div className="space-y-1">
-                      <p className="text-sm text-gray-600">Department</p>
-                      <p className="font-medium text-gray-900">{plan.department || 'N/A'}</p>
+                    <div className="space-y-2">
+                      <p className="text-xs text-[#27251F]/60 uppercase tracking-wide font-medium">Department</p>
+                      <div className="flex items-center gap-2">
+                        <div className="h-2 w-2 bg-[#E51636] rounded-full"></div>
+                        <p className="font-medium text-[#27251F]">{plan.department || 'All Departments'}</p>
+                      </div>
                     </div>
-                    <div className="space-y-1">
-                      <p className="text-sm text-gray-600">Position</p>
-                      <p className="font-medium text-gray-900">{plan.position || 'N/A'}</p>
+                    <div className="space-y-2">
+                      <p className="text-xs text-[#27251F]/60 uppercase tracking-wide font-medium">Position</p>
+                      <div className="flex items-center gap-2">
+                        <div className="h-2 w-2 bg-[#004F71] rounded-full"></div>
+                        <p className="font-medium text-[#27251F]">{plan.position || 'All Positions'}</p>
+                      </div>
                     </div>
                   </div>
                 ) : (
                   <div className="grid grid-cols-2 gap-4">
-                    <div className="space-y-1">
-                      <p className="text-sm text-gray-600">Start Date</p>
-                      <p className="font-medium text-gray-900">
-                        {plan.startDate ? new Date(plan.startDate).toLocaleDateString() : 'N/A'}
-                      </p>
+                    <div className="space-y-2">
+                      <p className="text-xs text-[#27251F]/60 uppercase tracking-wide font-medium">Start Date</p>
+                      <div className="flex items-center gap-2">
+                        <CalendarIcon className="h-4 w-4 text-[#FDB022]" />
+                        <p className="font-medium text-[#27251F]">
+                          {plan.startDate ? new Date(plan.startDate).toLocaleDateString() : 'Not Set'}
+                        </p>
+                      </div>
                     </div>
-                    <div className="space-y-1">
-                      <p className="text-sm text-gray-600">
+                    <div className="space-y-2">
+                      <p className="text-xs text-[#27251F]/60 uppercase tracking-wide font-medium">
                         {plan.status === 'completed' || plan.status === 'COMPLETED' ? 'Completed On' : 'Status'}
                       </p>
-                      <p className="font-medium text-gray-900">
-                        {plan.completedAt ?
-                          new Date(plan.completedAt).toLocaleDateString() :
-                          plan.status === 'in_progress' || plan.status === 'IN_PROGRESS' ? 'In Progress' : 'Not Started'}
-                      </p>
+                      <div className="flex items-center gap-2">
+                        {plan.status === 'completed' || plan.status === 'COMPLETED' ? (
+                          <CheckCircle2 className="h-4 w-4 text-[#16A34A]" />
+                        ) : plan.status === 'in_progress' || plan.status === 'IN_PROGRESS' ? (
+                          <Clock className="h-4 w-4 text-[#004F71]" />
+                        ) : (
+                          <div className="h-4 w-4 rounded-full border-2 border-[#FDB022]" />
+                        )}
+                        <p className="font-medium text-[#27251F]">
+                          {plan.completedAt ?
+                            new Date(plan.completedAt).toLocaleDateString() :
+                            plan.status === 'in_progress' || plan.status === 'IN_PROGRESS' ? 'In Progress' : 'Not Started'}
+                        </p>
+                      </div>
                     </div>
                   </div>
                 )}
 
-                {/* Actions */}
-                <div className="flex flex-col gap-2 pt-2">
+                {/* Enhanced Action Buttons */}
+                <div className="flex gap-3 pt-4 border-t border-gray-100">
                   <Button
-                    variant="ghost"
+                    variant="outline"
                     onClick={() => {
                       // For team members, navigate to progress details
                       // For managers, navigate to plan details
@@ -481,7 +535,7 @@ export default function TrainingPlanList() {
                         handleViewDetails(plan._id)
                       }
                     }}
-                    className="w-full justify-center rounded-full bg-[#FEE4E2] text-[#E51636] hover:bg-[#FEE4E2]/80 hover:text-[#E51636] gap-2 font-medium"
+                    className="flex-1 gap-2 border-[#E51636]/20 text-[#E51636] hover:bg-[#E51636]/5 hover:border-[#E51636] rounded-xl transition-all duration-200 font-medium"
                   >
                     <Eye className="h-4 w-4" />
                     {!isManager ? 'View Progress' : 'View Details'}
@@ -490,12 +544,11 @@ export default function TrainingPlanList() {
                   {/* Only show Assign button for managers */}
                   {isManager && (
                     <Button
-                      variant="ghost"
                       onClick={() => {
                         setSelectedPlan(plan)
                         setIsAssignDialogOpen(true)
                       }}
-                      className="w-full justify-center rounded-full bg-[#E51636] text-white hover:bg-[#E51636]/90 gap-2 font-medium"
+                      className="flex-1 gap-2 bg-gradient-to-r from-[#004F71] to-[#0066A1] hover:from-[#0066A1] hover:to-[#004F71] text-white rounded-xl transition-all duration-200 font-medium shadow-lg hover:shadow-xl"
                     >
                       <UserPlus className="h-4 w-4" />
                       Assign
@@ -509,14 +562,25 @@ export default function TrainingPlanList() {
       </div>
 
       {filteredPlans.length === 0 && (
-        <Card>
+        <Card className="bg-white rounded-[20px] border-0 shadow-lg">
           <CardContent className="p-12 text-center">
-            <div className="flex flex-col items-center gap-4">
-              <ClipboardList className="h-12 w-12 text-gray-400" />
-              <div className="space-y-1">
-                <h3 className="font-semibold text-gray-900">No Training Plans Found</h3>
-                <p className="text-gray-600">There are no training plans matching your search criteria.</p>
+            <div className="flex flex-col items-center gap-6">
+              <div className="h-20 w-20 bg-gradient-to-br from-[#E51636]/10 to-[#DD1A21]/10 rounded-3xl flex items-center justify-center">
+                <ClipboardList className="h-10 w-10 text-[#E51636]" />
               </div>
+              <div className="space-y-2">
+                <h3 className="font-bold text-xl text-[#27251F]">No Training Plans Found</h3>
+                <p className="text-[#27251F]/60 max-w-md">There are no training plans matching your search criteria. Try adjusting your search or create a new plan.</p>
+              </div>
+              {isManager && (
+                <Button
+                  onClick={() => setIsCreateDialogOpen(true)}
+                  className="gap-2 bg-gradient-to-r from-[#E51636] to-[#DD1A21] hover:from-[#DD1A21] hover:to-[#E51636] text-white rounded-xl shadow-lg hover:shadow-xl transition-all duration-300 px-8"
+                >
+                  <Plus className="h-4 w-4" />
+                  Create Your First Plan
+                </Button>
+              )}
             </div>
           </CardContent>
         </Card>

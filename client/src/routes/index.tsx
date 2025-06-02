@@ -94,6 +94,8 @@ import TrainingPlanList from '@/pages/Training/PlanList';
 import NewHires from '@/pages/Training/NewHires';
 import TrainingDetails from '@/pages/Training/Progress/TrainingDetails';
 import PlanDetails from '@/pages/Training/PlanDetails';
+import CommunityPlans from '@/pages/Training/CommunityPlans';
+import CommunityPlanDetails from '@/pages/Training/CommunityPlanDetails';
 import FuturePage from '@/pages/FuturePage';
 import AssignManagers from '../pages/users/AssignManagers';
 import DailyChecklistHistory from '../pages/Kitchen/FoodSafety/DailyChecklistHistory';
@@ -238,6 +240,8 @@ export default function AppRoutes() {
         <Route path="progress/:id" element={<TrainingDetails />} />
         <Route path="plans" element={<TrainingPlanList />} />
         <Route path="plans/:id" element={<PlanDetails />} />
+        <Route path="community-plans" element={<CommunityPlans />} />
+        <Route path="community-plans/:id" element={<CommunityPlanDetails />} />
         <Route path="new-hires" element={<NewHires />} />
         <Route path="*" element={<Navigate to="/training/progress" replace />} />
       </Route>

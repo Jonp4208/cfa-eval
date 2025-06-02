@@ -32,7 +32,7 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu'
-import { Search, Filter, Plus, Loader2, Trash2, Users, BarChart2, UserPlus, ClipboardCheck, MoreHorizontal } from 'lucide-react'
+import { Search, Filter, Plus, Loader2, Trash2, Users, BarChart2, UserPlus, ClipboardCheck, MoreHorizontal, TrendingUp, Target, Award, Calendar, Clock, CheckCircle2, XCircle, AlertCircle } from 'lucide-react'
 import { useAuth } from '@/contexts/AuthContext'
 import api from '@/lib/axios'
 import { toast } from '@/components/ui/use-toast'
@@ -346,11 +346,11 @@ export default function TrainingProgress() {
   const getStatusColor = (status: string) => {
     switch (status.toLowerCase()) {
       case 'completed':
-        return 'bg-green-100 text-green-800'
+        return 'bg-[#16A34A]/10 text-[#16A34A] border-[#16A34A]/20'
       case 'in_progress':
-        return 'bg-blue-100 text-blue-800'
+        return 'bg-[#004F71]/10 text-[#004F71] border-[#004F71]/20'
       default:
-        return 'bg-gray-100 text-gray-800'
+        return 'bg-[#FDB022]/10 text-[#FDB022] border-[#FDB022]/20'
     }
   }
 
@@ -366,12 +366,12 @@ export default function TrainingProgress() {
 
   const getStatusStyles = (status: string) => {
     const styleMap: Record<string, string> = {
-      'in_progress': 'bg-blue-100 text-blue-800',
-      'completed': 'bg-green-100 text-green-800',
-      'on_hold': 'bg-amber-100 text-amber-800',
-      'not_started': 'bg-gray-100 text-gray-800'
+      'in_progress': 'bg-[#004F71]/10 text-[#004F71] border-[#004F71]/20',
+      'completed': 'bg-[#16A34A]/10 text-[#16A34A] border-[#16A34A]/20',
+      'on_hold': 'bg-[#FDB022]/10 text-[#FDB022] border-[#FDB022]/20',
+      'not_started': 'bg-[#E51636]/10 text-[#E51636] border-[#E51636]/20'
     }
-    return styleMap[status] || 'bg-gray-100 text-gray-800'
+    return styleMap[status] || 'bg-[#E51636]/10 text-[#E51636] border-[#E51636]/20'
   }
 
   // Helper to get initials from name
@@ -425,70 +425,201 @@ export default function TrainingProgress() {
 
   return (
     <div className="space-y-6">
-      {/* Stat Cards */}
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-3 md:gap-4 mb-6">
+      {/* Enhanced Dashboard Cards */}
+      <div className="grid grid-cols-2 md:grid-cols-2 lg:grid-cols-4 gap-4 md:gap-6 mb-8">
         {/* Active Trainees Card */}
-        <Card className="bg-white rounded-[20px] p-3 md:p-5 shadow-sm hover:shadow-md transition-shadow">
-          <div className="flex items-start justify-between">
-            <div>
-              <p className="text-[#6B7280] text-xs md:text-sm font-medium">Active Trainees</p>
-              <h3 className="text-2xl md:text-[32px] font-bold mt-1 md:mt-1.5 text-[#27251F] leading-none">
-                {trainees.filter(t => t.status === 'in_progress').length}
-              </h3>
-              <p className="text-[#6B7280] text-[11px] md:text-[13px] mt-0.5 md:mt-1">Currently in training</p>
+        <Card className="relative overflow-hidden bg-gradient-to-br from-[#E51636] to-[#DD1A21] text-white rounded-[24px] hover:shadow-2xl transition-all duration-500 transform hover:-translate-y-2 hover:scale-105 group">
+          <CardContent className="p-4 md:p-8 relative z-10">
+            <div className="flex items-start justify-between">
+              <div className="space-y-3">
+                <p className="text-white/80 font-medium text-sm uppercase tracking-wide">Active Trainees</p>
+                <h3 className="text-4xl font-bold text-white">{trainees.filter(t => t.status === 'in_progress').length}</h3>
+                <div className="flex items-center gap-2 text-white/90">
+                  <Users className="h-4 w-4" />
+                  <span className="text-sm">Currently in training</span>
+                </div>
+              </div>
+              <div className="h-16 w-16 bg-white/20 backdrop-blur-sm rounded-3xl flex items-center justify-center group-hover:bg-white/30 transition-all duration-300">
+                <Users className="h-8 w-8 text-white" />
+              </div>
             </div>
-            <div className="h-9 w-9 md:h-12 md:w-12 bg-[#FEE4E2] rounded-full flex items-center justify-center">
-              <Users className="h-4 w-4 md:h-6 md:w-6 text-[#E51636]" />
-            </div>
-          </div>
+          </CardContent>
+          <div className="absolute inset-0 bg-gradient-to-r from-transparent to-white/10 opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
         </Card>
 
         {/* Completion Rate Card */}
-        <Card className="bg-white rounded-[20px] p-3 md:p-5 shadow-sm hover:shadow-md transition-shadow">
-          <div className="flex items-start justify-between">
-            <div>
-              <p className="text-[#6B7280] text-xs md:text-sm font-medium">Completion Rate</p>
-              <h3 className="text-2xl md:text-[32px] font-bold mt-1 md:mt-1.5 text-[#27251F] leading-none">
-                {calculateOverallCompletionRate()}%
-              </h3>
-              <p className="text-[#6B7280] text-[11px] md:text-[13px] mt-0.5 md:mt-1">Overall completion</p>
+        <Card className="relative overflow-hidden bg-gradient-to-br from-[#004F71] to-[#0066A1] text-white rounded-[24px] hover:shadow-2xl transition-all duration-500 transform hover:-translate-y-2 hover:scale-105 group">
+          <CardContent className="p-4 md:p-8 relative z-10">
+            <div className="flex items-start justify-between">
+              <div className="space-y-3">
+                <p className="text-white/80 font-medium text-sm uppercase tracking-wide">Completion Rate</p>
+                <h3 className="text-4xl font-bold text-white">{calculateOverallCompletionRate()}%</h3>
+                <div className="w-full bg-white/20 rounded-full h-2 overflow-hidden">
+                  <div
+                    className="h-full bg-white rounded-full transition-all duration-1000 ease-out"
+                    style={{ width: `${calculateOverallCompletionRate()}%` }}
+                  />
+                </div>
+              </div>
+              <div className="h-16 w-16 bg-white/20 backdrop-blur-sm rounded-3xl flex items-center justify-center group-hover:bg-white/30 transition-all duration-300">
+                <TrendingUp className="h-8 w-8 text-white" />
+              </div>
             </div>
-            <div className="h-9 w-9 md:h-12 md:w-12 bg-[#DCFCE7] rounded-full flex items-center justify-center">
-              <BarChart2 className="h-4 w-4 md:h-6 md:w-6 text-[#16A34A]" />
-            </div>
-          </div>
+          </CardContent>
+          <div className="absolute inset-0 bg-gradient-to-r from-transparent to-white/10 opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
         </Card>
 
         {/* New Hires Card */}
-        <Card className="bg-white rounded-[20px] p-3 md:p-5 shadow-sm hover:shadow-md transition-shadow">
-          <div className="flex items-start justify-between">
-            <div>
-              <p className="text-[#6B7280] text-xs md:text-sm font-medium">New Hires</p>
-              <h3 className="text-2xl md:text-[32px] font-bold mt-1 md:mt-1.5 text-[#27251F] leading-none">
-                {newHires.length}
-              </h3>
-              <p className="text-[#6B7280] text-[11px] md:text-[13px] mt-0.5 md:mt-1">Need training plans</p>
+        <Card className="relative overflow-hidden bg-gradient-to-br from-[#FDB022] to-[#F39C12] text-white rounded-[24px] hover:shadow-2xl transition-all duration-500 transform hover:-translate-y-2 hover:scale-105 group">
+          <CardContent className="p-4 md:p-8 relative z-10">
+            <div className="flex items-start justify-between">
+              <div className="space-y-3">
+                <p className="text-white/80 font-medium text-sm uppercase tracking-wide">New Hires</p>
+                <h3 className="text-4xl font-bold text-white">{newHires.length}</h3>
+                <div className="flex items-center gap-2 text-white/90">
+                  <AlertCircle className="h-4 w-4" />
+                  <span className="text-sm">Need training plans</span>
+                </div>
+              </div>
+              <div className="h-16 w-16 bg-white/20 backdrop-blur-sm rounded-3xl flex items-center justify-center group-hover:bg-white/30 transition-all duration-300">
+                <UserPlus className="h-8 w-8 text-white" />
+              </div>
             </div>
-            <div className="h-9 w-9 md:h-12 md:w-12 bg-[#FEE4E2] rounded-full flex items-center justify-center">
-              <UserPlus className="h-4 w-4 md:h-6 md:w-6 text-[#E51636]" />
-            </div>
-          </div>
+          </CardContent>
+          <div className="absolute inset-0 bg-gradient-to-r from-transparent to-white/10 opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
         </Card>
 
         {/* Active Plans Card */}
-        <Card className="bg-white rounded-[20px] p-3 md:p-5 shadow-sm hover:shadow-md transition-shadow">
-          <div className="flex items-start justify-between">
-            <div>
-              <p className="text-[#6B7280] text-xs md:text-sm font-medium">Active Plans</p>
-              <h3 className="text-2xl md:text-[32px] font-bold mt-1 md:mt-1.5 text-[#27251F] leading-none">
-                {trainees.filter(t => t.currentPlan).length}
-              </h3>
-              <p className="text-[#6B7280] text-[11px] md:text-[13px] mt-0.5 md:mt-1">Currently in use</p>
+        <Card className="relative overflow-hidden bg-gradient-to-br from-[#16A34A] to-[#15803D] text-white rounded-[24px] hover:shadow-2xl transition-all duration-500 transform hover:-translate-y-2 hover:scale-105 group">
+          <CardContent className="p-4 md:p-8 relative z-10">
+            <div className="flex items-start justify-between">
+              <div className="space-y-3">
+                <p className="text-white/80 font-medium text-sm uppercase tracking-wide">Active Plans</p>
+                <h3 className="text-4xl font-bold text-white">{trainees.filter(t => t.currentPlan).length}</h3>
+                <div className="flex items-center gap-2 text-white/90">
+                  <Target className="h-4 w-4" />
+                  <span className="text-sm">Currently in use</span>
+                </div>
+              </div>
+              <div className="h-16 w-16 bg-white/20 backdrop-blur-sm rounded-3xl flex items-center justify-center group-hover:bg-white/30 transition-all duration-300">
+                <ClipboardCheck className="h-8 w-8 text-white" />
+              </div>
             </div>
-            <div className="h-9 w-9 md:h-12 md:w-12 bg-[#FEE4E2] rounded-full flex items-center justify-center">
-              <ClipboardCheck className="h-4 w-4 md:h-6 md:w-6 text-[#E51636]" />
+          </CardContent>
+          <div className="absolute inset-0 bg-gradient-to-r from-transparent to-white/10 opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+        </Card>
+      </div>
+
+      {/* Department Progress Overview */}
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8">
+        {/* Department Breakdown */}
+        <Card className="lg:col-span-2 bg-white rounded-[20px] border-0 shadow-lg hover:shadow-xl transition-all duration-300">
+          <CardHeader className="pb-4">
+            <div className="flex items-center justify-between">
+              <div>
+                <h3 className="text-xl font-bold text-[#27251F]">Department Progress</h3>
+                <p className="text-[#27251F]/60 text-sm mt-1">Training completion by department</p>
+              </div>
+              <div className="h-12 w-12 bg-[#E51636]/10 rounded-2xl flex items-center justify-center">
+                <BarChart2 className="h-6 w-6 text-[#E51636]" />
+              </div>
             </div>
-          </div>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            {/* Front of House */}
+            <div className="space-y-2">
+              <div className="flex items-center justify-between">
+                <span className="font-medium text-[#27251F]">Front of House</span>
+                <span className="text-sm text-[#27251F]/60">
+                  {Math.round((trainees.filter(t => t.department === 'Front of House' && t.status === 'completed').length / Math.max(trainees.filter(t => t.department === 'Front of House').length, 1)) * 100)}%
+                </span>
+              </div>
+              <div className="w-full bg-gray-100 rounded-full h-3 overflow-hidden">
+                <div
+                  className="h-full bg-gradient-to-r from-[#E51636] to-[#DD1A21] rounded-full transition-all duration-1000"
+                  style={{ width: `${Math.round((trainees.filter(t => t.department === 'Front of House' && t.status === 'completed').length / Math.max(trainees.filter(t => t.department === 'Front of House').length, 1)) * 100)}%` }}
+                />
+              </div>
+            </div>
+
+            {/* Back of House */}
+            <div className="space-y-2">
+              <div className="flex items-center justify-between">
+                <span className="font-medium text-[#27251F]">Back of House</span>
+                <span className="text-sm text-[#27251F]/60">
+                  {Math.round((trainees.filter(t => t.department === 'Back of House' && t.status === 'completed').length / Math.max(trainees.filter(t => t.department === 'Back of House').length, 1)) * 100)}%
+                </span>
+              </div>
+              <div className="w-full bg-gray-100 rounded-full h-3 overflow-hidden">
+                <div
+                  className="h-full bg-gradient-to-r from-[#004F71] to-[#0066A1] rounded-full transition-all duration-1000"
+                  style={{ width: `${Math.round((trainees.filter(t => t.department === 'Back of House' && t.status === 'completed').length / Math.max(trainees.filter(t => t.department === 'Back of House').length, 1)) * 100)}%` }}
+                />
+              </div>
+            </div>
+
+            {/* Management */}
+            <div className="space-y-2">
+              <div className="flex items-center justify-between">
+                <span className="font-medium text-[#27251F]">Management</span>
+                <span className="text-sm text-[#27251F]/60">
+                  {Math.round((trainees.filter(t => (t.position === 'Leader' || t.position === 'Director') && t.status === 'completed').length / Math.max(trainees.filter(t => t.position === 'Leader' || t.position === 'Director').length, 1)) * 100)}%
+                </span>
+              </div>
+              <div className="w-full bg-gray-100 rounded-full h-3 overflow-hidden">
+                <div
+                  className="h-full bg-gradient-to-r from-[#16A34A] to-[#15803D] rounded-full transition-all duration-1000"
+                  style={{ width: `${Math.round((trainees.filter(t => (t.position === 'Leader' || t.position === 'Director') && t.status === 'completed').length / Math.max(trainees.filter(t => t.position === 'Leader' || t.position === 'Director').length, 1)) * 100)}%` }}
+                />
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* Recent Activity */}
+        <Card className="bg-white rounded-[20px] border-0 shadow-lg hover:shadow-xl transition-all duration-300">
+          <CardHeader className="pb-4">
+            <div className="flex items-center gap-3">
+              <div className="h-12 w-12 bg-[#FDB022]/10 rounded-2xl flex items-center justify-center">
+                <Clock className="h-6 w-6 text-[#FDB022]" />
+              </div>
+              <div>
+                <h3 className="text-xl font-bold text-[#27251F]">Recent Activity</h3>
+                <p className="text-[#27251F]/60 text-sm">Latest training updates</p>
+              </div>
+            </div>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            {trainees.slice(0, 3).map((trainee, index) => (
+              <div key={trainee._id} className="flex items-start gap-3">
+                <div className={`h-8 w-8 rounded-full flex items-center justify-center flex-shrink-0 ${
+                  trainee.status === 'completed'
+                    ? 'bg-[#16A34A]/10'
+                    : trainee.status === 'in_progress'
+                    ? 'bg-[#004F71]/10'
+                    : 'bg-[#E51636]/10'
+                }`}>
+                  {trainee.status === 'completed' && <CheckCircle2 className="h-4 w-4 text-[#16A34A]" />}
+                  {trainee.status === 'in_progress' && <Clock className="h-4 w-4 text-[#004F71]" />}
+                  {trainee.status === 'not_started' && <UserPlus className="h-4 w-4 text-[#E51636]" />}
+                </div>
+                <div className="flex-1 min-w-0">
+                  <p className="text-sm font-medium text-[#27251F]">{trainee.name}</p>
+                  <p className="text-xs text-[#27251F]/60">
+                    {trainee.status === 'completed' ? 'Completed' : trainee.status === 'in_progress' ? 'In Progress' : 'Started'} {trainee.currentPlan?.name || 'Training'}
+                  </p>
+                  <p className="text-xs text-[#27251F]/40">
+                    {trainee.currentPlan?.startDate ? new Date(trainee.currentPlan.startDate).toLocaleDateString() : 'Recently'}
+                  </p>
+                </div>
+              </div>
+            ))}
+            {trainees.length === 0 && (
+              <div className="text-center text-[#27251F]/60 text-sm py-4">
+                No recent activity
+              </div>
+            )}
+          </CardContent>
         </Card>
       </div>
 
@@ -499,25 +630,25 @@ export default function TrainingProgress() {
           {/* Search */}
           <div className="w-full sm:w-[300px]">
             <div className="relative">
-              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
+              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-[#27251F]/40" />
               <Input
                 placeholder="Search trainees..."
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                className="pl-9 w-full"
+                className="pl-10 w-full border-gray-200 focus:border-[#E51636] focus:ring-[#E51636]/20 rounded-xl"
               />
             </div>
           </div>
 
           {/* Filter Tabs */}
-          <div className="bg-white rounded-full flex p-1 shadow-sm border border-gray-200 w-full sm:w-auto">
+          <div className="bg-white rounded-2xl flex p-1 shadow-lg border border-gray-100 w-full sm:w-auto">
             <Button
               variant="ghost"
               onClick={() => setActiveTab('active')}
-              className={`rounded-full px-4 sm:px-8 border flex-1 sm:flex-initial ${
+              className={`rounded-xl px-4 sm:px-8 border flex-1 sm:flex-initial transition-all duration-200 ${
                 activeTab === 'active'
-                  ? 'bg-[#FEE4E2] text-[#E51636] font-medium border-[#E51636]'
-                  : 'text-gray-600 hover:text-[#E51636] hover:bg-gray-50 border-transparent'
+                  ? 'bg-gradient-to-r from-[#E51636] to-[#DD1A21] text-white font-medium border-transparent shadow-md'
+                  : 'text-[#27251F]/60 hover:text-[#E51636] hover:bg-[#E51636]/5 border-transparent'
               }`}
             >
               Active
@@ -525,10 +656,10 @@ export default function TrainingProgress() {
             <Button
               variant="ghost"
               onClick={() => setActiveTab('completed')}
-              className={`rounded-full px-4 sm:px-8 border flex-1 sm:flex-initial ${
+              className={`rounded-xl px-4 sm:px-8 border flex-1 sm:flex-initial transition-all duration-200 ${
                 activeTab === 'completed'
-                  ? 'bg-[#FEE4E2] text-[#E51636] font-medium border-[#E51636]'
-                  : 'text-gray-600 hover:text-[#E51636] hover:bg-gray-50 border-transparent'
+                  ? 'bg-gradient-to-r from-[#16A34A] to-[#15803D] text-white font-medium border-transparent shadow-md'
+                  : 'text-[#27251F]/60 hover:text-[#16A34A] hover:bg-[#16A34A]/5 border-transparent'
               }`}
             >
               Completed
@@ -539,7 +670,7 @@ export default function TrainingProgress() {
           {(user?.position === 'Leader' || user?.position === 'Director') && (
             <Button
               onClick={() => setIsAssignDialogOpen(true)}
-              className="bg-[#E51636] text-white hover:bg-[#E51636]/90 rounded-full gap-2 whitespace-nowrap px-6 w-full sm:w-auto"
+              className="bg-gradient-to-r from-[#E51636] to-[#DD1A21] hover:from-[#DD1A21] hover:to-[#E51636] text-white rounded-xl shadow-lg hover:shadow-xl transition-all duration-300 gap-2 whitespace-nowrap px-6 w-full sm:w-auto"
             >
               <Plus className="h-4 w-4" />
               Assign Training
@@ -548,86 +679,137 @@ export default function TrainingProgress() {
         </div>
       </div>
 
-      {/* Desktop Table */}
-      <div className="hidden md:block bg-white rounded-lg shadow-sm">
-        <Table>
-          <TableHeader>
-            <TableRow className="hover:bg-transparent border-b border-gray-100">
-              <TableHead className="text-gray-600 w-1/5">Trainee</TableHead>
-              <TableHead className="text-gray-600 w-1/6">Position</TableHead>
-              <TableHead className="text-gray-600 w-1/5">Current Plan</TableHead>
-              <TableHead className="text-gray-600 w-1/6">Assigned Date</TableHead>
-              <TableHead className="text-gray-600 w-1/4">Progress</TableHead>
-              <TableHead className="text-gray-600 w-1/8">Actions</TableHead>
-            </TableRow>
-          </TableHeader>
-          <TableBody>
-            {filteredTrainees.map((trainee) => {
-              // Calculate the capped progress for display (0-100%)
-              const displayProgress = Math.min(trainee.progress || 0, 100)
-              const formattedProgress = formatProgress(trainee.progress)
-
-              return (
-                <TableRow key={trainee._id} className="hover:bg-gray-50">
-                  <TableCell className="font-medium">{trainee.name}</TableCell>
-                  <TableCell>{trainee.position}</TableCell>
-                  <TableCell>{trainee.currentPlan?.name || 'No Plan'}</TableCell>
-                  <TableCell>
-                    {trainee.currentPlan?.startDate ? (
-                      new Date(trainee.currentPlan.startDate).toLocaleDateString()
-                    ) : (
-                      '-'
-                    )}
-                  </TableCell>
-                  <TableCell>
-                    <div className="flex items-center gap-2">
-                      <div className="w-full max-w-[300px] h-2 bg-gray-100 rounded-full overflow-hidden">
-                        <div
-                          className="h-full bg-[#E51636] rounded-full"
-                          style={{ width: `${displayProgress}%` }}
-                        />
-                      </div>
-                      <span className="text-sm text-gray-600 min-w-[45px]">
-                        {formatProgress(trainee.progress)}
-                      </span>
-                    </div>
-                  </TableCell>
-
-                  <TableCell>
-                    <div className="flex items-center gap-2">
-                      <Button
-                        variant="ghost"
-                        onClick={() => {
-                          if (trainee._id) {
-                            navigate(`/training/progress/${trainee._id}`)
-                          }
-                        }}
-                        disabled={!trainee.currentPlan}
-                        className={`rounded-full ${!trainee.currentPlan ? 'cursor-not-allowed opacity-50' : 'hover:bg-[#FEE4E2] hover:text-[#E51636]'}`}
-                      >
-                        View Details
-                      </Button>
-                      {user?.position === 'Director' && trainee.currentPlan && (
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          onClick={() => {
-                            setDeleteTraineeId(trainee._id)
-                            setIsDeleteDialogOpen(true)
-                          }}
-                          className="rounded-full hover:bg-[#FEE4E2] hover:text-[#E51636]"
-                        >
-                          <Trash2 className="h-4 w-4" />
-                        </Button>
-                      )}
-                    </div>
-                  </TableCell>
+      {/* Enhanced Desktop Table */}
+      <Card className="hidden md:block bg-white rounded-[20px] border-0 shadow-lg hover:shadow-xl transition-all duration-300">
+        <CardHeader className="pb-4">
+          <div className="flex items-center justify-between">
+            <div>
+              <h3 className="text-xl font-bold text-[#27251F]">Training Progress</h3>
+              <p className="text-[#27251F]/60 text-sm mt-1">Detailed view of all trainees</p>
+            </div>
+            <div className="h-12 w-12 bg-[#004F71]/10 rounded-2xl flex items-center justify-center">
+              <Users className="h-6 w-6 text-[#004F71]" />
+            </div>
+          </div>
+        </CardHeader>
+        <CardContent className="p-0">
+          <div className="overflow-hidden rounded-xl border border-gray-100 mx-6 mb-6">
+            <Table>
+              <TableHeader>
+                <TableRow className="bg-gray-50/50 hover:bg-gray-50/80 border-gray-100">
+                  <TableHead className="font-semibold text-[#27251F] py-4">Trainee</TableHead>
+                  <TableHead className="font-semibold text-[#27251F] py-4">Position</TableHead>
+                  <TableHead className="font-semibold text-[#27251F] py-4">Current Plan</TableHead>
+                  <TableHead className="font-semibold text-[#27251F] py-4">Assigned Date</TableHead>
+                  <TableHead className="font-semibold text-[#27251F] py-4">Progress</TableHead>
+                  <TableHead className="font-semibold text-[#27251F] py-4">Actions</TableHead>
                 </TableRow>
-              )
-            })}
-          </TableBody>
-        </Table>
-      </div>
+              </TableHeader>
+              <TableBody>
+                {filteredTrainees.map((trainee) => {
+                  // Calculate the capped progress for display (0-100%)
+                  const displayProgress = Math.min(trainee.progress || 0, 100)
+                  const formattedProgress = formatProgress(trainee.progress)
+
+                  return (
+                    <TableRow key={trainee._id} className="hover:bg-gray-50/50 transition-colors duration-200 border-gray-100">
+                      <TableCell className="py-4">
+                        <div className="flex items-center gap-3">
+                          <div className="h-10 w-10 bg-gradient-to-br from-[#E51636] to-[#DD1A21] rounded-full flex items-center justify-center text-white font-semibold text-sm">
+                            {getInitials(trainee.name)}
+                          </div>
+                          <div>
+                            <p className="font-medium text-[#27251F]">{trainee.name}</p>
+                            <p className="text-sm text-[#27251F]/60">{trainee.department}</p>
+                          </div>
+                        </div>
+                      </TableCell>
+                      <TableCell className="py-4">
+                        <span className="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-[#004F71]/10 text-[#004F71] border border-[#004F71]/20">
+                          {trainee.position}
+                        </span>
+                      </TableCell>
+                      <TableCell className="py-4">
+                        <div className="flex items-center gap-2">
+                          <ClipboardCheck className="h-4 w-4 text-[#27251F]/40" />
+                          <span className="font-medium text-[#27251F]">
+                            {trainee.currentPlan?.name || 'No Plan Assigned'}
+                          </span>
+                        </div>
+                      </TableCell>
+                      <TableCell className="py-4">
+                        <div className="flex items-center gap-2">
+                          <Calendar className="h-4 w-4 text-[#27251F]/40" />
+                          <span className="text-[#27251F]">
+                            {trainee.currentPlan?.startDate ? (
+                              new Date(trainee.currentPlan.startDate).toLocaleDateString()
+                            ) : (
+                              '-'
+                            )}
+                          </span>
+                        </div>
+                      </TableCell>
+                      <TableCell className="py-4">
+                        <div className="space-y-2">
+                          <div className="flex items-center justify-between">
+                            <span className="text-sm font-medium text-[#27251F]">
+                              {formatProgress(trainee.progress)}
+                            </span>
+                            <span className="text-xs text-[#27251F]/60">
+                              {displayProgress >= 100 ? 'Complete' : 'In Progress'}
+                            </span>
+                          </div>
+                          <div className="w-full bg-gray-100 rounded-full h-2 overflow-hidden">
+                            <div
+                              className={`h-full rounded-full transition-all duration-1000 ease-out ${
+                                displayProgress >= 100
+                                  ? 'bg-gradient-to-r from-[#16A34A] to-[#15803D]'
+                                  : displayProgress >= 50
+                                  ? 'bg-gradient-to-r from-[#004F71] to-[#0066A1]'
+                                  : 'bg-gradient-to-r from-[#E51636] to-[#DD1A21]'
+                              }`}
+                              style={{ width: `${displayProgress}%` }}
+                            />
+                          </div>
+                        </div>
+                      </TableCell>
+                      <TableCell className="py-4">
+                        <div className="flex items-center gap-2">
+                          <Button
+                            variant="ghost"
+                            onClick={() => {
+                              if (trainee._id) {
+                                navigate(`/training/progress/${trainee._id}`)
+                              }
+                            }}
+                            disabled={!trainee.currentPlan}
+                            className={`text-[#E51636] hover:text-[#DD1A21] hover:bg-[#E51636]/5 rounded-xl transition-all duration-200 ${!trainee.currentPlan ? 'cursor-not-allowed opacity-50' : ''}`}
+                          >
+                            View Details
+                          </Button>
+                          {user?.position === 'Director' && trainee.currentPlan && (
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              onClick={() => {
+                                setDeleteTraineeId(trainee._id)
+                                setIsDeleteDialogOpen(true)
+                              }}
+                              className="text-[#E51636] hover:text-[#DD1A21] hover:bg-[#E51636]/5 rounded-xl transition-all duration-200"
+                            >
+                              <Trash2 className="h-4 w-4" />
+                            </Button>
+                          )}
+                        </div>
+                      </TableCell>
+                    </TableRow>
+                  )
+                })}
+              </TableBody>
+            </Table>
+          </div>
+        </CardContent>
+      </Card>
 
       {/* Mobile Table */}
       <div className="md:hidden space-y-4">

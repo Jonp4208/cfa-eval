@@ -7,7 +7,8 @@ import {
   ClipboardList,
   Users,
   ArrowLeft,
-  GraduationCap
+  GraduationCap,
+  Globe
 } from 'lucide-react'
 import { useAuth } from '@/contexts/AuthContext'
 import PageHeader from '@/components/PageHeader'
@@ -130,16 +131,47 @@ export default function Training() {
                 <Users className="h-4 w-4" />
                 <span className="font-medium">New Hires</span>
               </Link>
+
+              <Link
+                to="/training/community-plans"
+                className={`inline-flex items-center gap-1.5 px-4 py-2 rounded-[16px] transition-all text-sm border ${
+                  isActive('/community-plans')
+                    ? 'bg-[#E51636] text-white border-[#E51636]'
+                    : 'hover:bg-gray-50 border-transparent'
+                }`}
+              >
+                <Globe className="h-4 w-4" />
+                <span className="font-medium">Community Plans</span>
+              </Link>
             </div>
           </div>
         ) : (
-          // For team members, show a simple header for My Training
-          <div className="bg-white rounded-xl shadow-sm p-4">
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-2">
-                <ClipboardList className="h-5 w-5 text-[#E51636]" />
-                <h2 className="text-lg font-semibold">My Training</h2>
-              </div>
+          // For team members, show navigation between My Training and Community Plans
+          <div className="bg-white rounded-xl shadow-sm p-3 border border-gray-200">
+            <div className="flex items-center gap-2 overflow-x-auto whitespace-nowrap">
+              <Link
+                to="/training/plans"
+                className={`inline-flex items-center gap-1.5 px-4 py-2 rounded-[16px] transition-all text-sm border ${
+                  isActive('/plans') && !isActive('/community-plans')
+                    ? 'bg-[#E51636] text-white border-[#E51636]'
+                    : 'hover:bg-gray-50 border-transparent'
+                }`}
+              >
+                <ClipboardList className="h-4 w-4" />
+                <span className="font-medium">My Training</span>
+              </Link>
+
+              <Link
+                to="/training/community-plans"
+                className={`inline-flex items-center gap-1.5 px-4 py-2 rounded-[16px] transition-all text-sm border ${
+                  isActive('/community-plans')
+                    ? 'bg-[#E51636] text-white border-[#E51636]'
+                    : 'hover:bg-gray-50 border-transparent'
+                }`}
+              >
+                <Globe className="h-4 w-4" />
+                <span className="font-medium">Community Plans</span>
+              </Link>
             </div>
           </div>
         )}
