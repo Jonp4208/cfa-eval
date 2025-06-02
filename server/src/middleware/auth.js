@@ -16,7 +16,7 @@ export const auth = async (req, res, next) => {
       decoded = jwt.verify(token, process.env.JWT_SECRET);
       // Don't log the token contents
     } catch (error) {
-      logger.error('Token verification error:', error);
+      logger.debug('Token verification error:', error);
 
       // Check if it's a token expiration error
       if (error.name === 'TokenExpiredError') {
@@ -117,7 +117,7 @@ export const auth = async (req, res, next) => {
               logger.debug('Auth: Token refreshed successfully');
               return next();
             } catch (refreshError) {
-              logger.error('Refresh token verification error:', refreshError);
+              logger.debug('Refresh token verification error:', refreshError);
               return res.status(401).json({ message: 'Token expired' });
             }
           }

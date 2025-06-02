@@ -1,6 +1,6 @@
 import React from 'react';
 import { createContext, useContext, useState, useEffect } from 'react';
-import api from '@/lib/axios';
+import api, { resetAuthPhase } from '@/lib/axios';
 import { User } from '@/types/user';
 import { Store } from '@/types/store';
 import userStoreService from '@/services/userStoreService';
@@ -123,6 +123,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       setToken(token);
       setUser(user);
       setStore(response.data.store);
+
+      // Reset auth phase to re-enable error toasts after successful login
+      resetAuthPhase();
 
       // Fetch subscription status after login
       try {

@@ -1,6 +1,7 @@
 import React, { createContext, useContext, useState, useEffect } from 'react'
 import { useQuery } from '@tanstack/react-query'
 import { settingsService } from '@/lib/services/settings'
+import { useAuth } from '@/contexts/AuthContext'
 import enTranslations from '@/lib/translations/en'
 import esTranslations from '@/lib/translations/es'
 
@@ -19,6 +20,8 @@ const LANGUAGE_STORAGE_KEY = 'app_language_preference'
 const TranslationContext = createContext<TranslationContextType | undefined>(undefined)
 
 export const TranslationProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
+  const { user, token } = useAuth()
+
   // Initialize language from localStorage or default to 'en'
   const getInitialLanguage = (): Language => {
     // First check localStorage
@@ -26,13 +29,13 @@ export const TranslationProvider: React.FC<{ children: React.ReactNode }> = ({ c
     if (savedLanguage === 'en' || savedLanguage === 'es') {
       return savedLanguage as Language;
     }
-    
+
     // Then check browser language
     const browserLang = navigator.language.toLowerCase();
     if (browserLang.startsWith('es')) {
       return 'es';
     }
-    
+
     // Default to English
     return 'en';
   }
@@ -42,10 +45,11 @@ export const TranslationProvider: React.FC<{ children: React.ReactNode }> = ({ c
     language === 'en' ? enTranslations : esTranslations
   )
 
-  // Fetch user's language preference from settings
+  // Fetch user's language preference from settings - only when authenticated
   const { data: settings } = useQuery({
     queryKey: ['settings'],
     queryFn: settingsService.getSettings,
+    enabled: !!user && !!token, // Only run when user is authenticated
     onSuccess: (data) => {
       if (data.language && (data.language === 'en' || data.language === 'es')) {
         // Only update if different from current language to avoid unnecessary re-renders

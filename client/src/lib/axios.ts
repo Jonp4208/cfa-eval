@@ -6,6 +6,8 @@ const PUBLIC_ROUTES = [
   '/api/register',
   '/api/auth/login',
   '/api/auth/register',
+  '/api/settings', // Add settings route to prevent 401 errors on login page
+  '/api/subscriptions', // Add subscriptions route to prevent 401 errors on login page
   '/',  // Add root route as public
   '/login',
   '/register'
@@ -26,6 +28,29 @@ const api = axios.create({
 // Helper function to check if we're already on the login page
 const isOnLoginPage = () => {
   return window.location.pathname === '/login';
+};
+
+// Track if we're in the initial authentication phase to suppress error toasts
+let isInitialAuthPhase = true;
+let authInitTimer: NodeJS.Timeout | null = null;
+
+// Set a timer to disable the initial auth phase after 1 minute
+const startAuthInitTimer = () => {
+  if (authInitTimer) {
+    clearTimeout(authInitTimer);
+  }
+  authInitTimer = setTimeout(() => {
+    isInitialAuthPhase = false;
+  }, 60000); // 1 minute
+};
+
+// Start the timer immediately when the module loads
+startAuthInitTimer();
+
+// Function to reset the auth phase (called during login)
+export const resetAuthPhase = () => {
+  isInitialAuthPhase = true;
+  startAuthInitTimer();
 };
 
 api.interceptors.request.use((config) => {
@@ -52,7 +77,10 @@ api.interceptors.response.use(
     return response;
   },
   (error) => {
-    if (error.code === 'ERR_NETWORK') {
+    // Don't show error toasts during initial authentication phase
+    const shouldSuppressToast = isInitialAuthPhase;
+
+    if (error.code === 'ERR_NETWORK' && !shouldSuppressToast) {
       toast({
         title: 'Connection Error',
         description: 'Unable to connect to the server. Please check your connection and try again.',
@@ -69,16 +97,16 @@ api.interceptors.response.use(
         // For protected routes, redirect to login only if not already on login page
         localStorage.removeItem('token');
         window.location.href = '/login';
-      } else if (!isOnLoginPage()) {
-        // For login/register routes, show error message
+      } else if (!isOnLoginPage() && !shouldSuppressToast) {
+        // For login/register routes, show error message only if not suppressing toasts
         toast({
           title: 'Authentication Error',
           description: error.response?.data?.message || 'Invalid credentials',
           variant: 'destructive',
         });
       }
-    } else if (error.response) {
-      // Handle other error responses
+    } else if (error.response && !shouldSuppressToast) {
+      // Handle other error responses only if not suppressing toasts
       toast({
         title: 'Error',
         description: error.response.data?.message || 'An unexpected error occurred',

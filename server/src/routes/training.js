@@ -10,6 +10,7 @@ import emailTemplates from '../utils/emailTemplates.js';
 import { handleAsync } from '../utils/errorHandler.js';
 import TrainingSession from '../models/TrainingSession.js';
 import CommunityPlan from '../models/CommunityPlan.js';
+import logger from '../utils/logger.js';
 
 const router = express.Router();
 
@@ -193,7 +194,7 @@ router.post('/templates/:id/duplicate', auth, async (req, res) => {
 
 // Get all training plans
 router.get('/plans', auth, handleAsync(async (req, res) => {
-  console.log('Fetching training plans for store:', req.user.store._id);
+  logger.debug('Fetching training plans for store:', req.user.store._id);
   const plans = await TrainingPlan.find({
     store: req.user.store._id,
     deleted: { $ne: true }
@@ -260,7 +261,7 @@ router.get('/employees/training-progress', auth, async (req, res) => {
     })
     .lean();
 
-    console.log(`Found ${trainingProgress.length} training progress records`);
+    logger.debug(`Found ${trainingProgress.length} training progress records`);
 
     // Add a debug mock entry for testing if needed
     if (process.env.NODE_ENV === 'development' && trainingProgress.length === 0) {
@@ -314,7 +315,7 @@ router.get('/employees/training-progress', auth, async (req, res) => {
       .filter(progress => progress.trainee) // Filter out any entries where trainee was not found
       .map(progress => {
         const traineeName = progress.trainee?.name || 'Unknown';
-        console.log(`\nProcessing trainee: ${traineeName} (${progress.trainee?._id})`);
+        logger.debug(`Processing trainee: ${traineeName} (${progress.trainee?._id})`);
 
         // Calculate progress based on completed modules vs total tasks
         const moduleProgress = progress.moduleProgress || [];
@@ -329,8 +330,8 @@ router.get('/employees/training-progress', auth, async (req, res) => {
           });
         }
 
-        console.log(`- Found ${allTasks.length} tasks in training plan`);
-        console.log(`- Found ${moduleProgress.length} module progress entries`);
+        logger.debug(`- Found ${allTasks.length} tasks in training plan`);
+        logger.debug(`- Found ${moduleProgress.length} module progress entries`);
 
         // Create a map of task IDs for easier matching
         const taskIdMap = new Map();
@@ -347,7 +348,7 @@ router.get('/employees/training-progress', auth, async (req, res) => {
           return isCompleted && hasMatchingTask;
         }).length;
 
-        console.log(`- Completed modules with matching tasks: ${completedModules}`);
+        logger.debug(`- Completed modules with matching tasks: ${completedModules}`);
 
         // Calculate progress percentage
         let totalModules = allTasks.length;
@@ -355,7 +356,7 @@ router.get('/employees/training-progress', auth, async (req, res) => {
         // If no tasks found, fall back to module count to avoid division by zero
         if (totalModules === 0) {
           totalModules = progress.trainingPlan?.modules?.length || 1;
-          console.log(`- No tasks found, using fallback module count: ${totalModules}`);
+          logger.debug(`- No tasks found, using fallback module count: ${totalModules}`);
         }
 
         let progressPercentage = 0;
@@ -363,7 +364,7 @@ router.get('/employees/training-progress', auth, async (req, res) => {
           progressPercentage = Math.round((completedModules / totalModules) * 100);
         }
 
-        console.log(`- Final calculation: (${completedModules} / ${totalModules}) * 100 = ${progressPercentage}%`);
+        logger.debug(`- Final calculation: (${completedModules} / ${totalModules}) * 100 = ${progressPercentage}%`);
 
         return {
           _id: progress.trainee._id,
@@ -828,7 +829,7 @@ router.get('/progress', auth, async (req, res) => {
   try {
     // Check if a specific trainee ID was provided
     const traineeId = req.query.traineeId || req.user._id;
-    console.log('Fetching training progress for user:', traineeId);
+    logger.debug('Fetching training progress for user:', traineeId);
 
     const trainingProgress = await TrainingProgress.find({
       trainee: traineeId,
@@ -899,7 +900,7 @@ router.get('/progress', auth, async (req, res) => {
 // Get assigned training plans for the current user
 router.get('/user/assigned', auth, async (req, res) => {
   try {
-    console.log('Fetching assigned training plans for user:', req.user._id);
+    logger.debug('Fetching assigned training plans for user:', req.user._id);
 
     const trainingProgress = await TrainingProgress.find({
       trainee: req.user._id,
@@ -911,7 +912,7 @@ router.get('/user/assigned', auth, async (req, res) => {
     })
     .sort({ createdAt: -1 });
 
-    console.log(`Found ${trainingProgress.length} assigned training plans for user`);
+    logger.debug(`Found ${trainingProgress.length} assigned training plans for user`);
 
     // Calculate progress for each plan
     const transformedProgress = trainingProgress.map(progress => {
@@ -926,7 +927,7 @@ router.get('/user/assigned', auth, async (req, res) => {
       }
 
       // Log the status for debugging
-      console.log(`Training plan ${progress.trainingPlan?.name} status: ${progress.status}`);
+      logger.debug(`Training plan ${progress.trainingPlan?.name} status: ${progress.status}`);
 
       return {
         _id: progress._id,
@@ -1403,7 +1404,7 @@ router.get('/employees/new-hires', auth, handleAsync(async (req, res) => {
     };
   });
 
-  console.log('Sending new hires data:', transformedHires);
+  logger.debug('Sending new hires data:', transformedHires);
   res.json(transformedHires);
 }));
 
