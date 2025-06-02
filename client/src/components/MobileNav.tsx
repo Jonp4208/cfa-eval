@@ -192,7 +192,6 @@ export function MobileNav() {
 
       setNavItems(processedItems);
     } else {
-      console.log('Using default navigation items');
       // Use default navigation items if no custom preferences
       const defaultItems = [
         { key: 'dashboard', show: true },

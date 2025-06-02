@@ -57,7 +57,8 @@ export function useKitchenDashboardStats() {
           try {
             return await fn();
           } catch (error) {
-            console.log('Error fetching kitchen data:', error);
+            // Only log actual errors, not expected failures
+            console.error('Error fetching kitchen data:', error);
             return defaultValue;
           }
         };

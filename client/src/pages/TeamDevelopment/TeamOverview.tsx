@@ -5,7 +5,7 @@ import { Button } from '@/components/ui/button'
 import { Progress } from '@/components/ui/progress'
 import { Input } from '@/components/ui/input'
 import { useToast } from '@/components/ui/use-toast'
-import { Users, BookOpen, TrendingUp, Award, Plus, Eye, Target, Brain, Heart, Shield, Zap, GraduationCap, Rocket, Star, Sparkles, Trophy, BarChart3, PieChart, Activity, Calendar, Clock, CheckCircle, ArrowUp, ArrowDown, Minus, Search } from 'lucide-react'
+import { Users, BookOpen, TrendingUp, Award, Plus, Eye, Target, Brain, Heart, Shield, Zap, GraduationCap, Rocket, Star, Sparkles, Trophy, BarChart3, PieChart, Activity, Calendar, Clock, CheckCircle, ArrowUp, ArrowDown, Minus, Search, CheckSquare, PlayCircle, FileText } from 'lucide-react'
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { useNavigate } from 'react-router-dom'
@@ -49,6 +49,22 @@ interface AvailablePlan {
   title: string
   description: string
   estimatedWeeks: number
+  book?: {
+    title: string
+    author: string
+    description: string
+  }
+  chickFilAFocus?: string
+}
+
+interface PlanTask {
+  id: string
+  type: 'video' | 'reading' | 'activity' | 'reflection' | 'assessment' | 'task'
+  title: string
+  description: string
+  resourceUrl?: string
+  estimatedTime: string
+  chickFilAExample?: string
 }
 
 const TeamOverview: React.FC = () => {
@@ -63,6 +79,10 @@ const TeamOverview: React.FC = () => {
   const [analyticsDialogOpen, setAnalyticsDialogOpen] = useState(false)
   const [progressSearchTerm, setProgressSearchTerm] = useState('')
   const [analyticsSearchTerm, setAnalyticsSearchTerm] = useState('')
+  const [planDetailsDialogOpen, setPlanDetailsDialogOpen] = useState(false)
+  const [selectedPlanForDetails, setSelectedPlanForDetails] = useState<string>('')
+  const [planTasks, setPlanTasks] = useState<PlanTask[]>([])
+  const [loadingPlanDetails, setLoadingPlanDetails] = useState(false)
   const { toast } = useToast()
   const navigate = useNavigate()
 
@@ -94,6 +114,29 @@ const TeamOverview: React.FC = () => {
     } catch (error) {
       console.error('Error fetching available plans:', error)
     }
+  }
+
+  const fetchPlanDetails = async (planId: string) => {
+    setLoadingPlanDetails(true)
+    try {
+      const response = await api.get(`/team-member-development/plans/${planId}/details`)
+      setPlanTasks(response.data.tasks || [])
+    } catch (error) {
+      console.error('Error fetching plan details:', error)
+      toast({
+        title: 'Error',
+        description: 'Failed to load plan details.',
+        variant: 'destructive'
+      })
+    } finally {
+      setLoadingPlanDetails(false)
+    }
+  }
+
+  const handleViewPlanDetails = (planId: string) => {
+    setSelectedPlanForDetails(planId)
+    setPlanDetailsDialogOpen(true)
+    fetchPlanDetails(planId)
   }
 
   const handleEnrollTeamMember = async () => {
@@ -187,20 +230,41 @@ const TeamOverview: React.FC = () => {
     }
   }
 
-  // Calculate plan distribution
+  const getTaskTypeIcon = (type: string) => {
+    switch (type) {
+      case 'video':
+        return <PlayCircle className="h-4 w-4" />
+      case 'reading':
+        return <BookOpen className="h-4 w-4" />
+      case 'activity':
+        return <Activity className="h-4 w-4" />
+      case 'reflection':
+        return <Brain className="h-4 w-4" />
+      case 'assessment':
+        return <CheckSquare className="h-4 w-4" />
+      default:
+        return <FileText className="h-4 w-4" />
+    }
+  }
+
+  // Calculate plan distribution - show ALL available plans
   const getPlanDistribution = () => {
     const planCounts: { [key: string]: number } = {}
+
+    // Count enrollments for each plan
     overviewData?.teamMembers.forEach(member => {
       member.enrollments.forEach(enrollment => {
         planCounts[enrollment.planId] = (planCounts[enrollment.planId] || 0) + 1
       })
     })
-    return Object.entries(planCounts).map(([planId, count]) => ({
-      planId,
-      title: getPlanTitle(planId),
-      count,
-      icon: getPlanIcon(planId),
-      gradient: getPlanGradient(planId)
+
+    // Include ALL available plans, even those with 0 enrollments
+    return availablePlans.map(plan => ({
+      planId: plan.id,
+      title: plan.title,
+      count: planCounts[plan.id] || 0,
+      icon: getPlanIcon(plan.id),
+      gradient: getPlanGradient(plan.id)
     })).sort((a, b) => b.count - a.count)
   }
 
@@ -354,14 +418,16 @@ const TeamOverview: React.FC = () => {
               <PieChart className="h-6 w-6 text-white" />
             </div>
             <div>
-              <h2 className="text-3xl font-bold text-gray-900">Plan Popularity</h2>
-              <p className="text-gray-600">See which development plans your team prefers</p>
+              <h2 className="text-3xl font-bold text-gray-900">Development Plans Overview</h2>
+              <p className="text-gray-600">Explore all available development plans and their current usage</p>
             </div>
           </div>
 
           <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
             {planDistribution.map((plan, index) => (
-              <Card key={plan.planId} className="border-0 shadow-xl hover:shadow-2xl transition-all duration-300 hover:-translate-y-1 bg-white overflow-hidden">
+              <Card key={plan.planId} className={`border-0 shadow-xl hover:shadow-2xl transition-all duration-300 hover:-translate-y-1 overflow-hidden ${
+                plan.count === 0 ? 'bg-gradient-to-br from-gray-50 to-gray-100' : 'bg-white'
+              }`}>
                 <div className={`h-2 bg-gradient-to-r ${plan.gradient}`}></div>
                 <CardContent className="p-6">
                   <div className="flex items-center gap-4 mb-4">
@@ -371,9 +437,15 @@ const TeamOverview: React.FC = () => {
                     <div className="flex-1">
                       <h3 className="font-bold text-gray-900 mb-1">{plan.title}</h3>
                       <div className="flex items-center gap-2">
-                        <Badge className="bg-gray-100 text-gray-800 border-0">
-                          #{index + 1} Most Popular
-                        </Badge>
+                        {plan.count > 0 ? (
+                          <Badge className="bg-gray-100 text-gray-800 border-0">
+                            #{planDistribution.filter(p => p.count > plan.count).length + 1} Most Popular
+                          </Badge>
+                        ) : (
+                          <Badge className="bg-orange-100 text-orange-800 border-0">
+                            Available
+                          </Badge>
+                        )}
                       </div>
                     </div>
                   </div>
@@ -388,14 +460,28 @@ const TeamOverview: React.FC = () => {
                       <div
                         className={`h-2 rounded-full bg-gradient-to-r ${plan.gradient}`}
                         style={{
-                          width: `${Math.min((plan.count / Math.max(...planDistribution.map(p => p.count))) * 100, 100)}%`
+                          width: `${planDistribution.length > 0 && Math.max(...planDistribution.map(p => p.count)) > 0
+                            ? Math.min((plan.count / Math.max(...planDistribution.map(p => p.count))) * 100, 100)
+                            : 0}%`
                         }}
                       ></div>
                     </div>
 
-                    <div className="text-xs text-gray-500">
-                      {Math.round((plan.count / overviewData.summary.totalEnrollments) * 100)}% of all enrollments
+                    <div className="text-xs text-gray-500 mb-3">
+                      {overviewData.summary.totalEnrollments > 0
+                        ? Math.round((plan.count / overviewData.summary.totalEnrollments) * 100)
+                        : 0}% of all enrollments
                     </div>
+
+                    <Button
+                      onClick={() => handleViewPlanDetails(plan.planId)}
+                      variant="outline"
+                      size="sm"
+                      className="w-full"
+                    >
+                      <Eye className="h-4 w-4 mr-2" />
+                      View Plan Details
+                    </Button>
                   </div>
                 </CardContent>
               </Card>
@@ -897,6 +983,163 @@ const TeamOverview: React.FC = () => {
           </div>
         </div>
       </div>
+
+      {/* Plan Details Dialog */}
+      <Dialog open={planDetailsDialogOpen} onOpenChange={setPlanDetailsDialogOpen}>
+        <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <BookOpen className="h-5 w-5" />
+              {selectedPlanForDetails && getPlanTitle(selectedPlanForDetails)} - Plan Details
+            </DialogTitle>
+            <DialogDescription>
+              Comprehensive overview of this development plan including tasks, objectives, and learning materials
+            </DialogDescription>
+          </DialogHeader>
+
+          {loadingPlanDetails ? (
+            <div className="flex items-center justify-center py-12">
+              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
+            </div>
+          ) : (
+            <div className="space-y-6">
+              {/* Plan Overview */}
+              {selectedPlanForDetails && (() => {
+                const planDetails = availablePlans.find(p => p.id === selectedPlanForDetails)
+                if (!planDetails) return null
+
+                return (
+                  <Card className="border-0 shadow-lg">
+                    <CardContent className="p-6">
+                      <div className="flex items-start gap-4 mb-4">
+                        <div className={`p-3 bg-gradient-to-r ${getPlanGradient(selectedPlanForDetails)} rounded-xl text-white shadow-lg`}>
+                          {getPlanIcon(selectedPlanForDetails)}
+                        </div>
+                        <div className="flex-1">
+                          <h3 className="text-xl font-bold text-gray-900 mb-2">{planDetails.title}</h3>
+                          <p className="text-gray-600 mb-3">{planDetails.description}</p>
+                          <div className="flex items-center gap-4 text-sm">
+                            <Badge className="bg-blue-100 text-blue-800">
+                              <Clock className="h-3 w-3 mr-1" />
+                              {planDetails.estimatedWeeks} weeks
+                            </Badge>
+                            {planDetails.chickFilAFocus && (
+                              <Badge className="bg-red-100 text-red-800">
+                                <Target className="h-3 w-3 mr-1" />
+                                Chick-fil-A Focus
+                              </Badge>
+                            )}
+                          </div>
+                        </div>
+                      </div>
+
+                      {planDetails.chickFilAFocus && (
+                        <div className="bg-red-50 border border-red-200 rounded-lg p-4 mb-4">
+                          <h4 className="font-semibold text-red-900 mb-2 flex items-center gap-2">
+                            <Target className="h-4 w-4" />
+                            Chick-fil-A Application
+                          </h4>
+                          <p className="text-red-800 text-sm">{planDetails.chickFilAFocus}</p>
+                        </div>
+                      )}
+
+                      {planDetails.book && (
+                        <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+                          <h4 className="font-semibold text-blue-900 mb-2 flex items-center gap-2">
+                            <BookOpen className="h-4 w-4" />
+                            Recommended Reading
+                          </h4>
+                          <div className="text-blue-800">
+                            <p className="font-medium">{planDetails.book.title}</p>
+                            <p className="text-sm">by {planDetails.book.author}</p>
+                            <p className="text-sm mt-2">{planDetails.book.description}</p>
+                          </div>
+                        </div>
+                      )}
+                    </CardContent>
+                  </Card>
+                )
+              })()}
+
+              {/* Learning Tasks */}
+              <div>
+                <h3 className="text-lg font-semibold mb-4 flex items-center gap-2">
+                  <CheckSquare className="h-5 w-5 text-green-500" />
+                  Learning Tasks & Activities
+                </h3>
+
+                {planTasks.length === 0 ? (
+                  <Card className="border-dashed border-2 border-gray-300">
+                    <CardContent className="p-8 text-center">
+                      <div className="p-4 bg-gray-100 rounded-full w-fit mx-auto mb-4">
+                        <FileText className="h-8 w-8 text-gray-400" />
+                      </div>
+                      <h4 className="text-lg font-semibold text-gray-900 mb-2">No Tasks Available</h4>
+                      <p className="text-gray-600">
+                        This plan doesn't have detailed tasks configured yet, or they couldn't be loaded.
+                      </p>
+                    </CardContent>
+                  </Card>
+                ) : (
+                  <div className="space-y-4">
+                    {planTasks.map((task, index) => (
+                      <Card key={task.id} className="border border-gray-200 hover:shadow-md transition-shadow">
+                        <CardContent className="p-4">
+                          <div className="flex items-start gap-4">
+                            <div className="flex-shrink-0">
+                              <div className="w-8 h-8 bg-blue-100 rounded-full flex items-center justify-center text-blue-600 font-semibold text-sm">
+                                {index + 1}
+                              </div>
+                            </div>
+                            <div className="flex-1">
+                              <div className="flex items-center gap-2 mb-2">
+                                <div className="flex items-center gap-1 text-gray-600">
+                                  {getTaskTypeIcon(task.type)}
+                                  <span className="text-sm font-medium capitalize">{task.type}</span>
+                                </div>
+                                <Badge variant="outline" className="text-xs">
+                                  <Clock className="h-3 w-3 mr-1" />
+                                  {task.estimatedTime}
+                                </Badge>
+                              </div>
+                              <h4 className="font-semibold text-gray-900 mb-2">{task.title}</h4>
+                              <p className="text-gray-600 text-sm mb-3">{task.description}</p>
+
+                              {task.resourceUrl && (
+                                <div className="mb-3">
+                                  <a
+                                    href={task.resourceUrl}
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                    className="inline-flex items-center gap-2 text-blue-600 hover:text-blue-800 text-sm font-medium"
+                                  >
+                                    <PlayCircle className="h-4 w-4" />
+                                    View Resource
+                                  </a>
+                                </div>
+                              )}
+
+                              {task.chickFilAExample && (
+                                <div className="bg-red-50 border border-red-200 rounded-lg p-3">
+                                  <h5 className="font-medium text-red-900 text-sm mb-1 flex items-center gap-1">
+                                    <Target className="h-3 w-3" />
+                                    Chick-fil-A Application
+                                  </h5>
+                                  <p className="text-red-800 text-sm">{task.chickFilAExample}</p>
+                                </div>
+                              )}
+                            </div>
+                          </div>
+                        </CardContent>
+                      </Card>
+                    ))}
+                  </div>
+                )}
+              </div>
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
 
     </div>
   )

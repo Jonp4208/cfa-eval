@@ -300,18 +300,6 @@ export default function KitchenHome() {
         e.temperature && (e.temperature < 32 || e.temperature > 40)
       ).length
 
-      console.log('Equipment metrics:', {
-        totalEquipment,
-        operational,
-        nonOperational,
-        needsMaintenance,
-        needsRepair,
-        offline,
-        maintenanceDueSoon,
-        maintenanceOverdue,
-        temperatureAlerts
-      })
-
       // Process checklist metrics
       const openingCompleted = openingChecklist.filter(item => item.isCompleted).length
       const transitionCompleted = transitionChecklist.filter(item => item.isCompleted).length

@@ -624,6 +624,173 @@ router.post('/plans/:planId/self-enroll', auth, checkSubscription, async (req, r
   }
 });
 
+// Get plan template details with tasks (for Directors/Managers to view plan structure)
+router.get('/plans/:planId/details', auth, checkSubscription, isManager, async (req, res) => {
+  try {
+    const { planId } = req.params;
+
+    if (!req.hasActiveSubscription) {
+      return res.status(403).json({
+        message: 'Leadership subscription required for team member development'
+      });
+    }
+
+    // Get plan template tasks based on planId
+    let learningTasks = [];
+
+    if (planId === 'growth-mindset-champion') {
+      learningTasks = [
+        {
+          id: 'gmc-task-1',
+          type: 'video',
+          title: 'Growth vs Fixed Mindset Introduction',
+          description: 'Watch Carol Dweck explain the fundamental differences between growth and fixed mindsets.',
+          resourceUrl: 'https://www.youtube.com/watch?v=hiiEeMN7vbQ',
+          estimatedTime: '10 minutes',
+          chickFilAExample: 'Think about how you handle feedback during busy lunch rushes - do you see it as criticism or as a chance to improve?'
+        },
+        {
+          id: 'gmc-task-2',
+          type: 'reading',
+          title: 'Mindset: Chapters 1-2',
+          description: 'Read about the power of believing you can improve and how mindset affects performance.',
+          estimatedTime: '45 minutes',
+          chickFilAExample: 'Consider how a growth mindset can help you master new positions like drive-thru or kitchen prep.'
+        },
+        {
+          id: 'gmc-task-3',
+          type: 'reflection',
+          title: 'Personal Mindset Assessment',
+          description: 'Reflect on your current mindset patterns and identify areas for growth.',
+          estimatedTime: '20 minutes',
+          chickFilAExample: 'Write about a time when you struggled with a task at work - how did you respond? How could a growth mindset have helped?'
+        },
+        {
+          id: 'gmc-task-4',
+          type: 'activity',
+          title: 'Growth Mindset Practice',
+          description: 'Practice reframing challenges as opportunities for one week.',
+          estimatedTime: '1 week',
+          chickFilAExample: 'When facing a difficult guest interaction, think "This is a chance to improve my service skills" instead of "This guest is impossible."'
+        }
+      ];
+    } else if (planId === 'second-mile-service') {
+      learningTasks = [
+        {
+          id: 'sms-task-1',
+          type: 'video',
+          title: 'The Second Mile Service Philosophy',
+          description: 'Learn about going above and beyond in customer service.',
+          resourceUrl: 'https://www.youtube.com/watch?v=example',
+          estimatedTime: '12 minutes',
+          chickFilAExample: 'Discover how small gestures like remembering a regular customer\'s order can create lasting impressions.'
+        },
+        {
+          id: 'sms-task-2',
+          type: 'reading',
+          title: 'Service Excellence Principles',
+          description: 'Study the principles of exceptional customer service.',
+          estimatedTime: '30 minutes',
+          chickFilAExample: 'Learn how to anticipate guest needs before they ask, like offering extra sauce or napkins.'
+        },
+        {
+          id: 'sms-task-3',
+          type: 'activity',
+          title: 'Service Observation',
+          description: 'Observe and document exceptional service moments for one week.',
+          estimatedTime: '1 week',
+          chickFilAExample: 'Notice when teammates go the extra mile for guests and learn from their examples.'
+        }
+      ];
+    } else if (planId === 'team-unity-builder') {
+      learningTasks = [
+        {
+          id: 'tub-task-1',
+          type: 'video',
+          title: 'Building Team Unity',
+          description: 'Learn strategies for creating strong team bonds.',
+          estimatedTime: '15 minutes',
+          chickFilAExample: 'Understand how supporting teammates during rush periods strengthens the entire team.'
+        },
+        {
+          id: 'tub-task-2',
+          type: 'activity',
+          title: 'Team Support Challenge',
+          description: 'Actively help teammates and build positive relationships.',
+          estimatedTime: '2 weeks',
+          chickFilAExample: 'Help new team members learn their positions and make them feel welcome.'
+        }
+      ];
+    } else if (planId === 'ownership-initiative') {
+      learningTasks = [
+        {
+          id: 'oi-task-1',
+          type: 'video',
+          title: 'The Oz Principle Introduction',
+          description: 'Learn about taking ownership and accountability for results.',
+          resourceUrl: 'https://www.youtube.com/watch?v=8bfyS3pC-hs',
+          estimatedTime: '16 minutes',
+          chickFilAExample: 'Think about how taking ownership of guest satisfaction impacts the entire restaurant.'
+        },
+        {
+          id: 'oi-task-2',
+          type: 'reading',
+          title: 'The Oz Principle: Chapters 1-3',
+          description: 'Read about the accountability ladder and how to stay above the line.',
+          estimatedTime: '50 minutes',
+          chickFilAExample: 'Consider how you can stay "above the line" when facing challenges during busy shifts.'
+        }
+      ];
+    } else if (planId === 'continuous-improvement') {
+      learningTasks = [
+        {
+          id: 'ci-task-1',
+          type: 'video',
+          title: 'Kaizen Philosophy',
+          description: 'Learn about continuous improvement and small daily changes.',
+          estimatedTime: '12 minutes',
+          chickFilAExample: 'Discover how small improvements in your work routine can make big differences.'
+        },
+        {
+          id: 'ci-task-2',
+          type: 'activity',
+          title: 'Daily Improvement Practice',
+          description: 'Identify and implement one small improvement each day.',
+          estimatedTime: '2 weeks',
+          chickFilAExample: 'Find ways to be more efficient in your position or help improve team processes.'
+        }
+      ];
+    } else if (planId === 'positive-energy-creator') {
+      learningTasks = [
+        {
+          id: 'pec-task-1',
+          type: 'video',
+          title: 'The Energy Bus Principles',
+          description: 'Learn how to create and maintain positive energy.',
+          estimatedTime: '14 minutes',
+          chickFilAExample: 'Understand how your positive attitude can energize the entire team during challenging shifts.'
+        },
+        {
+          id: 'pec-task-2',
+          type: 'activity',
+          title: 'Positive Energy Practice',
+          description: 'Practice spreading positive energy to teammates and guests.',
+          estimatedTime: '1 week',
+          chickFilAExample: 'Greet every guest with genuine enthusiasm and help teammates stay motivated.'
+        }
+      ];
+    }
+
+    res.json({
+      planId,
+      tasks: learningTasks
+    });
+  } catch (error) {
+    console.error('Error fetching plan details:', error);
+    res.status(500).json({ message: 'Error fetching plan details' });
+  }
+});
+
 // Get team member plan details with tasks
 router.get('/plans/:planId/tasks', auth, checkSubscription, async (req, res) => {
   try {

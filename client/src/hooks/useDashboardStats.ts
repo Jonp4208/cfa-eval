@@ -94,12 +94,9 @@ export function useDashboardStats() {
   const { data: fohTaskStats, isLoading: fohTasksLoading } = useQuery({
     queryKey: ['fohTaskStats'],
     queryFn: async () => {
-      console.log('Fetching FOH task stats...');
-
       // First try the new dedicated endpoint
       try {
         const response = await api.get('/api/foh-task-completions/today');
-        console.log('FOH task completions response:', response.data);
 
         // Convert the response to the format expected by the dashboard
         // Use the tasksByShift and completionsByShift from the response if available
@@ -142,7 +139,6 @@ export function useDashboardStats() {
 
         // Fall back to the original endpoint
         const response = await api.get('/api/foh-stats/stats');
-        console.log('FOH task stats fallback response:', response.data);
         return response.data;
       }
     },
@@ -158,7 +154,6 @@ export function useDashboardStats() {
     queryKey: ['performanceTrends'],
     queryFn: async () => {
       const response = await api.get('/api/analytics/performance-trends');
-      console.log('Performance trends data:', response.data.performanceTrends);
       return response.data.performanceTrends;
     },
     staleTime: 0, // Force refresh every time
@@ -190,7 +185,6 @@ export function useDashboardStats() {
       try {
         // Use the documentationService to get all combined records
         const combinedRecords = await documentationService.getAllCombinedRecords();
-        console.log('Combined records:', combinedRecords);
 
         // Format the records to match the expected structure
         return combinedRecords.map(record => ({

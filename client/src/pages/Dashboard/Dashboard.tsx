@@ -277,14 +277,6 @@ export default function Dashboard() {
     return incidentDate >= thirtyDaysAgo;
   }).length;
 
-  // Log the recent incidents data for debugging
-  console.log('Recent incidents data:', recentIncidents);
-
-  // Add a useEffect to log when the data changes
-  useEffect(() => {
-    console.log('Recent incidents updated:', recentIncidents);
-  }, [recentIncidents]);
-
   // Show Team Member dashboard for Team Members and Trainers
   if (user?.position === 'Team Member' || user?.position === 'Trainer') {
     return <TeamMemberDashboard />;
