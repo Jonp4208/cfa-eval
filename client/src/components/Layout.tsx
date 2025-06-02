@@ -361,6 +361,14 @@ export default function Layout({ children }: { children: React.ReactNode }) {
           label: 'My Documentation',
           href: `/documentation?employee=${user?._id}`,
           badge: null
+        }] : []),
+
+        // Only include Team Development if the leadership feature is enabled
+        ...(isFeatureEnabled('leadership') ? [{
+          icon: TrendingUp,
+          label: 'My Development',
+          href: '/team-development/my-plans',
+          badge: null
         }] : [])
       ] : [
         // Only include Evaluations if the feature is enabled
@@ -387,6 +395,14 @@ export default function Layout({ children }: { children: React.ReactNode }) {
           icon: MessageSquare,
           label: 'Team Surveys',
           href: '/team-surveys',
+          badge: null
+        }] : []),
+
+        // Only include Team Development if the leadership feature is enabled
+        ...(isFeatureEnabled('leadership') ? [{
+          icon: TrendingUp,
+          label: 'Team Development',
+          href: '/team-development/overview',
           badge: null
         }] : []),
 

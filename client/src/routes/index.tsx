@@ -74,6 +74,11 @@ import CreateAdvanced from '@/pages/TeamSurveys/CreateAdvanced';
 import TeamSurveyBuilder from '@/pages/TeamSurveys/SurveyBuilder';
 import TeamSurveyResults from '@/pages/TeamSurveys/SurveyResults';
 import TakeSurvey from '@/pages/TeamSurveys/TakeSurvey';
+import TeamDevelopment from '@/pages/TeamDevelopment';
+import TeamMyPlans from '@/pages/TeamDevelopment/MyPlans';
+import TeamOverview from '@/pages/TeamDevelopment/TeamOverview';
+import TeamPlanTasks from '@/pages/TeamDevelopment/PlanTasks';
+import TeamDevelopmentRedirect from '@/components/TeamDevelopmentRedirect';
 import Checklists from '@/pages/Kitchen/Checklists';
 import KitchenChecklistHistory from '@/pages/Kitchen/Checklists/History';
 import WasteTracker from '@/pages/Kitchen/WasteTracker';
@@ -281,6 +286,13 @@ export default function AppRoutes() {
 
       {/* Anonymous survey taking route (no auth required) */}
       <Route path="/survey/:token" element={<TakeSurvey />} />
+
+      <Route path="/team-development" element={<PrivateRoute requiredFeature="leadership"><TeamDevelopment /></PrivateRoute>}>
+        <Route index element={<TeamDevelopmentRedirect />} />
+        <Route path="my-plans" element={<TeamMyPlans />} />
+        <Route path="overview" element={<TeamOverview />} />
+        <Route path="plans/:planId/tasks" element={<TeamPlanTasks />} />
+      </Route>
 
       {/* Shifts functionality removed */}
 

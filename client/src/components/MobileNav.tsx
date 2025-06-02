@@ -108,6 +108,13 @@ const ALL_NAV_ITEMS = {
     showIf: (user: any) => user?.position !== 'Team Member',
     defaultShow: false,
     requiresFeature: 'leadership'
+  },
+  teamDevelopment: {
+    icon: TrendingUp,
+    getLabel: (user: any, t: any) => user?.position === 'Team Member' ? 'My Development' : 'Team Development',
+    href: (user: any) => user?.position === 'Team Member' ? '/team-development/my-plans' : '/team-development/overview',
+    defaultShow: true,
+    requiresFeature: 'leadership'
   }
 };
 
@@ -185,6 +192,7 @@ export function MobileNav() {
         { key: 'foh', show: true },
         { key: 'documentation', show: true },
         { key: 'evaluations', show: true },
+        { key: 'teamDevelopment', show: true },
         { key: 'users', show: true }
       ];
 

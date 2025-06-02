@@ -22,6 +22,7 @@ const ALL_NAV_ITEMS = [
   { key: 'evaluations', label: 'Evaluations', icon: 'ClipboardList' },
   { key: 'leadership', label: 'Leadership', icon: 'TrendingUp' },
   { key: 'teamSurveys', label: 'Team Surveys', icon: 'MessageSquare' },
+  { key: 'teamDevelopment', label: 'Team Development', icon: 'TrendingUp' },
   { key: 'analytics', label: 'Analytics', icon: 'BarChart' },
   { key: 'users', label: 'Team Members', icon: 'Users' }
 ];
