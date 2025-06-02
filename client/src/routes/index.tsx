@@ -113,7 +113,9 @@ import { EditTemplate } from '@/pages/EditTemplate';
 import InvoicesPage from '@/pages/Invoices';
 import AdminPage from '@/pages/Admin';
 import AdminDashboard from '@/pages/Admin/Dashboard';
+import AdminMessages from '@/pages/Admin/Messages';
 import SubscriptionManagementPage from '@/pages/Admin/SubscriptionManagement';
+import Messages from '@/pages/Messages/Messages';
 import HowTo from '@/pages/HowTo';
 
 
@@ -215,6 +217,7 @@ export default function AppRoutes() {
       <Route path="/templates" element={<PrivateRoute><Templates /></PrivateRoute>} />
       <Route path="/templates/new" element={<PrivateRoute><TemplateBuilder /></PrivateRoute>} />
       <Route path="/templates/:id/edit" element={<PrivateRoute><TemplateBuilder /></PrivateRoute>} />
+      <Route path="/messages" element={<PrivateRoute><Messages /></PrivateRoute>} />
       <Route path="/settings" element={<PrivateRoute><Settings /></PrivateRoute>} />
       <Route path="/users" element={<PrivateRoute><Users /></PrivateRoute>} />
       <Route path="/users/assign-managers" element={<PrivateRoute><AssignManagers /></PrivateRoute>} />
@@ -313,6 +316,7 @@ export default function AppRoutes() {
       <Route path="/admin/invoices" element={<PrivateRoute><InvoicesPage /></PrivateRoute>} />
       <Route path="/admin/stores" element={<PrivateRoute><AdminPage /></PrivateRoute>} />
       <Route path="/admin/stores/:storeId/subscription" element={<PrivateRoute><SubscriptionManagementPage /></PrivateRoute>} />
+      <Route path="/admin/messages" element={<PrivateRoute><AdminMessages /></PrivateRoute>} />
 
       <Route path="*" element={<Navigate to="/" replace />} />
     </Routes>

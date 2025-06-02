@@ -59,6 +59,7 @@ import { NotificationList } from './NotificationList';
 import { requestNotificationPermission } from '@/utils/notificationPermission';
 import StoreSelector from './StoreSelector';
 import { Toaster } from '@/components/ui/toaster';
+import ContactSupport from './ContactSupport';
 
 interface MenuItem {
   icon: LucideIcon;
@@ -92,6 +93,7 @@ export default function Layout({ children }: { children: React.ReactNode }) {
   const notificationRef = useRef<HTMLDivElement>(null);
   const [activeSubmenu, setActiveSubmenu] = useState<string | null>(null);
   const [notificationCount, setNotificationCount] = useState(0);
+  const [showContactSupport, setShowContactSupport] = useState(false);
   const menuRef = useRef<HTMLDivElement>(null);
 
   // Close notifications when clicking outside
@@ -691,6 +693,14 @@ export default function Layout({ children }: { children: React.ReactNode }) {
                 </DropdownMenuItem>
 
                 <DropdownMenuItem
+                  onClick={() => setShowContactSupport(true)}
+                  className="flex items-center gap-2 min-h-[44px] cursor-pointer"
+                >
+                  <MessageSquare className="w-4 h-4 text-gray-400" />
+                  <span>Contact Support</span>
+                </DropdownMenuItem>
+
+                <DropdownMenuItem
                   onClick={() => navigate('/settings')}
                   className="flex items-center gap-2 min-h-[44px] cursor-pointer"
                 >
@@ -901,6 +911,18 @@ export default function Layout({ children }: { children: React.ReactNode }) {
                 <span className="font-medium">How To</span>
               </button>
 
+              {/* Contact Support */}
+              <button
+                onClick={() => {
+                  setShowContactSupport(true);
+                  setIsMobileMenuOpen(false);
+                }}
+                className="w-full px-3 py-2 flex items-center gap-2 rounded-lg mb-1 hover:bg-gray-50"
+              >
+                <MessageSquare className="w-5 h-5 text-gray-500" />
+                <span className="font-medium">Contact Support</span>
+              </button>
+
               <button
                 onClick={() => {
                   navigate('/settings');
@@ -962,6 +984,14 @@ export default function Layout({ children }: { children: React.ReactNode }) {
 
       {/* Global Toast Notifications */}
       <Toaster />
+
+      {/* Contact Support Dialog */}
+      {showContactSupport && (
+        <ContactSupport
+          trigger={null}
+          onSuccess={() => setShowContactSupport(false)}
+        />
+      )}
     </div>
   );
 }

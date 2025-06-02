@@ -25,11 +25,13 @@ import {
   Eye,
   Edit,
   RefreshCw,
-  ShieldCheck
+  ShieldCheck,
+  MessageSquare
 } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import adminService from '@/services/adminService';
 import invoiceService from '@/services/invoiceService';
+import messageService from '@/services/messageService';
 import { format } from 'date-fns';
 import StoreSelector from '@/components/StoreSelector';
 import PageHeader, { headerButtonClass } from '@/components/PageHeader';
@@ -55,6 +57,12 @@ export default function AdminDashboard() {
     enabled: isJonathonPope
   });
 
+  const { data: messageStats, isLoading: messageStatsLoading, refetch: refetchMessageStats } = useQuery({
+    queryKey: ['admin-message-stats'],
+    queryFn: messageService.getMessageStats,
+    enabled: isJonathonPope
+  });
+
   // Calculate metrics
   const totalStores = stores?.length || 0;
   const activeStores = stores?.filter(store => store.subscription?.status === 'active').length || 0;
@@ -62,12 +70,14 @@ export default function AdminDashboard() {
   const pendingInvoices = invoices?.filter(invoice => invoice.status === 'pending').length || 0;
   const totalRevenue = invoices?.filter(invoice => invoice.status === 'paid')
     .reduce((sum, invoice) => sum + invoice.total, 0) || 0;
+  const newMessages = messageStats?.overview?.new || 0;
+  const totalMessages = messageStats?.overview?.total || 0;
 
   // Handle refresh all data
   const handleRefreshAll = async () => {
     setRefreshing(true);
     try {
-      await Promise.all([refetchStores(), refetchInvoices()]);
+      await Promise.all([refetchStores(), refetchInvoices(), refetchMessageStats()]);
     } finally {
       setRefreshing(false);
     }
@@ -105,7 +115,7 @@ export default function AdminDashboard() {
                 <Button
                   className={headerButtonClass}
                   onClick={handleRefreshAll}
-                  disabled={refreshing || storesLoading || invoicesLoading}
+                  disabled={refreshing || storesLoading || invoicesLoading || messageStatsLoading}
                 >
                   <RefreshCw className={`h-4 w-4 ${refreshing ? 'animate-spin' : ''}`} />
                   <span>Refresh</span>
@@ -244,33 +254,34 @@ export default function AdminDashboard() {
           </CardContent>
         </Card>
 
-        {/* System Analytics */}
-        <Card className="hover:shadow-lg transition-shadow cursor-pointer">
+        {/* Support Messages */}
+        <Card className="hover:shadow-lg transition-shadow cursor-pointer" onClick={() => navigate('/admin/messages')}>
           <CardHeader className="pb-3">
             <div className="flex items-center gap-3">
-              <div className="p-2 bg-green-100 rounded-lg">
-                <BarChart3 className="h-6 w-6 text-green-600" />
+              <div className="p-2 bg-purple-100 rounded-lg">
+                <MessageSquare className="h-6 w-6 text-purple-600" />
               </div>
               <div>
-                <CardTitle className="text-lg">System Analytics</CardTitle>
-                <p className="text-sm text-gray-600">Cross-store insights</p>
+                <CardTitle className="text-lg">Support Messages</CardTitle>
+                <p className="text-sm text-gray-600">Customer support requests</p>
               </div>
             </div>
           </CardHeader>
           <CardContent className="pt-0">
             <div className="space-y-2">
               <div className="flex justify-between text-sm">
-                <span>Active Users:</span>
-                <span className="font-medium">{totalUsers}</span>
+                <span>New Messages:</span>
+                <span className="font-medium text-red-600">{newMessages}</span>
               </div>
               <div className="flex justify-between text-sm">
-                <span>Growth Rate:</span>
-                <span className="font-medium text-green-600">+12%</span>
+                <span>Total Messages:</span>
+                <span className="font-medium">{totalMessages}</span>
               </div>
             </div>
-            <Button className="w-full mt-4" variant="outline" disabled>
-              <TrendingUp className="h-4 w-4 mr-2" />
-              Coming Soon
+            <Button className="w-full mt-4" variant="outline">
+              <MessageSquare className="h-4 w-4 mr-2" />
+              View Messages
+              <ArrowRight className="h-4 w-4 ml-2" />
             </Button>
           </CardContent>
         </Card>
