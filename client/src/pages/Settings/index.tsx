@@ -87,7 +87,7 @@ const SettingsPage = () => {
   // Define available tabs based on user role
   const availableTabs = [
     'general',
-    'subscription',
+    ...(isAdmin ? ['subscription'] : []), // Only admins can see subscription tab
     'password',
     'mobile-navigation',
     ...(isAdmin ? ['grading-scales'] : [])
@@ -336,17 +336,19 @@ const SettingsPage = () => {
             >
               {t('settings.general')}
             </TabsTrigger>
-            <TabsTrigger
-              value="subscription"
-              className="data-[state=active]:bg-[#E51636] data-[state=active]:text-white rounded-[14px] h-10 focus:ring-2 focus:ring-[#E51636] focus:ring-offset-2"
-              role="tab"
-              aria-selected={activeTab === 'subscription'}
-              tabIndex={activeTab === 'subscription' ? 0 : -1}
-              aria-controls="subscription-tab"
-              title="Subscription Settings (Alt+2)"
-            >
-              Subscription
-            </TabsTrigger>
+            {isAdmin && (
+              <TabsTrigger
+                value="subscription"
+                className="data-[state=active]:bg-[#E51636] data-[state=active]:text-white rounded-[14px] h-10 focus:ring-2 focus:ring-[#E51636] focus:ring-offset-2"
+                role="tab"
+                aria-selected={activeTab === 'subscription'}
+                tabIndex={activeTab === 'subscription' ? 0 : -1}
+                aria-controls="subscription-tab"
+                title="Subscription Settings (Alt+2)"
+              >
+                Subscription
+              </TabsTrigger>
+            )}
             <TabsTrigger
               value="password"
               className="data-[state=active]:bg-[#E51636] data-[state=active]:text-white rounded-[14px] h-10 focus:ring-2 focus:ring-[#E51636] focus:ring-offset-2"
@@ -523,9 +525,11 @@ const SettingsPage = () => {
 
 
 
-          <TabsContent value="subscription" id="subscription-tab" role="tabpanel" aria-labelledby="subscription-tab" tabIndex={0}>
-            <SubscriptionSettings />
-          </TabsContent>
+          {isAdmin && (
+            <TabsContent value="subscription" id="subscription-tab" role="tabpanel" aria-labelledby="subscription-tab" tabIndex={0}>
+              <SubscriptionSettings />
+            </TabsContent>
+          )}
 
           <TabsContent value="grading-scales" id="grading-scales-tab" role="tabpanel" aria-labelledby="grading-scales-tab" tabIndex={0}>
             <GradingScales />

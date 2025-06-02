@@ -45,16 +45,66 @@ const SubscriptionSettings = () => {
   const [highlightedFeature, setHighlightedFeature] = useState<string | null>(null);
   const [confirmDialogOpen, setConfirmDialogOpen] = useState(false);
   const [submitting, setSubmitting] = useState(false);
+  const [billingCycle, setBillingCycle] = useState<'monthly' | 'yearly'>('monthly');
 
-  // Define the subscription sections
+  // Define the subscription sections with enhanced information and custom pricing
   const subscriptionSections = [
-    { key: 'fohTasks', label: 'FOH Tasks', description: 'Front of house task management and checklists' },
-    { key: 'setups', label: 'Setup Sheet', description: 'Setup sheet templates and management' },
-    { key: 'kitchen', label: 'Kitchen', description: 'Kitchen management, waste tracking, and checklists' },
-    { key: 'documentation', label: 'Documentation', description: 'Employee documentation and records' },
-    { key: 'training', label: 'Training', description: 'Employee training plans and progress tracking' },
-    { key: 'evaluations', label: 'Evaluations', description: 'Employee evaluations and performance reviews' },
-    { key: 'leadership', label: 'Leadership', description: 'Leadership development plans and tracking' }
+    {
+      key: 'fohTasks',
+      label: 'FOH Tasks',
+      description: 'Front of house task management and checklists',
+      icon: '🏪',
+      price: 20,
+      features: ['Daily task checklists', 'Task assignment', 'Progress tracking', 'Team accountability']
+    },
+    {
+      key: 'setups',
+      label: 'Setup Sheet',
+      description: 'Setup sheet templates and management',
+      icon: '📋',
+      price: 0,
+      features: ['Custom templates', 'Setup scheduling', 'Team assignments', 'Progress monitoring']
+    },
+    {
+      key: 'kitchen',
+      label: 'Kitchen',
+      description: 'Kitchen management, waste tracking, and checklists',
+      icon: '👨‍🍳',
+      price: 50,
+      features: ['Waste tracking', 'Food safety checklists', 'Equipment monitoring', 'Analytics dashboard']
+    },
+    {
+      key: 'documentation',
+      label: 'Documentation',
+      description: 'Employee documentation and records',
+      icon: '📄',
+      price: 50,
+      features: ['Employee records', 'Document storage', 'Compliance tracking', 'Digital signatures']
+    },
+    {
+      key: 'training',
+      label: 'Training',
+      description: 'Employee training plans and progress tracking',
+      icon: '🎓',
+      price: 50,
+      features: ['Training modules', 'Progress tracking', 'Certification management', 'Skills assessment']
+    },
+    {
+      key: 'evaluations',
+      label: 'Evaluations',
+      description: 'Employee evaluations and performance reviews',
+      icon: '⭐',
+      price: 100,
+      features: ['Performance reviews', '360 feedback', 'Goal setting', 'Development plans']
+    },
+    {
+      key: 'leadership',
+      label: 'Leadership Development',
+      description: 'Leadership development plans and tracking',
+      icon: '👑',
+      price: 100,
+      features: ['Leadership assessments', 'Development plans', 'Mentoring tools', 'Growth tracking']
+    }
   ];
 
   // Check if we were redirected here with a required feature
@@ -163,211 +213,502 @@ const SubscriptionSettings = () => {
     }
   };
 
+  // Calculate total cost based on enabled features and their individual pricing
+  const calculateTotalCost = () => {
+    return subscriptionSections.reduce((total, section) => {
+      const isEnabled = features[section.key as keyof typeof features] || false;
+      return total + (isEnabled ? section.price : 0);
+    }, 0);
+  };
+
+  const rawMonthlyTotalCost = calculateTotalCost();
+  const maxMonthlyPrice = 200;
+  const yearlyDiscount = 0.15; // 15% discount for yearly billing
+
+  // Calculate costs based on billing cycle
+  const monthlyTotalCost = Math.min(rawMonthlyTotalCost, maxMonthlyPrice);
+  const yearlyTotalCost = Math.min(rawMonthlyTotalCost * 12 * (1 - yearlyDiscount), maxMonthlyPrice * 12 * (1 - yearlyDiscount));
+
+  const totalCost = billingCycle === 'monthly' ? monthlyTotalCost : yearlyTotalCost;
+  const isAtMaxPrice = rawMonthlyTotalCost >= maxMonthlyPrice;
+
+  // Get all features that would be included at max price
+  const getAllFeaturesValue = () => {
+    return subscriptionSections.reduce((total, section) => total + section.price, 0);
+  };
+
+  // Calculate yearly savings
+  const yearlyFullPrice = rawMonthlyTotalCost * 12;
+  const yearlyDiscountedPrice = yearlyFullPrice * (1 - yearlyDiscount);
+  const yearlySavings = yearlyFullPrice - yearlyDiscountedPrice;
+
 
 
   return (
-    <div className="space-y-6">
-      {/* Subscription Status Card */}
-      <Card>
-        <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-          <div>
-            <CardTitle className="text-xl font-bold">Subscription</CardTitle>
-            <CardDescription>
-              Manage your subscription and enabled features
-            </CardDescription>
+    <div className="space-y-8">
+      {/* Header Section */}
+      <div className="text-center space-y-4">
+        <div className="inline-flex items-center justify-center w-16 h-16 bg-gradient-to-br from-[#E51636] to-[#C41230] rounded-2xl mb-4">
+          <CreditCard className="w-8 h-8 text-white" />
+        </div>
+        <div>
+          <h1 className="text-3xl font-bold text-gray-900 mb-2">Subscription Management</h1>
+          <p className="text-lg text-gray-600 max-w-2xl mx-auto">
+            Choose the features your store needs. Pay only for what you use with our flexible pricing model.
+          </p>
+        </div>
+
+        {/* Billing Cycle Toggle */}
+        <div className="flex items-center justify-center space-x-4 mt-6">
+          <div className="bg-white rounded-2xl p-2 shadow-lg border">
+            <div className="flex items-center space-x-1">
+              <button
+                onClick={() => setBillingCycle('monthly')}
+                className={`px-6 py-3 rounded-xl font-semibold transition-all ${
+                  billingCycle === 'monthly'
+                    ? 'bg-[#E51636] text-white shadow-md'
+                    : 'text-gray-600 hover:text-gray-900'
+                }`}
+              >
+                Monthly
+              </button>
+              <button
+                onClick={() => setBillingCycle('yearly')}
+                className={`px-6 py-3 rounded-xl font-semibold transition-all relative ${
+                  billingCycle === 'yearly'
+                    ? 'bg-[#E51636] text-white shadow-md'
+                    : 'text-gray-600 hover:text-gray-900'
+                }`}
+              >
+                Yearly
+                <span className="absolute -top-2 -right-2 bg-green-500 text-white text-xs px-2 py-1 rounded-full">
+                  Save 15%
+                </span>
+              </button>
+            </div>
           </div>
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={handleRefresh}
-            disabled={refreshing || loading}
-          >
-            {refreshing || loading ? (
-              <Loader2 className="h-4 w-4 animate-spin" />
-            ) : (
-              'Refresh'
-            )}
-          </Button>
-        </CardHeader>
-        <CardContent>
-          <div className="space-y-4">
-            <div className="flex items-center justify-between">
-              <div className="flex items-center space-x-2">
-                {getSubscriptionStatusIcon()}
-                <span className="font-medium">{getSubscriptionStatusText()}</span>
+        </div>
+      </div>
+
+      {/* Subscription Status Card */}
+      <Card className="bg-gradient-to-r from-gray-50 to-gray-100 border-0 shadow-lg rounded-2xl">
+        <CardHeader className="pb-6">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center space-x-3">
+              {getSubscriptionStatusIcon()}
+              <div>
+                <CardTitle className="text-2xl font-bold text-gray-900">{getSubscriptionStatusText()}</CardTitle>
+                <CardDescription className="text-gray-600 mt-1">
+                  {currentPeriod && `Current period: ${formatDate(currentPeriod.startDate)} - ${formatDate(currentPeriod.endDate)}`}
+                </CardDescription>
               </div>
+            </div>
+            <div className="flex items-center space-x-3">
               {subscriptionStatus === 'none' && (
                 <Button
-                  variant="default"
-                  size="sm"
+                  className="bg-[#E51636] hover:bg-[#C41230] text-white px-6 py-3 rounded-xl font-semibold"
                   onClick={handleStartTrial}
                   disabled={loading}
                 >
                   Start 14-Day Free Trial
                 </Button>
               )}
+              <Button
+                variant="outline"
+                onClick={handleRefresh}
+                disabled={refreshing || loading}
+                className="rounded-xl"
+              >
+                {refreshing || loading ? (
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                ) : (
+                  'Refresh'
+                )}
+              </Button>
+            </div>
+          </div>
+        </CardHeader>
+        <CardContent>
+          {pendingChanges && pendingChanges.hasChanges && (
+            <div className="mb-6 bg-amber-50 border border-amber-200 p-4 rounded-xl">
+              <div className="flex items-center text-amber-700 mb-2">
+                <Calendar className="h-5 w-5 mr-2" />
+                <span className="font-semibold">Pending Changes</span>
+              </div>
+              <p className="text-sm text-amber-700">
+                Your subscription changes will take effect on {formatDate(pendingChanges.effectiveDate)}.
+              </p>
+            </div>
+          )}
+
+          <div className="bg-white p-6 rounded-xl border shadow-sm">
+            <div className="flex justify-between items-center mb-4">
+              <div>
+                <h3 className="text-xl font-bold text-gray-900">Monthly Cost Summary</h3>
+                <p className="text-gray-600">
+                  {isAtMaxPrice
+                    ? "🎉 Maximum price reached - All features included!"
+                    : "Based on your selected features"
+                  }
+                </p>
+              </div>
+              <div className="text-right">
+                <div className="text-3xl font-bold text-[#E51636]">{formatCurrency(totalCost)}</div>
+                <div className="text-sm text-gray-500">
+                  {billingCycle === 'monthly' ? 'per month' : 'per year'}
+                </div>
+                {billingCycle === 'yearly' && yearlySavings > 0 && (
+                  <div className="text-xs text-green-600 font-medium">
+                    Save {formatCurrency(yearlySavings)} annually!
+                  </div>
+                )}
+                {isAtMaxPrice && rawMonthlyTotalCost > maxMonthlyPrice && (
+                  <div className="text-xs text-green-600 font-medium">
+                    Save {formatCurrency(rawMonthlyTotalCost - maxMonthlyPrice)}/month!
+                  </div>
+                )}
+              </div>
             </div>
 
-            {currentPeriod && (
-              <div className="text-sm text-gray-500">
-                <p>Current period: {formatDate(currentPeriod.startDate)} - {formatDate(currentPeriod.endDate)}</p>
-              </div>
-            )}
-
-            {pendingChanges && pendingChanges.hasChanges && (
-              <div className="mt-2 bg-amber-50 border border-amber-200 p-3 rounded-md">
-                <div className="flex items-center text-amber-700 mb-1">
-                  <Calendar className="h-4 w-4 mr-2" />
-                  <span className="font-medium">Pending Changes</span>
+            {isAtMaxPrice && (
+              <div className="mb-4 p-4 bg-gradient-to-r from-green-50 to-emerald-50 border border-green-200 rounded-lg">
+                <div className="flex items-center text-green-700 mb-2">
+                  <CheckCircle className="h-5 w-5 mr-2" />
+                  <span className="font-semibold">All Features Unlocked!</span>
                 </div>
-                <p className="text-sm text-amber-700">
-                  You have subscription changes that will take effect on {formatDate(pendingChanges.effectiveDate)}.
+                <p className="text-sm text-green-700">
+                  You've reached our maximum {billingCycle} price of {formatCurrency(billingCycle === 'monthly' ? maxMonthlyPrice : maxMonthlyPrice * 12 * (1 - yearlyDiscount))}.
+                  All current and future features are now included at no additional cost!
                 </p>
               </div>
             )}
 
-            <div className="bg-gray-50 p-4 rounded-md mt-3">
-              <div className="flex justify-between items-center">
+            {pendingCost !== null && pendingCost !== totalCost && (
+              <div className="flex justify-between items-center p-4 bg-amber-50 rounded-lg border border-amber-200">
                 <div>
-                  <h3 className="font-medium">Current Monthly Cost</h3>
-                  <p className="text-sm text-gray-500">Based on enabled sections</p>
+                  <h4 className="font-semibold text-amber-800">Future Monthly Cost</h4>
+                  <p className="text-sm text-amber-700">Effective {formatDate(pendingChanges?.effectiveDate || '')}</p>
                 </div>
-                <div className="text-xl font-bold">{formatCurrency(calculatedCost)}</div>
+                <div className="text-2xl font-bold text-amber-800">{formatCurrency(pendingCost)}</div>
               </div>
+            )}
 
-              {pendingCost !== null && pendingCost !== calculatedCost && (
-                <div className="flex justify-between items-center mt-2 text-amber-700">
-                  <div>
-                    <h3 className="font-medium">Future Monthly Cost</h3>
-                    <p className="text-sm">Effective {formatDate(pendingChanges?.effectiveDate || '')}</p>
-                  </div>
-                  <div className="text-lg font-bold">{formatCurrency(pendingCost)}</div>
+            <div className="mt-4 pt-4 border-t border-gray-200">
+              <div className="flex justify-between text-sm text-gray-600">
+                <span>
+                  {isAtMaxPrice
+                    ? "All features included"
+                    : "Custom pricing per feature"
+                  }
+                </span>
+                <span>
+                  {isAtMaxPrice
+                    ? `${subscriptionSections.length}/${subscriptionSections.length} features`
+                    : `${subscriptionSections.filter(s => features[s.key as keyof typeof features]).length}/${subscriptionSections.length} features enabled`
+                  }
+                </span>
+              </div>
+              {!isAtMaxPrice && (
+                <div className="mt-2 text-xs text-gray-500">
+                  💡 Tip: Enable features worth {formatCurrency(maxMonthlyPrice)} or more to unlock everything for just {formatCurrency(billingCycle === 'monthly' ? maxMonthlyPrice : maxMonthlyPrice * 12 * (1 - yearlyDiscount))}/{billingCycle === 'monthly' ? 'month' : 'year'}
                 </div>
               )}
-
-              <div className="mt-2 text-sm text-gray-500">
-                <p>Each section: {formatCurrency(pricing?.sectionPrice || 50)} | Maximum: {formatCurrency(pricing?.maxPrice || 200)}</p>
-              </div>
             </div>
           </div>
         </CardContent>
       </Card>
 
-      {/* Subscription Sections */}
-      <Card>
-        <CardHeader>
-          <CardTitle>Subscription Sections</CardTitle>
-          <CardDescription>
-            Enable or disable sections based on your needs. You will only be charged for enabled sections.
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          <div className="space-y-4">
-            {subscriptionSections.map((section) => (
-              <div
+      {/* Features Grid */}
+      <div className="space-y-6">
+        <div className="text-center">
+          <h2 className="text-2xl font-bold text-gray-900 mb-2">Available Features</h2>
+          <p className="text-gray-600">Select the features that best fit your store's needs</p>
+        </div>
+
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          {/* Everything Plan Card - Show when close to max price */}
+          {!isAtMaxPrice && rawMonthlyTotalCost >= 150 && (
+            <Card className="relative overflow-hidden bg-gradient-to-br from-purple-50 to-indigo-50 border-purple-200 ring-2 ring-purple-300 shadow-xl">
+              <div className="absolute top-4 right-4">
+                <div className="bg-purple-500 text-white px-3 py-1 rounded-full text-xs font-semibold">
+                  RECOMMENDED
+                </div>
+              </div>
+
+              <CardHeader className="pb-4">
+                <div className="flex items-start space-x-3">
+                  <div className="text-3xl">🌟</div>
+                  <div className="flex-1">
+                    <CardTitle className="text-xl font-bold text-gray-900 mb-1">
+                      Everything Plan
+                    </CardTitle>
+                    <CardDescription className="text-gray-600 text-sm leading-relaxed">
+                      Get all features now and future ones at our maximum price
+                    </CardDescription>
+                  </div>
+                </div>
+              </CardHeader>
+
+              <CardContent className="space-y-4">
+                <div className="space-y-2">
+                  <h4 className="font-semibold text-gray-900 text-sm">Includes ALL features:</h4>
+                  <ul className="space-y-1">
+                    {subscriptionSections.map((section, index) => (
+                      <li key={index} className="flex items-center text-sm text-gray-600">
+                        <CheckCircle className="w-4 h-4 text-green-500 mr-2 flex-shrink-0" />
+                        {section.label}
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+
+                <div className="bg-white p-4 rounded-lg border border-purple-200">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <div className="text-2xl font-bold text-purple-600">
+                        {formatCurrency(billingCycle === 'monthly' ? maxMonthlyPrice : maxMonthlyPrice * 12 * (1 - yearlyDiscount))}
+                      </div>
+                      <div className="text-sm text-gray-500">
+                        {billingCycle === 'monthly' ? 'per month' : 'per year'}
+                      </div>
+                      <div className="text-xs text-green-600 font-medium">
+                        {billingCycle === 'monthly'
+                          ? `Save ${formatCurrency(getAllFeaturesValue() - maxMonthlyPrice)}!`
+                          : `Save ${formatCurrency((getAllFeaturesValue() * 12) - (maxMonthlyPrice * 12 * (1 - yearlyDiscount)))}!`
+                        }
+                      </div>
+                    </div>
+                    <Button
+                      onClick={() => {
+                        // Enable all features
+                        subscriptionSections.forEach(section => {
+                          if (!features[section.key as keyof typeof features]) {
+                            handleToggleFeature(section.key, true);
+                          }
+                        });
+                      }}
+                      className="bg-purple-600 hover:bg-purple-700 text-white px-4 py-2 rounded-lg font-semibold"
+                    >
+                      Enable All
+                    </Button>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+          )}
+
+          {subscriptionSections.map((section) => {
+            const isEnabled = features[section.key as keyof typeof features] || false;
+            const isHighlighted = highlightedFeature === section.key;
+            const isIncludedInMaxPlan = isAtMaxPrice;
+
+            return (
+              <Card
                 key={section.key}
-                className={`flex justify-between items-center p-3 bg-white border rounded-md ${
-                  highlightedFeature === section.key ? 'border-[#E51636] border-2 bg-red-50' : ''
+                className={`relative overflow-hidden transition-all duration-300 hover:shadow-xl ${
+                  isHighlighted ? 'ring-2 ring-[#E51636] shadow-lg' : ''
+                } ${
+                  isEnabled || isIncludedInMaxPlan
+                    ? 'bg-gradient-to-br from-green-50 to-emerald-50 border-green-200'
+                    : 'bg-white hover:bg-gray-50'
                 }`}
               >
-                <div>
-                  <p className="font-medium">{section.label}</p>
-                  <p className="text-sm text-gray-500">{section.description}</p>
+                {/* Feature Status Badge */}
+                <div className="absolute top-4 right-4">
+                  {isEnabled || isIncludedInMaxPlan ? (
+                    <div className="bg-green-500 text-white px-3 py-1 rounded-full text-xs font-semibold">
+                      {isIncludedInMaxPlan && !isEnabled ? 'INCLUDED' : 'ACTIVE'}
+                    </div>
+                  ) : (
+                    <div className="bg-gray-400 text-white px-3 py-1 rounded-full text-xs font-semibold">
+                      INACTIVE
+                    </div>
+                  )}
                 </div>
-                <div className="flex items-center">
-                  <Switch
-                    id={`toggle-${section.key}`}
-                    checked={features[section.key as keyof typeof features] || false}
-                    onCheckedChange={(checked) => handleToggleFeature(section.key, checked)}
-                    disabled={loading}
-                    className="data-[state=checked]:bg-[#E51636]"
-                  />
-                  <Label htmlFor={`toggle-${section.key}`} className="ml-2">
-                    {features[section.key as keyof typeof features] ? 'Enabled' : 'Disabled'}
-                  </Label>
+
+                <CardHeader className="pb-4">
+                  <div className="flex items-start space-x-3">
+                    <div className="text-3xl">{section.icon}</div>
+                    <div className="flex-1">
+                      <CardTitle className="text-xl font-bold text-gray-900 mb-1">
+                        {section.label}
+                      </CardTitle>
+                      <CardDescription className="text-gray-600 text-sm leading-relaxed">
+                        {section.description}
+                      </CardDescription>
+                    </div>
+                  </div>
+                </CardHeader>
+
+                <CardContent className="space-y-4">
+                  {/* Features List */}
+                  <div className="space-y-2">
+                    <h4 className="font-semibold text-gray-900 text-sm">Includes:</h4>
+                    <ul className="space-y-1">
+                      {section.features.map((feature, index) => (
+                        <li key={index} className="flex items-center text-sm text-gray-600">
+                          <CheckCircle className="w-4 h-4 text-green-500 mr-2 flex-shrink-0" />
+                          {feature}
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+
+                  {/* Pricing */}
+                  <div className="bg-white p-4 rounded-lg border border-gray-200">
+                    <div className="flex items-center justify-between">
+                      <div>
+                        {isIncludedInMaxPlan && !isEnabled ? (
+                          <div>
+                            <div className="text-2xl font-bold text-green-600">INCLUDED</div>
+                            <div className="text-sm text-gray-500">in max plan</div>
+                          </div>
+                        ) : section.price === 0 ? (
+                          <div>
+                            <div className="text-2xl font-bold text-green-600">FREE</div>
+                            <div className="text-sm text-gray-500">included</div>
+                          </div>
+                        ) : (
+                          <div>
+                            <div className="text-2xl font-bold text-[#E51636]">
+                              {formatCurrency(billingCycle === 'monthly' ? section.price : section.price * 12 * (1 - yearlyDiscount))}
+                            </div>
+                            <div className="text-sm text-gray-500">
+                              {billingCycle === 'monthly' ? 'per month' : 'per year'}
+                            </div>
+                            {billingCycle === 'yearly' && section.price > 0 && (
+                              <div className="text-xs text-green-600 font-medium">
+                                Save {formatCurrency(section.price * 12 * yearlyDiscount)}!
+                              </div>
+                            )}
+                          </div>
+                        )}
+                      </div>
+                      <div className="flex items-center space-x-3">
+                        <Label htmlFor={`toggle-${section.key}`} className="text-sm font-medium">
+                          {isEnabled || isIncludedInMaxPlan ? 'Enabled' : 'Disabled'}
+                        </Label>
+                        <Switch
+                          id={`toggle-${section.key}`}
+                          checked={isEnabled || isIncludedInMaxPlan}
+                          onCheckedChange={(checked) => handleToggleFeature(section.key, checked)}
+                          disabled={loading || isIncludedInMaxPlan}
+                          className="data-[state=checked]:bg-[#E51636]"
+                        />
+                      </div>
+                    </div>
+                    {isIncludedInMaxPlan && (
+                      <div className="mt-2 text-xs text-green-600 font-medium">
+                        ✨ Automatically included in your {formatCurrency(billingCycle === 'monthly' ? maxMonthlyPrice : maxMonthlyPrice * 12 * (1 - yearlyDiscount))}/{billingCycle === 'monthly' ? 'month' : 'year'} plan
+                      </div>
+                    )}
+                  </div>
+                </CardContent>
+              </Card>
+            );
+          })}
+        </div>
+
+        {/* Action Bar */}
+        <Card className="bg-gradient-to-r from-gray-50 to-gray-100 border-0 shadow-lg">
+          <CardContent className="p-6">
+            <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
+              <div className="text-center sm:text-left">
+                <p className="text-sm text-gray-600 mb-1">
+                  Disabled features will be hidden from your navigation menu
+                </p>
+                <div className="flex items-center justify-center sm:justify-start">
+                  <CreditCard className="h-5 w-5 mr-2 text-[#E51636]" />
+                  <span className="text-lg font-bold text-gray-900">
+                    {billingCycle === 'monthly' ? 'Monthly' : 'Yearly'} Total: {formatCurrency(totalCost)}
+                  </span>
                 </div>
               </div>
-            ))}
-          </div>
-        </CardContent>
-        <CardFooter className="bg-gray-50 border-t flex flex-col sm:flex-row justify-between gap-4">
-          <p className="text-sm text-gray-500">
-            Disabled sections will be hidden from the navigation menu.
-          </p>
-          <div className="flex items-center justify-between sm:justify-end w-full sm:w-auto gap-4">
-            <div className="flex items-center">
-              <CreditCard className="h-4 w-4 mr-2 text-gray-500" />
-              <span className="text-sm font-medium">
-                Total: {formatCurrency(calculatedCost)}/month
-              </span>
+
+              {subscriptionStatus === 'active' && !hasPendingChanges() && (
+                <Button
+                  onClick={() => setConfirmDialogOpen(true)}
+                  disabled={loading}
+                  className="bg-[#E51636] hover:bg-[#C41230] text-white px-8 py-3 rounded-xl font-semibold"
+                >
+                  <Save className="h-5 w-5 mr-2" />
+                  Save Changes
+                </Button>
+              )}
             </div>
-            {subscriptionStatus === 'active' && !hasPendingChanges() && (
-              <Button
-                variant="default"
-                size="sm"
-                onClick={() => setConfirmDialogOpen(true)}
-                disabled={loading}
-                className="whitespace-nowrap"
-              >
-                <Save className="h-4 w-4 mr-2" />
-                Submit Changes
-              </Button>
-            )}
-          </div>
-        </CardFooter>
-      </Card>
+          </CardContent>
+        </Card>
+      </div>
 
       {/* Confirmation Dialog */}
       <Dialog open={confirmDialogOpen} onOpenChange={setConfirmDialogOpen}>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>Confirm Subscription Changes</DialogTitle>
-            <DialogDescription>
+        <DialogContent className="max-w-md">
+          <DialogHeader className="text-center">
+            <div className="mx-auto w-12 h-12 bg-[#E51636] rounded-full flex items-center justify-center mb-4">
+              <Save className="w-6 h-6 text-white" />
+            </div>
+            <DialogTitle className="text-xl font-bold">Confirm Subscription Changes</DialogTitle>
+            <DialogDescription className="text-gray-600">
               Your subscription changes will take effect at the end of your current billing period.
               {currentPeriod && (
-                <span className="block mt-2 font-medium">
+                <span className="block mt-2 font-semibold text-gray-900">
                   Effective date: {formatDate(currentPeriod.endDate)}
                 </span>
               )}
             </DialogDescription>
           </DialogHeader>
 
-          <div className="py-4">
-            <h3 className="font-medium mb-2">Changes Summary:</h3>
-            <ul className="space-y-1 text-sm">
-              {subscriptionSections.map(section => {
-                const currentValue = features[section.key as keyof typeof features] || false;
-                const originalValue = pendingChanges?.features?.[section.key as keyof typeof features];
+          <div className="py-6 space-y-4">
+            <div>
+              <h3 className="font-semibold text-gray-900 mb-3">Changes Summary:</h3>
+              <div className="space-y-2">
+                {subscriptionSections.map(section => {
+                  const currentValue = features[section.key as keyof typeof features] || false;
+                  const originalValue = pendingChanges?.features?.[section.key as keyof typeof features];
 
-                // Only show if there's a change from the original state
-                if (originalValue !== undefined && currentValue !== originalValue) {
-                  return (
-                    <li key={section.key} className="flex items-center">
-                      <span className={currentValue ? 'text-green-600' : 'text-red-600'}>
-                        {section.label}: {currentValue ? 'Enabled' : 'Disabled'}
-                      </span>
-                    </li>
-                  );
-                }
-                return null;
-              }).filter(Boolean)}
-            </ul>
+                  // Only show if there's a change from the original state
+                  if (originalValue !== undefined && currentValue !== originalValue) {
+                    return (
+                      <div key={section.key} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
+                        <div className="flex items-center space-x-2">
+                          <span className="text-lg">{section.icon}</span>
+                          <span className="font-medium">{section.label}</span>
+                        </div>
+                        <span className={`px-2 py-1 rounded-full text-xs font-semibold ${
+                          currentValue
+                            ? 'bg-green-100 text-green-800'
+                            : 'bg-red-100 text-red-800'
+                        }`}>
+                          {currentValue ? 'ENABLED' : 'DISABLED'}
+                        </span>
+                      </div>
+                    );
+                  }
+                  return null;
+                }).filter(Boolean)}
+              </div>
+            </div>
 
-            <div className="mt-4 p-3 bg-gray-50 rounded-md">
+            <div className="bg-gradient-to-r from-[#E51636] to-[#C41230] p-4 rounded-xl text-white">
               <div className="flex justify-between items-center">
-                <span className="font-medium">New Monthly Cost:</span>
-                <span className="font-bold">{formatCurrency(calculatedCost)}</span>
+                <span className="font-semibold">New Monthly Cost:</span>
+                <span className="text-2xl font-bold">{formatCurrency(totalCost)}</span>
               </div>
             </div>
           </div>
 
-          <DialogFooter>
-            <Button variant="outline" onClick={() => setConfirmDialogOpen(false)}>
+          <DialogFooter className="gap-3">
+            <Button
+              variant="outline"
+              onClick={() => setConfirmDialogOpen(false)}
+              className="flex-1"
+            >
               Cancel
             </Button>
             <Button
               onClick={handleSubmitChanges}
               disabled={submitting}
+              className="flex-1 bg-[#E51636] hover:bg-[#C41230]"
             >
               {submitting ? (
                 <>
