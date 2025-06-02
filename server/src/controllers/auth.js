@@ -3,12 +3,12 @@ import jwt from 'jsonwebtoken';
 import { User } from '../models/index.js';
 import crypto from 'crypto';
 import { sendEmail } from '../utils/email.js';
+import logger from '../utils/logger.js';
 
 // Register new user
 export const register = async (req, res) => {
   try {
     const { name, email, password } = req.body;
-    console.log('Registration attempt for:', email);
 
     // Convert email to lowercase before searching and creating user
     const user = await User.findOne({ email: email.toLowerCase() });
@@ -26,7 +26,6 @@ export const register = async (req, res) => {
     });
 
     await user.save();
-    console.log('User created:', user);
 
     const token = jwt.sign(
       { userId: user.id },
@@ -45,7 +44,6 @@ export const register = async (req, res) => {
 export const login = async (req, res) => {
   try {
     const { email, password } = req.body;
-    console.log('Login attempt for:', email);
 
     if (!email || !password) {
       return res.status(400).json({ message: 'Failed to log in: Email and password are required' });
@@ -54,30 +52,23 @@ export const login = async (req, res) => {
     // Convert email to lowercase before searching
     const user = await User.findOne({ email: email.toLowerCase() }).populate('store');
     if (!user) {
-      console.log('User not found:', email);
       return res.status(401).json({ message: 'Failed to log in: Email not found' });
     }
 
     // Check if user is active
     if (user.status === 'inactive') {
-      console.log('Inactive user attempted login:', email);
       return res.status(403).json({ message: 'Failed to log in: Account is inactive' });
     }
 
-    console.log('Comparing passwords...');
     const isMatch = await bcrypt.compare(password, user.password);
     if (!isMatch) {
-      console.log('Password mismatch for:', email);
       return res.status(401).json({ message: 'Failed to log in: Incorrect password' });
     }
 
     // Check if user has required fields
     if (!user.store) {
-      console.log('User has no store assigned:', email);
       return res.status(403).json({ message: 'Failed to log in: Account not configured properly' });
     }
-
-    console.log('Login successful for:', email);
 
     // Generate access token (short-lived)
     const token = jwt.sign(
@@ -108,7 +99,7 @@ export const login = async (req, res) => {
       }
     });
   } catch (err) {
-    console.error('Login error:', err);
+    logger.error('Login error:', err);
     res.status(500).json({ message: 'Failed to log in: Server error' });
   }
 };

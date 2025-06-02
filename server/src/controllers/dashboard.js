@@ -254,8 +254,7 @@ export const getDashboardStats = async (req, res) => {
                 startDate: { $gte: sixtyDaysAgo }
             });
 
-            // Only log at debug level
-            logger.debug(`New hires count: ${newHiresCount}`);
+
         } catch (error) {
             logger.error('Error fetching new hires count:', error);
         }
@@ -394,10 +393,7 @@ export const getTeamMemberDashboard = async (req, res) => {
         .populate('evaluator', 'name')
         .lean();
 
-        // Log only basic information about the result
-        logger.debug(`Next evaluation found: ${nextEvaluation ? 'yes' : 'no'}`);
 
-        logger.debug(`Finding last completed evaluation for user ${user._id}`);
         // Find last completed evaluation with a separate query
         const lastCompletedEvaluation = await Evaluation.findOne({
             employee: user._id,

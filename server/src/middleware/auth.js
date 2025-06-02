@@ -4,8 +4,6 @@ import logger from '../utils/logger.js';
 
 export const auth = async (req, res, next) => {
   try {
-    // Only log the path in debug mode, not the full URL which can contain sensitive data
-    logger.debug(`Auth: ${req.method} ${req.path}`);
     const token = req.header('Authorization')?.replace('Bearer ', '');
 
     if (!token) {
@@ -179,8 +177,6 @@ export const auth = async (req, res, next) => {
       userId: userObj._id
     };
 
-    // Only log authentication success at debug level
-    logger.debug('Auth: Success');
     next();
   } catch (error) {
     logger.error('Auth middleware error:', error);

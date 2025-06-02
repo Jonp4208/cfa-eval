@@ -85,8 +85,11 @@ app.use(express.urlencoded({ extended: true, limit: '100mb' }));
 
 // Debug middleware for route matching - only log at debug level
 app.use((req, res, next) => {
-  // Skip logging for static assets and common browser requests
-  if (!req.url.includes('.') && !req.url.includes('favicon.ico')) {
+  // Skip logging for static assets, common browser requests, and frequent API calls
+  if (!req.url.includes('.') &&
+      !req.url.includes('favicon.ico') &&
+      !req.url.includes('/api/dashboard') &&
+      !req.url.includes('/api/auth/profile')) {
     logger.request(req);
   }
   next();
