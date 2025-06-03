@@ -16,10 +16,12 @@ import {
   CheckCircle,
   X,
   ChevronUp,
-  ChevronDown
+  ChevronDown,
+  ChevronLeft,
+  ChevronRight
 } from 'lucide-react'
 import { useNavigate } from 'react-router-dom'
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 
 interface ImageModalProps {
   isOpen: boolean
@@ -284,6 +286,327 @@ function HeroImage() {
   )
 }
 
+// Desktop Carousel Component
+function DesktopCarousel() {
+  const [currentSlide, setCurrentSlide] = useState(0)
+  const [isModalOpen, setIsModalOpen] = useState(false)
+
+  const screenshots = [
+    {
+      src: "/new/dashboard.png",
+      alt: "Leadership Development Dashboard showing comprehensive store management interface",
+      title: "Leadership Development Dashboard",
+      description: "Complete overview of team development and store performance"
+    },
+    {
+      src: "/new/kitchenDashboard.png",
+      alt: "Kitchen dashboard showing food safety, waste tracking, and equipment status",
+      title: "Kitchen Operations Center",
+      description: "Real-time kitchen management and food safety compliance"
+    },
+    {
+      src: "/new/Evaluations.png",
+      alt: "Comprehensive employee performance evaluations interface",
+      title: "Performance Evaluations",
+      description: "Expert evaluation templates and performance tracking"
+    },
+    {
+      src: "/new/analyticsPage.png",
+      alt: "Detailed performance analytics and insights dashboard",
+      title: "Analytics & Insights",
+      description: "Data-driven insights for better decision making"
+    },
+    {
+      src: "/new/TrainingMainPage.png",
+      alt: "Comprehensive training program management interface",
+      title: "Training Management",
+      description: "Complete training program oversight and tracking"
+    }
+  ]
+
+  const nextSlide = () => {
+    setCurrentSlide((prev) => (prev + 1) % screenshots.length)
+  }
+
+  const prevSlide = () => {
+    setCurrentSlide((prev) => (prev - 1 + screenshots.length) % screenshots.length)
+  }
+
+  // Auto-advance slides
+  useEffect(() => {
+    const timer = setInterval(nextSlide, 5000) // Slower for desktop viewing
+    return () => clearInterval(timer)
+  }, [])
+
+  return (
+    <div className="relative w-full max-w-7xl mx-auto">
+      {/* Desktop Browser Mockup */}
+      <div className="relative bg-gray-800 rounded-t-2xl shadow-2xl overflow-hidden">
+        {/* Browser Header */}
+        <div className="relative bg-gray-800 p-4 flex items-center">
+          <div className="flex gap-2 absolute left-4">
+            <div className="w-3 h-3 rounded-full bg-red-500" />
+            <div className="w-3 h-3 rounded-full bg-yellow-500" />
+            <div className="w-3 h-3 rounded-full bg-green-500" />
+          </div>
+          <div className="w-full text-center text-gray-300 text-base font-medium">
+            {screenshots[currentSlide].title}
+          </div>
+          <div className="absolute right-4 text-gray-500 text-sm">
+            {currentSlide + 1} / {screenshots.length}
+          </div>
+        </div>
+
+        {/* Screen content with carousel - Full Width */}
+        <div className="aspect-[16/9] lg:aspect-[16/10] bg-white relative overflow-hidden">
+          <div
+            className="flex h-full transition-transform duration-700 ease-in-out"
+            style={{ transform: `translateX(-${currentSlide * 100}%)` }}
+          >
+            {screenshots.map((screenshot, index) => (
+              <div key={index} className="w-full h-full flex-shrink-0 relative">
+                <img
+                  src={screenshot.src}
+                  alt={screenshot.alt}
+                  className="w-full h-full object-contain bg-gray-50"
+                  onError={(e) => {
+                    const target = e.target as HTMLImageElement;
+                    target.src = `https://placehold.co/1200x900/e51636/ffffff?text=${encodeURIComponent(screenshot.title)}`;
+                  }}
+                />
+                {/* Subtle overlay for better contrast */}
+                <div className="absolute inset-0 bg-gradient-to-t from-black/3 via-transparent to-black/3 pointer-events-none"></div>
+              </div>
+            ))}
+          </div>
+
+          {/* Click to expand overlay */}
+          <div
+            className="absolute inset-0 bg-black/0 hover:bg-black/5 transition-all duration-300 flex items-center justify-center group cursor-pointer"
+            onClick={() => setIsModalOpen(true)}
+          >
+            <div className="transform scale-0 group-hover:scale-100 transition-transform duration-300">
+              <div className="w-20 h-20 rounded-full bg-white/95 backdrop-blur-sm flex items-center justify-center shadow-xl border border-gray-200">
+                <svg xmlns="http://www.w3.org/2000/svg" className="h-10 w-10 text-gray-700" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0zM10 7v6m3-3H7" />
+                </svg>
+              </div>
+            </div>
+            {/* Click hint */}
+            <div className="absolute bottom-4 left-1/2 -translate-x-1/2 bg-black/80 text-white px-4 py-2 rounded-full text-sm font-medium opacity-0 group-hover:opacity-100 transition-opacity duration-300">
+              Click to view full page
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* Navigation arrows - Positioned outside for full width */}
+      <button
+        onClick={prevSlide}
+        className="absolute -left-6 top-1/2 -translate-y-1/2 w-16 h-16 bg-white/95 backdrop-blur-sm rounded-full shadow-xl flex items-center justify-center hover:bg-white transition-all duration-300 hover:scale-110 z-20 border border-gray-200"
+      >
+        <ChevronLeft className="w-8 h-8 text-gray-700" />
+      </button>
+
+      <button
+        onClick={nextSlide}
+        className="absolute -right-6 top-1/2 -translate-y-1/2 w-16 h-16 bg-white/95 backdrop-blur-sm rounded-full shadow-xl flex items-center justify-center hover:bg-white transition-all duration-300 hover:scale-110 z-20 border border-gray-200"
+      >
+        <ChevronRight className="w-8 h-8 text-gray-700" />
+      </button>
+
+      {/* Current slide info */}
+      <div className="absolute -bottom-20 left-1/2 -translate-x-1/2 text-center max-w-2xl">
+        <div className="text-2xl font-bold text-gray-900 mb-2">
+          {screenshots[currentSlide].title}
+        </div>
+        <div className="text-lg text-gray-600 mb-6">
+          {screenshots[currentSlide].description}
+        </div>
+
+        {/* Slide indicators */}
+        <div className="flex gap-3 justify-center">
+          {screenshots.map((_, index) => (
+            <button
+              key={index}
+              onClick={() => setCurrentSlide(index)}
+              className={`w-4 h-4 rounded-full transition-all duration-300 ${
+                index === currentSlide
+                  ? 'bg-[#E51636] scale-125 shadow-lg'
+                  : 'bg-gray-300 hover:bg-gray-400'
+              }`}
+            />
+          ))}
+        </div>
+      </div>
+
+      {/* Feature badges */}
+      <div className="absolute -top-6 -right-6 bg-gradient-to-r from-[#E51636] to-[#DD0031] text-white p-4 rounded-2xl shadow-xl animate-pulse">
+        <div className="text-center">
+          <div className="text-sm font-bold">EXCLUSIVE</div>
+          <div className="text-xs">CFA Features</div>
+        </div>
+      </div>
+
+      <div className="absolute -bottom-6 -left-6 bg-green-500 text-white p-4 rounded-2xl shadow-xl">
+        <div className="text-center">
+          <div className="text-sm font-bold">MOBILE</div>
+          <div className="text-xs">Optimized</div>
+        </div>
+      </div>
+
+      {/* Full Page Modal */}
+      <ImageModal
+        isOpen={isModalOpen}
+        onClose={() => setIsModalOpen(false)}
+        imageSrc={screenshots[currentSlide].src}
+        title={screenshots[currentSlide].title}
+      />
+    </div>
+  )
+}
+
+// Mobile Carousel Component
+function MobileCarousel() {
+  const [currentSlide, setCurrentSlide] = useState(0)
+
+  const screenshots = [
+    {
+      src: "/new/MobileDashboard.png",
+      alt: "Mobile dashboard showing overview of all restaurant management features",
+      title: "Dashboard Overview",
+      description: "Complete restaurant management hub"
+    },
+    {
+      src: "/new/MobileEvaluations.png",
+      alt: "Mobile app showing performance reviews dashboard with real Chick-fil-A evaluation interface",
+      title: "Performance Reviews",
+      description: "Comprehensive mobile evaluations"
+    },
+    {
+      src: "/new/MobileKitchenDash.png",
+      alt: "Kitchen management dashboard showing food safety checklists and waste tracking",
+      title: "Kitchen Management",
+      description: "Digital checklists & waste tracking"
+    },
+    {
+      src: "/new/MobileFOHTask.png",
+      alt: "Front of house task management and team coordination interface",
+      title: "FOH Task Management",
+      description: "Team coordination & task tracking"
+    }
+  ]
+
+  const nextSlide = () => {
+    setCurrentSlide((prev) => (prev + 1) % screenshots.length)
+  }
+
+  const prevSlide = () => {
+    setCurrentSlide((prev) => (prev - 1 + screenshots.length) % screenshots.length)
+  }
+
+  // Auto-advance slides
+  useEffect(() => {
+    const timer = setInterval(nextSlide, 4000)
+    return () => clearInterval(timer)
+  }, [])
+
+  return (
+    <div className="relative mx-auto max-w-[320px] lg:max-w-[380px]">
+      {/* Phone mockup */}
+      <div className="relative bg-gray-900 p-2 rounded-[3rem] shadow-2xl">
+        {/* Phone frame */}
+        <div className="bg-black rounded-[2.5rem] p-1">
+          <div className="relative bg-white rounded-[2.25rem] overflow-hidden aspect-[9/19.5]">
+            {/* Notch */}
+            <div className="absolute top-0 left-1/2 transform -translate-x-1/2 w-32 h-6 bg-black rounded-b-2xl z-10"></div>
+
+            {/* Screen content with carousel */}
+            <div className="h-full w-full relative overflow-hidden">
+              <div
+                className="flex h-full transition-transform duration-500 ease-in-out"
+                style={{ transform: `translateX(-${currentSlide * 100}%)` }}
+              >
+                {screenshots.map((screenshot, index) => (
+                  <div key={index} className="w-full h-full flex-shrink-0 relative">
+                    <img
+                      src={screenshot.src}
+                      alt={screenshot.alt}
+                      className="w-full h-full object-cover"
+                      onError={(e) => {
+                        const target = e.target as HTMLImageElement;
+                        target.src = `https://placehold.co/320x690/e51636/ffffff?text=${encodeURIComponent(screenshot.title)}`;
+                      }}
+                    />
+                    {/* Overlay gradient for better visibility */}
+                    <div className="absolute inset-0 bg-gradient-to-t from-black/5 via-transparent to-black/5 pointer-events-none"></div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* Reflection effect */}
+        <div className="absolute inset-0 bg-gradient-to-br from-white/20 via-transparent to-transparent rounded-[3rem] pointer-events-none"></div>
+      </div>
+
+      {/* Navigation arrows */}
+      <button
+        onClick={prevSlide}
+        className="absolute left-4 top-1/2 -translate-y-1/2 w-12 h-12 bg-white/90 backdrop-blur-sm rounded-full shadow-lg flex items-center justify-center hover:bg-white transition-all duration-300 hover:scale-110 z-20"
+      >
+        <ChevronLeft className="w-6 h-6 text-gray-700" />
+      </button>
+
+      <button
+        onClick={nextSlide}
+        className="absolute right-4 top-1/2 -translate-y-1/2 w-12 h-12 bg-white/90 backdrop-blur-sm rounded-full shadow-lg flex items-center justify-center hover:bg-white transition-all duration-300 hover:scale-110 z-20"
+      >
+        <ChevronRight className="w-6 h-6 text-gray-700" />
+      </button>
+
+      {/* Current slide info */}
+      <div className="absolute -bottom-16 left-1/2 -translate-x-1/2 text-center">
+        <div className="text-lg font-bold text-gray-900 mb-1">
+          {screenshots[currentSlide].title}
+        </div>
+        <div className="text-sm text-gray-600 mb-4">
+          {screenshots[currentSlide].description}
+        </div>
+
+        {/* Slide indicators */}
+        <div className="flex gap-2 justify-center">
+          {screenshots.map((_, index) => (
+            <button
+              key={index}
+              onClick={() => setCurrentSlide(index)}
+              className={`w-3 h-3 rounded-full transition-all duration-300 ${
+                index === currentSlide
+                  ? 'bg-[#E51636] scale-125'
+                  : 'bg-gray-300 hover:bg-gray-400'
+              }`}
+            />
+          ))}
+        </div>
+      </div>
+
+      {/* Floating elements */}
+      <div className="absolute -top-4 -right-4 bg-green-500 text-white p-3 rounded-2xl shadow-xl animate-bounce">
+        <svg className="w-6 h-6" fill="currentColor" viewBox="0 0 20 20">
+          <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
+        </svg>
+      </div>
+
+      <div className="absolute -bottom-4 -left-4 bg-blue-500 text-white p-3 rounded-2xl shadow-xl animate-pulse">
+        <svg className="w-6 h-6" fill="currentColor" viewBox="0 0 20 20">
+          <path d="M2 3a1 1 0 011-1h2.153a1 1 0 01.986.836l.74 4.435a1 1 0 01-.54 1.06l-1.548.773a11.037 11.037 0 006.105 6.105l.774-1.548a1 1 0 011.059-.54l4.435.74a1 1 0 01.836.986V17a1 1 0 01-1 1h-2C7.82 18 2 12.18 2 5V3z" />
+        </svg>
+      </div>
+    </div>
+  )
+}
+
 export default function LandingPage() {
   const navigate = useNavigate()
   const [mainModalOpen, setMainModalOpen] = useState(false)
@@ -357,174 +680,382 @@ export default function LandingPage() {
       </section>
 
       {/* Features Section */}
-      <section className="py-24 bg-gray-50">
-        <div className="container mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="text-center mb-16">
-            <div className="inline-flex items-center px-3 py-1 rounded-full bg-red-100 text-sm font-medium text-[#E51636] mb-4">
-              Powerful Features
+      <section className="py-24 bg-gradient-to-br from-gray-50 via-white to-gray-50 relative overflow-hidden">
+        {/* Background Elements */}
+        <div className="absolute inset-0 pointer-events-none">
+          <div className="absolute top-20 left-10 w-72 h-72 bg-[#E51636]/5 rounded-full blur-3xl"></div>
+          <div className="absolute bottom-20 right-10 w-96 h-96 bg-[#E51636]/3 rounded-full blur-3xl"></div>
+        </div>
+
+        <div className="container relative mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="text-center mb-20">
+            <div className="inline-flex items-center px-4 py-2 rounded-full bg-gradient-to-r from-[#E51636] to-[#DD0031] text-white text-sm font-bold mb-6 shadow-lg">
+              <span className="flex h-2 w-2 rounded-full bg-green-400 mr-2 animate-pulse"></span>
+              PROVEN RESULTS • EXCLUSIVE ACCESS
             </div>
-            <h2 className="text-3xl sm:text-4xl font-bold text-gray-900 mb-4">
-              Everything You Need to Excel
+            <h2 className="text-4xl sm:text-5xl lg:text-6xl font-bold text-gray-900 mb-6 leading-tight">
+              Everything You Need to <br />
+              <span className="bg-gradient-to-r from-[#E51636] to-[#DD0031] bg-clip-text text-transparent">
+                Dominate Your Market
+              </span>
             </h2>
-            <p className="text-xl text-gray-600 max-w-3xl mx-auto">
-              Streamline operations, develop leaders, and drive performance with our comprehensive suite of tools.
+            <p className="text-xl sm:text-2xl text-gray-600 max-w-4xl mx-auto leading-relaxed">
+              Built by Chick-fil-A leaders with <span className="font-bold text-[#E51636]">15+ years of experience</span>.
+              Get the exact tools and strategies that drive top-performing stores.
             </p>
           </div>
 
-          <div className="grid gap-8 md:grid-cols-2 lg:grid-cols-3">
+          <div className="grid gap-8 lg:grid-cols-3 max-w-7xl mx-auto">
             {/* Kitchen Operations */}
-            <Card className="border-2 hover:border-[#E51636] transition-colors">
-              <CardContent className="p-6 space-y-4">
-                <div className="h-12 w-12 rounded-lg bg-red-100 flex items-center justify-center">
-                  <ChefHat className="h-6 w-6 text-[#E51636]" />
-                </div>
-                <h3 className="text-xl font-semibold">Kitchen Excellence</h3>
-                <p className="text-gray-600">
-                  Manage food safety, equipment maintenance, and waste tracking with precision and ease.
-                </p>
-                <ul className="space-y-2 text-sm text-gray-600">
-                  <li className="flex items-center gap-2">
-                    <div className="h-1.5 w-1.5 rounded-full bg-[#E51636]" />
-                    Food Safety Checklists
-                  </li>
-                  <li className="flex items-center gap-2">
-                    <div className="h-1.5 w-1.5 rounded-full bg-[#E51636]" />
-                    Equipment Maintenance
-                  </li>
-                  <li className="flex items-center gap-2">
-                    <div className="h-1.5 w-1.5 rounded-full bg-[#E51636]" />
-                    Waste Analytics
-                  </li>
-                </ul>
-              </CardContent>
-            </Card>
+            <div className="group relative">
+              <div className="absolute inset-0 bg-gradient-to-br from-[#E51636]/20 to-[#DD0031]/20 rounded-3xl blur-xl group-hover:blur-2xl transition-all duration-500 opacity-0 group-hover:opacity-100"></div>
+              <Card className="relative border-0 shadow-2xl hover:shadow-3xl transition-all duration-500 group-hover:-translate-y-2 bg-white/80 backdrop-blur-sm rounded-3xl overflow-hidden">
+                <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-[#E51636] to-[#DD0031]"></div>
+                <CardContent className="p-8 space-y-6">
+                  <div className="flex items-center justify-between">
+                    <div className="h-16 w-16 rounded-2xl bg-gradient-to-br from-red-100 to-red-50 flex items-center justify-center group-hover:from-[#E51636] group-hover:to-[#DD0031] transition-all duration-500 shadow-lg">
+                      <ChefHat className="h-8 w-8 text-[#E51636] group-hover:text-white transition-colors duration-500" />
+                    </div>
+                    <div className="text-right">
+                      <div className="text-2xl font-bold text-[#E51636]">45%</div>
+                      <div className="text-xs text-gray-500 font-medium">WASTE REDUCTION</div>
+                    </div>
+                  </div>
+
+                  <div>
+                    <h3 className="text-2xl font-bold text-gray-900 mb-3">Kitchen Excellence</h3>
+                    <p className="text-gray-600 text-lg leading-relaxed">
+                      <span className="font-semibold text-[#E51636]">Reduce waste by 45%</span> and achieve
+                      <span className="font-semibold text-[#E51636]"> 98% food safety compliance</span> with our proven kitchen management system.
+                    </p>
+                  </div>
+
+                  <div className="space-y-3">
+                    <div className="flex items-center gap-3 p-3 rounded-xl bg-green-50 border border-green-100">
+                      <CheckCircle className="h-5 w-5 text-green-600 flex-shrink-0" />
+                      <span className="text-gray-700 font-medium">Digital Food Safety Checklists</span>
+                    </div>
+                    <div className="flex items-center gap-3 p-3 rounded-xl bg-green-50 border border-green-100">
+                      <CheckCircle className="h-5 w-5 text-green-600 flex-shrink-0" />
+                      <span className="text-gray-700 font-medium">Real-time Waste Tracking</span>
+                    </div>
+                    <div className="flex items-center gap-3 p-3 rounded-xl bg-green-50 border border-green-100">
+                      <CheckCircle className="h-5 w-5 text-green-600 flex-shrink-0" />
+                      <span className="text-gray-700 font-medium">Equipment Status Monitoring</span>
+                    </div>
+                    <div className="flex items-center gap-3 p-3 rounded-xl bg-green-50 border border-green-100">
+                      <CheckCircle className="h-5 w-5 text-green-600 flex-shrink-0" />
+                      <span className="text-gray-700 font-medium">Shift Transition Checklists</span>
+                    </div>
+                  </div>
+
+                  <div className="pt-4 border-t border-gray-100">
+                    <div className="flex items-center justify-between text-sm">
+                      <span className="text-gray-500">ROI in first month</span>
+                      <span className="font-bold text-green-600">$2,000+ saved</span>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+            </div>
 
             {/* Team Development */}
-            <Card className="border-2 hover:border-[#E51636] transition-colors relative overflow-hidden">
-              <div className="absolute -right-10 -top-10 w-40 h-40 bg-[#E51636]/10 rounded-full"></div>
-              <div className="absolute right-0 top-0 bg-[#E51636] text-white text-xs font-bold py-1 px-3 rounded-bl-lg">
-                EXCLUSIVE
-              </div>
-              <CardContent className="p-6 space-y-4 relative z-10">
-                <div className="h-12 w-12 rounded-lg bg-red-100 flex items-center justify-center">
-                  <GraduationCap className="h-6 w-6 text-[#E51636]" />
+            <div className="group relative">
+              <div className="absolute inset-0 bg-gradient-to-br from-[#E51636]/20 to-[#DD0031]/20 rounded-3xl blur-xl group-hover:blur-2xl transition-all duration-500 opacity-0 group-hover:opacity-100"></div>
+              <Card className="relative border-0 shadow-2xl hover:shadow-3xl transition-all duration-500 group-hover:-translate-y-2 bg-white/80 backdrop-blur-sm rounded-3xl overflow-hidden">
+                <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-[#E51636] to-[#DD0031]"></div>
+                <div className="absolute right-4 top-4 bg-gradient-to-r from-[#E51636] to-[#DD0031] text-white text-xs font-bold py-2 px-4 rounded-full shadow-lg">
+                  EXCLUSIVE
                 </div>
-                <h3 className="text-xl font-semibold">Expert Leadership Plans</h3>
-                <p className="text-gray-600">
-                  Exclusive development plans created by a leader with 15+ years of Chick-fil-A experience.
-                </p>
-                <ul className="space-y-2 text-sm text-gray-600">
-                  <li className="flex items-center gap-2">
-                    <div className="h-1.5 w-1.5 rounded-full bg-[#E51636]" />
-                    Personalized Growth Paths
-                  </li>
-                  <li className="flex items-center gap-2">
-                    <div className="h-1.5 w-1.5 rounded-full bg-[#E51636]" />
-                    Proven Development Frameworks
-                  </li>
-                  <li className="flex items-center gap-2">
-                    <div className="h-1.5 w-1.5 rounded-full bg-[#E51636]" />
-                    Leadership Milestone Tracking
-                  </li>
-                </ul>
-              </CardContent>
-            </Card>
+                <CardContent className="p-8 space-y-6">
+                  <div className="flex items-center justify-between">
+                    <div className="h-16 w-16 rounded-2xl bg-gradient-to-br from-red-100 to-red-50 flex items-center justify-center group-hover:from-[#E51636] group-hover:to-[#DD0031] transition-all duration-500 shadow-lg">
+                      <GraduationCap className="h-8 w-8 text-[#E51636] group-hover:text-white transition-colors duration-500" />
+                    </div>
+                    <div className="text-right">
+                      <div className="text-2xl font-bold text-[#E51636]">2x</div>
+                      <div className="text-xs text-gray-500 font-medium">FASTER DEVELOPMENT</div>
+                    </div>
+                  </div>
+
+                  <div>
+                    <h3 className="text-2xl font-bold text-gray-900 mb-3">Expert Leadership Plans</h3>
+                    <p className="text-gray-600 text-lg leading-relaxed">
+                      <span className="font-semibold text-[#E51636]">Accelerate leadership development by 2x</span> with exclusive plans created by a leader with
+                      <span className="font-semibold text-[#E51636]"> 15+ years of Chick-fil-A experience</span>.
+                    </p>
+                  </div>
+
+                  <div className="space-y-3">
+                    <div className="flex items-center gap-3 p-3 rounded-xl bg-green-50 border border-green-100">
+                      <CheckCircle className="h-5 w-5 text-green-600 flex-shrink-0" />
+                      <span className="text-gray-700 font-medium">Personalized Growth Paths</span>
+                    </div>
+                    <div className="flex items-center gap-3 p-3 rounded-xl bg-green-50 border border-green-100">
+                      <CheckCircle className="h-5 w-5 text-green-600 flex-shrink-0" />
+                      <span className="text-gray-700 font-medium">Proven Development Frameworks</span>
+                    </div>
+                    <div className="flex items-center gap-3 p-3 rounded-xl bg-green-50 border border-green-100">
+                      <CheckCircle className="h-5 w-5 text-green-600 flex-shrink-0" />
+                      <span className="text-gray-700 font-medium">Leadership Milestone Tracking</span>
+                    </div>
+                    <div className="flex items-center gap-3 p-3 rounded-xl bg-green-50 border border-green-100">
+                      <CheckCircle className="h-5 w-5 text-green-600 flex-shrink-0" />
+                      <span className="text-gray-700 font-medium">360-Degree Feedback System</span>
+                    </div>
+                  </div>
+
+                  <div className="pt-4 border-t border-gray-100">
+                    <div className="flex items-center justify-between text-sm">
+                      <span className="text-gray-500">Promotion readiness</span>
+                      <span className="font-bold text-green-600">50% faster</span>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+            </div>
 
             {/* Team Management */}
-            <Card className="border-2 hover:border-[#E51636] transition-colors relative overflow-hidden">
-              <div className="absolute -right-10 -top-10 w-40 h-40 bg-[#E51636]/10 rounded-full"></div>
-              <div className="absolute right-0 top-0 bg-[#E51636] text-white text-xs font-bold py-1 px-3 rounded-bl-lg">
-                EXCLUSIVE
-              </div>
-              <CardContent className="p-6 space-y-4 relative z-10">
-                <div className="h-12 w-12 rounded-lg bg-red-100 flex items-center justify-center">
-                  <Users className="h-6 w-6 text-[#E51636]" />
+            <div className="group relative">
+              <div className="absolute inset-0 bg-gradient-to-br from-[#E51636]/20 to-[#DD0031]/20 rounded-3xl blur-xl group-hover:blur-2xl transition-all duration-500 opacity-0 group-hover:opacity-100"></div>
+              <Card className="relative border-0 shadow-2xl hover:shadow-3xl transition-all duration-500 group-hover:-translate-y-2 bg-white/80 backdrop-blur-sm rounded-3xl overflow-hidden">
+                <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-[#E51636] to-[#DD0031]"></div>
+                <div className="absolute right-4 top-4 bg-gradient-to-r from-[#E51636] to-[#DD0031] text-white text-xs font-bold py-2 px-4 rounded-full shadow-lg">
+                  EXCLUSIVE
                 </div>
-                <h3 className="text-xl font-semibold">Comprehensive Evaluations</h3>
-                <p className="text-gray-600">
-                  The only platform with a complete evaluation system designed specifically for Chick-fil-A teams.
-                </p>
-                <ul className="space-y-2 text-sm text-gray-600">
-                  <li className="flex items-center gap-2">
-                    <div className="h-1.5 w-1.5 rounded-full bg-[#E51636]" />
-                    Detailed Performance Reviews
-                  </li>
-                  <li className="flex items-center gap-2">
-                    <div className="h-1.5 w-1.5 rounded-full bg-[#E51636]" />
-                    Customizable Evaluation Templates
-                  </li>
-                  <li className="flex items-center gap-2">
-                    <div className="h-1.5 w-1.5 rounded-full bg-[#E51636]" />
-                    Growth-Focused Feedback System
-                  </li>
-                </ul>
-              </CardContent>
-            </Card>
+                <CardContent className="p-8 space-y-6">
+                  <div className="flex items-center justify-between">
+                    <div className="h-16 w-16 rounded-2xl bg-gradient-to-br from-red-100 to-red-50 flex items-center justify-center group-hover:from-[#E51636] group-hover:to-[#DD0031] transition-all duration-500 shadow-lg">
+                      <Users className="h-8 w-8 text-[#E51636] group-hover:text-white transition-colors duration-500" />
+                    </div>
+                    <div className="text-right">
+                      <div className="text-2xl font-bold text-[#E51636]">98%</div>
+                      <div className="text-xs text-gray-500 font-medium">COMPLETION RATE</div>
+                    </div>
+                  </div>
+
+                  <div>
+                    <h3 className="text-2xl font-bold text-gray-900 mb-3">Mobile-First Evaluations</h3>
+                    <p className="text-gray-600 text-lg leading-relaxed">
+                      The <span className="font-semibold text-[#E51636]">only platform with comprehensive mobile evaluations</span> designed specifically for Chick-fil-A operations and team development.
+                    </p>
+                  </div>
+
+                  <div className="space-y-3">
+                    <div className="flex items-center gap-3 p-3 rounded-xl bg-green-50 border border-green-100">
+                      <CheckCircle className="h-5 w-5 text-green-600 flex-shrink-0" />
+                      <span className="text-gray-700 font-medium">On-the-Floor Performance Reviews</span>
+                    </div>
+                    <div className="flex items-center gap-3 p-3 rounded-xl bg-green-50 border border-green-100">
+                      <CheckCircle className="h-5 w-5 text-green-600 flex-shrink-0" />
+                      <span className="text-gray-700 font-medium">Customizable Evaluation Templates</span>
+                    </div>
+                    <div className="flex items-center gap-3 p-3 rounded-xl bg-green-50 border border-green-100">
+                      <CheckCircle className="h-5 w-5 text-green-600 flex-shrink-0" />
+                      <span className="text-gray-700 font-medium">Real-time Analytics Dashboard</span>
+                    </div>
+                    <div className="flex items-center gap-3 p-3 rounded-xl bg-green-50 border border-green-100">
+                      <CheckCircle className="h-5 w-5 text-green-600 flex-shrink-0" />
+                      <span className="text-gray-700 font-medium">Team Member Experience Surveys</span>
+                    </div>
+                  </div>
+
+                  <div className="pt-4 border-t border-gray-100">
+                    <div className="flex items-center justify-between text-sm">
+                      <span className="text-gray-500">Time saved per review</span>
+                      <span className="font-bold text-green-600">15 minutes</span>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+            </div>
+          </div>
+
+          {/* Bottom CTA */}
+          <div className="text-center mt-16">
+            <div className="inline-flex items-center gap-4 bg-gradient-to-r from-[#E51636] to-[#DD0031] text-white px-8 py-4 rounded-2xl shadow-2xl hover:shadow-3xl transition-all duration-300 hover:scale-105">
+              <div className="text-left">
+                <div className="text-sm font-medium opacity-90">Start seeing results in</div>
+                <div className="text-xl font-bold">7 days or less</div>
+              </div>
+              <ArrowRight className="h-6 w-6" />
+            </div>
           </div>
         </div>
       </section>
 
       {/* How It Works Section */}
-      <section className="py-24 bg-gradient-to-br from-[#E51636]/5 to-[#E51636]/10">
-        <div className="container mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="text-center mb-16">
-            <div className="inline-flex items-center px-3 py-1 rounded-full bg-red-100 text-sm font-medium text-[#E51636] mb-4">
-              Simple Process
+      <section className="py-32 bg-gradient-to-br from-gray-900 via-gray-800 to-[#E51636]/20 relative overflow-hidden">
+        {/* Background Elements */}
+        <div className="absolute inset-0 pointer-events-none">
+          <div className="absolute top-0 left-1/4 w-96 h-96 bg-[#E51636]/10 rounded-full blur-3xl"></div>
+          <div className="absolute bottom-0 right-1/4 w-80 h-80 bg-[#DD0031]/10 rounded-full blur-3xl"></div>
+          <div className="absolute inset-0 bg-[url('data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNjAiIGhlaWdodD0iNjAiIHZpZXdCb3g9IjAgMCA2MCA2MCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48cGF0aCBkPSJNMzAgMzBtLTI4IDBhMjggMjggMCAxIDAgNTYgMGEyOCAyOCAwIDEgMCAtNTYgMCIgZmlsbD0ibm9uZSIgc3Ryb2tlPSIjZmZmZmZmIiBzdHJva2Utd2lkdGg9IjAuNSIgb3BhY2l0eT0iMC4wNSIvPjwvc3ZnPg==')] opacity-30"></div>
+        </div>
+
+        <div className="container relative mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="text-center mb-20">
+            <div className="inline-flex items-center px-6 py-3 rounded-full bg-gradient-to-r from-green-500 to-emerald-600 text-white text-sm font-bold mb-8 shadow-2xl">
+              <span className="flex h-2 w-2 rounded-full bg-white mr-3 animate-pulse"></span>
+              SETUP IN UNDER 5 MINUTES • NO TECHNICAL SKILLS REQUIRED
             </div>
-            <h2 className="text-3xl sm:text-4xl font-bold text-gray-900 mb-4">
-              Get Started in Minutes
+            <h2 className="text-4xl sm:text-5xl lg:text-6xl font-bold text-white mb-8 leading-tight">
+              From Sign-Up to <br />
+              <span className="bg-gradient-to-r from-green-400 to-emerald-500 bg-clip-text text-transparent">
+                Implementation Success
+              </span>
             </h2>
-            <p className="text-xl text-gray-600 max-w-3xl mx-auto">
-              Our platform is designed for busy restaurant leaders. Setup is quick and intuitive.
+            <p className="text-xl sm:text-2xl text-gray-300 max-w-4xl mx-auto leading-relaxed">
+              We've made it <span className="font-bold text-white">ridiculously simple</span> to get started.
+              Most stores are fully operational within their first week.
             </p>
           </div>
 
-          <div className="grid gap-8 md:grid-cols-3">
+          <div className="grid gap-12 lg:gap-16 md:grid-cols-3 max-w-6xl mx-auto">
             {/* Step 1 */}
-            <div className="bg-white rounded-2xl shadow-xl p-8 relative overflow-hidden">
-              <div className="absolute -top-6 -right-6 h-24 w-24 rounded-full bg-[#E51636]/10 flex items-center justify-center text-[#E51636] font-bold text-4xl">
-                1
-              </div>
-              <div className="relative z-10">
-                <div className="h-12 w-12 rounded-lg bg-red-100 flex items-center justify-center mb-6">
-                  <Users className="h-6 w-6 text-[#E51636]" />
+            <div className="group relative">
+              <div className="absolute inset-0 bg-gradient-to-br from-green-500/20 to-emerald-600/20 rounded-3xl blur-xl group-hover:blur-2xl transition-all duration-500 opacity-0 group-hover:opacity-100"></div>
+              <div className="relative bg-white/10 backdrop-blur-lg rounded-3xl p-8 border border-white/20 shadow-2xl hover:shadow-3xl transition-all duration-500 group-hover:-translate-y-3">
+                <div className="absolute -top-6 -right-6 h-20 w-20 rounded-full bg-gradient-to-br from-green-500 to-emerald-600 flex items-center justify-center text-white font-bold text-3xl shadow-2xl">
+                  1
                 </div>
-                <h3 className="text-xl font-semibold mb-4">Create Your Account</h3>
-                <p className="text-gray-600">
-                  Sign up with your email and create your restaurant profile in less than 2 minutes.
-                </p>
+                <div className="relative z-10">
+                  <div className="h-16 w-16 rounded-2xl bg-gradient-to-br from-green-100 to-emerald-50 flex items-center justify-center mb-8 shadow-lg group-hover:from-green-500 group-hover:to-emerald-600 transition-all duration-500">
+                    <Users className="h-8 w-8 text-green-600 group-hover:text-white transition-colors duration-500" />
+                  </div>
+                  <h3 className="text-2xl font-bold text-white mb-4">Create Your Account</h3>
+                  <p className="text-gray-300 text-lg leading-relaxed mb-6">
+                    Sign up with your email and create your restaurant profile.
+                    <span className="font-semibold text-green-400"> Takes less than 2 minutes</span>.
+                  </p>
+                  <div className="space-y-3">
+                    <div className="flex items-center gap-3 text-sm text-gray-300">
+                      <CheckCircle className="h-4 w-4 text-green-400 flex-shrink-0" />
+                      <span>No credit card required</span>
+                    </div>
+                    <div className="flex items-center gap-3 text-sm text-gray-300">
+                      <CheckCircle className="h-4 w-4 text-green-400 flex-shrink-0" />
+                      <span>Instant access to all features</span>
+                    </div>
+                    <div className="flex items-center gap-3 text-sm text-gray-300">
+                      <CheckCircle className="h-4 w-4 text-green-400 flex-shrink-0" />
+                      <span>30-day free trial</span>
+                    </div>
+                  </div>
+                </div>
               </div>
             </div>
 
             {/* Step 2 */}
-            <div className="bg-white rounded-2xl shadow-xl p-8 relative overflow-hidden">
-              <div className="absolute -top-6 -right-6 h-24 w-24 rounded-full bg-[#E51636]/10 flex items-center justify-center text-[#E51636] font-bold text-4xl">
-                2
-              </div>
-              <div className="relative z-10">
-                <div className="h-12 w-12 rounded-lg bg-red-100 flex items-center justify-center mb-6">
-                  <Settings className="h-6 w-6 text-[#E51636]" />
+            <div className="group relative">
+              <div className="absolute inset-0 bg-gradient-to-br from-blue-500/20 to-cyan-600/20 rounded-3xl blur-xl group-hover:blur-2xl transition-all duration-500 opacity-0 group-hover:opacity-100"></div>
+              <div className="relative bg-white/10 backdrop-blur-lg rounded-3xl p-8 border border-white/20 shadow-2xl hover:shadow-3xl transition-all duration-500 group-hover:-translate-y-3">
+                <div className="absolute -top-6 -right-6 h-20 w-20 rounded-full bg-gradient-to-br from-blue-500 to-cyan-600 flex items-center justify-center text-white font-bold text-3xl shadow-2xl">
+                  2
                 </div>
-                <h3 className="text-xl font-semibold mb-4">Customize Your Setup</h3>
-                <p className="text-gray-600">
-                  Import your team data and customize the platform to match your restaurant's specific needs.
-                </p>
+                <div className="relative z-10">
+                  <div className="h-16 w-16 rounded-2xl bg-gradient-to-br from-blue-100 to-cyan-50 flex items-center justify-center mb-8 shadow-lg group-hover:from-blue-500 group-hover:to-cyan-600 transition-all duration-500">
+                    <Settings className="h-8 w-8 text-blue-600 group-hover:text-white transition-colors duration-500" />
+                  </div>
+                  <h3 className="text-2xl font-bold text-white mb-4">Import & Customize</h3>
+                  <p className="text-gray-300 text-lg leading-relaxed mb-6">
+                    Add your team members and customize features for your store.
+                    <span className="font-semibold text-blue-400"> Everything is pre-configured</span>.
+                  </p>
+                  <div className="space-y-3">
+                    <div className="flex items-center gap-3 text-sm text-gray-300">
+                      <CheckCircle className="h-4 w-4 text-blue-400 flex-shrink-0" />
+                      <span>Bulk team member import</span>
+                    </div>
+                    <div className="flex items-center gap-3 text-sm text-gray-300">
+                      <CheckCircle className="h-4 w-4 text-blue-400 flex-shrink-0" />
+                      <span>Pre-built CFA templates</span>
+                    </div>
+                    <div className="flex items-center gap-3 text-sm text-gray-300">
+                      <CheckCircle className="h-4 w-4 text-blue-400 flex-shrink-0" />
+                      <span>Optional setup call</span>
+                    </div>
+                  </div>
+                </div>
               </div>
             </div>
 
             {/* Step 3 */}
-            <div className="bg-white rounded-2xl shadow-xl p-8 relative overflow-hidden">
-              <div className="absolute -top-6 -right-6 h-24 w-24 rounded-full bg-[#E51636]/10 flex items-center justify-center text-[#E51636] font-bold text-4xl">
-                3
-              </div>
-              <div className="relative z-10">
-                <div className="h-12 w-12 rounded-lg bg-red-100 flex items-center justify-center mb-6">
-                  <TrendingUp className="h-6 w-6 text-[#E51636]" />
+            <div className="group relative">
+              <div className="absolute inset-0 bg-gradient-to-br from-[#E51636]/20 to-[#DD0031]/20 rounded-3xl blur-xl group-hover:blur-2xl transition-all duration-500 opacity-0 group-hover:opacity-100"></div>
+              <div className="relative bg-white/10 backdrop-blur-lg rounded-3xl p-8 border border-white/20 shadow-2xl hover:shadow-3xl transition-all duration-500 group-hover:-translate-y-3">
+                <div className="absolute -top-6 -right-6 h-20 w-20 rounded-full bg-gradient-to-br from-[#E51636] to-[#DD0031] flex items-center justify-center text-white font-bold text-3xl shadow-2xl">
+                  3
                 </div>
-                <h3 className="text-xl font-semibold mb-4">Start Improving</h3>
-                <p className="text-gray-600">
-                  Begin using the tools immediately to streamline operations and develop your team.
-                </p>
+                <div className="relative z-10">
+                  <div className="h-16 w-16 rounded-2xl bg-gradient-to-br from-red-100 to-red-50 flex items-center justify-center mb-8 shadow-lg group-hover:from-[#E51636] group-hover:to-[#DD0031] transition-all duration-500">
+                    <TrendingUp className="h-8 w-8 text-[#E51636] group-hover:text-white transition-colors duration-500" />
+                  </div>
+                  <h3 className="text-2xl font-bold text-white mb-4">Start Building Results</h3>
+                  <p className="text-gray-300 text-lg leading-relaxed mb-6">
+                    Begin implementing proven systems immediately.
+                    <span className="font-semibold text-red-400"> Build sustainable improvements over time</span>.
+                  </p>
+                  <div className="space-y-3">
+                    <div className="flex items-center gap-3 text-sm text-gray-300">
+                      <CheckCircle className="h-4 w-4 text-red-400 flex-shrink-0" />
+                      <span>Start tracking waste patterns</span>
+                    </div>
+                    <div className="flex items-center gap-3 text-sm text-gray-300">
+                      <CheckCircle className="h-4 w-4 text-red-400 flex-shrink-0" />
+                      <span>Begin mobile evaluations</span>
+                    </div>
+                    <div className="flex items-center gap-3 text-sm text-gray-300">
+                      <CheckCircle className="h-4 w-4 text-red-400 flex-shrink-0" />
+                      <span>Access leadership development plans</span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* Process Flow */}
+          <div className="mt-20 relative">
+            <div className="absolute top-1/2 left-0 right-0 h-0.5 bg-gradient-to-r from-green-500 via-blue-500 to-[#E51636] transform -translate-y-1/2 hidden lg:block"></div>
+            <div className="flex justify-center items-center space-x-8 lg:space-x-16">
+              <div className="bg-white/10 backdrop-blur-lg rounded-2xl p-6 border border-white/20 shadow-xl">
+                <div className="text-center">
+                  <div className="text-3xl font-bold text-white mb-2">2 min</div>
+                  <div className="text-sm text-gray-300">Setup Time</div>
+                </div>
+              </div>
+              <ArrowRight className="h-8 w-8 text-white/50 hidden lg:block" />
+              <div className="bg-white/10 backdrop-blur-lg rounded-2xl p-6 border border-white/20 shadow-xl">
+                <div className="text-center">
+                  <div className="text-3xl font-bold text-white mb-2">5 min</div>
+                  <div className="text-sm text-gray-300">Customization</div>
+                </div>
+              </div>
+              <ArrowRight className="h-8 w-8 text-white/50 hidden lg:block" />
+              <div className="bg-white/10 backdrop-blur-lg rounded-2xl p-6 border border-white/20 shadow-xl">
+                <div className="text-center">
+                  <div className="text-3xl font-bold text-white mb-2">1 week</div>
+                  <div className="text-sm text-gray-300">Fully Operational</div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* Bottom CTA */}
+          <div className="text-center mt-16">
+            <div className="inline-flex flex-col items-center gap-4 bg-gradient-to-r from-green-500 to-emerald-600 text-white px-12 py-8 rounded-3xl shadow-2xl hover:shadow-3xl transition-all duration-300 hover:scale-105">
+              <div className="text-center">
+                <div className="text-sm font-medium opacity-90 mb-2">Ready to transform your store?</div>
+                <div className="text-2xl font-bold mb-4">Start Your Free Trial Now</div>
+                <Button
+                  size="lg"
+                  className="bg-white hover:bg-gray-100 text-green-600 font-bold shadow-lg transition-all duration-300 hover:scale-105 px-8 py-3"
+                  onClick={() => navigate('/register')}
+                >
+                  Get Started Free
+                  <ArrowRight className="ml-2 h-5 w-5" />
+                </Button>
               </div>
             </div>
           </div>
@@ -532,79 +1063,114 @@ export default function LandingPage() {
       </section>
 
       {/* Mobile First Section */}
-      <section className="py-24 bg-white overflow-hidden">
-        <div className="container mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="grid md:grid-cols-2 gap-12 items-center">
-            <div>
-              <div className="inline-flex items-center px-3 py-1 rounded-full bg-red-100 text-sm font-medium text-[#E51636] mb-4">
-                Mobile-First Design
+      <section className="py-32 bg-gradient-to-br from-gray-50 via-white to-blue-50/30 relative overflow-hidden">
+        {/* Background Elements */}
+        <div className="absolute inset-0 pointer-events-none">
+          <div className="absolute top-20 right-10 w-80 h-80 bg-blue-500/5 rounded-full blur-3xl"></div>
+          <div className="absolute bottom-20 left-10 w-96 h-96 bg-[#E51636]/5 rounded-full blur-3xl"></div>
+          <div className="absolute inset-0 bg-[url('data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNDAiIGhlaWdodD0iNDAiIHZpZXdCb3g9IjAgMCA0MCA0MCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48cGF0aCBkPSJNMjAgMjBtLTE4IDBhMTggMTggMCAxIDAgMzYgMGExOCAxOCAwIDEgMCAtMzYgMCIgZmlsbD0ibm9uZSIgc3Ryb2tlPSIjZTUxNjM2IiBzdHJva2Utd2lkdGg9IjAuMyIgb3BhY2l0eT0iMC4xIi8+PC9zdmc+')] opacity-40"></div>
+        </div>
+
+        <div className="container relative mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="grid lg:grid-cols-2 gap-16 items-center max-w-7xl mx-auto">
+            <div className="order-2 lg:order-1">
+              <div className="inline-flex items-center px-4 py-2 rounded-full bg-gradient-to-r from-blue-500 to-cyan-600 text-white text-sm font-bold mb-8 shadow-lg">
+                <svg className="w-4 h-4 mr-2" fill="currentColor" viewBox="0 0 20 20">
+                  <path fillRule="evenodd" d="M7 2a2 2 0 00-2 2v12a2 2 0 002 2h6a2 2 0 002-2V4a2 2 0 00-2-2H7zm3 14a1 1 0 100-2 1 1 0 000 2z" clipRule="evenodd" />
+                </svg>
+                MOBILE-FIRST DESIGN • INDUSTRY EXCLUSIVE
               </div>
-              <h2 className="text-3xl sm:text-4xl font-bold text-gray-900 mb-6">
-                Built for Your Team on the Go
+
+              <h2 className="text-4xl sm:text-5xl lg:text-6xl font-bold text-gray-900 mb-8 leading-tight">
+                Built for Your Team <br />
+                <span className="bg-gradient-to-r from-blue-600 to-cyan-600 bg-clip-text text-transparent">
+                  On the Go
+                </span>
               </h2>
-              <p className="text-xl text-gray-600 mb-8">
-                Unlike other platforms, we designed our solution specifically for mobile devices first, with exclusive evaluations that competitors lack, ensuring your team can access everything they need right from their phones.
+
+              <p className="text-xl sm:text-2xl text-gray-600 mb-12 leading-relaxed">
+                Unlike other platforms, we designed our solution <span className="font-bold text-gray-900">specifically for mobile devices first</span>,
+                with exclusive evaluations that competitors lack.
               </p>
 
-              <div className="space-y-4">
-                <div className="flex items-start gap-3">
-                  <div className="h-6 w-6 rounded-full bg-[#E51636]/10 flex items-center justify-center mt-1">
-                    <CheckCircle className="h-4 w-4 text-[#E51636]" />
+              <div className="grid gap-6 sm:gap-8">
+                <div className="group flex items-start gap-4 p-6 rounded-2xl bg-white/60 backdrop-blur-sm border border-white/40 shadow-lg hover:shadow-xl transition-all duration-300 hover:-translate-y-1">
+                  <div className="h-12 w-12 rounded-xl bg-gradient-to-br from-green-500 to-emerald-600 flex items-center justify-center shadow-lg group-hover:scale-110 transition-transform duration-300">
+                    <svg className="h-6 w-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 18h.01M8 21h8a2 2 0 002-2V5a2 2 0 00-2-2H8a2 2 0 00-2 2v14a2 2 0 002 2z" />
+                    </svg>
                   </div>
                   <div>
-                    <h3 className="font-semibold text-gray-900">Optimized for Phones</h3>
-                    <p className="text-gray-600">Every feature works perfectly on mobile devices with no compromises</p>
+                    <h3 className="text-xl font-bold text-gray-900 mb-2">Perfect Mobile Experience</h3>
+                    <p className="text-gray-600 leading-relaxed">Every feature works flawlessly on phones and tablets. No compromises, no desktop-first limitations.</p>
                   </div>
                 </div>
 
-                <div className="flex items-start gap-3">
-                  <div className="h-6 w-6 rounded-full bg-[#E51636]/10 flex items-center justify-center mt-1">
-                    <CheckCircle className="h-4 w-4 text-[#E51636]" />
+                <div className="group flex items-start gap-4 p-6 rounded-2xl bg-white/60 backdrop-blur-sm border border-white/40 shadow-lg hover:shadow-xl transition-all duration-300 hover:-translate-y-1">
+                  <div className="h-12 w-12 rounded-xl bg-gradient-to-br from-[#E51636] to-[#DD0031] flex items-center justify-center shadow-lg group-hover:scale-110 transition-transform duration-300">
+                    <svg className="h-6 w-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                    </svg>
                   </div>
                   <div>
-                    <h3 className="font-semibold text-gray-900">Exclusive Evaluations</h3>
-                    <p className="text-gray-600">Comprehensive performance reviews with customizable templates</p>
+                    <h3 className="text-xl font-bold text-gray-900 mb-2">Exclusive Evaluation System</h3>
+                    <p className="text-gray-600 leading-relaxed">Comprehensive performance reviews with customizable templates you can't get anywhere else.</p>
                   </div>
                 </div>
 
-                <div className="flex items-start gap-3">
-                  <div className="h-6 w-6 rounded-full bg-[#E51636]/10 flex items-center justify-center mt-1">
-                    <CheckCircle className="h-4 w-4 text-[#E51636]" />
+                <div className="group flex items-start gap-4 p-6 rounded-2xl bg-white/60 backdrop-blur-sm border border-white/40 shadow-lg hover:shadow-xl transition-all duration-300 hover:-translate-y-1">
+                  <div className="h-12 w-12 rounded-xl bg-gradient-to-br from-blue-500 to-cyan-600 flex items-center justify-center shadow-lg group-hover:scale-110 transition-transform duration-300">
+                    <svg className="h-6 w-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
+                    </svg>
                   </div>
                   <div>
-                    <h3 className="font-semibold text-gray-900">Quick Access</h3>
-                    <p className="text-gray-600">Access evaluations, training materials, and daily tasks in seconds</p>
+                    <h3 className="text-xl font-bold text-gray-900 mb-2">Lightning Fast Access</h3>
+                    <p className="text-gray-600 leading-relaxed">Access evaluations, training materials, and daily tasks in seconds, not minutes.</p>
                   </div>
                 </div>
 
-                <div className="flex items-start gap-3 mt-4">
-                  <div className="h-6 w-6 rounded-full bg-[#E51636]/10 flex items-center justify-center mt-1">
-                    <CheckCircle className="h-4 w-4 text-[#E51636]" />
+                <div className="group flex items-start gap-4 p-6 rounded-2xl bg-white/60 backdrop-blur-sm border border-white/40 shadow-lg hover:shadow-xl transition-all duration-300 hover:-translate-y-1">
+                  <div className="h-12 w-12 rounded-xl bg-gradient-to-br from-purple-500 to-pink-600 flex items-center justify-center shadow-lg group-hover:scale-110 transition-transform duration-300">
+                    <svg className="h-6 w-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.746 0 3.332.477 4.5 1.253v13C19.832 18.477 18.246 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />
+                    </svg>
                   </div>
                   <div>
-                    <h3 className="font-semibold text-gray-900">Leadership Development</h3>
-                    <p className="text-gray-600">Expert development plans based on 15+ years of experience</p>
+                    <h3 className="text-xl font-bold text-gray-900 mb-2">Expert Leadership Development</h3>
+                    <p className="text-gray-600 leading-relaxed">Proven development plans based on 15+ years of real Chick-fil-A leadership experience.</p>
                   </div>
                 </div>
               </div>
             </div>
 
-            <div className="relative">
-              <div className="absolute inset-0 bg-gradient-to-br from-[#E51636]/5 to-[#E51636]/10 rounded-3xl transform rotate-6"></div>
-              <div className="relative bg-white p-4 rounded-3xl shadow-xl border-8 border-gray-800 mx-auto max-w-[300px] aspect-[9/19]">
-                <div className="absolute top-0 left-1/2 transform -translate-x-1/2 w-24 h-5 bg-gray-800 rounded-b-xl"></div>
-                <div className="h-full w-full bg-gray-100 rounded-2xl overflow-hidden">
-                  <img
-                    src="/mobile-evaluations.png"
-                    alt="Mobile app evaluations interface"
-                    className="w-full h-full object-cover"
-                    onError={(e) => {
-                      const target = e.target as HTMLImageElement;
-                      target.src = 'https://placehold.co/300x650/e51636/ffffff?text=Performance+Reviews';
-                    }}
-                  />
-                </div>
-              </div>
+            <div className="order-1 lg:order-2 relative">
+              {/* Background glow effects */}
+              <div className="absolute inset-0 bg-gradient-to-br from-blue-500/10 to-[#E51636]/10 rounded-[3rem] blur-3xl scale-110"></div>
+              <div className="absolute inset-0 bg-gradient-to-tl from-cyan-500/10 to-purple-500/10 rounded-[3rem] blur-2xl scale-105 rotate-6"></div>
+
+              {/* Mobile Screenshots Carousel */}
+              <MobileCarousel />
+            </div>
+          </div>
+
+          {/* Bottom stats */}
+          <div className="mt-20 grid grid-cols-2 md:grid-cols-4 gap-8 max-w-4xl mx-auto">
+            <div className="text-center p-6 bg-white/60 backdrop-blur-sm rounded-2xl border border-white/40 shadow-lg">
+              <div className="text-3xl font-bold text-[#E51636] mb-2">100%</div>
+              <div className="text-sm text-gray-600 font-medium">Mobile Optimized</div>
+            </div>
+            <div className="text-center p-6 bg-white/60 backdrop-blur-sm rounded-2xl border border-white/40 shadow-lg">
+              <div className="text-3xl font-bold text-blue-600 mb-2">3 sec</div>
+              <div className="text-sm text-gray-600 font-medium">Load Time</div>
+            </div>
+            <div className="text-center p-6 bg-white/60 backdrop-blur-sm rounded-2xl border border-white/40 shadow-lg">
+              <div className="text-3xl font-bold text-green-600 mb-2">24/7</div>
+              <div className="text-sm text-gray-600 font-medium">Access</div>
+            </div>
+            <div className="text-center p-6 bg-white/60 backdrop-blur-sm rounded-2xl border border-white/40 shadow-lg">
+              <div className="text-3xl font-bold text-purple-600 mb-2">0</div>
+              <div className="text-sm text-gray-600 font-medium">Downtime</div>
             </div>
           </div>
         </div>
@@ -615,127 +1181,22 @@ export default function LandingPage() {
         <div className="container mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center mb-16">
             <div className="inline-flex items-center px-3 py-1 rounded-full bg-red-100 text-sm font-medium text-[#E51636] mb-4">
-              User-Friendly Interface
+              See It In Action
             </div>
             <h2 className="text-3xl sm:text-4xl font-bold text-gray-900 mb-4">
-              Powerful Tools at Your Fingertips
+              Built for Real Chick-fil-A Operations
             </h2>
             <p className="text-xl text-gray-600 max-w-3xl mx-auto">
               Experience our intuitive interface designed specifically for Chick-fil-A operations by leaders who understand your daily challenges.
             </p>
           </div>
 
-          <div className="grid gap-8 lg:grid-cols-12 items-center">
-            {/* Main Screenshot */}
-            <div
-              className="lg:col-span-8 rounded-2xl overflow-hidden shadow-2xl group cursor-pointer"
-              onClick={() => setMainModalOpen(true)}
-            >
-              <div className="relative bg-gray-800 rounded-t-2xl p-2 flex items-center">
-                <div className="flex gap-2 absolute left-3">
-                  <div className="w-3 h-3 rounded-full bg-red-500" />
-                  <div className="w-3 h-3 rounded-full bg-yellow-500" />
-                  <div className="w-3 h-3 rounded-full bg-green-500" />
-                </div>
-                <div className="w-full text-center text-gray-400 text-sm">Performance Reviews Dashboard</div>
-              </div>
-              <div className="aspect-[16/10] bg-white relative overflow-hidden">
-                <div className="absolute inset-0 bg-black/0 group-hover:bg-black/20 transition-all duration-300 flex items-center justify-center">
-                  <div className="transform scale-0 group-hover:scale-100 transition-transform duration-300">
-                    <div className="w-12 h-12 rounded-full bg-white/90 flex items-center justify-center">
-                      <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6 text-gray-900" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0zM10 7v6m3-3H7" />
-                      </svg>
-                    </div>
-                  </div>
-                </div>
-                <img
-                  src="/dashboard-reviews.png"
-                  alt="Performance Reviews Dashboard showing employee evaluations interface"
-                  className="w-full h-full object-cover transform group-hover:scale-105 transition-transform duration-300"
-                />
-              </div>
-            </div>
-            <ImageModal
-              isOpen={mainModalOpen}
-              onClose={() => setMainModalOpen(false)}
-              imageSrc="/dashboard-reviews.png"
-              title="Performance Reviews Dashboard"
-            />
-
-            {/* Side Screenshots */}
-            <div className="lg:col-span-4 space-y-8">
-              <ScreenshotCard
-                title="Employee Evaluations"
-                imageSrc="/evaluations.png"
-                alt="Employee evaluations interface showing performance reviews and ratings"
-              />
-              <ScreenshotCard
-                title="Leadership Development"
-                imageSrc="/leadership-development.png"
-                alt="Leadership development dashboard showing training progress and achievements"
-              />
-            </div>
+          {/* Desktop Carousel Section - Full Width */}
+          <div className="mb-32 px-8">
+            <DesktopCarousel />
           </div>
 
-          {/* Additional Features Showcase */}
-          <div className="mt-16 space-y-8">
-            {showAllFeatures && (
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-                <ScreenshotCard
-                  title="Mobile Evaluations"
-                  imageSrc="/mobile-evaluations.png"
-                  alt="Mobile evaluations interface showing performance reviews"
-                />
-                <ScreenshotCard
-                  title="Mobile Training"
-                  imageSrc="/mobile-training.png"
-                  alt="Mobile training interface showing employee progress"
-                />
-                <ScreenshotCard
-                  title="Mobile Task Management"
-                  imageSrc="/mobile-task.png"
-                  alt="Mobile task management system with daily operations tracking"
-                />
-                <ScreenshotCard
-                  title="Mobile Dashboard"
-                  imageSrc="/mobile-dashboard.png"
-                  alt="Mobile dashboard showing key performance metrics"
-                />
-                <ScreenshotCard
-                  title="Team Management"
-                  imageSrc="/team-management.png"
-                  alt="Team performance and disciplinary management interface"
-                />
-                <ScreenshotCard
-                  title="Performance Analytics"
-                  imageSrc="/evaluation-analytics.png"
-                  alt="Evaluation analytics and performance metrics dashboard"
-                />
-              </div>
-            )}
 
-            <div className="flex justify-center">
-              <Button
-                size="lg"
-                variant="outline"
-                className="border-2 border-[#E51636] text-[#E51636] hover:bg-[#E51636] hover:text-white transition-colors"
-                onClick={() => setShowAllFeatures(!showAllFeatures)}
-              >
-                {showAllFeatures ? (
-                  <>
-                    <ChevronUp className="w-5 h-5 mr-2" />
-                    Show Less Features
-                  </>
-                ) : (
-                  <>
-                    <ChevronDown className="w-5 h-5 mr-2" />
-                    View More Features
-                  </>
-                )}
-              </Button>
-            </div>
-          </div>
 
           {/* Feature Highlights */}
           <div className="grid grid-cols-3 gap-8 mt-12">
@@ -764,26 +1225,36 @@ export default function LandingPage() {
         </div>
       </section>
 
-      {/* Testimonial Section */}
+      {/* About the Creator Section */}
       <section className="py-24 bg-white">
         <div className="container mx-auto px-4 sm:px-6 lg:px-8">
           <div className="max-w-4xl mx-auto bg-gradient-to-br from-[#E51636] to-[#DD0031] rounded-3xl overflow-hidden shadow-2xl">
             <div className="grid md:grid-cols-5">
-              <div className="md:col-span-2 bg-[url('/testimonial-bg.jpg')] bg-cover bg-center hidden md:block">
-                {/* Image will be shown here if available */}
+              <div className="md:col-span-2 relative overflow-hidden">
+                <img
+                  src="/me.jpg"
+                  alt="Creator with family - passionate about leadership development"
+                  className="w-full h-full object-cover"
+                  onError={(e) => {
+                    const target = e.target as HTMLImageElement;
+                    target.style.display = 'none';
+                  }}
+                />
+                <div className="absolute inset-0 bg-gradient-to-t from-black/20 to-transparent"></div>
               </div>
               <div className="md:col-span-3 p-8 md:p-12 text-white">
                 <div className="text-5xl font-serif mb-6">"</div>
                 <blockquote className="text-xl md:text-2xl font-medium mb-8 leading-relaxed">
-                  This platform has completely transformed how we develop our team. The mobile-first design means my team can complete evaluations right on the floor, and the leadership plans have accelerated our development process.
+                  My passion for leadership development drives everything I do. With 10 years at Chick-fil-A and 15 years of leadership development experience, I've seen firsthand how the right tools and development plans can transform teams and elevate performance. This platform represents everything I wish I had when I was developing leaders.
                 </blockquote>
                 <div className="flex items-center">
                   <div className="h-14 w-14 rounded-full bg-white/20 flex items-center justify-center text-white font-bold text-xl mr-4">
-                    JM
+                    JP
                   </div>
                   <div>
-                    <h4 className="font-bold text-xl">John Manager</h4>
-                    <p className="text-red-100">Store Director, Chick-fil-A</p>
+                    <h4 className="font-bold text-xl">Jonathon Pope</h4>
+                    <p className="text-red-100">Creator & Current CFA Leader</p>
+                    <p className="text-red-200 text-sm mt-1">10 Years CFA • 15 Years Leadership Development</p>
                   </div>
                 </div>
               </div>
@@ -797,40 +1268,98 @@ export default function LandingPage() {
         <div className="container mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center mb-12">
             <div className="inline-flex items-center px-3 py-1 rounded-full bg-red-100 text-sm font-medium text-[#E51636] mb-4">
-              Real Results
+              Proven ROI
             </div>
             <h2 className="text-3xl sm:text-4xl font-bold text-gray-900 mb-4">
-              Achieve Operational Excellence
+              Results That Drive Your Bottom Line
             </h2>
             <p className="text-xl text-gray-600 max-w-3xl mx-auto">
-              Our platform is designed to help you reach your full potential.
+              Join successful Chick-fil-A stores already using our platform to outperform their competition.
             </p>
           </div>
 
           <div className="grid gap-8 md:grid-cols-3">
-            <div className="bg-white rounded-2xl shadow-lg p-8 text-center transform transition-all duration-300 hover:scale-105 hover:shadow-xl">
+            <div className="bg-white rounded-2xl shadow-lg p-8 text-center transform transition-all duration-300 hover:scale-105 hover:shadow-xl border-t-4 border-[#E51636]">
               <div className="inline-flex h-16 w-16 rounded-full bg-red-100 items-center justify-center mb-4">
                 <ClipboardCheck className="h-8 w-8 text-[#E51636]" />
               </div>
               <div className="text-4xl font-bold text-[#E51636] mb-2">98%</div>
-              <p className="text-gray-600 font-medium mb-2">Compliance Rate</p>
-              <p className="text-sm text-gray-500">Ensure food safety standards are consistently met</p>
+              <p className="text-gray-600 font-medium mb-2">Food Safety Compliance</p>
+              <p className="text-sm text-gray-500">Eliminate violations and maintain perfect health scores with digital checklists</p>
             </div>
-            <div className="bg-white rounded-2xl shadow-lg p-8 text-center transform transition-all duration-300 hover:scale-105 hover:shadow-xl">
+            <div className="bg-white rounded-2xl shadow-lg p-8 text-center transform transition-all duration-300 hover:scale-105 hover:shadow-xl border-t-4 border-[#E51636]">
               <div className="inline-flex h-16 w-16 rounded-full bg-red-100 items-center justify-center mb-4">
                 <TrendingUp className="h-8 w-8 text-[#E51636]" />
               </div>
               <div className="text-4xl font-bold text-[#E51636] mb-2">45%</div>
               <p className="text-gray-600 font-medium mb-2">Waste Reduction</p>
-              <p className="text-sm text-gray-500">Optimize operations and reduce unnecessary costs</p>
+              <p className="text-sm text-gray-500">Save thousands monthly with real-time waste tracking and analytics</p>
             </div>
-            <div className="bg-white rounded-2xl shadow-lg p-8 text-center transform transition-all duration-300 hover:scale-105 hover:shadow-xl">
+            <div className="bg-white rounded-2xl shadow-lg p-8 text-center transform transition-all duration-300 hover:scale-105 hover:shadow-xl border-t-4 border-[#E51636]">
               <div className="inline-flex h-16 w-16 rounded-full bg-red-100 items-center justify-center mb-4">
                 <GraduationCap className="h-8 w-8 text-[#E51636]" />
               </div>
               <div className="text-4xl font-bold text-[#E51636] mb-2">2x</div>
-              <p className="text-gray-600 font-medium mb-2">Leadership Development</p>
-              <p className="text-sm text-gray-500">Accelerate team member growth and promotion readiness</p>
+              <p className="text-gray-600 font-medium mb-2">Faster Leadership Development</p>
+              <p className="text-sm text-gray-500">Promote team members faster with proven development frameworks</p>
+            </div>
+          </div>
+
+          {/* Value Proposition */}
+          <div className="mt-16 bg-gradient-to-br from-[#E51636] to-[#DD0031] rounded-3xl p-8 md:p-12 text-white">
+            <div className="grid md:grid-cols-2 gap-8 items-center">
+              <div>
+                <h3 className="text-2xl md:text-3xl font-bold mb-6">
+                  Why Top-Performing Stores Choose Our Platform
+                </h3>
+                <div className="space-y-4">
+                  <div className="flex items-start gap-3">
+                    <CheckCircle className="h-6 w-6 text-green-300 flex-shrink-0 mt-1" />
+                    <div>
+                      <h4 className="font-semibold text-lg">Built by CFA Leaders</h4>
+                      <p className="text-red-100">Created by operators with 15+ years of real Chick-fil-A experience</p>
+                    </div>
+                  </div>
+                  <div className="flex items-start gap-3">
+                    <CheckCircle className="h-6 w-6 text-green-300 flex-shrink-0 mt-1" />
+                    <div>
+                      <h4 className="font-semibold text-lg">Mobile-First Design</h4>
+                      <p className="text-red-100">The only platform designed specifically for mobile restaurant operations</p>
+                    </div>
+                  </div>
+                  <div className="flex items-start gap-3">
+                    <CheckCircle className="h-6 w-6 text-green-300 flex-shrink-0 mt-1" />
+                    <div>
+                      <h4 className="font-semibold text-lg">Exclusive Content</h4>
+                      <p className="text-red-100">Access to evaluation templates and development plans you can't get anywhere else</p>
+                    </div>
+                  </div>
+                  <div className="flex items-start gap-3">
+                    <CheckCircle className="h-6 w-6 text-green-300 flex-shrink-0 mt-1" />
+                    <div>
+                      <h4 className="font-semibold text-lg">Immediate ROI</h4>
+                      <p className="text-red-100">Start seeing results in waste reduction and compliance within the first week</p>
+                    </div>
+                  </div>
+                </div>
+              </div>
+              <div className="text-center">
+                <div className="bg-white/10 backdrop-blur-sm rounded-2xl p-6">
+                  <div className="text-4xl font-bold mb-2">$50-200</div>
+                  <p className="text-lg mb-4">per month per section</p>
+                  <p className="text-red-100 text-sm mb-6">
+                    Pay only for what you use. Most stores save more in waste reduction than the entire platform costs.
+                  </p>
+                  <Button
+                    size="lg"
+                    className="bg-white hover:bg-white/90 text-[#E51636] font-bold shadow-lg transition-all duration-300 hover:scale-105 w-full"
+                    onClick={() => navigate('/register')}
+                  >
+                    Start Free Trial
+                    <ArrowRight className="ml-2 h-5 w-5" />
+                  </Button>
+                </div>
+              </div>
             </div>
           </div>
         </div>
