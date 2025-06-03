@@ -10,7 +10,12 @@ import {
   SelectValue,
 } from '@/components/ui/select'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
+import { Button } from '@/components/ui/button'
+import { Calendar } from '@/components/ui/calendar'
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover'
 import { format, startOfMonth, endOfMonth, subMonths, subDays, parseISO, getDay, isSameDay } from 'date-fns'
+import { CalendarIcon } from 'lucide-react'
+import { cn } from '@/lib/utils'
 import useWasteStore from '@/stores/useWasteStore'
 import {
   LineChart,
@@ -60,40 +65,64 @@ function calculateTrend(current: number, previous: number) {
 export default function WasteAnalytics() {
   const [timeRange, setTimeRange] = useState('last30')
   const [selectedTab, setSelectedTab] = useState('overview')
+  const [selectedDate, setSelectedDate] = useState<Date | undefined>(undefined)
   const { entries, fetchWasteEntries, metrics, fetchWasteMetrics } = useWasteStore()
 
   useEffect(() => {
-    // Get current date and set to start of day to ensure consistent date handling
-    const now = new Date()
-    const endDate = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 23, 59, 59)
     let startDate: Date
+    let endDate: Date
 
-    // Calculate start date based on time range
-    switch (timeRange) {
-      case 'last30':
-        // Go back 30 days from current date
-        startDate = new Date(endDate)
-        startDate.setDate(endDate.getDate() - 30)
-        break
-      case 'last90':
-        // Go back 90 days from current date
-        startDate = new Date(endDate)
-        startDate.setDate(endDate.getDate() - 90)
-        break
-      case 'lastMonth':
-        // Get first day of previous month
-        startDate = new Date(endDate.getFullYear(), endDate.getMonth() - 1, 1)
-        // Set end date to last day of previous month
-        endDate.setDate(0) // This sets to last day of previous month
-        break
-      default:
-        // Default to last 30 days
-        startDate = new Date(endDate)
-        startDate.setDate(endDate.getDate() - 30)
+    // If a specific date is selected, use that date
+    if (selectedDate && timeRange === 'specificDate') {
+      startDate = new Date(selectedDate)
+      startDate.setHours(0, 0, 0, 0)
+      endDate = new Date(selectedDate)
+      endDate.setHours(23, 59, 59, 999)
+    } else {
+      // Get current date and set to start of day to ensure consistent date handling
+      const now = new Date()
+      endDate = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 23, 59, 59)
+
+      // Calculate start date based on time range
+      switch (timeRange) {
+        case 'today':
+          // Today only
+          startDate = new Date(endDate)
+          break
+        case 'yesterday':
+          // Yesterday only
+          const yesterday = new Date(now)
+          yesterday.setDate(now.getDate() - 1)
+          startDate = new Date(yesterday)
+          startDate.setHours(0, 0, 0, 0)
+          endDate = new Date(yesterday)
+          endDate.setHours(23, 59, 59, 999)
+          break
+        case 'last30':
+          // Go back 30 days from current date
+          startDate = new Date(endDate)
+          startDate.setDate(endDate.getDate() - 30)
+          break
+        case 'last90':
+          // Go back 90 days from current date
+          startDate = new Date(endDate)
+          startDate.setDate(endDate.getDate() - 90)
+          break
+        case 'lastMonth':
+          // Get first day of previous month
+          startDate = new Date(endDate.getFullYear(), endDate.getMonth() - 1, 1)
+          // Set end date to last day of previous month
+          endDate.setDate(0) // This sets to last day of previous month
+          break
+        default:
+          // Default to last 30 days
+          startDate = new Date(endDate)
+          startDate.setDate(endDate.getDate() - 30)
+      }
+
+      // Set start date to beginning of day
+      startDate.setHours(0, 0, 0, 0)
     }
-
-    // Set start date to beginning of day
-    startDate.setHours(0, 0, 0, 0)
 
     // Format dates for API
     const formattedStartDate = startDate.toISOString()
@@ -102,7 +131,8 @@ export default function WasteAnalytics() {
     console.log('Fetching waste data:', {
       startDate: formattedStartDate,
       endDate: formattedEndDate,
-      timeRange
+      timeRange,
+      selectedDate
     })
 
     // Fetch data
@@ -115,7 +145,7 @@ export default function WasteAnalytics() {
       startDate: formattedStartDate,
       endDate: formattedEndDate
     })
-  }, [timeRange, fetchWasteEntries, fetchWasteMetrics])
+  }, [timeRange, selectedDate, fetchWasteEntries, fetchWasteMetrics])
 
   const {
     dailyChartData,
@@ -243,32 +273,33 @@ export default function WasteAnalytics() {
   }, [entries])
 
   return (
-    <div className="space-y-4 sm:space-y-6">
-      {/* Summary Cards */}
-      <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
-        <Card className="bg-white rounded-[20px] hover:shadow-xl transition-all duration-300">
-          <CardContent className="p-3 sm:p-6">
+    <div className="space-y-6 sm:space-y-8">
+      {/* Enhanced Summary Cards */}
+      <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6">
+        <Card className="bg-gradient-to-br from-red-50 via-red-100/80 to-pink-100/60 rounded-[20px] hover:shadow-xl transition-all duration-500 cursor-pointer overflow-hidden group border border-red-200/50 relative backdrop-blur-sm hover:scale-[1.02]">
+          <div className="absolute inset-0 bg-gradient-to-br from-red-500/10 via-transparent to-pink-500/10 opacity-40"></div>
+          <CardContent className="p-4 sm:p-6 relative">
             <div className="flex items-start justify-between">
-              <div className="flex items-center space-x-2 sm:space-x-4">
-                <div className="p-1.5 sm:p-2 bg-[#E51636]/10 rounded-full">
-                  <DollarSign className="h-4 w-4 sm:h-6 sm:w-6 text-[#E51636]" />
+              <div className="flex items-center space-x-3 sm:space-x-4">
+                <div className="p-2 sm:p-3 bg-gradient-to-br from-red-500/30 to-pink-500/20 rounded-xl group-hover:scale-110 transition-transform duration-300">
+                  <DollarSign className="h-5 w-5 sm:h-6 sm:w-6 text-red-700" />
                 </div>
                 <div>
-                  <p className="text-xs sm:text-sm text-[#27251F]/60 font-medium line-clamp-1">Today's Waste</p>
-                  <h3 className="text-lg sm:text-2xl font-bold mt-0.5 sm:mt-1 text-[#27251F]">{formatCurrency(summaryMetrics.todayTotal)}</h3>
-                  <div className="flex items-center gap-1 mt-0.5">
+                  <p className="text-xs sm:text-sm text-[#27251F]/70 font-medium line-clamp-1">Today's Waste</p>
+                  <h3 className="text-xl sm:text-2xl font-bold mt-1 text-[#27251F] group-hover:text-red-700 transition-colors duration-300">{formatCurrency(summaryMetrics.todayTotal)}</h3>
+                  <div className="flex items-center gap-1 mt-1">
                     {summaryMetrics.trend > 0 ? (
                       <>
                         <ArrowUp className="h-3 w-3 sm:h-4 sm:w-4 text-red-600" />
-                        <span className="text-[10px] sm:text-xs text-red-600">+{Math.abs(Math.round(summaryMetrics.trend))}%</span>
+                        <span className="text-[10px] sm:text-xs text-red-600 font-medium">+{Math.abs(Math.round(summaryMetrics.trend))}%</span>
                       </>
                     ) : summaryMetrics.trend < 0 ? (
                       <>
                         <ArrowDown className="h-3 w-3 sm:h-4 sm:w-4 text-green-600" />
-                        <span className="text-[10px] sm:text-xs text-green-600">-{Math.abs(Math.round(summaryMetrics.trend))}%</span>
+                        <span className="text-[10px] sm:text-xs text-green-600 font-medium">-{Math.abs(Math.round(summaryMetrics.trend))}%</span>
                       </>
                     ) : (
-                      <span className="text-[10px] sm:text-xs text-[#27251F]/60">No change</span>
+                      <span className="text-[10px] sm:text-xs text-[#27251F]/60 font-medium">No change</span>
                     )}
                   </div>
                 </div>
@@ -277,51 +308,54 @@ export default function WasteAnalytics() {
           </CardContent>
         </Card>
 
-        <Card className="bg-white rounded-[20px] hover:shadow-xl transition-all duration-300">
-          <CardContent className="p-3 sm:p-6">
+        <Card className="bg-gradient-to-br from-orange-50 via-orange-100/80 to-amber-100/60 rounded-[20px] hover:shadow-xl transition-all duration-500 cursor-pointer overflow-hidden group border border-orange-200/50 relative backdrop-blur-sm hover:scale-[1.02]">
+          <div className="absolute inset-0 bg-gradient-to-br from-orange-500/10 via-transparent to-amber-500/10 opacity-40"></div>
+          <CardContent className="p-4 sm:p-6 relative">
             <div className="flex items-start justify-between">
-              <div className="flex items-center space-x-2 sm:space-x-4">
-                <div className="p-1.5 sm:p-2 bg-orange-100 rounded-full">
-                  <Package2 className="h-4 w-4 sm:h-6 sm:w-6 text-orange-600" />
+              <div className="flex items-center space-x-3 sm:space-x-4">
+                <div className="p-2 sm:p-3 bg-gradient-to-br from-orange-500/30 to-amber-500/20 rounded-xl group-hover:scale-110 transition-transform duration-300">
+                  <Package2 className="h-5 w-5 sm:h-6 sm:w-6 text-orange-700" />
                 </div>
                 <div>
-                  <p className="text-xs sm:text-sm text-[#27251F]/60 font-medium line-clamp-1">Total Items</p>
-                  <h3 className="text-lg sm:text-2xl font-bold mt-0.5 sm:mt-1 text-[#27251F]">{summaryMetrics.totalItems}</h3>
-                  <p className="text-[10px] sm:text-xs text-[#27251F]/60 mt-0.5">Wasted items</p>
+                  <p className="text-xs sm:text-sm text-[#27251F]/70 font-medium line-clamp-1">Total Items</p>
+                  <h3 className="text-xl sm:text-2xl font-bold mt-1 text-[#27251F] group-hover:text-orange-700 transition-colors duration-300">{summaryMetrics.totalItems}</h3>
+                  <p className="text-[10px] sm:text-xs text-[#27251F]/60 mt-1 font-medium">Wasted items</p>
                 </div>
               </div>
             </div>
           </CardContent>
         </Card>
 
-        <Card className="bg-white rounded-[20px] hover:shadow-xl transition-all duration-300">
-          <CardContent className="p-3 sm:p-6">
+        <Card className="bg-gradient-to-br from-blue-50 via-blue-100/80 to-sky-100/60 rounded-[20px] hover:shadow-xl transition-all duration-500 cursor-pointer overflow-hidden group border border-blue-200/50 relative backdrop-blur-sm hover:scale-[1.02]">
+          <div className="absolute inset-0 bg-gradient-to-br from-blue-500/10 via-transparent to-sky-500/10 opacity-40"></div>
+          <CardContent className="p-4 sm:p-6 relative">
             <div className="flex items-start justify-between">
-              <div className="flex items-center space-x-2 sm:space-x-4">
-                <div className="p-1.5 sm:p-2 bg-blue-100 rounded-full">
-                  <Clock className="h-4 w-4 sm:h-6 sm:w-6 text-blue-600" />
+              <div className="flex items-center space-x-3 sm:space-x-4">
+                <div className="p-2 sm:p-3 bg-gradient-to-br from-blue-500/30 to-sky-500/20 rounded-xl group-hover:scale-110 transition-transform duration-300">
+                  <Clock className="h-5 w-5 sm:h-6 sm:w-6 text-blue-700" />
                 </div>
                 <div>
-                  <p className="text-xs sm:text-sm text-[#27251F]/60 font-medium line-clamp-1">Yesterday</p>
-                  <h3 className="text-lg sm:text-2xl font-bold mt-0.5 sm:mt-1 text-[#27251F]">{formatCurrency(summaryMetrics.yesterdayTotal)}</h3>
-                  <p className="text-[10px] sm:text-xs text-[#27251F]/60 mt-0.5">Total waste</p>
+                  <p className="text-xs sm:text-sm text-[#27251F]/70 font-medium line-clamp-1">Yesterday</p>
+                  <h3 className="text-xl sm:text-2xl font-bold mt-1 text-[#27251F] group-hover:text-blue-700 transition-colors duration-300">{formatCurrency(summaryMetrics.yesterdayTotal)}</h3>
+                  <p className="text-[10px] sm:text-xs text-[#27251F]/60 mt-1 font-medium">Total waste</p>
                 </div>
               </div>
             </div>
           </CardContent>
         </Card>
 
-        <Card className="bg-white rounded-[20px] hover:shadow-xl transition-all duration-300">
-          <CardContent className="p-3 sm:p-6">
+        <Card className="bg-gradient-to-br from-green-50 via-green-100/80 to-emerald-100/60 rounded-[20px] hover:shadow-xl transition-all duration-500 cursor-pointer overflow-hidden group border border-green-200/50 relative backdrop-blur-sm hover:scale-[1.02]">
+          <div className="absolute inset-0 bg-gradient-to-br from-green-500/10 via-transparent to-emerald-500/10 opacity-40"></div>
+          <CardContent className="p-4 sm:p-6 relative">
             <div className="flex items-start justify-between">
-              <div className="flex items-center space-x-2 sm:space-x-4">
-                <div className="p-1.5 sm:p-2 bg-green-100 rounded-full">
-                  <TrendingUp className="h-4 w-4 sm:h-6 sm:w-6 text-green-600" />
+              <div className="flex items-center space-x-3 sm:space-x-4">
+                <div className="p-2 sm:p-3 bg-gradient-to-br from-green-500/30 to-emerald-500/20 rounded-xl group-hover:scale-110 transition-transform duration-300">
+                  <TrendingUp className="h-5 w-5 sm:h-6 sm:w-6 text-green-700" />
                 </div>
                 <div>
-                  <p className="text-xs sm:text-sm text-[#27251F]/60 font-medium line-clamp-1">Average Cost</p>
-                  <h3 className="text-lg sm:text-2xl font-bold mt-0.5 sm:mt-1 text-[#27251F]">{formatCurrency(summaryMetrics.avgCostPerItem)}</h3>
-                  <p className="text-[10px] sm:text-xs text-[#27251F]/60 mt-0.5">Per item</p>
+                  <p className="text-xs sm:text-sm text-[#27251F]/70 font-medium line-clamp-1">Average Cost</p>
+                  <h3 className="text-xl sm:text-2xl font-bold mt-1 text-[#27251F] group-hover:text-green-700 transition-colors duration-300">{formatCurrency(summaryMetrics.avgCostPerItem)}</h3>
+                  <p className="text-[10px] sm:text-xs text-[#27251F]/60 mt-1 font-medium">Per item</p>
                 </div>
               </div>
             </div>
@@ -329,61 +363,112 @@ export default function WasteAnalytics() {
         </Card>
       </div>
 
-      <Tabs value={selectedTab} onValueChange={setSelectedTab} className="space-y-3 sm:space-y-4">
-        <div className="bg-white rounded-[20px] p-3 sm:p-6 flex flex-col md:flex-row md:justify-between md:items-center gap-3 sm:gap-4 shadow-sm transition-all duration-300">
-          <div className="bg-white rounded-[32px] p-1.5 overflow-x-auto hide-scrollbar flex-grow">
-            <TabsList className="w-full grid grid-cols-5 gap-1.5 sm:gap-2 bg-transparent min-w-[600px]">
+      <Tabs value={selectedTab} onValueChange={setSelectedTab} className="space-y-6 sm:space-y-8">
+        <div className="bg-gradient-to-br from-white via-gray-50/30 to-blue-50/20 rounded-[24px] p-4 sm:p-6 flex flex-col md:flex-row md:justify-between md:items-center gap-4 sm:gap-6 shadow-lg hover:shadow-xl transition-all duration-500 border border-gray-200/50 relative overflow-hidden">
+          <div className="absolute inset-0 bg-gradient-to-br from-blue-500/3 via-transparent to-purple-500/3 opacity-40"></div>
+          <div className="bg-white/80 backdrop-blur-sm rounded-[32px] p-3 overflow-x-auto hide-scrollbar flex-grow relative">
+            <TabsList className="w-full grid grid-cols-5 gap-2 sm:gap-3 bg-transparent min-w-[600px] h-auto p-0">
             <TabsTrigger
               value="overview"
-              className="py-1.5 sm:py-2 px-4 sm:px-6 rounded-[24px] text-xs sm:text-sm font-medium text-center flex items-center justify-center data-[state=active]:bg-[#E51636]/5 data-[state=active]:text-[#E51636] data-[state=active]:border data-[state=active]:border-[#E51636]/20 text-[#27251F]/60 hover:bg-gray-50 transition-all relative after:absolute after:inset-0 after:rounded-[24px] after:border after:border-gray-200 data-[state=active]:after:border-[#E51636]/20"
+              className="py-2 sm:py-3 px-4 sm:px-6 rounded-[24px] text-xs sm:text-sm font-semibold text-center flex items-center justify-center data-[state=active]:bg-gradient-to-br data-[state=active]:from-orange-500/10 data-[state=active]:to-amber-500/5 data-[state=active]:text-orange-700 data-[state=active]:border data-[state=active]:border-orange-300/50 text-[#27251F]/60 hover:bg-white/80 hover:text-[#27251F] transition-all duration-300 relative shadow-sm data-[state=active]:shadow-md"
             >
               Overview
             </TabsTrigger>
             <TabsTrigger
               value="dayOfWeek"
-              className="py-1.5 sm:py-2 px-4 sm:px-6 rounded-[24px] text-xs sm:text-sm font-medium text-center flex items-center justify-center data-[state=active]:bg-[#E51636]/5 data-[state=active]:text-[#E51636] data-[state=active]:border data-[state=active]:border-[#E51636]/20 text-[#27251F]/60 hover:bg-gray-50 transition-all relative after:absolute after:inset-0 after:rounded-[24px] after:border after:border-gray-200 data-[state=active]:after:border-[#E51636]/20"
+              className="py-2 sm:py-3 px-4 sm:px-6 rounded-[24px] text-xs sm:text-sm font-semibold text-center flex items-center justify-center data-[state=active]:bg-gradient-to-br data-[state=active]:from-orange-500/10 data-[state=active]:to-amber-500/5 data-[state=active]:text-orange-700 data-[state=active]:border data-[state=active]:border-orange-300/50 text-[#27251F]/60 hover:bg-white/80 hover:text-[#27251F] transition-all duration-300 relative shadow-sm data-[state=active]:shadow-md"
             >
               By Day
             </TabsTrigger>
             <TabsTrigger
               value="mealPeriod"
-              className="py-1.5 sm:py-2 px-4 sm:px-6 rounded-[24px] text-xs sm:text-sm font-medium text-center flex items-center justify-center data-[state=active]:bg-[#E51636]/5 data-[state=active]:text-[#E51636] data-[state=active]:border data-[state=active]:border-[#E51636]/20 text-[#27251F]/60 hover:bg-gray-50 transition-all relative after:absolute after:inset-0 after:rounded-[24px] after:border after:border-gray-200 data-[state=active]:after:border-[#E51636]/20"
+              className="py-2 sm:py-3 px-4 sm:px-6 rounded-[24px] text-xs sm:text-sm font-semibold text-center flex items-center justify-center data-[state=active]:bg-gradient-to-br data-[state=active]:from-orange-500/10 data-[state=active]:to-amber-500/5 data-[state=active]:text-orange-700 data-[state=active]:border data-[state=active]:border-orange-300/50 text-[#27251F]/60 hover:bg-white/80 hover:text-[#27251F] transition-all duration-300 relative shadow-sm data-[state=active]:shadow-md"
             >
               By Meal
             </TabsTrigger>
             <TabsTrigger
               value="hourOfDay"
-              className="py-1.5 sm:py-2 px-4 sm:px-6 rounded-[24px] text-xs sm:text-sm font-medium text-center flex items-center justify-center data-[state=active]:bg-[#E51636]/5 data-[state=active]:text-[#E51636] data-[state=active]:border data-[state=active]:border-[#E51636]/20 text-[#27251F]/60 hover:bg-gray-50 transition-all relative after:absolute after:inset-0 after:rounded-[24px] after:border after:border-gray-200 data-[state=active]:after:border-[#E51636]/20"
+              className="py-2 sm:py-3 px-4 sm:px-6 rounded-[24px] text-xs sm:text-sm font-semibold text-center flex items-center justify-center data-[state=active]:bg-gradient-to-br data-[state=active]:from-orange-500/10 data-[state=active]:to-amber-500/5 data-[state=active]:text-orange-700 data-[state=active]:border data-[state=active]:border-orange-300/50 text-[#27251F]/60 hover:bg-white/80 hover:text-[#27251F] transition-all duration-300 relative shadow-sm data-[state=active]:shadow-md"
             >
               By Hour
             </TabsTrigger>
             <TabsTrigger
               value="topItems"
-              className="py-1.5 sm:py-2 px-4 sm:px-6 rounded-[24px] text-xs sm:text-sm font-medium text-center flex items-center justify-center data-[state=active]:bg-[#E51636]/5 data-[state=active]:text-[#E51636] data-[state=active]:border data-[state=active]:border-[#E51636]/20 text-[#27251F]/60 hover:bg-gray-50 transition-all relative after:absolute after:inset-0 after:rounded-[24px] after:border after:border-gray-200 data-[state=active]:after:border-[#E51636]/20"
+              className="py-2 sm:py-3 px-4 sm:px-6 rounded-[24px] text-xs sm:text-sm font-semibold text-center flex items-center justify-center data-[state=active]:bg-gradient-to-br data-[state=active]:from-orange-500/10 data-[state=active]:to-amber-500/5 data-[state=active]:text-orange-700 data-[state=active]:border data-[state=active]:border-orange-300/50 text-[#27251F]/60 hover:bg-white/80 hover:text-[#27251F] transition-all duration-300 relative shadow-sm data-[state=active]:shadow-md"
             >
               Top Items
             </TabsTrigger>
           </TabsList>
           </div>
-          <Select value={timeRange} onValueChange={setTimeRange}>
-            <SelectTrigger className="w-full md:w-[140px] h-9 sm:h-[40px] bg-white border-2 border-gray-200 rounded-[32px] px-3 sm:px-4 text-xs sm:text-[14px] font-medium text-[#27251F] hover:border-gray-300 focus:border-[#E51636] focus:ring-0 transition-colors">
-              <SelectValue placeholder="Last 30 Days" />
-            </SelectTrigger>
-            <SelectContent className="bg-white border-2 border-gray-200 rounded-2xl shadow-lg min-w-[140px]">
-              <SelectItem value="last30" className="text-xs sm:text-[14px] font-medium text-[#27251F] focus:bg-[#E51636]/5 focus:text-[#E51636]">Last 30 Days</SelectItem>
-              <SelectItem value="last90" className="text-xs sm:text-[14px] font-medium text-[#27251F] focus:bg-[#E51636]/5 focus:text-[#E51636]">Last 90 Days</SelectItem>
-              <SelectItem value="lastMonth" className="text-xs sm:text-[14px] font-medium text-[#27251F] focus:bg-[#E51636]/5 focus:text-[#E51636]">Last Month</SelectItem>
-            </SelectContent>
-          </Select>
+          <div className="flex flex-col sm:flex-row gap-3 sm:gap-4 relative">
+            <Select value={timeRange} onValueChange={(value) => {
+              setTimeRange(value)
+              if (value !== 'specificDate') {
+                setSelectedDate(undefined)
+              }
+            }}>
+              <SelectTrigger className="w-full md:w-[160px] h-10 sm:h-[44px] bg-white/90 backdrop-blur-sm border-2 border-orange-200/50 rounded-[32px] px-4 sm:px-5 text-xs sm:text-[14px] font-semibold text-[#27251F] hover:border-orange-300/70 hover:bg-white focus:border-orange-500/50 focus:ring-0 transition-all duration-300 shadow-sm hover:shadow-md">
+                <SelectValue placeholder="Last 30 Days" />
+              </SelectTrigger>
+              <SelectContent className="bg-white/95 backdrop-blur-sm border-2 border-orange-200/50 rounded-2xl shadow-xl min-w-[160px]">
+                <SelectItem value="today" className="text-xs sm:text-[14px] font-semibold text-[#27251F] focus:bg-orange-500/10 focus:text-orange-700 rounded-lg m-1">Today</SelectItem>
+                <SelectItem value="yesterday" className="text-xs sm:text-[14px] font-semibold text-[#27251F] focus:bg-orange-500/10 focus:text-orange-700 rounded-lg m-1">Yesterday</SelectItem>
+                <SelectItem value="last30" className="text-xs sm:text-[14px] font-semibold text-[#27251F] focus:bg-orange-500/10 focus:text-orange-700 rounded-lg m-1">Last 30 Days</SelectItem>
+                <SelectItem value="last90" className="text-xs sm:text-[14px] font-semibold text-[#27251F] focus:bg-orange-500/10 focus:text-orange-700 rounded-lg m-1">Last 90 Days</SelectItem>
+                <SelectItem value="lastMonth" className="text-xs sm:text-[14px] font-semibold text-[#27251F] focus:bg-orange-500/10 focus:text-orange-700 rounded-lg m-1">Last Month</SelectItem>
+                <SelectItem value="specificDate" className="text-xs sm:text-[14px] font-semibold text-[#27251F] focus:bg-orange-500/10 focus:text-orange-700 rounded-lg m-1">Specific Date</SelectItem>
+              </SelectContent>
+            </Select>
+
+            {timeRange === 'specificDate' && (
+              <Popover>
+                <PopoverTrigger asChild>
+                  <Button
+                    variant="outline"
+                    className={cn(
+                      "w-full md:w-[200px] h-10 sm:h-[44px] bg-white/90 backdrop-blur-sm border-2 border-orange-200/50 rounded-[32px] px-4 sm:px-5 text-xs sm:text-[14px] font-semibold text-[#27251F] hover:border-orange-300/70 hover:bg-white focus:border-orange-500/50 focus:ring-0 transition-all duration-300 justify-start text-left shadow-sm hover:shadow-md",
+                      !selectedDate && "text-[#27251F]/60"
+                    )}
+                  >
+                    <CalendarIcon className="mr-2 h-4 w-4 text-orange-600" />
+                    {selectedDate ? format(selectedDate, "MMM d, yyyy") : "Pick a date"}
+                  </Button>
+                </PopoverTrigger>
+                <PopoverContent className="w-auto p-0 bg-white/95 backdrop-blur-sm border-2 border-orange-200/50 rounded-2xl shadow-xl" align="start">
+                  <Calendar
+                    mode="single"
+                    selected={selectedDate}
+                    onSelect={(date) => {
+                      setSelectedDate(date)
+                      if (date) {
+                        setTimeRange('specificDate')
+                      }
+                    }}
+                    disabled={(date) =>
+                      date > new Date() || date < new Date("2020-01-01")
+                    }
+                    initialFocus
+                    className="rounded-2xl"
+                  />
+                </PopoverContent>
+              </Popover>
+            )}
+          </div>
         </div>
 
         <TabsContent value="overview">
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-3 sm:gap-4">
-            <Card className="bg-white rounded-[20px] hover:shadow-xl transition-all duration-300">
-              <CardHeader className="p-3 sm:p-6 pb-0">
-                <CardTitle className="text-base sm:text-xl font-bold text-[#27251F]">Daily Waste Trend</CardTitle>
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 sm:gap-8">
+            <Card className="bg-gradient-to-br from-white via-blue-50/30 to-sky-50/20 rounded-[24px] hover:shadow-xl transition-all duration-500 border border-blue-200/50 relative overflow-hidden group">
+              <div className="absolute inset-0 bg-gradient-to-br from-blue-500/5 via-transparent to-sky-500/5 opacity-40"></div>
+              <CardHeader className="p-4 sm:p-6 pb-2 relative">
+                <div className="flex items-center gap-3">
+                  <div className="p-2 bg-gradient-to-br from-blue-500/20 to-sky-500/10 rounded-xl">
+                    <TrendingUp className="h-5 w-5 text-blue-700" />
+                  </div>
+                  <CardTitle className="text-lg sm:text-xl font-bold text-[#27251F] group-hover:text-blue-700 transition-colors duration-300">Daily Waste Trend</CardTitle>
+                </div>
               </CardHeader>
-              <CardContent className="p-3 sm:p-6">
+              <CardContent className="p-4 sm:p-6 pt-2 relative">
                 <div className="h-[200px] sm:h-[300px]">
                   <ResponsiveContainer width="100%" height="100%">
                     <LineChart data={dailyChartData}>
@@ -423,28 +508,34 @@ export default function WasteAnalytics() {
               </CardContent>
             </Card>
 
-            <Card className="bg-white rounded-[20px] hover:shadow-xl transition-all duration-300">
-              <CardHeader className="p-3 sm:p-6 pb-0">
-                <CardTitle className="text-base sm:text-xl font-bold text-[#27251F]">Top Wasted Items</CardTitle>
+            <Card className="bg-gradient-to-br from-white via-purple-50/30 to-violet-50/20 rounded-[24px] hover:shadow-xl transition-all duration-500 border border-purple-200/50 relative overflow-hidden group">
+              <div className="absolute inset-0 bg-gradient-to-br from-purple-500/5 via-transparent to-violet-500/5 opacity-40"></div>
+              <CardHeader className="p-4 sm:p-6 pb-2 relative">
+                <div className="flex items-center gap-3">
+                  <div className="p-2 bg-gradient-to-br from-purple-500/20 to-violet-500/10 rounded-xl">
+                    <Package2 className="h-5 w-5 text-purple-700" />
+                  </div>
+                  <CardTitle className="text-lg sm:text-xl font-bold text-[#27251F] group-hover:text-purple-700 transition-colors duration-300">Top Wasted Items</CardTitle>
+                </div>
               </CardHeader>
-              <CardContent className="p-3 sm:p-6">
-                <div className="space-y-3">
+              <CardContent className="p-4 sm:p-6 pt-2 relative">
+                <div className="space-y-4">
                   {topWastedItems.map((item, index) => (
-                    <div key={item.name} className="flex items-center justify-between p-2 sm:p-3 bg-gray-50 rounded-lg">
-                      <div className="flex items-center gap-2 sm:gap-3">
+                    <div key={item.name} className="flex items-center justify-between p-3 sm:p-4 bg-white/60 backdrop-blur-sm rounded-xl border border-white/50 hover:bg-white/80 hover:shadow-md transition-all duration-300 group">
+                      <div className="flex items-center gap-3 sm:gap-4">
                         <div
-                          className="w-2 h-2 sm:w-3 sm:h-3 rounded-full"
+                          className="w-3 h-3 sm:w-4 sm:h-4 rounded-full shadow-sm group-hover:scale-110 transition-transform duration-300"
                           style={{ backgroundColor: COLORS[index % COLORS.length] }}
                         />
                         <div>
-                          <p className="text-xs sm:text-sm font-medium text-[#27251F] line-clamp-1">{item.name}</p>
-                          <p className="text-[10px] sm:text-xs text-[#27251F]/60">{item.count} items</p>
+                          <p className="text-sm sm:text-base font-semibold text-[#27251F] line-clamp-1 group-hover:text-purple-700 transition-colors duration-300">{item.name}</p>
+                          <p className="text-xs sm:text-sm text-[#27251F]/60 font-medium">{item.count} items wasted</p>
                         </div>
                       </div>
                       <div className="text-right">
-                        <p className="text-xs sm:text-sm font-medium text-[#27251F]">{formatCurrency(item.totalCost)}</p>
-                        <p className="text-[10px] sm:text-xs text-[#27251F]/60">
-                          {Math.round((item.totalCost / entries.reduce((sum, entry) => sum + entry.cost, 0)) * 100)}%
+                        <p className="text-sm sm:text-base font-bold text-[#27251F] group-hover:text-purple-700 transition-colors duration-300">{formatCurrency(item.totalCost)}</p>
+                        <p className="text-xs sm:text-sm text-[#27251F]/60 font-medium">
+                          {Math.round((item.totalCost / entries.reduce((sum, entry) => sum + entry.cost, 0)) * 100)}% of total
                         </p>
                       </div>
                     </div>
