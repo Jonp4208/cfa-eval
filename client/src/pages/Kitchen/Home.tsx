@@ -447,31 +447,93 @@ export default function KitchenHome() {
     icon: Icon,
     stats,
     alerts,
-    path
+    path,
+    colorTheme = 'default'
   }: {
     title: string
     icon: any
     stats: { label: string; value: string | number | React.ReactNode; showProgress?: boolean }[]
     alerts?: { type: 'warning' | 'error' | 'success'; message: string }[]
     path: string
-  }) => (
+    colorTheme?: 'default' | 'green' | 'blue' | 'orange' | 'purple'
+  }) => {
+
+    // Define color themes with complete class names for Tailwind
+    const getThemeClasses = (theme: string) => {
+      switch (theme) {
+        case 'green':
+          return {
+            cardBg: 'bg-gradient-to-br from-green-50 via-green-100/80 to-emerald-100/60',
+            iconBg: 'bg-gradient-to-br from-green-500/30 to-emerald-500/20',
+            iconColor: 'text-green-700',
+            titleHover: 'group-hover:text-green-700',
+            valueHover: 'group-hover:text-green-700',
+            arrowHover: 'group-hover:text-green-700',
+            bgPattern: 'bg-gradient-to-br from-green-500/10 via-transparent to-emerald-500/10'
+          }
+        case 'blue':
+          return {
+            cardBg: 'bg-gradient-to-br from-blue-50 via-blue-100/80 to-sky-100/60',
+            iconBg: 'bg-gradient-to-br from-blue-500/30 to-sky-500/20',
+            iconColor: 'text-blue-700',
+            titleHover: 'group-hover:text-blue-700',
+            valueHover: 'group-hover:text-blue-700',
+            arrowHover: 'group-hover:text-blue-700',
+            bgPattern: 'bg-gradient-to-br from-blue-500/10 via-transparent to-sky-500/10'
+          }
+        case 'orange':
+          return {
+            cardBg: 'bg-gradient-to-br from-orange-50 via-orange-100/80 to-amber-100/60',
+            iconBg: 'bg-gradient-to-br from-orange-500/30 to-amber-500/20',
+            iconColor: 'text-orange-700',
+            titleHover: 'group-hover:text-orange-700',
+            valueHover: 'group-hover:text-orange-700',
+            arrowHover: 'group-hover:text-orange-700',
+            bgPattern: 'bg-gradient-to-br from-orange-500/10 via-transparent to-amber-500/10'
+          }
+        case 'purple':
+          return {
+            cardBg: 'bg-gradient-to-br from-purple-50 via-purple-100/80 to-violet-100/60',
+            iconBg: 'bg-gradient-to-br from-purple-500/30 to-violet-500/20',
+            iconColor: 'text-purple-700',
+            titleHover: 'group-hover:text-purple-700',
+            valueHover: 'group-hover:text-purple-700',
+            arrowHover: 'group-hover:text-purple-700',
+            bgPattern: 'bg-gradient-to-br from-purple-500/10 via-transparent to-violet-500/10'
+          }
+        default:
+          return {
+            cardBg: 'bg-gradient-to-br from-white via-gray-50/30 to-blue-50/20',
+            iconBg: 'bg-gradient-to-br from-[#E51636]/15 to-[#E51636]/5',
+            iconColor: 'text-[#E51636]',
+            titleHover: 'group-hover:text-[#E51636]',
+            valueHover: 'group-hover:text-[#E51636]',
+            arrowHover: 'group-hover:text-[#E51636]',
+            bgPattern: 'bg-gradient-to-br from-[#E51636]/3 via-transparent to-blue-500/3'
+          }
+      }
+    }
+
+    const themeClasses = getThemeClasses(colorTheme)
+
+    return (
     <Card
-      className="bg-gradient-to-br from-white via-gray-50/30 to-blue-50/20 rounded-[18px] shadow-lg hover:shadow-xl transition-all duration-500 cursor-pointer overflow-hidden group border border-gray-200/50 relative backdrop-blur-sm hover:scale-[1.02] active:scale-[0.98]"
+      className={`${themeClasses.cardBg} rounded-[18px] shadow-lg hover:shadow-xl transition-all duration-500 cursor-pointer overflow-hidden group border border-gray-200/50 relative backdrop-blur-sm hover:scale-[1.02] active:scale-[0.98]`}
       onClick={() => navigate(path)}
     >
       {/* Subtle background pattern */}
-      <div className="absolute inset-0 bg-gradient-to-br from-[#E51636]/3 via-transparent to-blue-500/3 opacity-40"></div>
+      <div className={`absolute inset-0 ${themeClasses.bgPattern} opacity-40`}></div>
 
       <div className="relative p-4 sm:p-5">
         <div className="flex items-center justify-between mb-3 sm:mb-4">
           <div className="flex items-center gap-2 sm:gap-3">
-            <div className="h-10 w-10 sm:h-12 sm:w-12 bg-gradient-to-br from-[#E51636]/15 to-[#E51636]/5 text-[#E51636] rounded-xl flex items-center justify-center transition-all duration-300 group-hover:scale-110 group-hover:rotate-3 shadow-sm">
+            <div className={`h-10 w-10 sm:h-12 sm:w-12 ${themeClasses.iconBg} ${themeClasses.iconColor} rounded-xl flex items-center justify-center transition-all duration-300 group-hover:scale-110 group-hover:rotate-3 shadow-sm`}>
               <Icon className="h-5 w-5 sm:h-6 sm:w-6" />
             </div>
-            <h3 className="text-sm sm:text-lg font-bold text-[#27251F] line-clamp-1 group-hover:text-[#E51636] transition-colors duration-300">{title}</h3>
+            <h3 className={`text-sm sm:text-lg font-bold text-[#27251F] line-clamp-1 ${themeClasses.titleHover} transition-colors duration-300`}>{title}</h3>
           </div>
-          <div className="h-8 w-8 bg-white/80 rounded-full flex items-center justify-center shadow-sm group-hover:shadow-md transition-all duration-300 group-hover:bg-[#E51636]/10">
-            <ArrowRight className="h-4 w-4 text-[#27251F]/60 group-hover:text-[#E51636] transition-all duration-300 group-hover:translate-x-0.5" />
+          <div className={`h-8 w-8 bg-white/80 rounded-full flex items-center justify-center shadow-sm group-hover:shadow-md transition-all duration-300 group-hover:bg-white/90`}>
+            <ArrowRight className={`h-4 w-4 text-[#27251F]/60 ${themeClasses.arrowHover} transition-all duration-300 group-hover:translate-x-0.5`} />
           </div>
         </div>
 
@@ -481,7 +543,7 @@ export default function KitchenHome() {
               <p className="text-xs sm:text-sm text-[#27251F]/70 font-medium line-clamp-1">{stat.label}</p>
               <div className="flex flex-col">
                 {typeof stat.value === 'string' || typeof stat.value === 'number' ? (
-                  <p className="text-sm sm:text-lg font-bold text-[#27251F] group-hover:text-[#E51636] transition-colors duration-300">{stat.value}</p>
+                  <p className={`text-sm sm:text-lg font-bold text-[#27251F] ${themeClasses.valueHover} transition-colors duration-300`}>{stat.value}</p>
                 ) : (
                   <div className="text-sm sm:text-base font-semibold text-[#27251F]">{stat.value}</div>
                 )}
@@ -539,6 +601,7 @@ export default function KitchenHome() {
       </div>
     </Card>
   )
+  }
 
 
 
@@ -650,6 +713,7 @@ export default function KitchenHome() {
           title={t('kitchen.foodSafety')}
           icon={ShieldCheck}
           path="/kitchen/food-safety"
+          colorTheme="green"
           stats={[
             {
               label: t('kitchen.checklistCompletion', 'Checklist Completion'),
@@ -676,6 +740,7 @@ export default function KitchenHome() {
           title={t('kitchen.wasteTracker')}
           icon={Trash2}
           path="/kitchen/waste-tracker"
+          colorTheme="orange"
           stats={[
             { label: t('kitchen.todaysWaste'), value: `$${getTodaysWaste().toFixed(2)}` },
             { label: t('kitchen.itemsTracked'), value: Array.isArray(wasteEntries) ? wasteEntries.length : 0 }
@@ -686,6 +751,7 @@ export default function KitchenHome() {
           title={t('kitchen.equipmentStatus')}
           icon={Wrench}
           path="/kitchen/equipment"
+          colorTheme="blue"
           stats={[
             {
               label: t('kitchen.equipmentStatus', 'Equipment Status'),
@@ -716,6 +782,7 @@ export default function KitchenHome() {
           title={t('kitchen.shiftChecklists', 'Shift Checklists')}
           icon={ClipboardList}
           path="/kitchen/checklists"
+          colorTheme="purple"
           stats={[
             {
               label: t('kitchen.completionRate', 'Completion Rate'),
