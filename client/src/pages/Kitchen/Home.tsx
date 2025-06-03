@@ -424,7 +424,7 @@ export default function KitchenHome() {
       .reduce((total, entry) => total + entry.value, 0)
   }
 
-  // Enhanced metric card with improved visual styling
+  // Enhanced metric card with beautiful visual styling and animations
   const MetricCard = ({
     title,
     icon: Icon,
@@ -439,40 +439,51 @@ export default function KitchenHome() {
     path: string
   }) => (
     <Card
-      className="bg-white rounded-[16px] shadow-md hover:shadow-lg transition-all duration-300 cursor-pointer overflow-hidden group border border-gray-200"
+      className="bg-gradient-to-br from-white via-gray-50/30 to-blue-50/20 rounded-[18px] shadow-lg hover:shadow-xl transition-all duration-500 cursor-pointer overflow-hidden group border border-gray-200/50 relative backdrop-blur-sm hover:scale-[1.02] active:scale-[0.98]"
       onClick={() => navigate(path)}
     >
-      <div className="p-3 sm:p-5">
-        <div className="flex items-center justify-between mb-2 sm:mb-3">
-          <div className="flex items-center gap-1.5 sm:gap-2">
-            <div className="h-8 w-8 sm:h-9 sm:w-9 bg-[#E51636]/10 text-[#E51636] rounded-md flex items-center justify-center transition-transform group-hover:scale-110 duration-300">
-              <Icon className="h-4 w-4 sm:h-5 sm:w-5" />
+      {/* Subtle background pattern */}
+      <div className="absolute inset-0 bg-gradient-to-br from-[#E51636]/3 via-transparent to-blue-500/3 opacity-40"></div>
+
+      <div className="relative p-4 sm:p-5">
+        <div className="flex items-center justify-between mb-3 sm:mb-4">
+          <div className="flex items-center gap-2 sm:gap-3">
+            <div className="h-10 w-10 sm:h-12 sm:w-12 bg-gradient-to-br from-[#E51636]/15 to-[#E51636]/5 text-[#E51636] rounded-xl flex items-center justify-center transition-all duration-300 group-hover:scale-110 group-hover:rotate-3 shadow-sm">
+              <Icon className="h-5 w-5 sm:h-6 sm:w-6" />
             </div>
-            <h3 className="text-sm sm:text-base font-semibold text-[#27251F] line-clamp-1">{title}</h3>
+            <h3 className="text-sm sm:text-lg font-bold text-[#27251F] line-clamp-1 group-hover:text-[#E51636] transition-colors duration-300">{title}</h3>
           </div>
-          <ArrowRight className="h-4 w-4 text-[#27251F]/60 transition-transform group-hover:translate-x-1 duration-300" />
+          <div className="h-8 w-8 bg-white/80 rounded-full flex items-center justify-center shadow-sm group-hover:shadow-md transition-all duration-300 group-hover:bg-[#E51636]/10">
+            <ArrowRight className="h-4 w-4 text-[#27251F]/60 group-hover:text-[#E51636] transition-all duration-300 group-hover:translate-x-0.5" />
+          </div>
         </div>
 
-        <div className="grid grid-cols-2 gap-2 sm:gap-3">
+        <div className="grid grid-cols-2 gap-3 sm:gap-4">
           {stats.map((stat, index) => (
-            <div key={index} className="space-y-0.5 sm:space-y-1">
-              <p className="text-xs text-[#27251F]/60 line-clamp-1">{stat.label}</p>
+            <div key={index} className="space-y-1 sm:space-y-2 bg-white/60 rounded-lg p-2 sm:p-3 backdrop-blur-sm border border-white/50">
+              <p className="text-xs sm:text-sm text-[#27251F]/70 font-medium line-clamp-1">{stat.label}</p>
               <div className="flex flex-col">
                 {typeof stat.value === 'string' || typeof stat.value === 'number' ? (
-                  <p className="text-xs sm:text-sm font-semibold text-[#27251F]">{stat.value}</p>
+                  <p className="text-sm sm:text-lg font-bold text-[#27251F] group-hover:text-[#E51636] transition-colors duration-300">{stat.value}</p>
                 ) : (
-                  <div className="text-xs sm:text-sm font-semibold text-[#27251F]">{stat.value}</div>
+                  <div className="text-sm sm:text-base font-semibold text-[#27251F]">{stat.value}</div>
                 )}
                 {stat.showProgress && typeof stat.value === 'number' && (
-                  <Progress
-                    value={stat.value as number}
-                    className="h-1.5 mt-1 bg-gray-100"
-                    indicatorClassName={`${
-                      stat.value >= 70 ? 'bg-green-500' :
-                      stat.value >= 40 ? 'bg-amber-500' :
-                      'bg-red-500'
-                    }`}
-                  />
+                  <div className="mt-2">
+                    <Progress
+                      value={stat.value as number}
+                      className="h-2 bg-gray-200/80 rounded-full overflow-hidden"
+                      indicatorClassName={`transition-all duration-700 ease-out rounded-full ${
+                        stat.value >= 70 ? 'bg-gradient-to-r from-green-400 to-green-500' :
+                        stat.value >= 40 ? 'bg-gradient-to-r from-amber-400 to-amber-500' :
+                        'bg-gradient-to-r from-red-400 to-red-500'
+                      }`}
+                    />
+                    <div className="flex justify-between items-center mt-1">
+                      <span className="text-xs text-[#27251F]/60">Progress</span>
+                      <span className="text-xs font-semibold text-[#27251F]">{stat.value}%</span>
+                    </div>
+                  </div>
                 )}
               </div>
             </div>
@@ -480,21 +491,30 @@ export default function KitchenHome() {
         </div>
 
         {alerts && alerts.length > 0 && (
-          <div className="mt-2 sm:mt-3 space-y-1 sm:space-y-1.5">
+          <div className="mt-4 space-y-2">
             {alerts.map((alert, index) => (
               <div
                 key={index}
                 className={cn(
-                  "flex items-center gap-1 sm:gap-1.5 text-xs p-1 sm:p-1.5 rounded-md",
-                  alert.type === 'warning' ? "bg-orange-50 text-orange-600 border border-orange-200" :
-                  alert.type === 'error' ? "bg-red-50 text-red-600 border border-red-200" :
-                  "bg-green-50 text-green-600 border border-green-200"
+                  "flex items-center gap-2 text-xs p-2 sm:p-3 rounded-lg backdrop-blur-sm border transition-all duration-300 hover:scale-[1.02]",
+                  alert.type === 'warning' ? "bg-gradient-to-r from-orange-50 to-amber-50 text-orange-700 border-orange-200/50 shadow-orange-100/50" :
+                  alert.type === 'error' ? "bg-gradient-to-r from-red-50 to-pink-50 text-red-700 border-red-200/50 shadow-red-100/50" :
+                  alert.type === 'info' ? "bg-gradient-to-r from-blue-50 to-indigo-50 text-blue-700 border-blue-200/50 shadow-blue-100/50" :
+                  "bg-gradient-to-r from-green-50 to-emerald-50 text-green-700 border-green-200/50 shadow-green-100/50"
                 )}
               >
-                {alert.type === 'warning' ? <AlertTriangle className="h-3 w-3 flex-shrink-0" /> :
-                 alert.type === 'error' ? <AlertCircle className="h-3 w-3 flex-shrink-0" /> :
-                 <CheckCircle2 className="h-3 w-3 flex-shrink-0" />}
-                <span className="line-clamp-1 text-[10px] sm:text-xs">{alert.message}</span>
+                <div className={cn(
+                  "h-6 w-6 rounded-full flex items-center justify-center flex-shrink-0",
+                  alert.type === 'warning' ? "bg-orange-100" :
+                  alert.type === 'error' ? "bg-red-100" :
+                  alert.type === 'info' ? "bg-blue-100" :
+                  "bg-green-100"
+                )}>
+                  {alert.type === 'warning' ? <AlertTriangle className="h-3 w-3" /> :
+                   alert.type === 'error' ? <AlertCircle className="h-3 w-3" /> :
+                   <CheckCircle2 className="h-3 w-3" />}
+                </div>
+                <span className="line-clamp-1 text-xs sm:text-sm font-medium">{alert.message}</span>
               </div>
             ))}
           </div>
@@ -509,10 +529,54 @@ export default function KitchenHome() {
 
   if (loading) {
     return (
-      <div className="flex items-center justify-center h-48 sm:h-64">
-        <div className="relative h-10 w-10 sm:h-12 sm:w-12">
-          <div className="absolute top-0 left-0 right-0 bottom-0 rounded-full border-2 border-[#E51636]/20"></div>
-          <div className="absolute top-0 left-0 right-0 bottom-0 rounded-full border-t-2 border-[#E51636] animate-spin"></div>
+      <div className="space-y-5 sm:space-y-6">
+        {/* Beautiful loading state with skeleton cards */}
+        <Card className="bg-gradient-to-br from-white via-blue-50/30 to-purple-50/20 rounded-[20px] shadow-lg border border-gray-200/50 overflow-hidden relative">
+          <div className="absolute inset-0 bg-gradient-to-br from-[#E51636]/5 via-transparent to-blue-500/5 opacity-50"></div>
+          <div className="relative p-5 sm:p-6">
+            <div className="flex items-center justify-center py-8">
+              <div className="flex flex-col items-center gap-4">
+                <div className="relative h-12 w-12 sm:h-16 sm:w-16">
+                  <div className="absolute inset-0 rounded-full border-4 border-[#E51636]/20"></div>
+                  <div className="absolute inset-0 rounded-full border-t-4 border-[#E51636] animate-spin"></div>
+                  <div className="absolute inset-2 rounded-full border-2 border-[#E51636]/10"></div>
+                  <div className="absolute inset-2 rounded-full border-t-2 border-[#E51636]/60 animate-spin" style={{ animationDirection: 'reverse', animationDuration: '1.5s' }}></div>
+                </div>
+                <div className="text-center space-y-2">
+                  <h3 className="text-lg font-semibold text-[#27251F] flex items-center gap-2">
+                    <ChefHat className="h-5 w-5 text-[#E51636]" />
+                    Loading Kitchen Dashboard
+                  </h3>
+                  <p className="text-sm text-[#27251F]/70">Gathering your kitchen metrics...</p>
+                </div>
+              </div>
+            </div>
+          </div>
+        </Card>
+
+        {/* Skeleton metric cards */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-5">
+          {[1, 2, 3, 4].map((i) => (
+            <Card key={i} className="bg-gradient-to-br from-white via-gray-50/30 to-blue-50/20 rounded-[18px] shadow-lg border border-gray-200/50 relative backdrop-blur-sm">
+              <div className="absolute inset-0 bg-gradient-to-br from-[#E51636]/3 via-transparent to-blue-500/3 opacity-40"></div>
+              <div className="relative p-4 sm:p-5 animate-pulse">
+                <div className="flex items-center gap-3 mb-4">
+                  <div className="h-12 w-12 bg-gray-200 rounded-xl"></div>
+                  <div className="h-6 bg-gray-200 rounded-lg flex-1"></div>
+                </div>
+                <div className="grid grid-cols-2 gap-3">
+                  <div className="space-y-2 bg-white/60 rounded-lg p-3">
+                    <div className="h-4 bg-gray-200 rounded"></div>
+                    <div className="h-6 bg-gray-200 rounded"></div>
+                  </div>
+                  <div className="space-y-2 bg-white/60 rounded-lg p-3">
+                    <div className="h-4 bg-gray-200 rounded"></div>
+                    <div className="h-6 bg-gray-200 rounded"></div>
+                  </div>
+                </div>
+              </div>
+            </Card>
+          ))}
         </div>
       </div>
     )
@@ -528,35 +592,43 @@ export default function KitchenHome() {
   });
 
   return (
-    <div className="space-y-4 sm:space-y-5">
-      {/* Smart Overview Section - Mobile optimized */}
-      <Card className="bg-gradient-to-br from-white to-gray-50 rounded-[16px] shadow-md border border-gray-200 overflow-hidden">
-        <div className="p-4 sm:p-5">
-          {/* Greeting and overview */}
+    <div className="space-y-5 sm:space-y-6">
+      {/* Enhanced Smart Overview Section with beautiful gradients */}
+      <Card className="bg-gradient-to-br from-white via-blue-50/30 to-purple-50/20 rounded-[20px] shadow-lg hover:shadow-xl transition-all duration-500 border border-gray-200/50 overflow-hidden relative">
+        {/* Subtle background pattern */}
+        <div className="absolute inset-0 bg-gradient-to-br from-[#E51636]/5 via-transparent to-blue-500/5 opacity-50"></div>
+        <div className="relative p-5 sm:p-6">
+          {/* Enhanced greeting and overview */}
           <div className="flex flex-col sm:flex-row sm:items-center justify-between">
-            <div>
-              <h2 className="text-base sm:text-xl font-bold text-[#27251F] flex items-center gap-2">
-                {getTimeBasedGreeting()}, {user?.name?.split(' ')[0] || t('common.user')}
-                <Sparkles className="h-4 w-4 text-[#E51636]" />
+            <div className="space-y-2">
+              <h2 className="text-lg sm:text-2xl font-bold text-[#27251F] flex items-center gap-3">
+                <div className="flex items-center gap-2">
+                  {getTimeBasedGreeting()}, {user?.name?.split(' ')[0] || t('common.user')}
+                  <Sparkles className="h-5 w-5 text-[#E51636] animate-pulse" />
+                </div>
               </h2>
-              <p className="text-xs sm:text-sm text-[#27251F]/70 mt-1">
-                {format(new Date(), 'EEEE, MMMM d')} • <span className="text-[#E51636]">{t('kitchen.kitchenOverview')}</span>
+              <p className="text-sm sm:text-base text-[#27251F]/70 flex items-center gap-2">
+                <ChefHat className="h-4 w-4 text-[#E51636]" />
+                {format(new Date(), 'EEEE, MMMM d')} • <span className="text-[#E51636] font-medium">{t('kitchen.kitchenOverview')}</span>
               </p>
             </div>
-            <Button
-              variant="outline"
-              className="mt-2 sm:mt-0 rounded-full py-1 px-4 border-[#E51636]/20 text-[#E51636] hover:bg-[#E51636]/5 hover:text-[#E51636] transition-all duration-300 text-xs hidden sm:flex touch-manipulation active-scale"
-              onClick={() => navigate('/kitchen/waste-tracker/analytics')}
-            >
-              <BarChart2 className="mr-1 h-3 w-3" />
-              {t('kitchen.viewAnalytics')}
-            </Button>
+            <div className="flex gap-2 mt-3 sm:mt-0">
+              <Button
+                variant="outline"
+                className="rounded-full py-2 px-4 border-[#E51636]/30 text-[#E51636] hover:bg-[#E51636]/10 hover:text-[#E51636] hover:border-[#E51636]/50 transition-all duration-300 text-sm flex items-center gap-2 shadow-sm hover:shadow-md touch-manipulation active-scale backdrop-blur-sm"
+                onClick={() => navigate('/kitchen/waste-tracker/analytics')}
+              >
+                <BarChart2 className="h-4 w-4" />
+                <span className="hidden sm:inline">{t('kitchen.viewAnalytics')}</span>
+                <span className="sm:hidden">Analytics</span>
+              </Button>
+            </div>
           </div>
         </div>
       </Card>
 
-      {/* Metrics Grid - Mobile optimized */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
+      {/* Enhanced Metrics Grid with beautiful spacing and animations */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-6 auto-rows-fr">
         <MetricCard
           title={t('kitchen.foodSafety')}
           icon={ShieldCheck}

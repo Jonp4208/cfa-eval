@@ -62,7 +62,7 @@ const Kitchen: React.FC = () => {
           }
         />
 
-        {/* Navigation with subtle shadow and smooth transitions - visible on all screen sizes */}
+        {/* Clean Navigation with professional styling */}
         <div className="bg-white rounded-[16px] p-2 sm:p-3 shadow-md border border-gray-200 hover:shadow-lg transition-all duration-300">
           <div className="flex flex-col sm:flex-row sm:items-center justify-between">
             <div className="overflow-x-auto hide-scrollbar pb-2 sm:pb-0 w-full">
@@ -144,8 +144,8 @@ const Kitchen: React.FC = () => {
           </div>
         </div>
 
-        {/* Main content area with smooth animations */}
-        <div className="animate-in slide-in-from-bottom-4 duration-300">
+        {/* Enhanced main content area with beautiful animations */}
+        <div className="animate-in slide-in-from-bottom-6 duration-500 ease-out">
           <Outlet />
         </div>
       </div>
