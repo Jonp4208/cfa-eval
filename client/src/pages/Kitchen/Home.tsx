@@ -418,10 +418,27 @@ export default function KitchenHome() {
   }
 
   const getTodaysWaste = () => {
-    const today = new Date().setHours(0, 0, 0, 0)
-    return wasteEntries
-      .filter(entry => new Date(entry.date).setHours(0, 0, 0, 0) === today)
-      .reduce((total, entry) => total + entry.value, 0)
+    try {
+      const today = new Date().setHours(0, 0, 0, 0)
+      const todaysEntries = wasteEntries.filter(entry => {
+        try {
+          return new Date(entry.date).setHours(0, 0, 0, 0) === today
+        } catch (error) {
+          console.warn('Invalid date in waste entry:', entry)
+          return false
+        }
+      })
+
+      const total = todaysEntries.reduce((sum, entry) => {
+        const cost = typeof entry.cost === 'number' && !isNaN(entry.cost) ? entry.cost : 0
+        return sum + cost
+      }, 0)
+
+      return isNaN(total) ? 0 : total
+    } catch (error) {
+      console.error('Error calculating today\'s waste:', error)
+      return 0
+    }
   }
 
   // Enhanced metric card with beautiful visual styling and animations
@@ -661,7 +678,7 @@ export default function KitchenHome() {
           path="/kitchen/waste-tracker"
           stats={[
             { label: t('kitchen.todaysWaste'), value: `$${getTodaysWaste().toFixed(2)}` },
-            { label: t('kitchen.itemsTracked'), value: wasteEntries.length }
+            { label: t('kitchen.itemsTracked'), value: Array.isArray(wasteEntries) ? wasteEntries.length : 0 }
           ]}
         />
 
