@@ -10,16 +10,36 @@ const router = express.Router();
 router.post('/capture', async (req, res) => {
   try {
     const leadData = req.body;
-    
-    // Format the interests for email display
-    const selectedInterests = Object.entries(leadData.interests || {})
-      .filter(([_, selected]) => selected)
-      .map(([interest]) => {
-        // Convert camelCase to Title Case with spaces
-        return interest
-          .replace(/([A-Z])/g, ' $1')
-          .replace(/^./, str => str.toUpperCase());
-      });
+
+    console.log('Received lead data:', leadData);
+
+    // Handle both old interests format and new selectedFeatures format
+    let selectedFeatures = [];
+
+    if (leadData.selectedFeaturesList && Array.isArray(leadData.selectedFeaturesList)) {
+      // New format - use the pre-formatted list
+      selectedFeatures = leadData.selectedFeaturesList;
+    } else if (leadData.selectedFeatures) {
+      // New format - extract from selectedFeatures object
+      selectedFeatures = Object.entries(leadData.selectedFeatures || {})
+        .filter(([_, selected]) => selected)
+        .map(([featureKey]) => {
+          // Convert camelCase to Title Case with spaces
+          return featureKey
+            .replace(/([A-Z])/g, ' $1')
+            .replace(/^./, str => str.toUpperCase());
+        });
+    } else if (leadData.interests) {
+      // Legacy format - convert interests to features
+      selectedFeatures = Object.entries(leadData.interests || {})
+        .filter(([_, selected]) => selected)
+        .map(([interest]) => {
+          // Convert camelCase to Title Case with spaces
+          return interest
+            .replace(/([A-Z])/g, ' $1')
+            .replace(/^./, str => str.toUpperCase());
+        });
+    }
 
     // Create HTML email content
     const emailContent = `
@@ -61,12 +81,40 @@ router.post('/capture', async (req, res) => {
               <td style="padding: 10px; border-bottom: 1px solid #ddd;">${leadData.employeeCount || 'Not provided'}</td>
             </tr>
             <tr>
-              <td style="padding: 10px; border-bottom: 1px solid #ddd;"><strong>Interests:</strong></td>
+              <td style="padding: 10px; border-bottom: 1px solid #ddd;"><strong>Selected Features:</strong></td>
               <td style="padding: 10px; border-bottom: 1px solid #ddd;">
-                ${selectedInterests.length > 0 
-                  ? selectedInterests.map(interest => `<div>• ${interest}</div>`).join('') 
+                ${selectedFeatures.length > 0
+                  ? selectedFeatures.map(feature => `<div>• ${feature}</div>`).join('')
                   : 'None selected'}
               </td>
+            </tr>
+            ${leadData.setupPreference ? `
+            <tr>
+              <td style="padding: 10px; border-bottom: 1px solid #ddd;"><strong>Setup Preference:</strong></td>
+              <td style="padding: 10px; border-bottom: 1px solid #ddd;">
+                <strong>${leadData.setupPreferenceLabel}</strong>
+                ${leadData.setupPreference === 'guided'
+                  ? '<br><span style="color: #2196f3;">📞 Wants personalized setup call!</span>'
+                  : '<br><span style="color: #666;">Prefers self-guided setup</span>'
+                }
+              </td>
+            </tr>
+            ` : ''}
+            ${leadData.calculatedCost !== undefined ? `
+            <tr>
+              <td style="padding: 10px; border-bottom: 1px solid #ddd;"><strong>Monthly Cost:</strong></td>
+              <td style="padding: 10px; border-bottom: 1px solid #ddd;">
+                <strong>$${leadData.calculatedCost}/month</strong>
+                ${leadData.rawCost !== leadData.calculatedCost ? `
+                  <br><small>Raw cost: $${leadData.rawCost} (saved $${leadData.savingsFromMaxPrice} from $200 cap)</small>
+                ` : ''}
+                ${leadData.isAtMaxPrice ? '<br><span style="color: #4caf50;">🎉 Reached maximum price!</span>' : ''}
+              </td>
+            </tr>
+            ` : ''}
+            <tr>
+              <td style="padding: 10px; border-bottom: 1px solid #ddd;"><strong>Trial Type:</strong></td>
+              <td style="padding: 10px; border-bottom: 1px solid #ddd;">${leadData.trialType || '14-day free trial'}</td>
             </tr>
             <tr>
               <td style="padding: 10px; border-bottom: 1px solid #ddd;"><strong>Additional Information:</strong></td>
@@ -74,7 +122,7 @@ router.post('/capture', async (req, res) => {
             </tr>
             <tr>
               <td style="padding: 10px; border-bottom: 1px solid #ddd;"><strong>Submitted On:</strong></td>
-              <td style="padding: 10px; border-bottom: 1px solid #ddd;">${new Date().toLocaleString()}</td>
+              <td style="padding: 10px; border-bottom: 1px solid #ddd;">${leadData.submissionDate ? new Date(leadData.submissionDate).toLocaleString() : new Date().toLocaleString()}</td>
             </tr>
           </table>
         </div>
@@ -104,7 +152,7 @@ router.post('/capture', async (req, res) => {
           
           <p>Thank you for your interest in LD Growth! We've received your request for a free trial.</p>
           
-          <p>Our team will review your information and contact you shortly to set up your 30-day free trial access.</p>
+          <p>Our team will review your information and contact you shortly to set up your 14-day free trial access.</p>
           
           <p>If you have any immediate questions, please feel free to reply to this email.</p>
           
