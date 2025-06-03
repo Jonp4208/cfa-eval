@@ -154,6 +154,8 @@ export default function TrainingProgress() {
     startDate: new Date().toISOString().split('T')[0]
   })
   const [newHires, setNewHires] = useState<NewHire[]>([])
+  const [currentPage, setCurrentPage] = useState(1)
+  const itemsPerPage = 10
 
   useEffect(() => {
     fetchTrainees()
@@ -327,7 +329,7 @@ export default function TrainingProgress() {
     }
   }
 
-  const filteredTrainees = trainees
+  const allFilteredTrainees = trainees
     .filter(trainee => {
       const matchesSearch = trainee.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
         trainee.position.toLowerCase().includes(searchQuery.toLowerCase())
@@ -342,6 +344,17 @@ export default function TrainingProgress() {
       const dateB = b.currentPlan?.startDate ? new Date(b.currentPlan.startDate).getTime() : 0
       return dateB - dateA // Descending order (newest first)
     })
+
+  // Calculate pagination
+  const totalPages = Math.ceil(allFilteredTrainees.length / itemsPerPage)
+  const startIndex = (currentPage - 1) * itemsPerPage
+  const endIndex = startIndex + itemsPerPage
+  const filteredTrainees = allFilteredTrainees.slice(startIndex, endIndex)
+
+  // Reset to page 1 when search or tab changes
+  useEffect(() => {
+    setCurrentPage(1)
+  }, [searchQuery, activeTab])
 
   const getStatusColor = (status: string) => {
     switch (status.toLowerCase()) {
@@ -868,10 +881,82 @@ export default function TrainingProgress() {
         })}
       </div>
 
-      {filteredTrainees.length === 0 && (
+      {filteredTrainees.length === 0 && allFilteredTrainees.length === 0 && (
         <div className="py-12 text-center text-gray-500">
           No trainees found
         </div>
+      )}
+
+      {/* Enhanced Pagination */}
+      {totalPages > 1 && (
+        <Card className="bg-white/80 backdrop-blur-sm border-gray-200/50 shadow-lg rounded-[20px]">
+          <CardContent className="p-4">
+            <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
+              <div className="text-sm text-gray-600">
+                Showing {startIndex + 1} to {Math.min(endIndex, allFilteredTrainees.length)} of {allFilteredTrainees.length} trainees
+              </div>
+              <div className="flex items-center gap-2">
+                <Button
+                  variant="outline"
+                  disabled={currentPage === 1}
+                  onClick={() => setCurrentPage(currentPage - 1)}
+                  className="bg-white/80 hover:bg-white border-gray-200 hover:border-[#E51636]/30 transition-all duration-200 rounded-[12px]"
+                >
+                  Previous
+                </Button>
+
+                {/* Page numbers */}
+                <div className="flex items-center gap-1">
+                  {[...Array(totalPages)].map((_, index) => {
+                    const pageNumber = index + 1
+                    const isCurrentPage = pageNumber === currentPage
+
+                    // Show first page, last page, current page, and pages around current
+                    const showPage = pageNumber === 1 ||
+                                   pageNumber === totalPages ||
+                                   Math.abs(pageNumber - currentPage) <= 1
+
+                    if (!showPage) {
+                      // Show ellipsis for gaps
+                      if (pageNumber === 2 && currentPage > 4) {
+                        return <span key={pageNumber} className="px-2 text-gray-400">...</span>
+                      }
+                      if (pageNumber === totalPages - 1 && currentPage < totalPages - 3) {
+                        return <span key={pageNumber} className="px-2 text-gray-400">...</span>
+                      }
+                      return null
+                    }
+
+                    return (
+                      <Button
+                        key={pageNumber}
+                        variant={isCurrentPage ? "default" : "outline"}
+                        size="sm"
+                        onClick={() => setCurrentPage(pageNumber)}
+                        className={`min-w-[40px] h-10 rounded-[12px] transition-all duration-200 ${
+                          isCurrentPage
+                            ? 'bg-[#E51636] text-white hover:bg-[#E51636]/90 border-[#E51636]'
+                            : 'bg-white/80 hover:bg-white border-gray-200 hover:border-[#E51636]/30 text-gray-700'
+                        }`}
+                      >
+                        {pageNumber}
+                      </Button>
+                    )
+                  })}
+                </div>
+
+                <Button
+                  variant="outline"
+                  disabled={currentPage === totalPages}
+                  onClick={() => setCurrentPage(currentPage + 1)}
+                  className="bg-white/80 hover:bg-white border-gray-200 hover:border-[#E51636]/30 transition-all duration-200 rounded-[12px]"
+                >
+                  Next
+                </Button>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
       )}
 
       {/* Assign Dialog */}

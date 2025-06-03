@@ -324,7 +324,8 @@ export default function Assessments() {
   return (
     <div className="space-y-6 px-4 md:px-6 pb-6">
       {/* Hero Section */}
-      <div className="bg-white rounded-[24px] p-8 md:p-12 border border-gray-100 relative overflow-hidden">
+      <div className="bg-gradient-to-br from-blue-50 via-indigo-50/80 to-purple-50/60 rounded-[24px] p-8 md:p-12 border border-blue-100/50 relative overflow-hidden shadow-lg">
+        <div className="absolute inset-0 bg-gradient-to-br from-blue-500/5 via-transparent to-purple-500/5 opacity-40"></div>
         <div className="relative z-10">
           <div className="max-w-3xl">
             <h1 className="text-3xl md:text-4xl font-bold mb-4 text-[#27251F]">
@@ -492,8 +493,8 @@ export default function Assessments() {
               const existingResponse = Array.isArray(responses) ? responses.find(r => r.template && r.template._id === template._id) : null
 
               return (
-                <Card key={template._id} className="bg-white rounded-[20px] border border-gray-100 hover:shadow-xl hover:border-[#E51636]/20 transition-all duration-300 group">
-                  <CardHeader className="p-6">
+                <Card key={template._id} className="bg-white rounded-[20px] border border-gray-100 hover:shadow-xl hover:border-[#E51636]/20 transition-all duration-300 group flex flex-col h-full">
+                  <CardHeader className="p-6 flex-shrink-0">
                     <div className="flex items-start justify-between mb-3">
                       <div className={`h-12 w-12 rounded-2xl flex items-center justify-center ${getCategoryColor(template.category)} group-hover:scale-110 transition-transform duration-300`}>
                         {getTypeIcon(template.type)}
@@ -519,8 +520,8 @@ export default function Assessments() {
                       </CardDescription>
                     </div>
                   </CardHeader>
-                  <CardContent className="p-6 pt-0">
-                    <div className="space-y-4">
+                  <CardContent className="p-6 pt-0 flex-grow flex flex-col">
+                    <div className="space-y-4 flex-grow">
                       {/* Assessment Info */}
                       <div className="flex items-center justify-between p-3 bg-gray-50 rounded-xl">
                         <div className="flex items-center gap-2 text-sm text-[#27251F]/70">
@@ -553,7 +554,10 @@ export default function Assessments() {
                         </div>
                       )}
 
-                      {/* Action Button */}
+                    </div>
+
+                    {/* Action Button - Always at bottom */}
+                    <div className="mt-4">
                       <Button
                         className={`w-full h-12 text-sm font-semibold rounded-xl transition-all duration-300 ${
                           existingResponse?.status === 'completed'
