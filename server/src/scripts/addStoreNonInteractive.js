@@ -1,6 +1,8 @@
 import mongoose from 'mongoose';
 import dotenv from 'dotenv';
 import { User, Store } from '../models/index.js';
+import { initializeModels } from '../models/initModels.js';
+import { setupNewStoreDefaults } from '../utils/setupNewStore.js';
 import path from 'path';
 import { fileURLToPath } from 'url';
 
@@ -38,6 +40,9 @@ async function addStoreNonInteractive() {
     // Connect to MongoDB
     await mongoose.connect(process.env.MONGODB_URI);
     console.log('Connected to MongoDB');
+
+    // Initialize models
+    initializeModels();
 
     // Check if store already exists
     const existingStore = await Store.findOne({ storeNumber });
@@ -100,7 +105,23 @@ async function addStoreNonInteractive() {
       console.log(`Updated admin user with store reference`);
     }
 
+    // Set up default grading scale and evaluation templates
+    console.log('\n📋 Setting up default evaluation templates...');
+    try {
+      const setupResults = await setupNewStoreDefaults(store._id, adminUser._id);
+      console.log(`✅ Created ${setupResults.templates.length} evaluation templates`);
+      if (setupResults.errors.length > 0) {
+        console.log('⚠️  Some setup items had errors:', setupResults.errors);
+      }
+    } catch (error) {
+      console.error('❌ Error setting up store defaults:', error);
+    }
+
     console.log('\nStore creation completed successfully!');
+    console.log('Summary:');
+    console.log(`- Store: ${storeName} (#${storeNumber})`);
+    console.log(`- Admin: ${adminUser.name} (${adminUser.email})`);
+    console.log('- Default grading scale and evaluation templates created');
 
     // Check if we should activate leadership subscription (optional arg)
     const activateSubscription = args[6] === 'activate-subscription';

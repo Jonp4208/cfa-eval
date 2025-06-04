@@ -1,5 +1,6 @@
 import { Store, User, StoreSubscription } from '../models/index.js';
 import bcrypt from 'bcrypt';
+import { setupNewStoreDefaults } from '../utils/setupNewStore.js';
 import { sendEmail } from '../utils/email.js';
 
 /**
@@ -119,6 +120,15 @@ export const addStore = async (req, res) => {
     // Update store with admin reference
     store.admins = [adminUser._id];
     await store.save();
+
+    // Set up default grading scale and evaluation templates
+    try {
+      const setupResults = await setupNewStoreDefaults(store._id, adminUser._id);
+      console.log(`✅ Created ${setupResults.templates.length} evaluation templates for ${store.name}`);
+    } catch (setupError) {
+      console.error('❌ Error setting up store defaults:', setupError);
+      // Don't fail the store creation if template setup fails
+    }
 
     // Send welcome email to admin
     try {

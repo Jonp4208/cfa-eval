@@ -4,6 +4,8 @@ import { User, Store } from '../models/index.js';
 import readline from 'readline';
 import path from 'path';
 import { fileURLToPath } from 'url';
+import { initializeModels } from '../models/initModels.js';
+import { setupNewStoreDefaults } from '../utils/setupNewStore.js';
 
 // Get the directory path of the current module
 const __filename = fileURLToPath(import.meta.url);
@@ -32,6 +34,9 @@ async function addStore() {
     // Connect to MongoDB
     await mongoose.connect(process.env.MONGODB_URI);
     console.log('Connected to MongoDB');
+
+    // Initialize models
+    initializeModels();
 
     // Get store details from user input
     const storeNumber = await question('Enter store number (e.g., 01234): ');
@@ -109,10 +114,23 @@ async function addStore() {
       console.log(`Updated admin user with store reference`);
     }
 
+    // Set up default grading scale and evaluation templates
+    console.log('\n📋 Setting up default evaluation templates...');
+    try {
+      const setupResults = await setupNewStoreDefaults(store._id, adminUser._id);
+      console.log(`✅ Created ${setupResults.templates.length} evaluation templates`);
+      if (setupResults.errors.length > 0) {
+        console.log('⚠️  Some setup items had errors:', setupResults.errors);
+      }
+    } catch (error) {
+      console.error('❌ Error setting up store defaults:', error);
+    }
+
     console.log('\nStore creation completed successfully!');
     console.log('Summary:');
     console.log(`- Store: ${storeName} (#${storeNumber})`);
     console.log(`- Admin: ${adminUser.name} (${adminUser.email})`);
+    console.log('- Default grading scale and evaluation templates created');
 
     // Ask if leadership subscription should be activated
     const activateSubscription = await question('Do you want to activate leadership subscription for this store? (y/n): ');

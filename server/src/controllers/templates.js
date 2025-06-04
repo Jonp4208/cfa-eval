@@ -24,7 +24,7 @@ export const getTemplates = async (req, res) => {
         // Build query
         const query = { store: store._id };
         if (status !== 'all') {
-            query.isActive = status === 'active';
+            query.status = status === 'active' ? 'active' : 'inactive';
         }
 
         console.log('Template query:', query);
@@ -38,12 +38,12 @@ export const getTemplates = async (req, res) => {
                 id: template._id,
                 name: template.name,
                 description: template.description,
-                isActive: template.isActive,
+                isActive: template.status === 'active',
                 createdBy: template.createdBy?.name || 'Unknown',
                 createdAt: template.createdAt,
                 updatedAt: template.updatedAt,
                 sectionsCount: template.sections?.length || 0,
-                criteriaCount: template.sections?.reduce((acc, section) => 
+                criteriaCount: template.sections?.reduce((acc, section) =>
                     acc + (section.criteria?.length || 0), 0
                 ) || 0
             }))
@@ -122,12 +122,12 @@ export const createTemplate = async (req, res) => {
 
         await template.save();
 
-        res.status(201).json({ 
+        res.status(201).json({
             template: {
                 id: template._id,
                 name: template.name,
                 description: template.description,
-                isActive: template.isActive,
+                isActive: template.status === 'active',
                 sectionsCount: template.sections.length
             }
         });
@@ -243,17 +243,17 @@ export const duplicateTemplate = async (req, res) => {
             sections: sourceTemplate.sections,
             store: req.user.store,
             createdBy: req.user._id,
-            isActive: true
+            status: 'active'
         });
 
         await duplicatedTemplate.save();
 
-        res.status(201).json({ 
+        res.status(201).json({
             template: {
                 id: duplicatedTemplate._id,
                 name: duplicatedTemplate.name,
                 description: duplicatedTemplate.description,
-                isActive: duplicatedTemplate.isActive,
+                isActive: duplicatedTemplate.status === 'active',
                 sectionsCount: duplicatedTemplate.sections.length
             }
         });

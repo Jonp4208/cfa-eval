@@ -310,7 +310,7 @@ function DesktopCarousel() {
       src: "/new/Evaluations.png",
       alt: "Comprehensive employee performance evaluations interface",
       title: "Performance Evaluations",
-      description: "Expert evaluation templates and performance tracking"
+      description: "Two professional evaluation templates: Team Member Performance & Leadership Development"
     },
     {
       src: "/new/analyticsPage.png",
@@ -422,58 +422,7 @@ function DesktopCarousel() {
         <ChevronRight className="w-7 h-7 text-gray-700" />
       </button>
 
-      {/* Content below the image */}
-      <div className="mt-12 grid lg:grid-cols-2 gap-12 items-start">
-        {/* Left side - Description */}
-        <div className="space-y-6">
-          <div>
-            <h3 className="text-3xl font-bold text-gray-900 mb-4">
-              {screenshots[currentSlide].title}
-            </h3>
-            <p className="text-xl text-gray-600 leading-relaxed">
-              {screenshots[currentSlide].description}
-            </p>
-          </div>
 
-          {/* CTA Button */}
-          <div className="pt-4">
-            <button
-              onClick={() => setIsModalOpen(true)}
-              className="inline-flex items-center gap-3 bg-gradient-to-r from-[#E51636] to-[#DD0031] hover:from-[#DD0031] hover:to-[#C41230] text-white px-6 py-3 rounded-xl shadow-lg hover:shadow-xl transition-all duration-300 hover:scale-105"
-            >
-              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-              </svg>
-              View Full Page Screenshot
-            </button>
-          </div>
-        </div>
-
-        {/* Right side - Navigation */}
-        <div className="space-y-6">
-          <h4 className="text-lg font-semibold text-gray-900">Explore All Features:</h4>
-          <div className="grid gap-3">
-            {screenshots.map((screenshot, index) => (
-              <button
-                key={index}
-                onClick={() => setCurrentSlide(index)}
-                className={`text-left p-4 rounded-xl transition-all duration-300 ${
-                  index === currentSlide
-                    ? 'bg-[#E51636] text-white shadow-lg'
-                    : 'bg-gray-100 hover:bg-gray-200 text-gray-700'
-                }`}
-              >
-                <div className="font-medium">{screenshot.title}</div>
-                <div className={`text-sm mt-1 ${
-                  index === currentSlide ? 'text-red-100' : 'text-gray-500'
-                }`}>
-                  {screenshot.description}
-                </div>
-              </button>
-            ))}
-          </div>
-        </div>
-      </div>
 
       {/* Slide indicators */}
       <div className="flex gap-3 justify-center mt-8">
@@ -1273,7 +1222,6 @@ export default function LandingPage() {
                 <div className="absolute inset-0 bg-gradient-to-t from-black/20 to-transparent"></div>
               </div>
               <div className="md:col-span-3 p-8 md:p-12 text-white">
-                <div className="text-5xl font-serif mb-6">"</div>
                 <blockquote className="text-xl md:text-2xl font-medium mb-8 leading-relaxed">
                   My passion for leadership development drives everything I do. With 10 years in restaurant management and 15 years of leadership development experience, I've seen firsthand how the right tools and development plans can transform teams and elevate performance. This platform represents everything I wish I had when I was developing leaders.
                 </blockquote>
