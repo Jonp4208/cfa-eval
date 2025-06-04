@@ -52,7 +52,7 @@ interface WasteEntry {
   notes?: string
 }
 
-// Common waste items in CFA kitchen organized by meal period
+// Common waste items in restaurant kitchen organized by meal period
 const WASTE_ITEMS: WasteItems = {
   breakfast: [
     { name: 'Breakfast Filet', unit: 'pieces', defaultCost: 1.10, icon: '🍗' },

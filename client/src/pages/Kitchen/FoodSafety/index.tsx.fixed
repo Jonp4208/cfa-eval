@@ -108,7 +108,7 @@ const CFA_TEMP_RANGES: Record<string, TempRange> = {
   grilled_nugget_cook: { min: 165, max: 175, warning: 5, type: 'product' }
 };
 
-// Standard CFA checklist categories
+// Standard restaurant checklist categories
 const CHECKLIST_CATEGORIES = [
   { id: 'opening', label: 'Opening Procedures', icon: 'sunrise' },
   { id: 'temp_monitoring', label: 'Temperature Monitoring', icon: 'thermometer' },

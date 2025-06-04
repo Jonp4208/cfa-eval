@@ -78,8 +78,8 @@ interface TempRange {
   type?: 'product'
 }
 
-// Standard CFA temperature ranges
-const CFA_TEMP_RANGES: Record<string, TempRange> = {
+// Standard restaurant temperature ranges
+const TEMP_RANGES: Record<string, TempRange> = {
   // Equipment Temperatures
   walk_in_cooler: { min: 35, max: 41, warning: 2 },
   walk_in_freezer: { min: -10, max: 0, warning: 5 },
@@ -98,7 +98,7 @@ const CFA_TEMP_RANGES: Record<string, TempRange> = {
   grilled_nugget_cook: { min: 165, max: 175, warning: 5, type: 'product' }
 };
 
-// Standard CFA checklist categories
+// Standard restaurant checklist categories
 const CHECKLIST_CATEGORIES = [
   { id: 'opening', label: 'Opening Procedures', icon: 'sunrise' },
   { id: 'temp_monitoring', label: 'Temperature Monitoring', icon: 'thermometer' },
@@ -161,7 +161,7 @@ const FoodSafety: React.FC = () => {
   const [tempView, setTempView] = useState<'equipment' | 'product'>('equipment');
   const [editListsDialog, setEditListsDialog] = useState(false);
   const [editingSection, setEditingSection] = useState<'temperatures' | 'checklist' | null>(null);
-  const [editedTempRanges, setEditedTempRanges] = useState<Record<string, TempRange>>(CFA_TEMP_RANGES);
+  const [editedTempRanges, setEditedTempRanges] = useState<Record<string, TempRange>>(TEMP_RANGES);
   const [editedDailyItems, setEditedDailyItems] = useState<DailyChecklistItems>({
     items: []
   });
@@ -251,7 +251,7 @@ const FoodSafety: React.FC = () => {
       if (configData && configData.temperatureRanges) {
         const newTempRanges = configData.temperatureRanges;
         setEditedTempRanges(newTempRanges);
-        Object.assign(CFA_TEMP_RANGES, newTempRanges);
+        Object.assign(TEMP_RANGES, newTempRanges);
       }
 
       // Set the latest temperatures
@@ -406,7 +406,7 @@ const FoodSafety: React.FC = () => {
     // Return 'pending' if temp is undefined or null, or if value is null
     if (!temp || temp.value === null) return 'pending';
 
-    const range = CFA_TEMP_RANGES[location as keyof typeof CFA_TEMP_RANGES];
+    const range = TEMP_RANGES[location as keyof typeof TEMP_RANGES];
     if (!range) return 'pending';
 
     if (temp.value < range.min || temp.value > range.max) return 'fail';
@@ -425,7 +425,7 @@ const FoodSafety: React.FC = () => {
         setTemperatures({});
       } else if (editingSection === 'checklist') {
         await kitchenService.updateFoodSafetyConfig({
-          temperatureRanges: CFA_TEMP_RANGES,
+          temperatureRanges: TEMP_RANGES,
           dailyChecklistItems: editedDailyItems
         });
         // Reset current checks
@@ -461,7 +461,7 @@ const FoodSafety: React.FC = () => {
       const tempsToSave = Object.entries(newTemperatures)
         .filter(([_, data]) => data.value !== null)
         .map(([location, data]) => {
-          const type = CFA_TEMP_RANGES[location]?.type || 'equipment';
+          const type = TEMP_RANGES[location]?.type || 'equipment';
           return {
           location,
           value: data.value as number,
@@ -1215,7 +1215,7 @@ const FoodSafety: React.FC = () => {
                     onClick={() => {
                 setEditListsDialog(false);
                 // Reset to original values
-                setEditedTempRanges({ ...CFA_TEMP_RANGES });
+                setEditedTempRanges({ ...TEMP_RANGES });
                 setEditedDailyItems({ items: [] });
               }}
             >
@@ -1266,7 +1266,7 @@ const FoodSafety: React.FC = () => {
                 </div>
 
           <div className="p-6 space-y-6 overflow-y-auto flex-1">
-            {Object.entries(CFA_TEMP_RANGES)
+            {Object.entries(TEMP_RANGES)
               .filter(([_, range]) =>
                 recordTempView === 'equipment' ? !range.type : range.type === 'product'
               )
@@ -1377,7 +1377,7 @@ const FoodSafety: React.FC = () => {
                   ).length}
                 </h3>
                 <p className="text-[#27251F]/60 text-xs md:text-sm mt-1">
-                  {Object.keys(CFA_TEMP_RANGES).length} total monitoring points
+                  {Object.keys(TEMP_RANGES).length} total monitoring points
                 </p>
               </div>
               <div className="h-12 w-12 md:h-14 md:w-14 bg-blue-100 text-blue-600 rounded-2xl flex items-center justify-center">
@@ -1674,7 +1674,7 @@ const FoodSafety: React.FC = () => {
             </div>
 
             <div className="space-y-2 sm:space-y-3">
-              {Object.entries(CFA_TEMP_RANGES)
+              {Object.entries(TEMP_RANGES)
                 .filter(([_, range]) =>
                   tempView === 'equipment' ? !range.type : range.type === 'product'
                 )

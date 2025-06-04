@@ -514,7 +514,7 @@ function MobileCarousel() {
     },
     {
       src: "/new/MobileEvaluations.png",
-      alt: "Mobile app showing performance reviews dashboard with real Chick-fil-A evaluation interface",
+      alt: "Mobile app showing performance reviews dashboard with evaluation interface",
       title: "Performance Reviews",
       description: ""
     },
@@ -669,7 +669,7 @@ export default function LandingPage() {
                 Transform Your Team with Expert <span className="text-red-100">Leadership Development</span>
               </h1>
               <p className="text-xl sm:text-2xl text-red-100">
-                The only platform with exclusive Chick-fil-A evaluation templates and proven leadership development plans built by current CFA leaders and Operators with real-world experience.
+                The only platform with exclusive evaluation templates and proven leadership development plans built by current restaurant leaders and operators with real-world experience.
               </p>
               <div className="flex flex-col sm:flex-row gap-4">
                 <Button
@@ -729,7 +729,7 @@ export default function LandingPage() {
               </span>
             </h2>
             <p className="text-xl sm:text-2xl text-gray-600 max-w-4xl mx-auto leading-relaxed">
-              The only platform with <span className="font-bold text-[#E51636]">exclusive CFA evaluation templates</span> and proven leadership development plans built by <span className="font-bold text-[#E51636]">current CFA leaders and Operators</span> with real-world experience.
+              The only platform with <span className="font-bold text-[#E51636]">exclusive evaluation templates</span> and proven leadership development plans built by <span className="font-bold text-[#E51636]">current restaurant leaders and operators</span> with real-world experience.
             </p>
           </div>
 
@@ -756,7 +756,7 @@ export default function LandingPage() {
                   <div>
                     <h3 className="text-2xl font-bold text-gray-900 mb-3">Mobile-First Evaluations</h3>
                     <p className="text-gray-600 text-lg leading-relaxed">
-                      The <span className="font-semibold text-[#E51636]">only platform with comprehensive mobile evaluations</span> designed specifically for Chick-fil-A operations and team development.
+                      The <span className="font-semibold text-[#E51636]">only platform with comprehensive mobile evaluations</span> designed specifically for restaurant operations and team development.
                     </p>
                   </div>
 
@@ -812,7 +812,7 @@ export default function LandingPage() {
                     <h3 className="text-2xl font-bold text-gray-900 mb-3">Expert Leadership Plans</h3>
                     <p className="text-gray-600 text-lg leading-relaxed">
                       <span className="font-semibold text-[#E51636]">Accelerate leadership development by 2x</span> with exclusive plans created by
-                      <span className="font-semibold text-[#E51636]"> current CFA leaders and Operators</span> with proven real-world experience.
+                      <span className="font-semibold text-[#E51636]"> current restaurant leaders and operators</span> with proven real-world experience.
                     </p>
                   </div>
 
@@ -999,7 +999,7 @@ export default function LandingPage() {
                     </div>
                     <div className="flex items-center gap-3 text-sm text-gray-300">
                       <CheckCircle className="h-4 w-4 text-blue-400 flex-shrink-0" />
-                      <span>Pre-built CFA templates</span>
+                      <span>Pre-built evaluation templates</span>
                     </div>
                     <div className="flex items-center gap-3 text-sm text-gray-300">
                       <CheckCircle className="h-4 w-4 text-blue-400 flex-shrink-0" />
@@ -1214,10 +1214,10 @@ export default function LandingPage() {
               See It In Action
             </div>
             <h2 className="text-3xl sm:text-4xl font-bold text-gray-900 mb-4">
-              Built for Real Chick-fil-A Operations
+              Built for Real Restaurant Operations
             </h2>
             <p className="text-xl text-gray-600 max-w-3xl mx-auto">
-              Experience our intuitive interface designed specifically for Chick-fil-A operations by leaders who understand your daily challenges.
+              Experience our intuitive interface designed specifically for restaurant operations by leaders who understand your daily challenges.
             </p>
           </div>
 
@@ -1275,7 +1275,7 @@ export default function LandingPage() {
               <div className="md:col-span-3 p-8 md:p-12 text-white">
                 <div className="text-5xl font-serif mb-6">"</div>
                 <blockquote className="text-xl md:text-2xl font-medium mb-8 leading-relaxed">
-                  My passion for leadership development drives everything I do. With 10 years at Chick-fil-A and 15 years of leadership development experience, I've seen firsthand how the right tools and development plans can transform teams and elevate performance. This platform represents everything I wish I had when I was developing leaders.
+                  My passion for leadership development drives everything I do. With 10 years in restaurant management and 15 years of leadership development experience, I've seen firsthand how the right tools and development plans can transform teams and elevate performance. This platform represents everything I wish I had when I was developing leaders.
                 </blockquote>
                 <div className="flex items-center">
                   <div className="h-14 w-14 rounded-full bg-white/20 flex items-center justify-center text-white font-bold text-xl mr-4">
@@ -1304,7 +1304,7 @@ export default function LandingPage() {
               Results That Drive Your Bottom Line
             </h2>
             <p className="text-xl text-gray-600 max-w-3xl mx-auto">
-              Join successful Chick-fil-A stores already using our platform to outperform their competition.
+              Join successful restaurants already using our platform to outperform their competition.
             </p>
           </div>
 
@@ -1346,8 +1346,8 @@ export default function LandingPage() {
                   <div className="flex items-start gap-3">
                     <CheckCircle className="h-6 w-6 text-green-300 flex-shrink-0 mt-1" />
                     <div>
-                      <h4 className="font-semibold text-lg">Built by CFA Leaders</h4>
-                      <p className="text-red-100">Created by operators with 15+ years of real Chick-fil-A experience</p>
+                      <h4 className="font-semibold text-lg">Built by Restaurant Leaders</h4>
+                      <p className="text-red-100">Created by operators with 15+ years of real restaurant experience</p>
                     </div>
                   </div>
                   <div className="flex items-start gap-3">
@@ -1407,7 +1407,7 @@ export default function LandingPage() {
             Limited Time Offer
           </div>
           <h2 className="text-3xl sm:text-4xl lg:text-5xl font-bold mb-8">
-            Ready for a Platform Built <span className="underline decoration-red-300">Specifically</span> for Chick-fil-A?
+            Ready for a Platform Built <span className="underline decoration-red-300">Specifically</span> for Restaurants?
           </h2>
           <p className="text-xl text-gray-200 mb-8 max-w-2xl mx-auto">
             Get exclusive access to our mobile-first platform with industry-leading evaluations and expert leadership development plans.

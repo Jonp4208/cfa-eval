@@ -9,7 +9,7 @@ dotenv.config();
 const sampleCommunityPlans = [
   {
     name: "New Team Member Onboarding",
-    description: "Comprehensive 5-day onboarding program for new team members covering CFA basics, customer service excellence, and food safety fundamentals.",
+    description: "Comprehensive 5-day onboarding program for new team members covering restaurant basics, customer service excellence, and food safety fundamentals.",
     department: "FOH",
     position: "Team Member",
     type: "New Hire",
@@ -20,8 +20,8 @@ const sampleCommunityPlans = [
         dayNumber: 1,
         tasks: [
           {
-            name: "CFA History & Values",
-            description: "Learn about Chick-fil-A's history, mission, and core values",
+            name: "Restaurant History & Values",
+            description: "Learn about the restaurant's history, mission, and core values",
             duration: 60
           },
           {

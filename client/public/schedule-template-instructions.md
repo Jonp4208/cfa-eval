@@ -1,6 +1,6 @@
-# Chick-fil-A Shift Schedule Template
+# Restaurant Shift Schedule Template
 
-This template is designed to help you create a weekly shift schedule for your Chick-fil-A store. Follow these instructions to properly fill out and upload the schedule.
+This template is designed to help you create a weekly shift schedule for your restaurant. Follow these instructions to properly fill out and upload the schedule.
 
 ## Template Structure
 

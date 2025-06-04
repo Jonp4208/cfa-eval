@@ -68,13 +68,13 @@ const TeamDevelopmentReflectionForm: React.FC<TeamDevelopmentReflectionFormProps
         </DialogHeader>
 
         <div className="space-y-6">
-          {/* Chick-fil-A Example */}
+          {/* Restaurant Example */}
           {task.chickFilAExample && (
             <Card className="bg-red-50 border-red-200">
               <CardHeader>
                 <CardTitle className="text-lg text-red-800 flex items-center gap-2">
                   <Lightbulb className="h-5 w-5" />
-                  Chick-fil-A Reflection Guide
+                  Restaurant Reflection Guide
                 </CardTitle>
               </CardHeader>
               <CardContent>

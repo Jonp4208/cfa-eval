@@ -1123,7 +1123,7 @@ const TeamOverview: React.FC = () => {
                                 <div className="bg-red-50 border border-red-200 rounded-lg p-3">
                                   <h5 className="font-medium text-red-900 text-sm mb-1 flex items-center gap-1">
                                     <Target className="h-3 w-3" />
-                                    Chick-fil-A Application
+                                    Restaurant Application
                                   </h5>
                                   <p className="text-red-800 text-sm">{task.chickFilAExample}</p>
                                 </div>

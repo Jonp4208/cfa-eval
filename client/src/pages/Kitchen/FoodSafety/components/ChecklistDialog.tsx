@@ -22,8 +22,8 @@ import { Plus, X, AlertTriangle } from 'lucide-react'
 import { FoodSafetyChecklist, ChecklistFrequency, WeekDay, ValidationCriteria, CheckType } from '@/types/kitchen'
 import { cn } from "@/lib/utils"
 
-// Import the CFA temperature ranges from the parent component
-const CFA_TEMP_RANGES = {
+// Import the restaurant temperature ranges from the parent component
+const TEMP_RANGES = {
   chicken_cook: { min: 165, max: 175, warning: 5 },
   chicken_hold: { min: 140, max: 145, warning: 3 },
   refrigerator: { min: 34, max: 40, warning: 2 },

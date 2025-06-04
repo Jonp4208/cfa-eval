@@ -103,7 +103,6 @@ export default function Login() {
               <TrendingUp className="h-8 w-8" />
               <h1 className="text-3xl md:text-4xl font-bold">
                 LD Growth
-                <span className="bg-white/10 ml-2 px-2 rounded-lg">CFA</span>
               </h1>
             </div>
             <p className="text-white/80 text-center text-lg">Empowering Team Member Development</p>
