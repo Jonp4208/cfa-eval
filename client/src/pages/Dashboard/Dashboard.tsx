@@ -490,7 +490,7 @@ export default function Dashboard() {
     if (isFeatureEnabled('leadership')) enabledFeatures.push('leadership');
 
     // Define feature priority (most important first)
-    const featurePriority = ['fohTasks', 'evaluations', 'kitchen', 'documentation', 'training', 'leadership'];
+    const featurePriority = ['evaluations', 'leadership', 'fohTasks', 'kitchen', 'documentation', 'training'];
 
     // Sort enabled features by priority
     const prioritizedFeatures = [...enabledFeatures].sort((a, b) => {
@@ -902,7 +902,7 @@ export default function Dashboard() {
             const cards = [];
 
             // Define feature priority (most important first)
-            const featurePriority = ['fohTasks', 'evaluations', 'kitchen', 'documentation', 'training', 'leadership'];
+            const featurePriority = ['evaluations', 'leadership', 'fohTasks', 'kitchen', 'documentation', 'training'];
 
             // Sort enabled features by priority
             const prioritizedFeatures = [...enabledFeatures].sort((a, b) => {

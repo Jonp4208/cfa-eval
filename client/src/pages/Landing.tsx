@@ -18,7 +18,8 @@ import {
   ChevronUp,
   ChevronDown,
   ChevronLeft,
-  ChevronRight
+  ChevronRight,
+  Award
 } from 'lucide-react'
 import { useNavigate } from 'react-router-dom'
 import { useState, useEffect } from 'react'
@@ -123,25 +124,52 @@ function HeroImage() {
 
       {/* Main Content */}
       <div className="relative grid grid-cols-2 gap-4 scale-90">
-        {/* Kitchen Performance Card */}
+        {/* Team Evaluations Card - Moved to top */}
         <div className="col-span-2 bg-white/90 backdrop-blur-sm p-6 rounded-2xl shadow-2xl">
-          <div className="flex items-center gap-4 mb-4">
-            <ChefHat className="w-8 h-8 text-[#E51636]" />
-            <h3 className="text-xl font-semibold text-gray-900">Kitchen Performance</h3>
-          </div>
-          <div className="grid grid-cols-3 gap-4">
-            <div className="space-y-2">
-              <div className="h-2 bg-[#E51636]/20 rounded-full" />
-              <div className="h-2 bg-[#E51636]/30 rounded-full" />
-              <div className="h-2 bg-[#E51636]/40 rounded-full" />
+          <div className="flex items-center justify-between mb-4">
+            <div className="flex items-center gap-4">
+              <Users className="w-8 h-8 text-[#E51636]" />
+              <h3 className="text-xl font-semibold text-gray-900">Team Evaluations</h3>
             </div>
-            <div className="col-span-2">
-              <div className="flex items-end justify-between h-24 px-2">
-                <div className="w-4 bg-[#E51636]/20 rounded-t-lg h-1/3" />
-                <div className="w-4 bg-[#E51636]/30 rounded-t-lg h-1/2" />
-                <div className="w-4 bg-[#E51636]/40 rounded-t-lg h-2/3" />
-                <div className="w-4 bg-[#E51636]/50 rounded-t-lg h-3/4" />
-                <div className="w-4 bg-[#E51636]/60 rounded-t-lg h-full" />
+            <div className="px-2 py-1 bg-[#E51636]/10 rounded-full text-xs font-medium text-[#E51636]">
+              EXCLUSIVE
+            </div>
+          </div>
+          <div className="grid grid-cols-2 gap-4">
+            <div className="space-y-2">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  <div className="w-2 h-2 rounded-full bg-[#E51636]" />
+                  <span className="text-sm text-gray-600">John Smith</span>
+                </div>
+                <div className="flex">
+                  {[1, 2, 3, 4].map((star) => (
+                    <svg key={star} className="w-3 h-3 text-yellow-400 fill-current" viewBox="0 0 24 24">
+                      <path d="M12 17.27L18.18 21l-1.64-7.03L22 9.24l-7.19-.61L12 2 9.19 8.63 2 9.24l5.46 4.73L5.82 21z" />
+                    </svg>
+                  ))}
+                </div>
+              </div>
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  <div className="w-2 h-2 rounded-full bg-[#E51636]" />
+                  <span className="text-sm text-gray-600">Sarah Johnson</span>
+                </div>
+                <div className="flex">
+                  {[1, 2, 3, 4, 5].map((star) => (
+                    <svg key={star} className="w-3 h-3 text-yellow-400 fill-current" viewBox="0 0 24 24">
+                      <path d="M12 17.27L18.18 21l-1.64-7.03L22 9.24l-7.19-.61L12 2 9.19 8.63 2 9.24l5.46 4.73L5.82 21z" />
+                    </svg>
+                  ))}
+                </div>
+              </div>
+            </div>
+            <div className="flex items-center justify-center">
+              <div className="h-20 w-20 rounded-full bg-[#E51636]/10 flex items-center justify-center">
+                <div className="text-center">
+                  <div className="text-xl font-bold text-[#E51636]">4.8</div>
+                  <div className="text-xs text-gray-500">Team Avg</div>
+                </div>
               </div>
             </div>
           </div>
@@ -201,82 +229,56 @@ function HeroImage() {
           </div>
         </div>
 
-        {/* Daily Goals Card */}
+        {/* Leadership Development Card */}
         <div className="bg-white/90 backdrop-blur-sm p-6 rounded-2xl shadow-xl">
           <div className="flex items-center gap-4 mb-4">
-            <Target className="w-6 h-6 text-[#E51636]" />
-            <h3 className="text-lg font-semibold text-gray-900">Daily Goals</h3>
+            <Award className="w-6 h-6 text-[#E51636]" />
+            <h3 className="text-lg font-semibold text-gray-900">Leadership Development</h3>
           </div>
           <div className="space-y-3">
-            <div className="flex items-center gap-2">
-              <div className="h-2 flex-1 bg-gray-200 rounded-full overflow-hidden">
-                <div className="h-full w-[85%] bg-[#E51636] rounded-full" />
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <div className="w-2 h-2 rounded-full bg-blue-500" />
+                <span className="text-sm text-gray-600">Active Plans</span>
               </div>
-              <span className="text-sm font-medium text-gray-600">85%</span>
+              <span className="text-sm font-medium text-blue-600">8</span>
             </div>
-            <div className="grid grid-cols-3 gap-2">
-              <div className="bg-[#E51636]/5 rounded-lg p-2 text-center">
-                <div className="text-sm font-medium text-[#E51636]">12</div>
-                <div className="text-xs text-gray-500">Tasks</div>
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <div className="w-2 h-2 rounded-full bg-green-500" />
+                <span className="text-sm text-gray-600">Completed Tasks</span>
               </div>
-              <div className="bg-[#E51636]/5 rounded-lg p-2 text-center">
-                <div className="text-sm font-medium text-[#E51636]">98%</div>
-                <div className="text-xs text-gray-500">Speed</div>
+              <span className="text-sm font-medium text-green-600">24</span>
+            </div>
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <div className="w-2 h-2 rounded-full bg-purple-500" />
+                <span className="text-sm text-gray-600">Team Leaders</span>
               </div>
-              <div className="bg-[#E51636]/5 rounded-lg p-2 text-center">
-                <div className="text-sm font-medium text-[#E51636]">4.9</div>
-                <div className="text-xs text-gray-500">Rating</div>
-              </div>
+              <span className="text-sm font-medium text-purple-600">5</span>
             </div>
           </div>
         </div>
 
-        {/* Evaluations Card */}
+        {/* Kitchen Performance Card */}
         <div className="col-span-2 bg-white/90 backdrop-blur-sm p-6 rounded-2xl shadow-xl mt-4">
-          <div className="flex items-center justify-between mb-4">
-            <div className="flex items-center gap-4">
-              <Users className="w-6 h-6 text-[#E51636]" />
-              <h3 className="text-lg font-semibold text-gray-900">Team Evaluations</h3>
-            </div>
-            <div className="px-2 py-1 bg-[#E51636]/10 rounded-full text-xs font-medium text-[#E51636]">
-              EXCLUSIVE
-            </div>
+          <div className="flex items-center gap-4 mb-4">
+            <ChefHat className="w-6 h-6 text-[#E51636]" />
+            <h3 className="text-lg font-semibold text-gray-900">Kitchen Performance</h3>
           </div>
-          <div className="grid grid-cols-2 gap-4">
+          <div className="grid grid-cols-3 gap-4">
             <div className="space-y-2">
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-2">
-                  <div className="w-2 h-2 rounded-full bg-[#E51636]" />
-                  <span className="text-sm text-gray-600">John Smith</span>
-                </div>
-                <div className="flex">
-                  {[1, 2, 3, 4].map((star) => (
-                    <svg key={star} className="w-3 h-3 text-yellow-400 fill-current" viewBox="0 0 24 24">
-                      <path d="M12 17.27L18.18 21l-1.64-7.03L22 9.24l-7.19-.61L12 2 9.19 8.63 2 9.24l5.46 4.73L5.82 21z" />
-                    </svg>
-                  ))}
-                </div>
-              </div>
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-2">
-                  <div className="w-2 h-2 rounded-full bg-[#E51636]" />
-                  <span className="text-sm text-gray-600">Sarah Johnson</span>
-                </div>
-                <div className="flex">
-                  {[1, 2, 3, 4, 5].map((star) => (
-                    <svg key={star} className="w-3 h-3 text-yellow-400 fill-current" viewBox="0 0 24 24">
-                      <path d="M12 17.27L18.18 21l-1.64-7.03L22 9.24l-7.19-.61L12 2 9.19 8.63 2 9.24l5.46 4.73L5.82 21z" />
-                    </svg>
-                  ))}
-                </div>
-              </div>
+              <div className="h-2 bg-[#E51636]/20 rounded-full" />
+              <div className="h-2 bg-[#E51636]/30 rounded-full" />
+              <div className="h-2 bg-[#E51636]/40 rounded-full" />
             </div>
-            <div className="flex items-center justify-center">
-              <div className="h-20 w-20 rounded-full bg-[#E51636]/10 flex items-center justify-center">
-                <div className="text-center">
-                  <div className="text-xl font-bold text-[#E51636]">4.8</div>
-                  <div className="text-xs text-gray-500">Team Avg</div>
-                </div>
+            <div className="col-span-2">
+              <div className="flex items-end justify-between h-24 px-2">
+                <div className="w-4 bg-[#E51636]/20 rounded-t-lg h-1/3" />
+                <div className="w-4 bg-[#E51636]/30 rounded-t-lg h-1/2" />
+                <div className="w-4 bg-[#E51636]/40 rounded-t-lg h-2/3" />
+                <div className="w-4 bg-[#E51636]/50 rounded-t-lg h-3/4" />
+                <div className="w-4 bg-[#E51636]/60 rounded-t-lg h-full" />
               </div>
             </div>
           </div>
@@ -339,120 +341,153 @@ function DesktopCarousel() {
   }, [])
 
   return (
-    <div className="relative w-full max-w-7xl mx-auto">
-      {/* Desktop Browser Mockup */}
-      <div className="relative bg-gray-800 rounded-t-2xl shadow-2xl overflow-hidden">
-        {/* Browser Header */}
-        <div className="relative bg-gray-800 p-4 flex items-center">
-          <div className="flex gap-2 absolute left-4">
-            <div className="w-3 h-3 rounded-full bg-red-500" />
-            <div className="w-3 h-3 rounded-full bg-yellow-500" />
-            <div className="w-3 h-3 rounded-full bg-green-500" />
+    <div className="relative w-full max-w-8xl mx-auto">
+      {/* Full-Width Image Showcase */}
+      <div className="relative bg-gradient-to-br from-gray-900 via-gray-800 to-gray-900 rounded-3xl shadow-2xl overflow-hidden">
+        {/* Enhanced Header */}
+        <div className="relative bg-gray-800/90 backdrop-blur-sm p-6 flex items-center justify-between border-b border-gray-700">
+          <div className="flex items-center gap-4">
+            <div className="flex gap-2">
+              <div className="w-3 h-3 rounded-full bg-red-500" />
+              <div className="w-3 h-3 rounded-full bg-yellow-500" />
+              <div className="w-3 h-3 rounded-full bg-green-500" />
+            </div>
+            <div className="text-gray-300 text-lg font-medium">
+              {screenshots[currentSlide].title}
+            </div>
           </div>
-          <div className="w-full text-center text-gray-300 text-base font-medium">
-            {screenshots[currentSlide].title}
-          </div>
-          <div className="absolute right-4 text-gray-500 text-sm">
-            {currentSlide + 1} / {screenshots.length}
+          <div className="flex items-center gap-4">
+            <div className="text-gray-400 text-sm">
+              {currentSlide + 1} of {screenshots.length}
+            </div>
+            <button
+              onClick={() => setIsModalOpen(true)}
+              className="bg-white/10 hover:bg-white/20 text-white px-4 py-2 rounded-lg text-sm transition-all duration-300 flex items-center gap-2"
+            >
+              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+              </svg>
+              View Full Size
+            </button>
           </div>
         </div>
 
-        {/* Screen content with carousel - Full Width */}
-        <div className="aspect-[16/9] lg:aspect-[16/10] bg-white relative overflow-hidden">
-          <div
-            className="flex h-full transition-transform duration-700 ease-in-out"
-            style={{ transform: `translateX(-${currentSlide * 100}%)` }}
-          >
-            {screenshots.map((screenshot, index) => (
-              <div key={index} className="w-full h-full flex-shrink-0 relative">
-                <img
-                  src={screenshot.src}
-                  alt={screenshot.alt}
-                  className="w-full h-full object-contain bg-gray-50"
-                  onError={(e) => {
-                    const target = e.target as HTMLImageElement;
-                    target.src = `https://placehold.co/1200x900/e51636/ffffff?text=${encodeURIComponent(screenshot.title)}`;
-                  }}
-                />
-                {/* Subtle overlay for better contrast */}
-                <div className="absolute inset-0 bg-gradient-to-t from-black/3 via-transparent to-black/3 pointer-events-none"></div>
-              </div>
-            ))}
-          </div>
-
-          {/* Click to expand overlay */}
-          <div
-            className="absolute inset-0 bg-black/0 hover:bg-black/5 transition-all duration-300 flex items-center justify-center group cursor-pointer"
-            onClick={() => setIsModalOpen(true)}
-          >
-            <div className="transform scale-0 group-hover:scale-100 transition-transform duration-300">
-              <div className="w-20 h-20 rounded-full bg-white/95 backdrop-blur-sm flex items-center justify-center shadow-xl border border-gray-200">
-                <svg xmlns="http://www.w3.org/2000/svg" className="h-10 w-10 text-gray-700" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0zM10 7v6m3-3H7" />
-                </svg>
-              </div>
-            </div>
-            {/* Click hint */}
-            <div className="absolute bottom-4 left-1/2 -translate-x-1/2 bg-black/80 text-white px-4 py-2 rounded-full text-sm font-medium opacity-0 group-hover:opacity-100 transition-opacity duration-300">
-              Click to view full page
+        {/* Full-size image display */}
+        <div className="relative bg-white">
+          <div className="aspect-[16/10] relative overflow-hidden">
+            <div
+              className="flex h-full transition-transform duration-1000 ease-in-out"
+              style={{ transform: `translateX(-${currentSlide * 100}%)` }}
+            >
+              {screenshots.map((screenshot, index) => (
+                <div key={index} className="w-full h-full flex-shrink-0 relative">
+                  <img
+                    src={screenshot.src}
+                    alt={screenshot.alt}
+                    className="w-full h-full object-cover object-top cursor-pointer"
+                    onClick={() => setIsModalOpen(true)}
+                    onError={(e) => {
+                      const target = e.target as HTMLImageElement;
+                      target.src = `https://placehold.co/1400x900/e51636/ffffff?text=${encodeURIComponent(screenshot.title)}`;
+                    }}
+                  />
+                  {/* Hover overlay */}
+                  <div className="absolute inset-0 bg-black/0 hover:bg-black/10 transition-all duration-300 flex items-center justify-center group">
+                    <div className="transform scale-0 group-hover:scale-100 transition-transform duration-300">
+                      <div className="bg-white/95 backdrop-blur-sm rounded-full p-4 shadow-xl">
+                        <svg className="w-8 h-8 text-gray-700" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                        </svg>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              ))}
             </div>
           </div>
         </div>
       </div>
 
-      {/* Navigation arrows - Positioned outside for full width */}
+      {/* Navigation arrows */}
       <button
         onClick={prevSlide}
-        className="absolute -left-6 top-1/2 -translate-y-1/2 w-16 h-16 bg-white/95 backdrop-blur-sm rounded-full shadow-xl flex items-center justify-center hover:bg-white transition-all duration-300 hover:scale-110 z-20 border border-gray-200"
+        className="absolute left-6 top-1/2 -translate-y-1/2 w-14 h-14 bg-white/95 backdrop-blur-sm rounded-full shadow-xl flex items-center justify-center hover:bg-white transition-all duration-300 hover:scale-110 z-20"
       >
-        <ChevronLeft className="w-8 h-8 text-gray-700" />
+        <ChevronLeft className="w-7 h-7 text-gray-700" />
       </button>
-
       <button
         onClick={nextSlide}
-        className="absolute -right-6 top-1/2 -translate-y-1/2 w-16 h-16 bg-white/95 backdrop-blur-sm rounded-full shadow-xl flex items-center justify-center hover:bg-white transition-all duration-300 hover:scale-110 z-20 border border-gray-200"
+        className="absolute right-6 top-1/2 -translate-y-1/2 w-14 h-14 bg-white/95 backdrop-blur-sm rounded-full shadow-xl flex items-center justify-center hover:bg-white transition-all duration-300 hover:scale-110 z-20"
       >
-        <ChevronRight className="w-8 h-8 text-gray-700" />
+        <ChevronRight className="w-7 h-7 text-gray-700" />
       </button>
 
-      {/* Current slide info */}
-      <div className="absolute -bottom-20 left-1/2 -translate-x-1/2 text-center max-w-2xl">
-        <div className="text-2xl font-bold text-gray-900 mb-2">
-          {screenshots[currentSlide].title}
-        </div>
-        <div className="text-lg text-gray-600 mb-6">
-          {screenshots[currentSlide].description}
-        </div>
+      {/* Content below the image */}
+      <div className="mt-12 grid lg:grid-cols-2 gap-12 items-start">
+        {/* Left side - Description */}
+        <div className="space-y-6">
+          <div>
+            <h3 className="text-3xl font-bold text-gray-900 mb-4">
+              {screenshots[currentSlide].title}
+            </h3>
+            <p className="text-xl text-gray-600 leading-relaxed">
+              {screenshots[currentSlide].description}
+            </p>
+          </div>
 
-        {/* Slide indicators */}
-        <div className="flex gap-3 justify-center">
-          {screenshots.map((_, index) => (
+          {/* CTA Button */}
+          <div className="pt-4">
             <button
-              key={index}
-              onClick={() => setCurrentSlide(index)}
-              className={`w-4 h-4 rounded-full transition-all duration-300 ${
-                index === currentSlide
-                  ? 'bg-[#E51636] scale-125 shadow-lg'
-                  : 'bg-gray-300 hover:bg-gray-400'
-              }`}
-            />
-          ))}
+              onClick={() => setIsModalOpen(true)}
+              className="inline-flex items-center gap-3 bg-gradient-to-r from-[#E51636] to-[#DD0031] hover:from-[#DD0031] hover:to-[#C41230] text-white px-6 py-3 rounded-xl shadow-lg hover:shadow-xl transition-all duration-300 hover:scale-105"
+            >
+              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+              </svg>
+              View Full Page Screenshot
+            </button>
+          </div>
+        </div>
+
+        {/* Right side - Navigation */}
+        <div className="space-y-6">
+          <h4 className="text-lg font-semibold text-gray-900">Explore All Features:</h4>
+          <div className="grid gap-3">
+            {screenshots.map((screenshot, index) => (
+              <button
+                key={index}
+                onClick={() => setCurrentSlide(index)}
+                className={`text-left p-4 rounded-xl transition-all duration-300 ${
+                  index === currentSlide
+                    ? 'bg-[#E51636] text-white shadow-lg'
+                    : 'bg-gray-100 hover:bg-gray-200 text-gray-700'
+                }`}
+              >
+                <div className="font-medium">{screenshot.title}</div>
+                <div className={`text-sm mt-1 ${
+                  index === currentSlide ? 'text-red-100' : 'text-gray-500'
+                }`}>
+                  {screenshot.description}
+                </div>
+              </button>
+            ))}
+          </div>
         </div>
       </div>
 
-      {/* Feature badges */}
-      <div className="absolute -top-6 -right-6 bg-gradient-to-r from-[#E51636] to-[#DD0031] text-white p-4 rounded-2xl shadow-xl animate-pulse">
-        <div className="text-center">
-          <div className="text-sm font-bold">EXCLUSIVE</div>
-          <div className="text-xs">CFA Features</div>
-        </div>
-      </div>
-
-      <div className="absolute -bottom-6 -left-6 bg-green-500 text-white p-4 rounded-2xl shadow-xl">
-        <div className="text-center">
-          <div className="text-sm font-bold">MOBILE</div>
-          <div className="text-xs">Optimized</div>
-        </div>
+      {/* Slide indicators */}
+      <div className="flex gap-3 justify-center mt-8">
+        {screenshots.map((_, index) => (
+          <button
+            key={index}
+            onClick={() => setCurrentSlide(index)}
+            className={`w-4 h-4 rounded-full transition-all duration-300 ${
+              index === currentSlide
+                ? 'bg-[#E51636] scale-125 shadow-lg'
+                : 'bg-gray-300 hover:bg-gray-400'
+            }`}
+          />
+        ))}
       </div>
 
       {/* Full Page Modal */}
@@ -475,25 +510,25 @@ function MobileCarousel() {
       src: "/new/MobileDashboard.png",
       alt: "Mobile dashboard showing overview of all restaurant management features",
       title: "Dashboard Overview",
-      description: "Complete restaurant management hub"
+      description: ""
     },
     {
       src: "/new/MobileEvaluations.png",
       alt: "Mobile app showing performance reviews dashboard with real Chick-fil-A evaluation interface",
       title: "Performance Reviews",
-      description: "Comprehensive mobile evaluations"
+      description: ""
     },
     {
       src: "/new/MobileKitchenDash.png",
       alt: "Kitchen management dashboard showing food safety checklists and waste tracking",
       title: "Kitchen Management",
-      description: "Digital checklists & waste tracking"
+      description: ""
     },
     {
       src: "/new/MobileFOHTask.png",
       alt: "Front of house task management and team coordination interface",
       title: "FOH Task Management",
-      description: "Team coordination & task tracking"
+      description: ""
     }
   ]
 
@@ -566,16 +601,10 @@ function MobileCarousel() {
         <ChevronRight className="w-6 h-6 text-gray-700" />
       </button>
 
-      {/* Current slide info */}
-      <div className="absolute -bottom-16 left-1/2 -translate-x-1/2 text-center">
-        <div className="text-lg font-bold text-gray-900 mb-1">
-          {screenshots[currentSlide].title}
-        </div>
-        <div className="text-sm text-gray-600 mb-4">
-          {screenshots[currentSlide].description}
-        </div>
+      {/* Current slide info - removed to prevent text overlap */}
 
-        {/* Slide indicators */}
+      {/* Slide indicators */}
+      <div className="absolute -bottom-16 left-1/2 -translate-x-1/2">
         <div className="flex gap-2 justify-center">
           {screenshots.map((_, index) => (
             <button
@@ -634,28 +663,28 @@ export default function LandingPage() {
             <div className="relative z-10 space-y-8">
               <div className="inline-flex items-center px-3 py-1 rounded-full bg-white/20 backdrop-blur-sm text-sm font-medium mb-2">
                 <span className="flex h-2 w-2 rounded-full bg-green-400 mr-2"></span>
-                Built by Chick-fil-A leaders for Chick-fil-A teams
+                Leadership Development & Performance Evaluations
               </div>
               <h1 className="text-4xl sm:text-5xl lg:text-6xl font-bold tracking-tight">
-                Elevate Your Restaurant's <span className="text-red-100">Performance</span>
+                Transform Your Team with Expert <span className="text-red-100">Leadership Development</span>
               </h1>
               <p className="text-xl sm:text-2xl text-red-100">
-                The only mobile-first platform built by Chick-fil-A leaders with exclusive evaluations and leadership development plans based on 15+ years of experience.
+                The only platform with exclusive Chick-fil-A evaluation templates and proven leadership development plans built by current CFA leaders and Operators with real-world experience.
               </p>
               <div className="flex flex-col sm:flex-row gap-4">
                 <Button
                   size="lg"
                   variant="secondary"
-                  className="relative z-20 text-[#E51636] hover:text-[#E51636] bg-white hover:bg-white/90 font-bold shadow-lg transition-all duration-300 hover:scale-105"
+                  className="relative z-20 text-[#E51636] hover:text-[#E51636] bg-white hover:bg-white/90 font-bold text-xl px-10 py-6 shadow-2xl hover:shadow-3xl transition-all duration-300 hover:scale-110 border-2 border-white"
                   onClick={() => navigate('/register')}
                 >
                   Start Free Trial
-                  <ArrowRight className="ml-2 h-5 w-5" />
+                  <ArrowRight className="ml-2 h-6 w-6" />
                 </Button>
                 <Button
                   size="lg"
-                  variant="secondary"
-                  className="relative z-20 bg-white hover:bg-gray-100 text-[#E51636] font-bold border-2 border-[#E51636] transition-all duration-300 hover:scale-105 hover:shadow-lg"
+                  variant="ghost"
+                  className="relative z-20 bg-transparent hover:bg-white/20 text-white hover:text-white font-medium text-lg px-8 py-6 border-2 border-white/40 hover:border-white/60 transition-all duration-300 backdrop-blur-sm"
                   onClick={() => navigate('/login')}
                 >
                   Log In
@@ -694,72 +723,18 @@ export default function LandingPage() {
               PROVEN RESULTS • EXCLUSIVE ACCESS
             </div>
             <h2 className="text-4xl sm:text-5xl lg:text-6xl font-bold text-gray-900 mb-6 leading-tight">
-              Everything You Need to <br />
+              Leadership Development & <br />
               <span className="bg-gradient-to-r from-[#E51636] to-[#DD0031] bg-clip-text text-transparent">
-                Dominate Your Market
+                Performance Evaluations
               </span>
             </h2>
             <p className="text-xl sm:text-2xl text-gray-600 max-w-4xl mx-auto leading-relaxed">
-              Built by Chick-fil-A leaders with <span className="font-bold text-[#E51636]">15+ years of experience</span>.
-              Get the exact tools and strategies that drive top-performing stores.
+              The only platform with <span className="font-bold text-[#E51636]">exclusive CFA evaluation templates</span> and proven leadership development plans built by <span className="font-bold text-[#E51636]">current CFA leaders and Operators</span> with real-world experience.
             </p>
           </div>
 
           <div className="grid gap-8 lg:grid-cols-3 max-w-7xl mx-auto">
-            {/* Kitchen Operations */}
-            <div className="group relative">
-              <div className="absolute inset-0 bg-gradient-to-br from-[#E51636]/20 to-[#DD0031]/20 rounded-3xl blur-xl group-hover:blur-2xl transition-all duration-500 opacity-0 group-hover:opacity-100"></div>
-              <Card className="relative border-0 shadow-2xl hover:shadow-3xl transition-all duration-500 group-hover:-translate-y-2 bg-white/80 backdrop-blur-sm rounded-3xl overflow-hidden">
-                <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-[#E51636] to-[#DD0031]"></div>
-                <CardContent className="p-8 space-y-6">
-                  <div className="flex items-center justify-between">
-                    <div className="h-16 w-16 rounded-2xl bg-gradient-to-br from-red-100 to-red-50 flex items-center justify-center group-hover:from-[#E51636] group-hover:to-[#DD0031] transition-all duration-500 shadow-lg">
-                      <ChefHat className="h-8 w-8 text-[#E51636] group-hover:text-white transition-colors duration-500" />
-                    </div>
-                    <div className="text-right">
-                      <div className="text-2xl font-bold text-[#E51636]">45%</div>
-                      <div className="text-xs text-gray-500 font-medium">WASTE REDUCTION</div>
-                    </div>
-                  </div>
-
-                  <div>
-                    <h3 className="text-2xl font-bold text-gray-900 mb-3">Kitchen Excellence</h3>
-                    <p className="text-gray-600 text-lg leading-relaxed">
-                      <span className="font-semibold text-[#E51636]">Reduce waste by 45%</span> and achieve
-                      <span className="font-semibold text-[#E51636]"> 98% food safety compliance</span> with our proven kitchen management system.
-                    </p>
-                  </div>
-
-                  <div className="space-y-3">
-                    <div className="flex items-center gap-3 p-3 rounded-xl bg-green-50 border border-green-100">
-                      <CheckCircle className="h-5 w-5 text-green-600 flex-shrink-0" />
-                      <span className="text-gray-700 font-medium">Digital Food Safety Checklists</span>
-                    </div>
-                    <div className="flex items-center gap-3 p-3 rounded-xl bg-green-50 border border-green-100">
-                      <CheckCircle className="h-5 w-5 text-green-600 flex-shrink-0" />
-                      <span className="text-gray-700 font-medium">Real-time Waste Tracking</span>
-                    </div>
-                    <div className="flex items-center gap-3 p-3 rounded-xl bg-green-50 border border-green-100">
-                      <CheckCircle className="h-5 w-5 text-green-600 flex-shrink-0" />
-                      <span className="text-gray-700 font-medium">Equipment Status Monitoring</span>
-                    </div>
-                    <div className="flex items-center gap-3 p-3 rounded-xl bg-green-50 border border-green-100">
-                      <CheckCircle className="h-5 w-5 text-green-600 flex-shrink-0" />
-                      <span className="text-gray-700 font-medium">Shift Transition Checklists</span>
-                    </div>
-                  </div>
-
-                  <div className="pt-4 border-t border-gray-100">
-                    <div className="flex items-center justify-between text-sm">
-                      <span className="text-gray-500">ROI in first month</span>
-                      <span className="font-bold text-green-600">$2,000+ saved</span>
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
-            </div>
-
-            {/* Team Development */}
+            {/* Mobile Evaluations */}
             <div className="group relative">
               <div className="absolute inset-0 bg-gradient-to-br from-[#E51636]/20 to-[#DD0031]/20 rounded-3xl blur-xl group-hover:blur-2xl transition-all duration-500 opacity-0 group-hover:opacity-100"></div>
               <Card className="relative border-0 shadow-2xl hover:shadow-3xl transition-all duration-500 group-hover:-translate-y-2 bg-white/80 backdrop-blur-sm rounded-3xl overflow-hidden">
@@ -770,63 +745,7 @@ export default function LandingPage() {
                 <CardContent className="p-8 space-y-6">
                   <div className="flex items-center justify-between">
                     <div className="h-16 w-16 rounded-2xl bg-gradient-to-br from-red-100 to-red-50 flex items-center justify-center group-hover:from-[#E51636] group-hover:to-[#DD0031] transition-all duration-500 shadow-lg">
-                      <GraduationCap className="h-8 w-8 text-[#E51636] group-hover:text-white transition-colors duration-500" />
-                    </div>
-                    <div className="text-right">
-                      <div className="text-2xl font-bold text-[#E51636]">2x</div>
-                      <div className="text-xs text-gray-500 font-medium">FASTER DEVELOPMENT</div>
-                    </div>
-                  </div>
-
-                  <div>
-                    <h3 className="text-2xl font-bold text-gray-900 mb-3">Expert Leadership Plans</h3>
-                    <p className="text-gray-600 text-lg leading-relaxed">
-                      <span className="font-semibold text-[#E51636]">Accelerate leadership development by 2x</span> with exclusive plans created by a leader with
-                      <span className="font-semibold text-[#E51636]"> 15+ years of Chick-fil-A experience</span>.
-                    </p>
-                  </div>
-
-                  <div className="space-y-3">
-                    <div className="flex items-center gap-3 p-3 rounded-xl bg-green-50 border border-green-100">
-                      <CheckCircle className="h-5 w-5 text-green-600 flex-shrink-0" />
-                      <span className="text-gray-700 font-medium">Personalized Growth Paths</span>
-                    </div>
-                    <div className="flex items-center gap-3 p-3 rounded-xl bg-green-50 border border-green-100">
-                      <CheckCircle className="h-5 w-5 text-green-600 flex-shrink-0" />
-                      <span className="text-gray-700 font-medium">Proven Development Frameworks</span>
-                    </div>
-                    <div className="flex items-center gap-3 p-3 rounded-xl bg-green-50 border border-green-100">
-                      <CheckCircle className="h-5 w-5 text-green-600 flex-shrink-0" />
-                      <span className="text-gray-700 font-medium">Leadership Milestone Tracking</span>
-                    </div>
-                    <div className="flex items-center gap-3 p-3 rounded-xl bg-green-50 border border-green-100">
-                      <CheckCircle className="h-5 w-5 text-green-600 flex-shrink-0" />
-                      <span className="text-gray-700 font-medium">360-Degree Feedback System</span>
-                    </div>
-                  </div>
-
-                  <div className="pt-4 border-t border-gray-100">
-                    <div className="flex items-center justify-between text-sm">
-                      <span className="text-gray-500">Promotion readiness</span>
-                      <span className="font-bold text-green-600">50% faster</span>
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
-            </div>
-
-            {/* Team Management */}
-            <div className="group relative">
-              <div className="absolute inset-0 bg-gradient-to-br from-[#E51636]/20 to-[#DD0031]/20 rounded-3xl blur-xl group-hover:blur-2xl transition-all duration-500 opacity-0 group-hover:opacity-100"></div>
-              <Card className="relative border-0 shadow-2xl hover:shadow-3xl transition-all duration-500 group-hover:-translate-y-2 bg-white/80 backdrop-blur-sm rounded-3xl overflow-hidden">
-                <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-[#E51636] to-[#DD0031]"></div>
-                <div className="absolute right-4 top-4 bg-gradient-to-r from-[#E51636] to-[#DD0031] text-white text-xs font-bold py-2 px-4 rounded-full shadow-lg">
-                  EXCLUSIVE
-                </div>
-                <CardContent className="p-8 space-y-6">
-                  <div className="flex items-center justify-between">
-                    <div className="h-16 w-16 rounded-2xl bg-gradient-to-br from-red-100 to-red-50 flex items-center justify-center group-hover:from-[#E51636] group-hover:to-[#DD0031] transition-all duration-500 shadow-lg">
-                      <Users className="h-8 w-8 text-[#E51636] group-hover:text-white transition-colors duration-500" />
+                      <ClipboardCheck className="h-8 w-8 text-[#E51636] group-hover:text-white transition-colors duration-500" />
                     </div>
                     <div className="text-right">
                       <div className="text-2xl font-bold text-[#E51636]">98%</div>
@@ -869,17 +788,128 @@ export default function LandingPage() {
                 </CardContent>
               </Card>
             </div>
+
+            {/* Team Development */}
+            <div className="group relative">
+              <div className="absolute inset-0 bg-gradient-to-br from-[#E51636]/20 to-[#DD0031]/20 rounded-3xl blur-xl group-hover:blur-2xl transition-all duration-500 opacity-0 group-hover:opacity-100"></div>
+              <Card className="relative border-0 shadow-2xl hover:shadow-3xl transition-all duration-500 group-hover:-translate-y-2 bg-white/80 backdrop-blur-sm rounded-3xl overflow-hidden">
+                <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-[#E51636] to-[#DD0031]"></div>
+                <div className="absolute right-4 top-4 bg-gradient-to-r from-[#E51636] to-[#DD0031] text-white text-xs font-bold py-2 px-4 rounded-full shadow-lg">
+                  EXCLUSIVE
+                </div>
+                <CardContent className="p-8 space-y-6">
+                  <div className="flex items-center justify-between">
+                    <div className="h-16 w-16 rounded-2xl bg-gradient-to-br from-red-100 to-red-50 flex items-center justify-center group-hover:from-[#E51636] group-hover:to-[#DD0031] transition-all duration-500 shadow-lg">
+                      <GraduationCap className="h-8 w-8 text-[#E51636] group-hover:text-white transition-colors duration-500" />
+                    </div>
+                    <div className="text-right">
+                      <div className="text-2xl font-bold text-[#E51636]">2x</div>
+                      <div className="text-xs text-gray-500 font-medium">FASTER DEVELOPMENT</div>
+                    </div>
+                  </div>
+
+                  <div>
+                    <h3 className="text-2xl font-bold text-gray-900 mb-3">Expert Leadership Plans</h3>
+                    <p className="text-gray-600 text-lg leading-relaxed">
+                      <span className="font-semibold text-[#E51636]">Accelerate leadership development by 2x</span> with exclusive plans created by
+                      <span className="font-semibold text-[#E51636]"> current CFA leaders and Operators</span> with proven real-world experience.
+                    </p>
+                  </div>
+
+                  <div className="space-y-3">
+                    <div className="flex items-center gap-3 p-3 rounded-xl bg-green-50 border border-green-100">
+                      <CheckCircle className="h-5 w-5 text-green-600 flex-shrink-0" />
+                      <span className="text-gray-700 font-medium">Personalized Growth Paths</span>
+                    </div>
+                    <div className="flex items-center gap-3 p-3 rounded-xl bg-green-50 border border-green-100">
+                      <CheckCircle className="h-5 w-5 text-green-600 flex-shrink-0" />
+                      <span className="text-gray-700 font-medium">Proven Development Frameworks</span>
+                    </div>
+                    <div className="flex items-center gap-3 p-3 rounded-xl bg-green-50 border border-green-100">
+                      <CheckCircle className="h-5 w-5 text-green-600 flex-shrink-0" />
+                      <span className="text-gray-700 font-medium">Leadership Milestone Tracking</span>
+                    </div>
+                    <div className="flex items-center gap-3 p-3 rounded-xl bg-green-50 border border-green-100">
+                      <CheckCircle className="h-5 w-5 text-green-600 flex-shrink-0" />
+                      <span className="text-gray-700 font-medium">360-Degree Feedback System</span>
+                    </div>
+                  </div>
+
+                  <div className="pt-4 border-t border-gray-100">
+                    <div className="flex items-center justify-between text-sm">
+                      <span className="text-gray-500">Promotion readiness</span>
+                      <span className="font-bold text-green-600">50% faster</span>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+            </div>
+
+            {/* Performance Analytics */}
+            <div className="group relative">
+              <div className="absolute inset-0 bg-gradient-to-br from-[#E51636]/20 to-[#DD0031]/20 rounded-3xl blur-xl group-hover:blur-2xl transition-all duration-500 opacity-0 group-hover:opacity-100"></div>
+              <Card className="relative border-0 shadow-2xl hover:shadow-3xl transition-all duration-500 group-hover:-translate-y-2 bg-white/80 backdrop-blur-sm rounded-3xl overflow-hidden">
+                <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-[#E51636] to-[#DD0031]"></div>
+                <CardContent className="p-8 space-y-6">
+                  <div className="flex items-center justify-between">
+                    <div className="h-16 w-16 rounded-2xl bg-gradient-to-br from-red-100 to-red-50 flex items-center justify-center group-hover:from-[#E51636] group-hover:to-[#DD0031] transition-all duration-500 shadow-lg">
+                      <TrendingUp className="h-8 w-8 text-[#E51636] group-hover:text-white transition-colors duration-500" />
+                    </div>
+                    <div className="text-right">
+                      <div className="text-2xl font-bold text-[#E51636]">85%</div>
+                      <div className="text-xs text-gray-500 font-medium">IMPROVEMENT RATE</div>
+                    </div>
+                  </div>
+
+                  <div>
+                    <h3 className="text-2xl font-bold text-gray-900 mb-3">Performance Analytics</h3>
+                    <p className="text-gray-600 text-lg leading-relaxed">
+                      Track team development progress with <span className="font-semibold text-[#E51636]">detailed analytics and insights</span> that help you make data-driven leadership decisions.
+                    </p>
+                  </div>
+
+                  <div className="space-y-3">
+                    <div className="flex items-center gap-3 p-3 rounded-xl bg-green-50 border border-green-100">
+                      <CheckCircle className="h-5 w-5 text-green-600 flex-shrink-0" />
+                      <span className="text-gray-700 font-medium">Individual Progress Tracking</span>
+                    </div>
+                    <div className="flex items-center gap-3 p-3 rounded-xl bg-green-50 border border-green-100">
+                      <CheckCircle className="h-5 w-5 text-green-600 flex-shrink-0" />
+                      <span className="text-gray-700 font-medium">Team Performance Insights</span>
+                    </div>
+                    <div className="flex items-center gap-3 p-3 rounded-xl bg-green-50 border border-green-100">
+                      <CheckCircle className="h-5 w-5 text-green-600 flex-shrink-0" />
+                      <span className="text-gray-700 font-medium">Development Milestone Reports</span>
+                    </div>
+                    <div className="flex items-center gap-3 p-3 rounded-xl bg-green-50 border border-green-100">
+                      <CheckCircle className="h-5 w-5 text-green-600 flex-shrink-0" />
+                      <span className="text-gray-700 font-medium">ROI Performance Metrics</span>
+                    </div>
+                  </div>
+
+                  <div className="pt-4 border-t border-gray-100">
+                    <div className="flex items-center justify-between text-sm">
+                      <span className="text-gray-500">Performance improvement</span>
+                      <span className="font-bold text-green-600">85% of team</span>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+            </div>
           </div>
 
           {/* Bottom CTA */}
           <div className="text-center mt-16">
-            <div className="inline-flex items-center gap-4 bg-gradient-to-r from-[#E51636] to-[#DD0031] text-white px-8 py-4 rounded-2xl shadow-2xl hover:shadow-3xl transition-all duration-300 hover:scale-105">
+            <Button
+              onClick={() => navigate('/register')}
+              className="inline-flex items-center gap-4 bg-gradient-to-r from-[#E51636] to-[#DD0031] hover:from-[#DD0031] hover:to-[#C41230] text-white px-8 py-4 rounded-2xl shadow-2xl hover:shadow-3xl transition-all duration-300 hover:scale-105 border-none h-auto"
+            >
               <div className="text-left">
                 <div className="text-sm font-medium opacity-90">Start seeing results in</div>
                 <div className="text-xl font-bold">7 days or less</div>
               </div>
               <ArrowRight className="h-6 w-6" />
-            </div>
+            </Button>
           </div>
         </div>
       </section>
