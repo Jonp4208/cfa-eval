@@ -15,7 +15,8 @@ import {
   CheckCircle, Activity, Target,
   ArrowLeft, Pencil, Plus, Stethoscope, MessageSquare, File,
   Building, Clock, BadgeCheck, Users, Briefcase, Info,
-  GraduationCap, BookOpen as BookOpenIcon, Layers, CheckCircle2
+  GraduationCap, BookOpen as BookOpenIcon, Layers, CheckCircle2,
+  UserCheck, UserX
 } from 'lucide-react';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
@@ -329,6 +330,28 @@ export default function UserProfile() {
     }
   });
 
+  // Toggle user status mutation
+  const toggleStatusMutation = useMutation({
+    mutationFn: async () => {
+      const response = await api.patch(`/api/users/${id}/status`);
+      return response.data;
+    },
+    onSuccess: (data) => {
+      toast({
+        title: 'Success',
+        description: data.message,
+      });
+      refetch(); // Refresh the profile data
+    },
+    onError: (error: any) => {
+      toast({
+        title: 'Error',
+        description: error.response?.data?.message || 'Failed to update user status',
+        variant: 'destructive',
+      });
+    }
+  });
+
   // Set initial selected manager
   useEffect(() => {
     if (profile?.manager?._id) {
@@ -611,6 +634,91 @@ export default function UserProfile() {
             </div>
           </CardContent>
         </Card>
+
+        {/* Status Management Card - Only for Directors */}
+        {currentUser?.position === 'Director' && (
+          <Card className="bg-white rounded-[20px] shadow-md overflow-hidden border-none">
+            <CardHeader className="bg-[#F9F9F9] border-b border-gray-100 p-6">
+              <CardTitle className="text-xl text-[#27251F] flex items-center gap-2">
+                {profile.status === 'active' ? (
+                  <UserCheck className="w-5 h-5 text-green-600" />
+                ) : (
+                  <UserX className="w-5 h-5 text-red-600" />
+                )}
+                Account Status
+              </CardTitle>
+              <CardDescription>
+                Manage user access and account status
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="p-6">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-4">
+                  <div className={`h-12 w-12 rounded-xl flex items-center justify-center ${
+                    profile.status === 'active'
+                      ? 'bg-green-100'
+                      : 'bg-red-100'
+                  }`}>
+                    {profile.status === 'active' ? (
+                      <UserCheck className="w-6 h-6 text-green-600" />
+                    ) : (
+                      <UserX className="w-6 h-6 text-red-600" />
+                    )}
+                  </div>
+                  <div>
+                    <h3 className="font-semibold text-[#27251F]">
+                      {profile.status === 'active' ? 'Active Account' : 'Inactive Account'}
+                    </h3>
+                    <p className="text-sm text-[#27251F]/60">
+                      {profile.status === 'active'
+                        ? 'User can log in and access the system'
+                        : 'User cannot log in but all data is preserved'
+                      }
+                    </p>
+                  </div>
+                </div>
+                <Button
+                  onClick={() => {
+                    const action = profile.status === 'active' ? 'deactivate' : 'activate';
+                    if (confirm(`Are you sure you want to ${action} ${profile.name}?`)) {
+                      toggleStatusMutation.mutate();
+                    }
+                  }}
+                  disabled={toggleStatusMutation.isPending}
+                  variant={profile.status === 'active' ? 'destructive' : 'default'}
+                  className={profile.status === 'active'
+                    ? 'bg-red-600 hover:bg-red-700'
+                    : 'bg-green-600 hover:bg-green-700'
+                  }
+                >
+                  {toggleStatusMutation.isPending ? (
+                    <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2" />
+                  ) : profile.status === 'active' ? (
+                    <UserX className="w-4 h-4 mr-2" />
+                  ) : (
+                    <UserCheck className="w-4 h-4 mr-2" />
+                  )}
+                  {profile.status === 'active' ? 'Deactivate User' : 'Activate User'}
+                </Button>
+              </div>
+
+              {profile.status === 'inactive' && (
+                <div className="mt-4 p-4 bg-amber-50 border border-amber-200 rounded-lg">
+                  <div className="flex items-start gap-3">
+                    <AlertCircle className="w-5 h-5 text-amber-600 mt-0.5" />
+                    <div>
+                      <h4 className="font-medium text-amber-800">Account Deactivated</h4>
+                      <p className="text-sm text-amber-700 mt-1">
+                        This user cannot log in or access the system. All data including evaluations,
+                        training records, and documentation is preserved and will be restored when the account is reactivated.
+                      </p>
+                    </div>
+                  </div>
+                </div>
+              )}
+            </CardContent>
+          </Card>
+        )}
 
         {/* Tabs */}
         <Tabs defaultValue="performance" className="space-y-6">

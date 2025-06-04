@@ -209,3 +209,45 @@ export const updateUser = async (req, res) => {
     res.status(400).json({ error: error.message });
   }
 };
+
+// Toggle user status (active/inactive) - Directors only
+export const toggleUserStatus = async (req, res) => {
+  try {
+    const { id } = req.params;
+
+    // Only Directors can toggle user status
+    if (req.user.position !== 'Director') {
+      return res.status(403).json({
+        message: 'Access denied. Only Directors can activate or deactivate users.'
+      });
+    }
+
+    // Find the user and ensure it belongs to the same store
+    const user = await User.findOne({
+      _id: id,
+      store: req.user.store._id
+    });
+
+    if (!user) {
+      return res.status(404).json({ message: 'User not found' });
+    }
+
+    // Toggle the status
+    const newStatus = user.status === 'active' ? 'inactive' : 'active';
+
+    const updatedUser = await User.findByIdAndUpdate(
+      id,
+      { status: newStatus },
+      { new: true, runValidators: true }
+    ).populate('store', 'name storeNumber')
+     .populate('manager', 'name');
+
+    res.json({
+      user: updatedUser,
+      message: `User ${newStatus === 'active' ? 'activated' : 'deactivated'} successfully`
+    });
+  } catch (error) {
+    console.error('Error toggling user status:', error);
+    res.status(500).json({ message: 'Error updating user status' });
+  }
+};

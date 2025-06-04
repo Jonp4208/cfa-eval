@@ -64,12 +64,23 @@ const canManageUsers = (user: any) => {
   return user?.role === 'admin' || user?.position === 'Director' || user?.position === 'Leader';
 };
 
+// Helper function to check if user can toggle status (Directors only)
+const canToggleStatus = (user: any) => {
+  return user?.position === 'Director';
+};
+
+// Helper function to check if user can delete users (Admins only)
+const canDeleteUsers = (user: any) => {
+  return user?.role === 'admin';
+};
+
 export default function Users() {
   const navigate = useNavigate();
   const queryClient = useQueryClient();
   const [searchQuery, setSearchQuery] = useState('');
   const [sortBy, setSortBy] = useState<'name' | 'position' | 'department' | 'role' | 'manager'>('name');
   const [filterBy, setFilterBy] = useState<'all' | 'FOH' | 'BOH' | 'myTeam'>('all');
+  const [statusFilter, setStatusFilter] = useState<'active' | 'inactive'>('active');
   const [showAddDialog, setShowAddDialog] = useState(false);
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
   const [showEmailResetDialog, setShowEmailResetDialog] = useState(false);
@@ -128,6 +139,8 @@ export default function Users() {
     }
   });
 
+
+
   // Fetch users with role-based filtering
   const { data, isLoading, error } = useQuery<{ users: UserType[] }>({
     queryKey: ['users'],
@@ -176,6 +189,9 @@ export default function Users() {
     const matchesSearch = user.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
       user.email.toLowerCase().includes(searchQuery.toLowerCase());
 
+    // Filter by status (active/inactive)
+    const matchesStatus = user.status === statusFilter;
+
     // Filter by department or my team
     let matchesFilter = true;
     if (filterBy !== 'all') {
@@ -199,7 +215,7 @@ export default function Users() {
       userStore: user.store?._id
     });
 
-    return matchesSearch && matchesFilter && sameStore;
+    return matchesSearch && matchesFilter && matchesStatus && sameStore;
   });
 
   console.log('Filtered users:', filteredUsers);
@@ -403,13 +419,35 @@ export default function Users() {
             <CardContent className="p-3 sm:p-4 md:p-6">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-xs sm:text-sm font-medium text-[#27251F]/60">Active Users</p>
+                  <p className="text-xs sm:text-sm font-medium text-[#27251F]/60">
+                    {statusFilter === 'active' ? 'Active Users' : 'Inactive Users'}
+                  </p>
                   <h3 className="text-xl sm:text-2xl md:text-3xl font-bold mt-1 sm:mt-2 text-[#27251F]">
-                    {users?.filter(user => user.status === 'active').length || 0}
+                    {users?.filter(user => user.status === statusFilter).length || 0}
                   </h3>
                 </div>
-                <div className="h-10 w-10 sm:h-12 sm:w-12 md:h-14 md:w-14 bg-green-50 rounded-xl sm:rounded-2xl flex items-center justify-center">
-                  <Shield className="h-5 w-5 sm:h-6 sm:w-6 md:h-7 md:w-7 text-green-600" />
+                <div className={`h-10 w-10 sm:h-12 sm:w-12 md:h-14 md:w-14 rounded-xl sm:rounded-2xl flex items-center justify-center ${
+                  statusFilter === 'active' ? 'bg-green-50' : 'bg-red-50'
+                }`}>
+                  <Shield className={`h-5 w-5 sm:h-6 sm:w-6 md:h-7 md:w-7 ${
+                    statusFilter === 'active' ? 'text-green-600' : 'text-red-600'
+                  }`} />
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+
+          <Card className="bg-white rounded-[16px] sm:rounded-[20px] shadow-md hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1">
+            <CardContent className="p-3 sm:p-4 md:p-6">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-xs sm:text-sm font-medium text-[#27251F]/60">Filtered Results</p>
+                  <h3 className="text-xl sm:text-2xl md:text-3xl font-bold mt-1 sm:mt-2 text-[#27251F]">
+                    {sortedUsers.length}
+                  </h3>
+                </div>
+                <div className="h-10 w-10 sm:h-12 sm:w-12 md:h-14 md:w-14 bg-purple-50 rounded-xl sm:rounded-2xl flex items-center justify-center">
+                  <Search className="h-5 w-5 sm:h-6 sm:w-6 md:h-7 md:w-7 text-purple-600" />
                 </div>
               </div>
             </CardContent>
@@ -424,24 +462,6 @@ export default function Users() {
                     {users?.filter(user => user.departments?.some(dept =>
                       dept.toLowerCase() === 'front counter' ||
                       dept.toLowerCase() === 'drive thru'
-                    )).length || 0}
-                  </h3>
-                </div>
-                <div className="h-10 w-10 sm:h-12 sm:w-12 md:h-14 md:w-14 bg-purple-50 rounded-xl sm:rounded-2xl flex items-center justify-center">
-                  <User className="h-5 w-5 sm:h-6 sm:w-6 md:h-7 md:w-7 text-purple-600" />
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-
-          <Card className="bg-white rounded-[16px] sm:rounded-[20px] shadow-md hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1">
-            <CardContent className="p-3 sm:p-4 md:p-6">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-xs sm:text-sm font-medium text-[#27251F]/60">BOH Users</p>
-                  <h3 className="text-xl sm:text-2xl md:text-3xl font-bold mt-1 sm:mt-2 text-[#27251F]">
-                    {users?.filter(user => user.departments?.some(dept =>
-                      dept.toLowerCase() === 'kitchen'
                     )).length || 0}
                   </h3>
                 </div>
@@ -527,7 +547,7 @@ export default function Users() {
         {/* Filters Section */}
         <Card className="bg-white rounded-[16px] sm:rounded-[20px] shadow-md">
           <CardContent className="p-3 sm:p-4 md:p-6">
-            <div className="grid grid-cols-1 sm:grid-cols-[1fr,auto,auto] gap-3 sm:gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-[1fr,auto,auto,auto] gap-3 sm:gap-4">
               <div className="relative">
                 <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4 sm:w-5 sm:h-5" />
                 <input
@@ -537,6 +557,30 @@ export default function Users() {
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
                 />
+              </div>
+
+              {/* Status Toggle */}
+              <div className="flex bg-gray-100 rounded-[12px] sm:rounded-[14px] p-1">
+                <button
+                  onClick={() => setStatusFilter('active')}
+                  className={`flex-1 px-3 sm:px-4 py-2 rounded-[8px] sm:rounded-[10px] text-sm sm:text-base font-medium transition-all duration-200 ${
+                    statusFilter === 'active'
+                      ? 'bg-white text-[#E51636] shadow-sm'
+                      : 'text-gray-600 hover:text-gray-800'
+                  }`}
+                >
+                  Active
+                </button>
+                <button
+                  onClick={() => setStatusFilter('inactive')}
+                  className={`flex-1 px-3 sm:px-4 py-2 rounded-[8px] sm:rounded-[10px] text-sm sm:text-base font-medium transition-all duration-200 ${
+                    statusFilter === 'inactive'
+                      ? 'bg-white text-[#E51636] shadow-sm'
+                      : 'text-gray-600 hover:text-gray-800'
+                  }`}
+                >
+                  Inactive
+                </button>
               </div>
 
               <Select value={filterBy} onValueChange={(value: 'all' | 'FOH' | 'BOH' | 'myTeam') => setFilterBy(value)}>
@@ -698,18 +742,20 @@ export default function Users() {
                       <span className="text-sm">Edit</span>
                     </Button>
 
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      className="h-10 px-3 text-[#27251F]/70 hover:text-[#E51636] hover:bg-[#E51636]/10"
-                      onClick={() => {
-                        setSelectedUser(user);
-                        setShowDeleteDialog(true);
-                      }}
-                    >
-                      <Trash2 className="w-4 h-4 mr-2" />
-                      <span className="text-sm">Delete</span>
-                    </Button>
+                    {canDeleteUsers(currentUser) && (
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        className="h-10 px-3 text-[#27251F]/70 hover:text-[#E51636] hover:bg-[#E51636]/10"
+                        onClick={() => {
+                          setSelectedUser(user);
+                          setShowDeleteDialog(true);
+                        }}
+                      >
+                        <Trash2 className="w-4 h-4 mr-2" />
+                        <span className="text-sm">Delete</span>
+                      </Button>
+                    )}
                   </div>
                 </div>
               ))}
@@ -851,26 +897,28 @@ export default function Users() {
                           </Tooltip>
                         </TooltipProvider>
 
-                        <TooltipProvider>
-                          <Tooltip>
-                            <TooltipTrigger asChild>
-                              <Button
-                                variant="ghost"
-                                size="icon"
-                                className="h-10 w-10 text-[#27251F]/60 hover:text-[#E51636] hover:bg-[#E51636]/10"
-                                onClick={() => {
-                                  setSelectedUser(user);
-                                  setShowDeleteDialog(true);
-                                }}
-                              >
-                                <Trash2 className="w-5 h-5" />
-                              </Button>
-                            </TooltipTrigger>
-                            <TooltipContent>
-                              <p>Delete User</p>
-                            </TooltipContent>
-                          </Tooltip>
-                        </TooltipProvider>
+                        {canDeleteUsers(currentUser) && (
+                          <TooltipProvider>
+                            <Tooltip>
+                              <TooltipTrigger asChild>
+                                <Button
+                                  variant="ghost"
+                                  size="icon"
+                                  className="h-10 w-10 text-[#27251F]/60 hover:text-[#E51636] hover:bg-[#E51636]/10"
+                                  onClick={() => {
+                                    setSelectedUser(user);
+                                    setShowDeleteDialog(true);
+                                  }}
+                                >
+                                  <Trash2 className="w-5 h-5" />
+                                </Button>
+                              </TooltipTrigger>
+                              <TooltipContent>
+                                <p>Delete User</p>
+                              </TooltipContent>
+                            </Tooltip>
+                          </TooltipProvider>
+                        )}
                       </div>
                     </div>
                   </div>
@@ -974,21 +1022,61 @@ export default function Users() {
 
       {/* Delete Confirmation Dialog */}
       <AlertDialog open={showDeleteDialog} onOpenChange={setShowDeleteDialog}>
-        <AlertDialogContent className="bg-white rounded-[20px]">
+        <AlertDialogContent className="bg-white rounded-[20px] max-w-md">
           <AlertDialogHeader>
-            <AlertDialogTitle>Delete User</AlertDialogTitle>
-            <AlertDialogDescription>
-              Are you sure you want to delete {selectedUser?.name}? This action cannot be undone.
+            <AlertDialogTitle className="text-red-600 flex items-center gap-2">
+              <Trash2 className="w-5 h-5" />
+              Permanently Delete User
+            </AlertDialogTitle>
+            <AlertDialogDescription className="space-y-3">
+              <div className="text-[#27251F]">
+                You are about to permanently delete <span className="font-semibold">{selectedUser?.name}</span>.
+              </div>
+
+              <div className="bg-red-50 border border-red-200 rounded-lg p-4">
+                <div className="flex items-start gap-3">
+                  <div className="w-6 h-6 rounded-full bg-red-100 flex items-center justify-center flex-shrink-0 mt-0.5">
+                    <span className="text-red-600 text-sm font-bold">!</span>
+                  </div>
+                  <div className="text-red-800 text-sm">
+                    <div className="font-semibold mb-2">⚠️ WARNING: This action is irreversible!</div>
+                    <div className="space-y-1">
+                      <div>• All user account data will be permanently deleted</div>
+                      <div>• All evaluation records will be lost forever</div>
+                      <div>• All training progress will be erased</div>
+                      <div>• All documentation will be removed</div>
+                      <div>• User will be immediately logged out</div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <div className="bg-blue-50 border border-blue-200 rounded-lg p-3">
+                <div className="text-blue-800 text-sm">
+                  <div className="font-semibold mb-1">💡 Alternative: Deactivate Instead</div>
+                  <div>Consider deactivating the user instead to preserve all data while preventing access.</div>
+                </div>
+              </div>
             </AlertDialogDescription>
           </AlertDialogHeader>
-          <AlertDialogFooter>
+          <AlertDialogFooter className="gap-3">
             <AlertDialogCancel className="h-12 px-6 rounded-xl">Cancel</AlertDialogCancel>
             <Button
               variant="destructive"
-              className="h-12 px-6 rounded-xl"
+              className="h-12 px-6 rounded-xl bg-red-600 hover:bg-red-700"
               onClick={() => selectedUser && deleteUserMutation.mutate(selectedUser._id)}
             >
-              {deleteUserMutation.isPending ? "Deleting..." : "Delete"}
+              {deleteUserMutation.isPending ? (
+                <>
+                  <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2" />
+                  Deleting...
+                </>
+              ) : (
+                <>
+                  <Trash2 className="w-4 h-4 mr-2" />
+                  Permanently Delete
+                </>
+              )}
             </Button>
           </AlertDialogFooter>
         </AlertDialogContent>

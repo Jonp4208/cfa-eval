@@ -18,6 +18,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { useToast } from "@/components/ui/use-toast";
+import { useAuth } from '@/contexts/AuthContext';
 import api from '@/lib/axios';
 import { MultiSelect } from "@/components/ui/multi-select";
 
@@ -28,6 +29,7 @@ interface User {
   departments: string[];
   position: string;
   role: string;
+  status?: 'active' | 'inactive';
   evaluator?: string;
   manager?: {
     _id: string;
@@ -43,6 +45,7 @@ interface FormData {
   departments: string[];
   position: string;
   role: string;
+  status: string;
   shift: string;
   managerId: string;
   startDate: string;
@@ -57,12 +60,14 @@ interface AddUserDialogProps {
 export default function AddUserDialog({ open, onOpenChange, user }: AddUserDialogProps) {
   const queryClient = useQueryClient();
   const { toast } = useToast();
+  const { user: currentUser } = useAuth();
   const [formData, setFormData] = useState<FormData>({
     name: '',
     email: '',
     departments: [],
     position: '',
     role: 'user',
+    status: 'active',
     shift: 'day',
     managerId: '',
     startDate: new Date().toISOString().split('T')[0]
@@ -106,6 +111,7 @@ export default function AddUserDialog({ open, onOpenChange, user }: AddUserDialo
         departments: user.departments || [],
         position: user.position || '',
         role: user.role || 'user',
+        status: user.status || 'active',
         shift: user.shift || 'day',
         managerId: user.manager?._id || '',
         startDate: user.startDate ? new Date(user.startDate).toISOString().split('T')[0] : new Date().toISOString().split('T')[0]
@@ -117,6 +123,7 @@ export default function AddUserDialog({ open, onOpenChange, user }: AddUserDialo
         departments: [],
         position: '',
         role: 'user',
+        status: 'active',
         shift: 'day',
         managerId: '',
         startDate: new Date().toISOString().split('T')[0]
@@ -154,6 +161,7 @@ export default function AddUserDialog({ open, onOpenChange, user }: AddUserDialo
           departments: formData.departments,
           position: formData.position,
           role: formData.role,
+          status: formData.status,
           shift: formData.shift,
           startDate: formData.startDate
         });
@@ -174,6 +182,7 @@ export default function AddUserDialog({ open, onOpenChange, user }: AddUserDialo
           departments: formData.departments,
           position: formData.position,
           role: formData.role,
+          status: formData.status,
           shift: formData.shift,
           startDate: formData.startDate,
           manager: formData.managerId || null
@@ -192,6 +201,7 @@ export default function AddUserDialog({ open, onOpenChange, user }: AddUserDialo
           departments: [],
           position: '',
           role: 'user',
+          status: 'active',
           shift: 'day',
           managerId: '',
           startDate: new Date().toISOString().split('T')[0]
@@ -321,6 +331,33 @@ export default function AddUserDialog({ open, onOpenChange, user }: AddUserDialo
               </Select>
               {errors.role && <p className="text-sm text-[#E51636]">{errors.role}</p>}
             </div>
+
+            {user && currentUser?.position === 'Director' && (
+              <div className="grid gap-2">
+                <label htmlFor="status" className="text-sm font-medium text-[#27251F]">Status</label>
+                <Select
+                  value={formData.status}
+                  onValueChange={(value) => setFormData(prev => ({ ...prev, status: value }))}
+                >
+                  <SelectTrigger id="status" className="bg-white border-gray-200 text-[#27251F] focus:ring-[#E51636]">
+                    <SelectValue placeholder="Select status" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="active">Active</SelectItem>
+                    <SelectItem value="inactive">Inactive</SelectItem>
+                  </SelectContent>
+                </Select>
+                <p className="text-xs text-gray-500">
+                  {formData.status === 'active'
+                    ? 'User can log in and access the system'
+                    : 'User cannot log in but data is preserved'
+                  }
+                </p>
+                <p className="text-xs text-blue-600">
+                  Only Directors can change user status
+                </p>
+              </div>
+            )}
 
             <div className="grid gap-2">
               <label htmlFor="manager" className="text-sm font-medium text-[#27251F]">Manager</label>

@@ -9,7 +9,7 @@ import { Readable } from 'stream';
 import fs from 'fs';
 import path from 'path';
 import { fileURLToPath } from 'url';
-import { updateUserMetrics, updateUser } from '../controllers/users.js';
+import { updateUserMetrics, updateUser, toggleUserStatus } from '../controllers/users.js';
 import Evaluation from '../models/Evaluation.js';
 import GradingScale from '../models/GradingScale.js';
 import { sendEmail } from '../utils/email.js';
@@ -351,10 +351,17 @@ router.put('/:id', auth, async (req, res) => {
   }
 });
 
-// Delete user
+// Delete user - Admins only
 router.delete('/:id', auth, async (req, res) => {
   try {
     const { id } = req.params;
+
+    // Only admins can delete users
+    if (req.user.role !== 'admin') {
+      return res.status(403).json({
+        message: 'Access denied. Only system administrators can permanently delete users.'
+      });
+    }
 
     const user = await User.findById(id);
     if (!user) {
@@ -366,8 +373,24 @@ router.delete('/:id', auth, async (req, res) => {
       return res.status(403).json({ message: 'Not authorized to delete this user' });
     }
 
+    // Prevent deletion of the last admin
+    if (user.role === 'admin') {
+      const adminCount = await User.countDocuments({
+        store: req.user.store._id,
+        role: 'admin'
+      });
+      if (adminCount <= 1) {
+        return res.status(400).json({
+          message: 'Cannot delete the last administrator. At least one admin must remain.'
+        });
+      }
+    }
+
     await user.deleteOne();
-    res.json({ message: 'User deleted successfully' });
+    res.json({
+      message: 'User permanently deleted. All associated data has been removed.',
+      warning: 'This action cannot be undone. All evaluations, training records, and documentation have been permanently deleted.'
+    });
   } catch (error) {
     console.error('Error deleting user:', error);
     res.status(500).json({ message: 'Failed to delete user' });
@@ -676,6 +699,9 @@ router.post('/:id/reset-password', auth, async (req, res) => {
     res.status(500).json({ message: 'Failed to send password reset instructions' });
   }
 });
+
+// Toggle user status (active/inactive)
+router.patch('/:id/status', auth, toggleUserStatus);
 
 // Update manager
 router.patch('/:id', auth, async (req, res) => {
