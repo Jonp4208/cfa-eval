@@ -6,10 +6,11 @@ import { Button } from '@/components/ui/button';
 import { useToast } from '@/components/ui/use-toast';
 import { useAuth } from '@/contexts/AuthContext';
 import api from '@/lib/axios';
-import { AlertCircle, ClipboardCheck, FileText, GraduationCap, Calendar } from 'lucide-react';
+import { AlertCircle, ClipboardCheck, FileText, GraduationCap, Calendar, Settings, UserCheck } from 'lucide-react';
 import PageHeader from '@/components/PageHeader';
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Progress } from '@/components/ui/progress';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 
 interface Evaluation {
   _id: string;
@@ -127,6 +128,8 @@ export default function ViewEvaluation() {
   const [totalQuestions, setTotalQuestions] = useState(0);
   const [showSummary, setShowSummary] = useState(false);
   const [isEditing, setIsEditing] = useState(false);
+  const [showChangeEvaluator, setShowChangeEvaluator] = useState(false);
+  const [selectedEvaluatorId, setSelectedEvaluatorId] = useState('');
   const queryClient = useQueryClient();
 
   // Initialize showScheduleReview based on URL parameter
@@ -178,6 +181,19 @@ export default function ViewEvaluation() {
       const response = await api.get(`/api/evaluations/${id}`);
       return response.data.evaluation;
     }
+  });
+
+  // Fetch available evaluators (Directors and Leaders)
+  const { data: availableEvaluators } = useQuery({
+    queryKey: ['availableEvaluators'],
+    queryFn: async () => {
+      const response = await api.get('/api/users');
+      // Filter for users with Director or Leader positions
+      return response.data.users.filter((user: any) =>
+        ['Director', 'Leader'].includes(user.position)
+      );
+    },
+    enabled: user?.position === 'Director' // Only fetch if current user is a Director
   });
 
   // Fetch employee documentation
@@ -864,6 +880,32 @@ export default function ViewEvaluation() {
     }
   });
 
+  // Update evaluator mutation (admin only)
+  const updateEvaluator = useMutation({
+    mutationFn: async (evaluatorId: string) => {
+      const response = await api.patch(`/api/evaluations/${id}/evaluator`, {
+        evaluatorId
+      });
+      return response.data;
+    },
+    onSuccess: (data) => {
+      toast({
+        title: "Success",
+        description: "Evaluator updated successfully",
+      });
+      setShowChangeEvaluator(false);
+      setSelectedEvaluatorId('');
+      refetch(); // Refetch evaluation data to update UI
+    },
+    onError: (error: any) => {
+      toast({
+        title: "Error",
+        description: error.response?.data?.message || "Failed to update evaluator",
+        variant: "destructive",
+      });
+    }
+  });
+
   if (isLoading) {
     return <div className="text-center py-4">Loading evaluation...</div>;
   }
@@ -884,6 +926,21 @@ export default function ViewEvaluation() {
           showBackButton={true}
           icon={<ClipboardCheck className="h-5 w-5" />}
         />
+
+        {/* Admin Controls */}
+        {user?.position === 'Director' && evaluation?.status !== 'completed' && (
+          <div className="flex justify-end">
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => setShowChangeEvaluator(true)}
+              className="flex items-center gap-2"
+            >
+              <UserCheck className="h-4 w-4" />
+              Change Evaluator
+            </Button>
+          </div>
+        )}
 
         {/* Main Content */}
         <Card className="bg-white rounded-[20px] shadow-md border-0">
@@ -1889,6 +1946,64 @@ export default function ViewEvaluation() {
             )}
           </CardContent>
         </Card>
+
+        {/* Change Evaluator Dialog */}
+        <Dialog open={showChangeEvaluator} onOpenChange={setShowChangeEvaluator}>
+          <DialogContent className="sm:max-w-md">
+            <DialogHeader>
+              <DialogTitle>Change Evaluator</DialogTitle>
+              <DialogDescription>
+                Select a new evaluator for this evaluation. Only Directors and Leaders can be evaluators.
+              </DialogDescription>
+            </DialogHeader>
+            <div className="space-y-4">
+              <div>
+                <label className="text-sm font-medium text-gray-700 mb-2 block">
+                  Current Evaluator: {evaluation?.evaluator?.name}
+                </label>
+              </div>
+              <div>
+                <label className="text-sm font-medium text-gray-700 mb-2 block">
+                  New Evaluator
+                </label>
+                <Select value={selectedEvaluatorId} onValueChange={setSelectedEvaluatorId}>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Select new evaluator" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {availableEvaluators?.map((evaluator: any) => (
+                      <SelectItem
+                        key={evaluator._id}
+                        value={evaluator._id}
+                        disabled={evaluator._id === evaluation?.evaluator?._id}
+                      >
+                        {evaluator.name} - {evaluator.position}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
+            <DialogFooter>
+              <Button
+                variant="outline"
+                onClick={() => {
+                  setShowChangeEvaluator(false);
+                  setSelectedEvaluatorId('');
+                }}
+              >
+                Cancel
+              </Button>
+              <Button
+                onClick={() => updateEvaluator.mutate(selectedEvaluatorId)}
+                disabled={!selectedEvaluatorId || updateEvaluator.isPending}
+                className="bg-[#E51636] text-white hover:bg-[#E51636]/90"
+              >
+                {updateEvaluator.isPending ? 'Updating...' : 'Update Evaluator'}
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
       </div>
     </div>
   );

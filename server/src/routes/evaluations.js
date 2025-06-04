@@ -14,7 +14,8 @@ import {
     saveDraft,
     sendCompletedEvaluationEmail,
     sendUnacknowledgedNotification,
-    startReview
+    startReview,
+    updateEvaluator
 } from '../controllers/evaluations.js';
 import { auth } from '../middleware/auth.js';
 import { isManager, isDirector } from '../middleware/roles.js';
@@ -27,6 +28,9 @@ router.get('/', auth, getEvaluations);
 router.get('/:evaluationId', auth, getEvaluation);
 router.put('/:evaluationId', auth, isManager, updateEvaluation);
 router.delete('/:evaluationId', auth, isDirector, deleteEvaluation);
+
+// Admin routes
+router.patch('/:evaluationId/evaluator', auth, isDirector, updateEvaluator);
 
 // Employee specific routes
 router.get('/employee/:employeeId', auth, getEmployeeEvaluations);

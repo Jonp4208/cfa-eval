@@ -984,6 +984,76 @@ export const completeManagerEvaluation = async (req, res) => {
     }
 };
 
+// Update evaluator (admin only)
+export const updateEvaluator = async (req, res) => {
+    try {
+        const { evaluatorId } = req.body;
+
+        if (!evaluatorId) {
+            return res.status(400).json({ message: 'Evaluator ID is required' });
+        }
+
+        // Find the evaluation
+        const evaluation = await Evaluation.findOne({
+            _id: req.params.evaluationId,
+            store: req.user.store._id
+        });
+
+        if (!evaluation) {
+            return res.status(404).json({ message: 'Evaluation not found' });
+        }
+
+        // Don't allow changing evaluator if evaluation is completed
+        if (evaluation.status === 'completed') {
+            return res.status(400).json({ message: 'Cannot change evaluator for completed evaluations' });
+        }
+
+        // Verify the new evaluator exists and belongs to the same store
+        const newEvaluator = await User.findOne({
+            _id: evaluatorId,
+            store: req.user.store._id,
+            status: 'active'
+        });
+
+        if (!newEvaluator) {
+            return res.status(404).json({ message: 'Evaluator not found or not in the same store' });
+        }
+
+        // Verify the new evaluator has manager permissions
+        const managerPositions = ['Director', 'Leader'];
+        if (!managerPositions.includes(newEvaluator.position)) {
+            return res.status(400).json({ message: 'Selected user is not authorized to be an evaluator' });
+        }
+
+        // Update the evaluator
+        evaluation.evaluator = evaluatorId;
+
+        // Reset notification status for the new evaluator if evaluation is in progress
+        if (evaluation.status === 'pending_manager_review' || evaluation.status === 'in_review_session') {
+            evaluation.notificationStatus.evaluator.selfEvaluationCompleted = false;
+            evaluation.notificationStatus.evaluator.reviewSessionScheduled = false;
+        }
+
+        await evaluation.save();
+
+        // Populate the updated evaluation for response
+        const updatedEvaluation = await Evaluation.findById(evaluation._id)
+            .populate('employee', 'name position email')
+            .populate('evaluator', 'name position email')
+            .populate('template', 'name description')
+            .populate('store', 'name');
+
+        res.json({
+            message: 'Evaluator updated successfully',
+            evaluation: updatedEvaluation
+        });
+
+    } catch (error) {
+        console.error('Update evaluator error:', error);
+        res.status(500).json({ message: 'Error updating evaluator' });
+    }
+};
+
 // Acknowledge evaluation
 export const acknowledgeEvaluation = async (req, res) => {
     try {
