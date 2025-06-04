@@ -6,6 +6,7 @@ import { FOHTaskCompletion } from '../models/FOHTask.js';
 import { getNewYorkDateString } from '../utils/timezone-utils.js';
 import { sendEmailWithRetry } from '../utils/email.js';
 import { handleError, withRetry, ErrorCategory } from '../utils/errorHandler.js';
+import logger from '../utils/logger.js';
 
 const sendReminderEmail = async (evaluation, daysUntilDue) => {
   try {
