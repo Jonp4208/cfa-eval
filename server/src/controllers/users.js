@@ -7,23 +7,32 @@ export const updateUserMetrics = async (req, res) => {
     const { id } = req.params;
     const { heartsAndHands } = req.body;
 
+    console.log('Updating Hearts and Hands for user:', id);
+    console.log('New Hearts and Hands position:', heartsAndHands);
+
     const user = await User.findById(id);
     if (!user) {
       return res.status(404).json({ message: 'User not found' });
     }
+
+    console.log('Current user metrics before update:', user.metrics);
 
     // Initialize metrics if it doesn't exist
     if (!user.metrics) {
       user.metrics = {};
     }
 
-    // Update metrics while preserving other metrics data
-    user.metrics = {
-      ...user.metrics,
-      heartsAndHands
-    };
+    // Update Hearts and Hands metrics specifically
+    user.metrics.heartsAndHands = heartsAndHands;
+
+    // Mark the metrics field as modified for Mongoose
+    user.markModified('metrics');
+
+    console.log('User metrics after update:', user.metrics);
 
     await user.save();
+
+    console.log('User saved successfully. Final metrics:', user.metrics);
 
     res.json(user);
   } catch (error) {

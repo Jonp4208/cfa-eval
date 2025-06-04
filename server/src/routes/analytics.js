@@ -2204,6 +2204,101 @@ router.get('/export-hearts-and-hands', auth, async (req, res) => {
   }
 });
 
+// Export evaluation trends data
+router.get('/export-evaluation-trends', auth, async (req, res) => {
+  try {
+    const { timeframe = '90' } = req.query;
+    const days = parseInt(timeframe) || 90;
+
+    // Calculate date range
+    const endDate = new Date();
+    const startDate = new Date();
+    startDate.setDate(startDate.getDate() - days);
+
+    // Get all evaluations in the date range
+    const evaluations = await Evaluation.find({
+      store: req.user.store._id,
+      createdAt: { $gte: startDate, $lte: endDate }
+    })
+    .populate('employee')
+    .populate('template')
+    .sort({ createdAt: 1 });
+
+    // Create CSV content
+    let csv = 'Date,Status,Employee,Template,Department,Score,Completion Time (days)\n';
+
+    evaluations.forEach(evaluation => {
+      const employee = evaluation.employee?.name || 'Unknown';
+      const template = evaluation.template?.name || 'Unknown';
+      const department = evaluation.employee?.departments?.[0] || 'Unknown';
+      const date = evaluation.createdAt.toISOString().split('T')[0];
+      const score = evaluation.finalScore || 'N/A';
+
+      // Calculate completion time
+      let completionTime = 'N/A';
+      if (evaluation.status === 'completed' && evaluation.completedDate && evaluation.createdAt) {
+        const diffTime = Math.abs(new Date(evaluation.completedDate) - new Date(evaluation.createdAt));
+        completionTime = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+      }
+
+      csv += `"${date}","${evaluation.status}","${employee}","${template}","${department}","${score}","${completionTime}"\n`;
+    });
+
+    res.setHeader('Content-Type', 'text/csv');
+    res.setHeader('Content-Disposition', 'attachment; filename="evaluation-trends.csv"');
+    res.send(csv);
+
+  } catch (error) {
+    console.error('Error exporting evaluation trends:', error);
+    res.status(500).json({ message: 'Failed to export evaluation trends data' });
+  }
+});
+
+// Export department comparison data
+router.get('/export-department-comparison', auth, async (req, res) => {
+  try {
+    const { timeframe = '90' } = req.query;
+    const days = parseInt(timeframe) || 90;
+
+    // Calculate date range
+    const endDate = new Date();
+    const startDate = new Date();
+    startDate.setDate(startDate.getDate() - days);
+
+    // Get all evaluations in the date range
+    const evaluations = await Evaluation.find({
+      store: req.user.store._id,
+      createdAt: { $gte: startDate, $lte: endDate },
+      status: 'completed'
+    })
+    .populate('employee')
+    .populate('template');
+
+    // Create CSV content
+    let csv = 'Department,Employee,Position,Score,Date,Template,Evaluator\n';
+
+    evaluations.forEach(evaluation => {
+      const employee = evaluation.employee?.name || 'Unknown';
+      const position = evaluation.employee?.position || 'Unknown';
+      const department = evaluation.employee?.departments?.[0] || 'Unknown';
+      const date = evaluation.completedDate?.toISOString().split('T')[0] || 'Unknown';
+      const score = evaluation.finalScore || 'N/A';
+      const template = evaluation.template?.name || 'Unknown';
+      const evaluator = evaluation.evaluator?.name || 'Unknown';
+
+      csv += `"${department}","${employee}","${position}","${score}","${date}","${template}","${evaluator}"\n`;
+    });
+
+    res.setHeader('Content-Type', 'text/csv');
+    res.setHeader('Content-Disposition', 'attachment; filename="department-comparison.csv"');
+    res.send(csv);
+
+  } catch (error) {
+    console.error('Error exporting department comparison:', error);
+    res.status(500).json({ message: 'Failed to export department comparison data' });
+  }
+});
+
 // Export team scores data
 router.get('/export-team-scores', auth, async (req, res) => {
   try {
@@ -2299,6 +2394,71 @@ router.get('/export-team-scores', auth, async (req, res) => {
   } catch (error) {
     console.error('Error exporting team scores data:', error);
     res.status(500).json({ message: 'Error exporting team scores data' });
+  }
+});
+
+// Debug endpoint to check Hearts and Hands data
+router.get('/debug-hearts-and-hands', auth, async (req, res) => {
+  try {
+    const users = await User.find({ store: req.user.store._id })
+      .select('name position departments metrics')
+      .limit(10);
+
+    const debugData = users.map(user => ({
+      name: user.name,
+      position: user.position,
+      departments: user.departments,
+      metrics: user.metrics,
+      hasHeartsAndHands: !!user.metrics?.heartsAndHands,
+      heartsAndHandsData: user.metrics?.heartsAndHands
+    }));
+
+    res.json({
+      totalUsers: users.length,
+      users: debugData,
+      message: 'Debug data retrieved successfully'
+    });
+  } catch (error) {
+    console.error('Debug Hearts and Hands error:', error);
+    res.status(500).json({ message: 'Debug failed' });
+  }
+});
+
+// Test endpoint to update Hearts and Hands for a specific user
+router.post('/test-hearts-and-hands/:userId', auth, async (req, res) => {
+  try {
+    const { userId } = req.params;
+    const { x, y } = req.body;
+
+    const user = await User.findById(userId);
+    if (!user) {
+      return res.status(404).json({ message: 'User not found' });
+    }
+
+    // Initialize metrics if it doesn't exist
+    if (!user.metrics) {
+      user.metrics = {};
+    }
+
+    // Update Hearts and Hands
+    user.metrics.heartsAndHands = { x, y };
+    user.markModified('metrics');
+
+    await user.save();
+
+    // Fetch the updated user to verify
+    const updatedUser = await User.findById(userId).select('name metrics');
+
+    res.json({
+      message: 'Hearts and Hands updated successfully',
+      user: {
+        name: updatedUser.name,
+        heartsAndHands: updatedUser.metrics?.heartsAndHands
+      }
+    });
+  } catch (error) {
+    console.error('Test Hearts and Hands error:', error);
+    res.status(500).json({ message: 'Test failed' });
   }
 });
 

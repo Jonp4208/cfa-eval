@@ -250,14 +250,27 @@ export default function TeamScores() {
   return (
     <div className="min-h-screen p-4 md:p-6">
       <div className="max-w-7xl mx-auto space-y-6">
-        {/* Header */}
+        {/* Enhanced Header */}
         <div className="bg-gradient-to-r from-[#E51636] to-[#DD0031] rounded-[20px] p-6 md:p-8 text-white shadow-xl relative overflow-hidden">
           <div className="absolute inset-0 bg-[url('/pattern.png')] opacity-10" />
           <div className="relative">
             <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
               <div>
-                <h1 className="text-2xl md:text-4xl font-bold">Team Performance Scores</h1>
-                <p className="text-white/80 mt-2 text-sm md:text-lg">Overview of all team members' evaluation scores</p>
+                <div className="flex items-center gap-3 mb-2">
+                  <Medal className="h-8 w-8" />
+                  <h1 className="text-2xl md:text-4xl font-bold">Team Performance Scores</h1>
+                </div>
+                <p className="text-white/80 mt-2 text-sm md:text-lg">Comprehensive overview of all team members' evaluation scores</p>
+                <div className="flex items-center gap-4 mt-4">
+                  <div className="flex items-center gap-2 text-white/80">
+                    <Users className="w-4 h-4" />
+                    <span className="text-sm">{data?.teamMembers?.length || 0} Team Members</span>
+                  </div>
+                  <div className="flex items-center gap-2 text-white/80">
+                    <FileText className="w-4 h-4" />
+                    <span className="text-sm">Performance Tracking</span>
+                  </div>
+                </div>
                 <Button
                   variant="ghost"
                   onClick={() => navigate('/analytics')}
@@ -266,13 +279,23 @@ export default function TeamScores() {
                   Back to Analytics
                 </Button>
               </div>
+              <div className="flex gap-2">
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  onClick={handleExportData}
+                  className="bg-white/10 hover:bg-white/20 text-white border-white/20"
+                >
+                  <Download className="h-4 w-4" />
+                </Button>
+              </div>
             </div>
           </div>
         </div>
 
-        {/* Team Summary Stats */}
+        {/* Enhanced Team Summary Stats */}
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-6">
-          <Card className="bg-white rounded-[20px] shadow-md hover:shadow-xl transition-all duration-300">
+          <Card className="bg-gradient-to-br from-blue-50 to-indigo-50 rounded-[20px] shadow-md hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1 border border-blue-100">
             <CardContent className="p-6">
               <div className="flex items-start justify-between">
                 <div>
@@ -280,15 +303,33 @@ export default function TeamScores() {
                   <h3 className="text-3xl font-bold mt-2 text-[#27251F]">
                     {formatScore(teamStats.avgScore)}
                   </h3>
+                  <div className="mt-2">
+                    {teamStats.avgScore && teamStats.avgScore >= 85 ? (
+                      <div className="flex items-center gap-1 text-green-600">
+                        <TrendingUp className="h-3 w-3" />
+                        <span className="text-xs font-medium">Excellent</span>
+                      </div>
+                    ) : teamStats.avgScore && teamStats.avgScore >= 75 ? (
+                      <div className="flex items-center gap-1 text-blue-600">
+                        <TrendingUp className="h-3 w-3" />
+                        <span className="text-xs font-medium">Good</span>
+                      </div>
+                    ) : (
+                      <div className="flex items-center gap-1 text-orange-600">
+                        <TrendingUp className="h-3 w-3" />
+                        <span className="text-xs font-medium">Improving</span>
+                      </div>
+                    )}
+                  </div>
                 </div>
-                <div className="h-14 w-14 bg-[#E51636]/10 rounded-2xl flex items-center justify-center">
-                  <TrendingUp className="h-7 w-7 text-[#E51636]" />
+                <div className="h-14 w-14 bg-blue-100 rounded-2xl flex items-center justify-center">
+                  <TrendingUp className="h-7 w-7 text-blue-600" />
                 </div>
               </div>
             </CardContent>
           </Card>
 
-          <Card className="bg-white rounded-[20px] shadow-md hover:shadow-xl transition-all duration-300">
+          <Card className="bg-gradient-to-br from-green-50 to-emerald-50 rounded-[20px] shadow-md hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1 border border-green-100">
             <CardContent className="p-6">
               <div className="flex items-start justify-between">
                 <div>
@@ -296,15 +337,18 @@ export default function TeamScores() {
                   <h3 className="text-3xl font-bold mt-2 text-[#27251F]">
                     {teamStats.totalEvals}
                   </h3>
+                  <p className="text-xs text-[#27251F]/60 mt-2">
+                    {timeframe.replace('last', '')} day period
+                  </p>
                 </div>
-                <div className="h-14 w-14 bg-[#E51636]/10 rounded-2xl flex items-center justify-center">
-                  <FileText className="h-7 w-7 text-[#E51636]" />
+                <div className="h-14 w-14 bg-green-100 rounded-2xl flex items-center justify-center">
+                  <FileText className="h-7 w-7 text-green-600" />
                 </div>
               </div>
             </CardContent>
           </Card>
 
-          <Card className="bg-white rounded-[20px] shadow-md hover:shadow-xl transition-all duration-300">
+          <Card className="bg-gradient-to-br from-purple-50 to-violet-50 rounded-[20px] shadow-md hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1 border border-purple-100">
             <CardContent className="p-6">
               <div className="flex items-start justify-between">
                 <div>
@@ -312,29 +356,39 @@ export default function TeamScores() {
                   <h3 className="text-3xl font-bold mt-2 text-[#27251F]">
                     {filteredMembers.length}
                   </h3>
+                  <p className="text-xs text-[#27251F]/60 mt-2">
+                    {data?.teamMembers?.length !== filteredMembers.length ?
+                      `${data?.teamMembers?.length} total` : 'All members shown'}
+                  </p>
                 </div>
-                <div className="h-14 w-14 bg-[#E51636]/10 rounded-2xl flex items-center justify-center">
-                  <Users className="h-7 w-7 text-[#E51636]" />
+                <div className="h-14 w-14 bg-purple-100 rounded-2xl flex items-center justify-center">
+                  <Users className="h-7 w-7 text-purple-600" />
                 </div>
               </div>
             </CardContent>
           </Card>
 
           {teamStats.topPerformer && (
-            <Card className="bg-white rounded-[20px] shadow-md hover:shadow-xl transition-all duration-300">
+            <Card className="bg-gradient-to-br from-yellow-50 to-orange-50 rounded-[20px] shadow-md hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1 border border-yellow-100">
               <CardContent className="p-6">
                 <div className="flex items-start justify-between">
                   <div>
                     <p className="text-[#27251F]/60 font-medium">Top Performer</p>
                     <h3 className="text-xl font-bold mt-2 text-[#27251F]">
-                      {teamStats.topPerformer.name}
+                      {teamStats.topPerformer.name.split(' ')[0]}
                     </h3>
-                    <p className="text-sm text-[#27251F]/60">
-                      {formatScore(teamStats.topPerformer.averageScore)}
-                    </p>
+                    <div className="flex items-center gap-2 mt-2">
+                      <span className="text-sm font-medium text-[#27251F]">
+                        {formatScore(teamStats.topPerformer.averageScore)}
+                      </span>
+                      <div className="flex items-center gap-1 text-yellow-600">
+                        <Medal className="h-3 w-3" />
+                        <span className="text-xs font-medium">Leader</span>
+                      </div>
+                    </div>
                   </div>
-                  <div className="h-14 w-14 bg-[#E51636]/10 rounded-2xl flex items-center justify-center">
-                    <Medal className="h-7 w-7 text-[#E51636]" />
+                  <div className="h-14 w-14 bg-yellow-100 rounded-2xl flex items-center justify-center">
+                    <Medal className="h-7 w-7 text-yellow-600" />
                   </div>
                 </div>
               </CardContent>

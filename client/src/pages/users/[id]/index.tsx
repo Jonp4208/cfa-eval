@@ -141,6 +141,7 @@ export default function UserProfile() {
   });
   const [disciplinaryIncidents, setDisciplinaryIncidents] = useState<DisciplinaryIncident[]>([]);
   const dialogCloseRef = useRef<HTMLButtonElement>(null);
+  const [activeTab, setActiveTab] = useState('performance');
 
   // Fetch user data
   const { data: profile, isLoading, refetch } = useQuery({
@@ -150,6 +151,7 @@ export default function UserProfile() {
         console.log('Fetching user with ID:', id);
         const response = await api.get(`/api/users/${id}`);
         console.log('User API Response:', response.data);
+        console.log('Hearts and Hands metrics:', response.data?.metrics?.heartsAndHands);
         return response.data;
       } catch (error: any) {
         console.error('Error fetching user:', error);
@@ -186,63 +188,92 @@ export default function UserProfile() {
     }
   });
 
+  // Function to initialize Hearts and Hands position
+  const initializeHeartsAndHandsPosition = () => {
+    if (profile?.metrics?.heartsAndHands && dragContainerRef.current) {
+      const rect = dragContainerRef.current.getBoundingClientRect();
+
+      // Only initialize if container has dimensions
+      if (rect.width === 0 || rect.height === 0) {
+        return false; // Indicate initialization failed
+      }
+
+      const dotSize = 32;
+      const savedPosition = profile.metrics.heartsAndHands;
+
+      // Set the Hearts and Hands position (percentage values)
+      setHeartsAndHandsPosition(savedPosition);
+
+      // Calculate pixel position for the draggable component
+      const pixelPosition = {
+        x: (savedPosition.x / 100) * (rect.width - dotSize),
+        y: ((100 - savedPosition.y) / 100) * (rect.height - dotSize)
+      };
+
+      setPosition(pixelPosition);
+
+      setContainerSize({
+        width: rect.width,
+        height: rect.height
+      });
+
+      return true; // Indicate successful initialization
+    }
+    return false;
+  };
+
   // Update positions when profile data changes
   useEffect(() => {
-    const initializePosition = () => {
-      if (profile?.metrics?.heartsAndHands && dragContainerRef.current) {
-        const rect = dragContainerRef.current.getBoundingClientRect();
-        const dotSize = 32;
-        const savedPosition = profile.metrics.heartsAndHands;
+    // Use a retry strategy for initial load
+    let retryCount = 0;
+    const maxRetries = 20; // Try for up to 2 seconds
 
-        console.log('Initializing position with:', savedPosition);
+    const tryInitialize = () => {
+      if (initializeHeartsAndHandsPosition()) {
+        return; // Success
+      }
 
-        // Force set both positions
-        setHeartsAndHandsPosition(savedPosition);
-        setPosition({
-          x: (savedPosition.x / 100) * (rect.width - dotSize),
-          y: ((100 - savedPosition.y) / 100) * (rect.height - dotSize)
-        });
-
-        setContainerSize({
-          width: rect.width,
-          height: rect.height
-        });
+      retryCount++;
+      if (retryCount < maxRetries) {
+        setTimeout(tryInitialize, 100);
       }
     };
 
-    // Try multiple times to ensure initialization
-    const timeoutId = setTimeout(initializePosition, 100);
-    const intervalId = setInterval(initializePosition, 500);
-
-    // Clean up after 2 seconds
-    const cleanupId = setTimeout(() => {
-      clearInterval(intervalId);
-    }, 2000);
-
-    return () => {
-      clearTimeout(timeoutId);
-      clearTimeout(cleanupId);
-      clearInterval(intervalId);
-    };
+    // Start initialization attempts
+    tryInitialize();
   }, [profile?.metrics?.heartsAndHands]);
 
-  // Remove the separate pixel position effect since we're handling it in the initialization
+  // Initialize position when metrics tab becomes active
+  useEffect(() => {
+    if (activeTab === 'metrics') {
+      // Wait a bit for the tab content to render
+      setTimeout(() => {
+        initializeHeartsAndHandsPosition();
+      }, 100);
+    }
+  }, [activeTab, profile?.metrics?.heartsAndHands]);
+
+  // Handle window resize to recalculate position
   useEffect(() => {
     const handleResize = () => {
       if (dragContainerRef.current && profile?.metrics?.heartsAndHands) {
         const rect = dragContainerRef.current.getBoundingClientRect();
-        const dotSize = 32;
-        const savedPosition = profile.metrics.heartsAndHands;
 
-        setPosition({
-          x: (savedPosition.x / 100) * (rect.width - dotSize),
-          y: ((100 - savedPosition.y) / 100) * (rect.height - dotSize)
-        });
+        // Only update if container has valid dimensions
+        if (rect.width > 0 && rect.height > 0) {
+          const dotSize = 32;
+          const savedPosition = profile.metrics.heartsAndHands;
 
-        setContainerSize({
-          width: rect.width,
-          height: rect.height
-        });
+          setPosition({
+            x: (savedPosition.x / 100) * (rect.width - dotSize),
+            y: ((100 - savedPosition.y) / 100) * (rect.height - dotSize)
+          });
+
+          setContainerSize({
+            width: rect.width,
+            height: rect.height
+          });
+        }
       }
     };
 
@@ -721,7 +752,7 @@ export default function UserProfile() {
         )}
 
         {/* Tabs */}
-        <Tabs defaultValue="performance" className="space-y-6">
+        <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
           <div className="overflow-x-auto pb-2">
             <TabsList className="bg-white rounded-xl p-1 flex w-full min-w-max shadow-sm border border-gray-100">
               <TabsTrigger
@@ -1755,6 +1786,7 @@ export default function UserProfile() {
                           </p>
                           <p>Drag the red dot to update the team member's position on the Hearts & Hands quadrant.</p>
                         </div>
+
                         <div className="flex justify-end">
                           <Button
                             onClick={() => updateHeartsAndHandsMutation.mutate(heartsAndHandsPosition)}

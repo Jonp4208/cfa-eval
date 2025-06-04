@@ -81,28 +81,34 @@ const HeartsAndHands = () => {
           throw new Error('Invalid response structure');
         }
 
-        // Filter out users without valid Hearts and Hands metrics right away
-        const usersWithValidMetrics = response.data.users.filter((user: any) => {
-          const metrics = user.metrics?.heartsAndHands;
-          return metrics &&
-                 typeof metrics.x === 'number' &&
-                 typeof metrics.y === 'number' &&
-                 metrics.x >= 0 && metrics.x <= 100 &&
-                 metrics.y >= 0 && metrics.y <= 100;
+        // Process all users and ensure they have Hearts and Hands metrics
+        const processedUsers = response.data.users.map((user: any) => {
+          // Ensure user has metrics with default Hearts and Hands values
+          const metrics = user.metrics || {};
+          const heartsAndHands = metrics.heartsAndHands || { x: 50, y: 50 };
+
+          return {
+            id: user._id,
+            name: user.name || 'Unknown',
+            position: user.position || 'Team Member',
+            department: user.departments?.[0] || 'Everything',
+            metrics: {
+              ...metrics,
+              heartsAndHands: {
+                x: typeof heartsAndHands.x === 'number' ? heartsAndHands.x : 50,
+                y: typeof heartsAndHands.y === 'number' ? heartsAndHands.y : 50
+              }
+            },
+            email: user.email,
+            role: user.role,
+            shift: user.shift
+          };
         });
 
-        console.log('Found valid team members:', usersWithValidMetrics.length);
+        console.log('Found team members:', processedUsers.length);
+        console.log('Sample user data:', processedUsers[0]);
 
-        return usersWithValidMetrics.map((user: any) => ({
-          id: user._id,
-          name: user.name || 'Unknown',
-          position: user.position || 'Team Member',
-          department: user.department || activeDepartment,
-          metrics: user.metrics,
-          email: user.email,
-          role: user.role,
-          shift: user.shift
-        }));
+        return processedUsers;
       } catch (error) {
         throw new Error('Failed to fetch team members. Please try again later.');
       }
@@ -121,21 +127,12 @@ const HeartsAndHands = () => {
     return Array.from(posSet);
   }, [teamMembers]);
 
-  // Get filtered team members with valid metrics
+  // Get filtered team members (all team members should have metrics now)
   const validTeamMembers = useMemo(() => {
     console.log('Team Members:', teamMembers);
     return teamMembers.filter(member => {
-      // Check if member has valid Hearts and Hands metrics
-      const coords = member.metrics?.heartsAndHands;
-      const hasValidMetrics = coords &&
-                           typeof coords.x === 'number' &&
-                           typeof coords.y === 'number' &&
-                           coords.x >= 0 && coords.x <= 100 &&
-                           coords.y >= 0 && coords.y <= 100;
-
-      // Apply other filters
-      return hasValidMetrics &&
-        !member.position.toLowerCase().includes('director') &&
+      // Apply filters (all team members should have default Hearts and Hands metrics)
+      return !member.position.toLowerCase().includes('director') &&
         !member.position.toLowerCase().includes('manager') &&
         (activeDepartment === 'all' || member.department.toLowerCase() === activeDepartment.toLowerCase()) &&
         (activePosition === 'all' || member.position === activePosition) &&
@@ -146,15 +143,8 @@ const HeartsAndHands = () => {
 
   // Calculate department averages
   const departmentAverages = useMemo(() => {
-    // IMPORTANT: Only use team members with valid metrics
-    const teamMembersWithValidMetrics = teamMembers.filter(member => {
-      const metrics = member.metrics?.heartsAndHands;
-      return metrics &&
-             typeof metrics.x === 'number' &&
-             typeof metrics.y === 'number' &&
-             metrics.x >= 0 && metrics.x <= 100 &&
-             metrics.y >= 0 && metrics.y <= 100;
-    });
+    // Use all team members (they should all have default metrics now)
+    const teamMembersWithValidMetrics = teamMembers;
 
     // Ensure all team members have a department and shift
     teamMembersWithValidMetrics.forEach(member => {

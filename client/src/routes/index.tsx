@@ -33,6 +33,7 @@ import NewDocument from '@/pages/Documentation/NewDocument';
 import DocumentDetail from '@/pages/Documentation/[id]';
 import EditDocument from '@/pages/Documentation/[id]/edit';
 import TeamScores from '@/pages/Analytics/TeamScores';
+import PerformanceHeatmap from '@/pages/Analytics/PerformanceHeatmap';
 import Kitchen from '@/pages/Kitchen';
 import FoodSafety from '../pages/Kitchen/FoodSafety';
 import CompleteChecklist from '../pages/Kitchen/FoodSafety/CompleteChecklist';
@@ -237,6 +238,7 @@ export default function AppRoutes() {
         <Route path="day-vs-night" element={<DayVsNight />} />
         <Route path="evaluation-trends" element={<EvaluationTrends />} />
         <Route path="department-comparison" element={<DepartmentComparison />} />
+        <Route path="performance-heatmap" element={<PerformanceHeatmap />} />
       </Route>
       <Route path="/training" element={<PrivateRoute requiredFeature="training"><Training /></PrivateRoute>}>
         <Route index element={<Navigate to="/training/progress" replace />} />
