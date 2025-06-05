@@ -1296,8 +1296,15 @@ export default function LandingPage() {
                   <div className="flex items-start gap-3">
                     <CheckCircle className="h-6 w-6 text-green-300 flex-shrink-0 mt-1" />
                     <div>
-                      <h4 className="font-semibold text-lg">Built by Restaurant Leaders</h4>
-                      <p className="text-red-100">Created by operators with 15+ years of real restaurant experience</p>
+                      <h4 className="font-semibold text-lg">Comprehensive Evaluations</h4>
+                      <p className="text-red-100">Go beyond simple shift ratings with detailed skill assessments that drive real development and performance improvement</p>
+                    </div>
+                  </div>
+                  <div className="flex items-start gap-3">
+                    <CheckCircle className="h-6 w-6 text-green-300 flex-shrink-0 mt-1" />
+                    <div>
+                      <h4 className="font-semibold text-lg">Leadership Development</h4>
+                      <p className="text-red-100">Expert-designed development plans and training modules to build stronger leaders at every level of your restaurant</p>
                     </div>
                   </div>
                   <div className="flex items-start gap-3">
@@ -1369,7 +1376,7 @@ export default function LandingPage() {
                 <ul className="space-y-3">
                   <li className="flex items-start">
                     <CheckCircle className="h-5 w-5 mr-2 text-green-400 flex-shrink-0 mt-0.5" />
-                    <span>Free 30-day trial with full access to all exclusive features</span>
+                    <span>Free 14-day trial with full access to all exclusive features</span>
                   </li>
                   <li className="flex items-start">
                     <CheckCircle className="h-5 w-5 mr-2 text-green-400 flex-shrink-0 mt-0.5" />
