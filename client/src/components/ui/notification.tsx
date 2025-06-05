@@ -60,7 +60,14 @@ export function Notification({
 
   return (
     <div className={cn(
-      'fixed bottom-4 right-4 w-96 rounded-lg border p-4 shadow-lg',
+      'fixed rounded-lg border shadow-lg z-[10000]',
+      // Desktop positioning and sizing
+      'min-[938px]:bottom-4 min-[938px]:right-4 min-[938px]:w-96 min-[938px]:p-4',
+      // Mobile positioning - above mobile nav with responsive width
+      'max-[937px]:bottom-[calc(80px+env(safe-area-inset-bottom,0px)+1rem)]',
+      'max-[937px]:left-4 max-[937px]:right-4 max-[937px]:p-3',
+      // iPhone specific adjustments for larger safe areas
+      'max-[937px]:bottom-[calc(100px+env(safe-area-inset-bottom,0px)+1rem)]',
       isClosing ? 'animate-slide-out' : 'animate-slide-in',
       backgrounds[type]
     )}>
@@ -81,7 +88,7 @@ export function Notification({
         <button
           onClick={handleClose}
           className={cn(
-            'flex-shrink-0 rounded-lg p-1 hover:bg-white/25 transition-colors',
+            'flex-shrink-0 rounded-lg p-1 hover:bg-white/25 transition-colors touch-manipulation',
             titles[type]
           )}
         >
@@ -104,7 +111,16 @@ interface NotificationContainerProps {
 
 export function NotificationContainer({ notifications, onClose }: NotificationContainerProps) {
   return (
-    <div className="fixed top-0 right-0 z-50 p-4 space-y-4">
+    <div className={cn(
+      "fixed z-[10000] space-y-4",
+      // Desktop positioning
+      "min-[938px]:top-4 min-[938px]:right-4 min-[938px]:p-4",
+      // Mobile positioning - above mobile nav
+      "max-[937px]:bottom-[calc(80px+env(safe-area-inset-bottom,0px)+1rem)]",
+      "max-[937px]:left-4 max-[937px]:right-4 max-[937px]:p-2",
+      // iPhone specific adjustments
+      "max-[937px]:bottom-[calc(100px+env(safe-area-inset-bottom,0px)+1rem)]"
+    )}>
       {notifications.map((notification) => (
         <Notification
           key={notification.id}

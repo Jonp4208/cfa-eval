@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { ClipboardList, X, AlertTriangle, Bell, Target, TrendingUp } from 'lucide-react';
+import { ClipboardList, AlertTriangle, Bell, Target, TrendingUp } from 'lucide-react';
 import api from '@/lib/axios';
 import { useNotification } from '@/contexts/NotificationContext';
 import { useTranslation } from '@/contexts/TranslationContext';
@@ -146,31 +146,7 @@ export function NotificationList({ onDismiss, isMobile = false, compact = false 
     }
   };
 
-  const handleDismissNotification = async (notificationId: string, event?: React.MouseEvent) => {
-    try {
-      // Stop event propagation to prevent notification click handler
-      event?.stopPropagation()
 
-      // Optimistically remove from UI first
-      setNotifications(prev => prev.filter(n => n._id !== notificationId))
-
-      // Then delete from backend
-      const response = await api.delete(`/api/notifications/${notificationId}`)
-
-      if (response.status !== 200) {
-        // If deletion failed, add notification back to list
-        const response = await api.get('/api/notifications')
-        setNotifications(response.data.notifications)
-        showNotification('error', t('common.error'), t('notifications.failedToDelete'))
-      }
-    } catch (error) {
-      console.error('Error dismissing notification:', error)
-      // Refresh notifications list on error
-      const response = await api.get('/api/notifications')
-      setNotifications(response.data.notifications)
-      showNotification('error', t('common.error'), t('notifications.failedToDelete'))
-    }
-  }
 
   const getNotificationIcon = (type: string) => {
     const upperType = type.toUpperCase();
@@ -228,65 +204,93 @@ export function NotificationList({ onDismiss, isMobile = false, compact = false 
 
   return (
     <div className={cn(
-      "overflow-y-auto",
-      compact ? "max-h-[30vh]" : isMobile ? "max-h-[calc(100vh-280px)] pb-16" : "max-h-[400px] py-2"
+      compact && isMobile ? "" : "overflow-y-auto",
+      compact && isMobile ? "" : compact ? "max-h-[30vh]" : isMobile ? "max-h-[calc(100vh-280px)] pb-16" : "max-h-[400px] py-2"
     )}>
       {notifications.map((notification) => (
         <div
           key={notification._id}
           className={cn(
-            "relative hover:bg-gray-50",
-            compact ? "p-2 border-b" : isMobile ? "p-4 border-b" : "px-4 py-2"
+            "relative hover:bg-gray-50 active:bg-gray-100 transition-colors cursor-pointer notification-list-item",
+            compact ? "p-3 border-b border-gray-100" : isMobile ? "p-4 border-b border-gray-100" : "px-4 py-3 border-b border-gray-100"
           )}
+          onClick={() => handleNotificationClick(notification)}
         >
           <div className="flex items-start gap-3">
-            <div className="relative">
+            <div className="relative flex-shrink-0">
               <div className={cn(
-                "rounded-full bg-[#E51636]/10 flex items-center justify-center flex-shrink-0",
-                compact ? "w-6 h-6" : "w-8 h-8"
+                "rounded-full bg-[#E51636]/10 flex items-center justify-center",
+                compact ? "w-8 h-8" : isMobile ? "w-10 h-10" : "w-8 h-8"
               )}>
                 {getNotificationIcon(notification.type)}
               </div>
               {notification.status === 'UNREAD' && (
-                <div className="absolute -top-1 -right-1 w-3 h-3 bg-[#E51636] rounded-full" />
+                <div className={cn(
+                  "absolute bg-[#E51636] rounded-full notification-badge",
+                  compact ? "-top-1 -right-1 w-3 h-3" : isMobile ? "-top-1 -right-1 w-4 h-4" : "-top-1 -right-1 w-3 h-3"
+                )} />
               )}
             </div>
-            <button
-              className="flex-grow text-left"
-              onClick={() => handleNotificationClick(notification)}
-            >
-              <div className="flex flex-col gap-1">
-                <div className="flex justify-between items-start">
+            <div className="flex-grow min-w-0">
+              <div className="flex justify-between items-start gap-2">
+                <div className="flex-grow min-w-0">
+                  {/* Extract employee name from message or use stored employee name */}
+                  {(() => {
+                    let notificationType = '';
+                    let employeeName = '';
+
+                    // Extract employee name from message patterns
+                    if (notification.message) {
+                      const forMatch = notification.message.match(/for ([^.]+)/);
+                      if (forMatch) {
+                        employeeName = forMatch[1];
+                      }
+                    }
+
+                    // Fallback to stored employee name
+                    if (!employeeName && notification.employee?.name) {
+                      employeeName = notification.employee.name;
+                    }
+
+                    // Determine notification type from title
+                    if (notification.title.includes('Documentation')) {
+                      notificationType = 'Documentation';
+                    } else if (notification.title.includes('Disciplinary')) {
+                      notificationType = 'Disciplinary';
+                    } else if (notification.title.includes('Evaluation')) {
+                      notificationType = 'Evaluation';
+                    } else if (notification.title.includes('Task')) {
+                      notificationType = 'Task';
+                    } else if (notification.title.includes('Goal')) {
+                      notificationType = 'Goal';
+                    } else {
+                      // Use first word of title as fallback
+                      notificationType = notification.title.split(' ')[0];
+                    }
+
+                    const displayText = employeeName ? `${notificationType} - ${employeeName}` : notification.title;
+
+                    return (
+                      <p className={cn(
+                        "font-semibold text-[#27251F] leading-tight",
+                        compact ? "text-sm" : isMobile ? "text-base" : "text-sm"
+                      )}>
+                        {displayText}
+                      </p>
+                    );
+                  })()}
+                </div>
+                <div className="flex-shrink-0">
                   <p className={cn(
-                    "font-medium text-[#27251F]",
-                    compact ? "text-sm" : isMobile ? "text-base" : "text-sm"
-                  )}>
-                    {notification.title}
-                    {notification.employee?.name && ` - ${notification.employee.name}`}
-                  </p>
-                  <p className={cn(
-                    "text-[#27251F]/60 text-xs",
+                    "text-[#27251F]/60 font-medium",
                     compact ? "text-xs" : isMobile ? "text-sm" : "text-xs"
                   )}>
                     {formatDate(notification.createdAt)}
                   </p>
                 </div>
-                {!compact && (
-                  <p className={cn(
-                    "text-[#27251F]/60",
-                    isMobile ? "text-sm" : "text-xs"
-                  )}>
-                    {notification.message}
-                  </p>
-                )}
               </div>
-            </button>
-            <button
-              onClick={(e) => handleDismissNotification(notification._id, e)}
-              className="text-[#27251F]/40 hover:text-[#27251F]/60"
-            >
-              <X className={compact ? "w-3 h-3" : "w-4 h-4"} />
-            </button>
+
+            </div>
           </div>
         </div>
       ))}

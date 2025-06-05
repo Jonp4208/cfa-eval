@@ -76,15 +76,25 @@ export default function ChangePasswordForm() {
     <>
       {/* Notification */}
       {notification && (
-        <div className="fixed top-4 right-4 z-50 animate-in fade-in slide-in-from-top-2">
+        <div className={cn(
+          "fixed z-[10000] animate-in fade-in slide-in-from-top-2",
+          // Desktop positioning
+          "min-[938px]:top-4 min-[938px]:right-4",
+          // Mobile positioning - above mobile nav
+          "max-[937px]:bottom-[calc(80px+env(safe-area-inset-bottom,0px)+1rem)]",
+          "max-[937px]:left-4 max-[937px]:right-4",
+          // iPhone specific adjustments
+          "max-[937px]:bottom-[calc(100px+env(safe-area-inset-bottom,0px)+1rem)]"
+        )}>
           <div className={cn(
-            "flex items-center gap-2 p-4 rounded-lg shadow-lg min-w-[320px]",
+            "flex items-center gap-2 p-4 rounded-lg shadow-lg",
+            "min-[938px]:min-w-[320px] max-[937px]:w-full",
             notification.type === 'success' ? 'bg-green-50 text-green-900' : 'bg-red-50 text-red-900'
           )}>
             {notification.type === 'success' ? (
-              <CheckCircle className="w-5 h-5 text-green-500" />
+              <CheckCircle className="w-5 h-5 text-green-500 flex-shrink-0" />
             ) : (
-              <XCircle className="w-5 h-5 text-red-500" />
+              <XCircle className="w-5 h-5 text-red-500 flex-shrink-0" />
             )}
             <p className="flex-1 text-sm font-medium">{notification.message}</p>
           </div>

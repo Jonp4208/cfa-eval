@@ -250,6 +250,90 @@
     border-radius: 10px;
   }
 
+  /* Mobile notification positioning fixes */
+  @media (max-width: 937px) {
+    /* Standard mobile devices */
+    [data-radix-toast-viewport] {
+      bottom: calc(80px + env(safe-area-inset-bottom, 0px) + 1rem) !important;
+      left: 0.5rem !important;
+      right: 0.5rem !important;
+      max-width: none !important;
+    }
+
+    /* iPhone 13 specific */
+    @media screen and (width: 390px) and (height: 844px) {
+      [data-radix-toast-viewport] {
+        bottom: calc(66px + env(safe-area-inset-bottom, 0px) + 1rem) !important;
+      }
+    }
+
+    /* iPhone 13 Pro Max specific */
+    @media screen and (width: 428px) and (height: 926px) {
+      [data-radix-toast-viewport] {
+        bottom: calc(100px + env(safe-area-inset-bottom, 0px) + 1rem) !important;
+      }
+    }
+
+    /* iPhone 14 Pro and later with Dynamic Island */
+    @media screen and (min-width: 393px) and (min-height: 852px),
+           screen and (min-width: 430px) and (min-height: 932px) {
+      [data-radix-toast-viewport] {
+        bottom: calc(85px + env(safe-area-inset-bottom, 0px) + 1rem) !important;
+      }
+    }
+
+    /* Mobile toast styling improvements */
+    [data-radix-toast-root] {
+      max-width: none !important;
+      margin: 0 !important;
+    }
+
+    /* Improve touch targets on mobile */
+    [data-radix-toast-close] {
+      min-width: 44px !important;
+      min-height: 44px !important;
+      display: flex !important;
+      align-items: center !important;
+      justify-content: center !important;
+    }
+  }
+
+  /* Notification z-index fixes */
+  .notification-container,
+  [data-radix-toast-viewport],
+  [data-radix-toast-root] {
+    z-index: 10000 !important;
+  }
+
+  /* Notification list improvements */
+  .notification-list-item {
+    transition: all 0.2s ease-in-out;
+  }
+
+  .notification-list-item:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  }
+
+  .notification-list-item:active {
+    transform: translateY(0);
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+  }
+
+  /* Better notification badge styling */
+  .notification-badge {
+    animation: pulse 2s infinite;
+  }
+
+  @keyframes pulse {
+    0%, 100% {
+      opacity: 1;
+    }
+    50% {
+      opacity: 0.7;
+    }
+  }
+
   .thin-scrollbar::-webkit-scrollbar-thumb {
     background: #c1c1c1;
     border-radius: 10px;

@@ -14,7 +14,16 @@ const ToastViewport = React.forwardRef<
   <ToastPrimitives.Viewport
     ref={ref}
     className={cn(
-      "fixed bottom-4 right-4 z-[100] flex max-h-screen w-full flex-col max-w-[420px] p-4",
+      // Desktop positioning
+      "fixed z-[10000] flex max-h-screen w-full flex-col p-4",
+      // Mobile positioning - above mobile nav with safe area support
+      "bottom-4 right-4 max-w-[420px]",
+      "min-[938px]:bottom-4 min-[938px]:right-4",
+      // Mobile specific - position above mobile nav (80px) + safe area + padding
+      "max-[937px]:bottom-[calc(80px+env(safe-area-inset-bottom,0px)+1rem)]",
+      "max-[937px]:right-2 max-[937px]:left-2 max-[937px]:max-w-none",
+      // iPhone specific adjustments
+      "max-[937px]:bottom-[calc(100px+env(safe-area-inset-bottom,0px)+1rem)]",
       "scrollbar scrollbar-w-2 scrollbar-track-transparent scrollbar-thumb-gray-400/50 hover:scrollbar-thumb-gray-500/50",
       className
     )}
@@ -24,7 +33,7 @@ const ToastViewport = React.forwardRef<
 ToastViewport.displayName = ToastPrimitives.Viewport.displayName
 
 const toastVariants = cva(
-  "group pointer-events-auto relative flex w-full items-center justify-between space-x-4 overflow-hidden rounded-md border p-6 pr-8 shadow-lg transition-all data-[swipe=cancel]:translate-x-0 data-[swipe=end]:translate-x-[var(--radix-toast-swipe-end-x)] data-[swipe=move]:translate-x-[var(--radix-toast-swipe-move-x)] data-[swipe=move]:transition-none data-[state=open]:animate-in data-[state=closed]:animate-out data-[swipe=end]:animate-out data-[state=closed]:fade-out-80 data-[state=closed]:slide-out-to-right-full data-[state=open]:slide-in-from-bottom-full",
+  "group pointer-events-auto relative flex w-full items-center justify-between space-x-4 overflow-hidden rounded-md border shadow-lg transition-all data-[swipe=cancel]:translate-x-0 data-[swipe=end]:translate-x-[var(--radix-toast-swipe-end-x)] data-[swipe=move]:translate-x-[var(--radix-toast-swipe-move-x)] data-[swipe=move]:transition-none data-[state=open]:animate-in data-[state=closed]:animate-out data-[swipe=end]:animate-out data-[state=closed]:fade-out-80 data-[state=closed]:slide-out-to-right-full data-[state=open]:slide-in-from-bottom-full p-6 pr-8 min-[938px]:p-6 min-[938px]:pr-8 max-[937px]:p-4 max-[937px]:pr-6",
   {
     variants: {
       variant: {

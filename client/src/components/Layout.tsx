@@ -653,23 +653,34 @@ export default function Layout({ children }: { children: React.ReactNode }) {
                     )}
                   </Button>
                 </DropdownMenuTrigger>
-                <DropdownMenuContent align="end" className="w-[300px] max-h-[80vh] overflow-y-auto">
-                  <DropdownMenuLabel>{t('common.notifications', 'Notifications')}</DropdownMenuLabel>
-                  <NotificationList onDismiss={() => {
-                    // Refresh notification count after dismissal
-                    const fetchNotifications = async () => {
-                      try {
-                        const response = await api.get('/api/notifications');
-                        const unreadCount = response.data.notifications.filter(
-                          (notification: any) => !notification.read
-                        ).length;
-                        setNotificationCount(unreadCount);
-                      } catch (error) {
-                        console.error('Error fetching notifications:', error);
-                      }
-                    };
-                    fetchNotifications();
-                  }} />
+                <DropdownMenuContent align="end" className="w-[380px] max-h-[70vh] overflow-hidden p-0 shadow-lg border border-gray-200">
+                  <div className="p-4 border-b border-gray-100 bg-gray-50">
+                    <div className="flex items-center justify-between">
+                      <h3 className="font-semibold text-gray-900">{t('common.notifications', 'Notifications')}</h3>
+                      {notificationCount > 0 && (
+                        <span className="px-2 py-1 rounded-full text-xs font-medium bg-red-100 text-red-600">
+                          {notificationCount} new
+                        </span>
+                      )}
+                    </div>
+                  </div>
+                  <div className="overflow-y-auto max-h-[60vh]">
+                    <NotificationList onDismiss={() => {
+                      // Refresh notification count after dismissal
+                      const fetchNotifications = async () => {
+                        try {
+                          const response = await api.get('/api/notifications');
+                          const unreadCount = response.data.notifications.filter(
+                            (notification: any) => !notification.read
+                          ).length;
+                          setNotificationCount(unreadCount);
+                        } catch (error) {
+                          console.error('Error fetching notifications:', error);
+                        }
+                      };
+                      fetchNotifications();
+                    }} />
+                  </div>
                 </DropdownMenuContent>
               </DropdownMenu>
             </div>
@@ -755,7 +766,7 @@ export default function Layout({ children }: { children: React.ReactNode }) {
         >
           <div
             ref={menuRef}
-            className="absolute right-0 top-0 bottom-0 w-[85%] max-w-[320px] bg-white shadow-xl overflow-y-auto overscroll-contain thin-scrollbar"
+            className="absolute right-0 top-0 bottom-0 w-[85%] max-w-[320px] bg-white shadow-xl flex flex-col overscroll-contain"
             style={{ height: '100%', maxHeight: '100vh' }}
             onClick={(e) => e.stopPropagation()}
           >
@@ -776,41 +787,41 @@ export default function Layout({ children }: { children: React.ReactNode }) {
               </button>
             </div>
 
-            {/* Notifications Section - Moved to top */}
-            <div className="p-3 border-b">
-              <div className="flex items-center justify-between mb-1">
-                <h3 className="font-medium text-gray-900 text-sm">{t('common.notifications', 'Notifications')}</h3>
-                {notificationCount > 0 && (
-                  <span className="px-1.5 py-0.5 rounded-full text-xs font-medium bg-red-100 text-red-600">
-                    {notificationCount}
-                  </span>
-                )}
-              </div>
+            <div className="flex-1 p-2 overflow-y-auto thin-scrollbar pb-safe" style={{ overscrollBehavior: 'contain', paddingBottom: 'calc(env(safe-area-inset-bottom, 0px) + 2rem)' }}>
+              {/* Notifications Section - Integrated into main scroll */}
+              {notificationCount > 0 && (
+                <>
+                  <div className="flex items-center justify-between mb-2 px-1">
+                    <h3 className="font-medium text-gray-900 text-sm">{t('common.notifications', 'Notifications')}</h3>
+                    <span className="px-2 py-1 rounded-full text-xs font-medium bg-red-100 text-red-600">
+                      {notificationCount} new
+                    </span>
+                  </div>
+                  <div className="bg-gray-50 rounded-lg border border-gray-200 mb-4">
+                    <NotificationList
+                      onDismiss={() => {
+                        // Refresh notification count after dismissal
+                        const fetchNotifications = async () => {
+                          try {
+                            const response = await api.get('/api/notifications');
+                            const unreadCount = response.data.notifications.filter(
+                              (notification: any) => !notification.read
+                            ).length;
+                            setNotificationCount(unreadCount);
+                          } catch (error) {
+                            console.error('Error fetching notifications:', error);
+                          }
+                        };
+                        fetchNotifications();
+                      }}
+                      compact={true}
+                      isMobile={true}
+                    />
+                  </div>
+                </>
+              )}
 
-              <div className="max-h-[15vh] overflow-y-auto rounded-lg bg-gray-50 mb-1 thin-scrollbar" style={{ overscrollBehavior: 'contain' }}>
-                <NotificationList
-                  onDismiss={() => {
-                    // Refresh notification count after dismissal
-                    const fetchNotifications = async () => {
-                      try {
-                        const response = await api.get('/api/notifications');
-                        const unreadCount = response.data.notifications.filter(
-                          (notification: any) => !notification.read
-                        ).length;
-                        setNotificationCount(unreadCount);
-                      } catch (error) {
-                        console.error('Error fetching notifications:', error);
-                      }
-                    };
-                    fetchNotifications();
-                  }}
-                  compact={true}
-                  isMobile={true}
-                />
-              </div>
-            </div>
-
-            <div className="p-2 overflow-y-auto thin-scrollbar" style={{ overscrollBehavior: 'contain', maxHeight: 'calc(100vh - 170px)' }}>
+              {/* Menu Items */}
               {menuItems
                 .filter(item => item.show)
                 .map(item => {
@@ -896,73 +907,72 @@ export default function Layout({ children }: { children: React.ReactNode }) {
                     </button>
                   );
                 })}
-            </div>
 
-            {/* Settings and Logout */}
-            <div className="p-3 border-t pb-safe safe-area-bottom">
-              <button
-                onClick={() => {
-                  navigate('/how-to');
-                  setIsMobileMenuOpen(false);
-                }}
-                className="w-full px-3 py-2 flex items-center gap-2 rounded-lg mb-1 hover:bg-gray-50"
-              >
-                <HelpCircle className="w-5 h-5 text-gray-500" />
-                <span className="font-medium">How To</span>
-              </button>
+              {/* Settings and Support Section */}
+              <div className="mt-4 pt-4 border-t border-gray-200">
+                <button
+                  onClick={() => {
+                    navigate('/how-to');
+                    setIsMobileMenuOpen(false);
+                  }}
+                  className="w-full px-3 py-2 flex items-center gap-2 rounded-lg mb-1 hover:bg-gray-50 text-gray-700"
+                >
+                  <HelpCircle className="w-5 h-5 text-gray-500" />
+                  <span className="font-medium">How To</span>
+                </button>
 
-              {/* Contact Support */}
-              <button
-                onClick={() => {
-                  setShowContactSupport(true);
-                  setIsMobileMenuOpen(false);
-                }}
-                className="w-full px-3 py-2 flex items-center gap-2 rounded-lg mb-1 hover:bg-gray-50"
-              >
-                <MessageSquare className="w-5 h-5 text-gray-500" />
-                <span className="font-medium">Contact Support</span>
-              </button>
+                <button
+                  onClick={() => {
+                    setShowContactSupport(true);
+                    setIsMobileMenuOpen(false);
+                  }}
+                  className="w-full px-3 py-2 flex items-center gap-2 rounded-lg mb-1 hover:bg-gray-50 text-gray-700"
+                >
+                  <MessageSquare className="w-5 h-5 text-gray-500" />
+                  <span className="font-medium">Contact Support</span>
+                </button>
 
-              <button
-                onClick={() => {
-                  navigate('/settings');
-                  setIsMobileMenuOpen(false);
-                }}
-                className="w-full px-3 py-2 flex items-center gap-2 rounded-lg mb-1 hover:bg-gray-50"
-              >
-                <Settings className="w-5 h-5 text-gray-500" />
-                <span className="font-medium">{t('navigation.settings')}</span>
-              </button>
+                <button
+                  onClick={() => {
+                    navigate('/settings');
+                    setIsMobileMenuOpen(false);
+                  }}
+                  className="w-full px-3 py-2 flex items-center gap-2 rounded-lg mb-1 hover:bg-gray-50 text-gray-700"
+                >
+                  <Settings className="w-5 h-5 text-gray-500" />
+                  <span className="font-medium">{t('navigation.settings')}</span>
+                </button>
 
-              {/* Admin link - only visible to Jonathon Pope */}
-              {user?.email === 'jonp4208@gmail.com' && (
-                <>
-                  <div className="mt-2 mb-1 px-3">
-                    <div className="text-xs font-medium text-gray-500">Admin</div>
-                  </div>
-                  <button
-                    onClick={() => {
-                      navigate('/admin');
-                      setIsMobileMenuOpen(false);
-                    }}
-                    className="w-full px-3 py-2 flex items-center gap-2 rounded-lg mb-1 hover:bg-gray-50"
-                  >
-                    <ShieldCheck className="w-5 h-5 text-gray-500" />
-                    <span className="font-medium">Admin Dashboard</span>
-                  </button>
-                </>
-              )}
+                {/* Admin link - only visible to Jonathon Pope */}
+                {user?.email === 'jonp4208@gmail.com' && (
+                  <>
+                    <div className="mt-3 mb-1 px-3">
+                      <div className="text-xs font-medium text-gray-500">Admin</div>
+                    </div>
+                    <button
+                      onClick={() => {
+                        navigate('/admin');
+                        setIsMobileMenuOpen(false);
+                      }}
+                      className="w-full px-3 py-2 flex items-center gap-2 rounded-lg mb-1 hover:bg-gray-50 text-gray-700"
+                    >
+                      <ShieldCheck className="w-5 h-5 text-gray-500" />
+                      <span className="font-medium">Admin Dashboard</span>
+                    </button>
+                  </>
+                )}
 
-              <button
-                onClick={() => {
-                  logout();
-                  setIsMobileMenuOpen(false);
-                }}
-                className="w-full px-3 py-2 flex items-center gap-2 rounded-lg text-red-600 hover:bg-red-50 mt-2"
-              >
-                <LogOut className="w-5 h-5" />
-                <span className="font-medium">{t('auth.logout')}</span>
-              </button>
+                <button
+                  onClick={() => {
+                    logout();
+                    setIsMobileMenuOpen(false);
+                  }}
+                  className="w-full px-3 py-2 flex items-center gap-2 rounded-lg text-red-600 hover:bg-red-50 mt-3 mb-8"
+                >
+                  <LogOut className="w-5 h-5" />
+                  <span className="font-medium">{t('auth.logout')}</span>
+                </button>
+              </div>
             </div>
           </div>
         </div>
