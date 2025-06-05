@@ -615,10 +615,10 @@ export default function LandingPage() {
                 Leadership Development & Performance Evaluations
               </div>
               <h1 className="text-4xl sm:text-5xl lg:text-6xl font-bold tracking-tight">
-                Transform Your Team with Expert <span className="text-red-100">Leadership Development</span>
+                <span className="text-amber-300 font-extrabold">L</span>eadership <span className="text-amber-300 font-extrabold">D</span>evelopment. Lasting <span className="text-amber-300 font-extrabold">Growth</span>.
               </h1>
-              <p className="text-xl sm:text-2xl text-red-100">
-                The only platform with exclusive evaluation templates and proven leadership development plans built by current restaurant leaders and operators with real-world experience.
+              <p className="text-xl sm:text-2xl text-red-100 font-medium italic">
+                "You're not just managing today's operations - you're building tomorrow's leaders"
               </p>
               <div className="flex flex-col sm:flex-row gap-4">
                 <Button
