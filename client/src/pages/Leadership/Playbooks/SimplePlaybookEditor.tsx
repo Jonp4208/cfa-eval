@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
+import { useParams, useNavigate, useSearchParams } from 'react-router-dom';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -29,8 +29,36 @@ const EditableText: React.FC<EditableTextProps> = ({
   const [isEditing, setIsEditing] = useState(false);
   const [editValue, setEditValue] = useState(value);
 
+  // Check if current value is placeholder text
+  const isPlaceholderText = (text: string) => {
+    const placeholderTexts = [
+      'What exactly needs to be accomplished? Be precise.',
+      'How will you know when it\'s complete? What can you count or observe?',
+      'Can this realistically be done with available resources?',
+      'Why does this matter to your organization\'s success?',
+      'When will this be completed? Set a specific deadline.',
+      'Examples:\n• Health department violation notice',
+      'Examples:\n• Monthly deep cleaning schedule',
+      'Examples:\n• Restocking paper supplies',
+      'Examples:\n• Reorganizing storage room',
+      'Your Title',
+      'Your Subtitle',
+      'Goal 1',
+      'Goal 2'
+    ];
+    return placeholderTexts.some(placeholder => text.includes(placeholder));
+  };
+
+  const handleClick = () => {
+    setIsEditing(true);
+    // If the current value is placeholder text, start with empty string for easier editing
+    setEditValue(isPlaceholderText(value) ? '' : value);
+  };
+
   const handleSave = () => {
-    onChange(editValue);
+    // If user left it empty, keep the original value (don't replace with empty)
+    const finalValue = editValue.trim() === '' ? value : editValue;
+    onChange(finalValue);
     setIsEditing(false);
   };
 
@@ -66,6 +94,7 @@ const EditableText: React.FC<EditableTextProps> = ({
             onChange={(e) => setEditValue(e.target.value)}
             onKeyDown={handleKeyDown}
             onBlur={handleSave}
+            onFocus={(e) => e.target.select()}
             className={`${className} min-h-[60px]`}
             placeholder={placeholder}
             autoFocus
@@ -76,6 +105,7 @@ const EditableText: React.FC<EditableTextProps> = ({
             onChange={(e) => setEditValue(e.target.value)}
             onKeyDown={handleKeyDown}
             onBlur={handleSave}
+            onFocus={(e) => e.target.select()}
             className={className}
             placeholder={placeholder}
             autoFocus
@@ -87,7 +117,7 @@ const EditableText: React.FC<EditableTextProps> = ({
 
   return (
     <div
-      onClick={() => setIsEditing(true)}
+      onClick={handleClick}
       className={`${className} cursor-pointer border-2 border-dashed border-blue-300 bg-blue-50/30 rounded px-2 py-1 transition-all duration-200 relative group hover:border-blue-400 hover:bg-blue-50`}
       title="Click to edit"
     >
@@ -104,6 +134,7 @@ const EditableText: React.FC<EditableTextProps> = ({
 export default function SimplePlaybookEditor() {
   const { id } = useParams();
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
   const { toast } = useToast();
   const [playbook, setPlaybook] = useState<Playbook | null>(null);
   const [loading, setLoading] = useState(true);
@@ -115,10 +146,10 @@ export default function SimplePlaybookEditor() {
     title: 'Your Title',
     subtitle: 'Your Subtitle',
     // Priority Matrix - only descriptions are editable
-    urgentImportantDescription: '2 to 3 Important/urgent Items heres',
-    importantNotUrgentDescription: '2 to 3 Important/Not urgent Items heres',
-    urgentNotImportantDescription: '2 to 3 urgent/Not Important Items heres',
-    notUrgentNotImportantDescription: '2 to 3 Not Urgent/Not Important Items heres',
+    urgentImportantDescription: 'Examples:\n• Health department violation notice\n• Kitchen equipment breakdown during lunch rush\n\nYour items:',
+    importantNotUrgentDescription: 'Examples:\n• Monthly deep cleaning schedule\n• Staff training on new procedures\n\nYour items:',
+    urgentNotImportantDescription: 'Examples:\n• Restocking paper supplies\n• Replacing burnt-out light bulbs\n\nYour items:',
+    notUrgentNotImportantDescription: 'Examples:\n• Reorganizing storage room\n• Excessive paperwork/reports\n\nYour items:',
 
     // SMART Template - only descriptions are editable
     specificDescription: 'What exactly needs to be accomplished? Be precise.',
@@ -145,9 +176,119 @@ export default function SimplePlaybookEditor() {
     if (id && id !== 'new') {
       fetchPlaybook();
     } else {
+      // Check if we have a template parameter
+      const templateId = searchParams.get('template');
+      if (templateId) {
+        initializeFromTemplate(templateId);
+      } else {
+        setLoading(false);
+      }
+    }
+  }, [id, searchParams]);
+
+  const initializeFromTemplate = async (templateId: string) => {
+    try {
+      const templates = playbookService.getPlaybookTemplates();
+      const template = templates.find(t => t.id === templateId);
+
+      if (template) {
+        // Get template-specific examples for priority matrix
+        const templateExamples = getTemplateExamples(templateId);
+
+        // Initialize with template data
+        setPlaybookData(prev => ({
+          ...prev,
+          title: template.name,
+          subtitle: template.description,
+          // Set template-specific priority matrix examples
+          urgentImportantDescription: templateExamples.urgentImportant,
+          importantNotUrgentDescription: templateExamples.importantNotUrgent,
+          urgentNotImportantDescription: templateExamples.urgentNotImportant,
+          notUrgentNotImportantDescription: templateExamples.notUrgentNotImportant,
+          // Set template-specific SMART goals
+          smartGoals: template.goals.map((goal, index) => ({
+            id: index + 1,
+            title: `Goal ${index + 1}: ${goal}`,
+            specific: 'What exactly needs to be accomplished? Be precise.',
+            measurable: 'How will you know when it\'s complete? What can you count or observe?',
+            achievable: 'Can this realistically be done with available resources?',
+            relevant: 'Why does this matter to your organization\'s success?',
+            timeBound: 'When will this be completed? Set a specific deadline.'
+          }))
+        }));
+
+        toast({
+          title: 'Template Loaded',
+          description: `Started with ${template.name} template`
+        });
+      }
+
+      setLoading(false);
+    } catch (error) {
+      console.error('Error initializing from template:', error);
       setLoading(false);
     }
-  }, [id]);
+  };
+
+  const getTemplateExamples = (templateId: string) => {
+    const examples = {
+      'kitchen-operations': {
+        urgentImportant: 'Examples:\n• Food safety violation during inspection\n• Walk-in cooler breakdown during prep\n\nYour items:',
+        importantNotUrgent: 'Examples:\n• Monthly equipment maintenance schedule\n• Staff training on portion control\n\nYour items:',
+        urgentNotImportant: 'Examples:\n• Restocking disposable containers\n• Cleaning grease trap filters\n\nYour items:',
+        notUrgentNotImportant: 'Examples:\n• Reorganizing dry storage area\n• Excessive inventory paperwork\n\nYour items:'
+      },
+      'drive-thru-optimization': {
+        urgentImportant: 'Examples:\n• Drive thru system completely down\n• Customer complaint about 10-minute wait\n\nYour items:',
+        importantNotUrgent: 'Examples:\n• Training team on order accuracy\n• Implementing order staging system\n\nYour items:',
+        urgentNotImportant: 'Examples:\n• Restocking drive thru supplies\n• Cleaning headset equipment\n\nYour items:',
+        notUrgentNotImportant: 'Examples:\n• Reorganizing drive thru storage\n• Excessive timing reports\n\nYour items:'
+      },
+      'front-counter-excellence': {
+        urgentImportant: 'Examples:\n• POS system down during lunch rush\n• Customer complaint about rude service\n\nYour items:',
+        importantNotUrgent: 'Examples:\n• Customer service training program\n• Implementing greeting standards\n\nYour items:',
+        urgentNotImportant: 'Examples:\n• Restocking napkins and straws\n• Cleaning front counter displays\n\nYour items:',
+        notUrgentNotImportant: 'Examples:\n• Reorganizing front counter storage\n• Excessive customer surveys\n\nYour items:'
+      },
+      'team-leadership': {
+        urgentImportant: 'Examples:\n• Key team member just quit\n• Serious conflict between team members\n\nYour items:',
+        importantNotUrgent: 'Examples:\n• Monthly one-on-one meetings\n• Team development planning\n\nYour items:',
+        urgentNotImportant: 'Examples:\n• Scheduling next week\'s shifts\n• Ordering team member uniforms\n\nYour items:',
+        notUrgentNotImportant: 'Examples:\n• Reorganizing employee files\n• Excessive team meeting notes\n\nYour items:'
+      },
+      'food-safety-compliance': {
+        urgentImportant: 'Examples:\n• Failed health department inspection\n• Customer reports food poisoning\n\nYour items:',
+        importantNotUrgent: 'Examples:\n• Monthly food safety training\n• Updating HACCP procedures\n\nYour items:',
+        urgentNotImportant: 'Examples:\n• Restocking sanitizer supplies\n• Replacing worn thermometers\n\nYour items:',
+        notUrgentNotImportant: 'Examples:\n• Reorganizing safety documentation\n• Excessive temperature logs\n\nYour items:'
+      },
+      'training-development': {
+        urgentImportant: 'Examples:\n• New hire starting tomorrow untrained\n• Critical skill gap affecting service\n\nYour items:',
+        importantNotUrgent: 'Examples:\n• Developing training modules\n• Cross-training experienced staff\n\nYour items:',
+        urgentNotImportant: 'Examples:\n• Printing training materials\n• Setting up training equipment\n\nYour items:',
+        notUrgentNotImportant: 'Examples:\n• Reorganizing training files\n• Excessive training documentation\n\nYour items:'
+      },
+      'cost-management': {
+        urgentImportant: 'Examples:\n• Food costs 5% over budget this month\n• Major equipment repair needed\n\nYour items:',
+        importantNotUrgent: 'Examples:\n• Monthly budget review process\n• Implementing waste tracking system\n\nYour items:',
+        urgentNotImportant: 'Examples:\n• Processing vendor invoices\n• Updating inventory counts\n\nYour items:',
+        notUrgentNotImportant: 'Examples:\n• Reorganizing financial files\n• Excessive cost reports\n\nYour items:'
+      },
+      'customer-experience': {
+        urgentImportant: 'Examples:\n• Multiple negative online reviews\n• Customer complaint to corporate\n\nYour items:',
+        importantNotUrgent: 'Examples:\n• Customer feedback system setup\n• Service excellence training\n\nYour items:',
+        urgentNotImportant: 'Examples:\n• Responding to online reviews\n• Updating customer displays\n\nYour items:',
+        notUrgentNotImportant: 'Examples:\n• Reorganizing customer files\n• Excessive satisfaction surveys\n\nYour items:'
+      }
+    };
+
+    return examples[templateId] || {
+      urgentImportant: 'Examples:\n• Health department violation notice\n• Kitchen equipment breakdown during lunch rush\n\nYour items:',
+      importantNotUrgent: 'Examples:\n• Monthly deep cleaning schedule\n• Staff training on new procedures\n\nYour items:',
+      urgentNotImportant: 'Examples:\n• Restocking paper supplies\n• Replacing burnt-out light bulbs\n\nYour items:',
+      notUrgentNotImportant: 'Examples:\n• Reorganizing storage room\n• Excessive paperwork/reports\n\nYour items:'
+    };
+  };
 
   const fetchPlaybook = async () => {
     try {
@@ -161,10 +302,10 @@ export default function SimplePlaybookEditor() {
           title: data.title || 'Your Title',
           subtitle: data.subtitle || 'Your Subtitle',
           // Default values for priority matrix
-          urgentImportantDescription: '2 to 3 Important/urgent Items heres',
-          importantNotUrgentDescription: '2 to 3 Important/Not urgent Items heres',
-          urgentNotImportantDescription: '2 to 3 urgent/Not Important Items heres',
-          notUrgentNotImportantDescription: '2 to 3 Not Urgent/Not Important Items heres',
+          urgentImportantDescription: 'Examples:\n• Health department violation notice\n• Kitchen equipment breakdown during lunch rush\n\nYour items:',
+          importantNotUrgentDescription: 'Examples:\n• Monthly deep cleaning schedule\n• Staff training on new procedures\n\nYour items:',
+          urgentNotImportantDescription: 'Examples:\n• Restocking paper supplies\n• Replacing burnt-out light bulbs\n\nYour items:',
+          notUrgentNotImportantDescription: 'Examples:\n• Reorganizing storage room\n• Excessive paperwork/reports\n\nYour items:',
           // Default values for SMART template
           specificDescription: 'What exactly needs to be accomplished? Be precise.',
           measurableDescription: 'How will you know when it\'s complete? What can you count or observe?',
@@ -504,12 +645,17 @@ export default function SimplePlaybookEditor() {
         }
       ];
 
+      // Determine category and target role based on template or default
+      const templateId = searchParams.get('template');
+      const templates = playbookService.getPlaybookTemplates();
+      const template = templates.find(t => t.id === templateId);
+
       const updateData = {
         title: playbookData.title,
         subtitle: playbookData.subtitle,
         contentBlocks,
-        category: 'Leadership',
-        targetRole: 'Director'
+        category: template?.category || 'Leadership',
+        targetRole: template?.targetRole || 'Director'
       };
 
       if (id && id !== 'new' && id !== 'simple-edit') {
@@ -829,7 +975,7 @@ export default function SimplePlaybookEditor() {
                     <EditableText
                       value={playbookData.urgentImportantDescription}
                       onChange={(value) => updateField('urgentImportantDescription', value)}
-                      className="text-sm text-red-600"
+                      className="text-sm text-red-600 whitespace-pre-line"
                       multiline
                       placeholder="Description..."
                       isPreview={isPreview}
@@ -843,7 +989,7 @@ export default function SimplePlaybookEditor() {
                     <EditableText
                       value={playbookData.importantNotUrgentDescription}
                       onChange={(value) => updateField('importantNotUrgentDescription', value)}
-                      className="text-sm text-blue-600"
+                      className="text-sm text-blue-600 whitespace-pre-line"
                       multiline
                       placeholder="Description..."
                       isPreview={isPreview}
@@ -857,7 +1003,7 @@ export default function SimplePlaybookEditor() {
                     <EditableText
                       value={playbookData.urgentNotImportantDescription}
                       onChange={(value) => updateField('urgentNotImportantDescription', value)}
-                      className="text-sm text-yellow-600"
+                      className="text-sm text-yellow-600 whitespace-pre-line"
                       multiline
                       placeholder="Description..."
                       isPreview={isPreview}
@@ -871,7 +1017,7 @@ export default function SimplePlaybookEditor() {
                     <EditableText
                       value={playbookData.notUrgentNotImportantDescription}
                       onChange={(value) => updateField('notUrgentNotImportantDescription', value)}
-                      className="text-sm text-gray-600"
+                      className="text-sm text-gray-600 whitespace-pre-line"
                       multiline
                       placeholder="Description..."
                       isPreview={isPreview}

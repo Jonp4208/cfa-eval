@@ -12,6 +12,7 @@ import {
   Copy,
   Trash2,
   Users,
+  User,
   Calendar,
   Tag,
   Loader2,
@@ -573,34 +574,19 @@ export default function Playbooks() {
                               {playbook.viewCount} views
                             </span>
                           </div>
-                          <span className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium ${
-                            playbook.isPublished
-                              ? 'bg-green-500 text-white'
-                              : 'bg-gray-500 text-white'
-                          }`}>
-                            {playbook.isPublished ? (
-                              <>
-                                <Globe className="w-3 h-3 mr-1" />
-                                Published
-                              </>
-                            ) : (
-                              <>
-                                <Lock className="w-3 h-3 mr-1" />
-                                Draft
-                              </>
-                            )}
-                          </span>
+                          <div className="text-right">
+                            <div className="text-white/60 text-xs flex items-center justify-end gap-1">
+                              <User className="w-3 h-3" />
+                              Created by
+                            </div>
+                            <div className="text-white/80 text-xs font-medium">
+                              {playbook.createdBy?.name || 'Unknown'}
+                            </div>
+                          </div>
                         </div>
                       </div>
 
-                      {/* Status Badge */}
-                      <div className={`absolute -top-2 -right-2 text-white text-xs font-bold px-3 py-1 rounded-full shadow-lg transform rotate-12 ${
-                        playbook.isPublished
-                          ? 'bg-green-500'
-                          : 'bg-orange-500'
-                      }`}>
-                        {playbook.isPublished ? '✅ LIVE' : '📝 DRAFT'}
-                      </div>
+
 
                       {/* Action Buttons */}
                       {canManagePlaybooks && (
@@ -651,9 +637,7 @@ export default function Playbooks() {
                           <div className="flex items-center gap-3 mb-2">
                             <div className="w-5 h-5 bg-gray-200 rounded animate-pulse"></div>
                             <div className="h-6 bg-gray-200 rounded w-48 animate-pulse"></div>
-                            <div className="px-2 py-1 bg-gray-100 rounded-full">
-                              <span className="text-xs text-gray-500">Draft</span>
-                            </div>
+
                           </div>
 
                           <div className="h-4 bg-gray-200 rounded w-32 mb-2 animate-pulse"></div>
@@ -701,9 +685,7 @@ export default function Playbooks() {
                           <div className="flex items-center gap-3 mb-2">
                             <div className="w-5 h-5 bg-gray-200 rounded animate-pulse"></div>
                             <div className="h-6 bg-gray-200 rounded w-48 animate-pulse"></div>
-                            <div className="px-2 py-1 bg-gray-100 rounded-full">
-                              <span className="text-xs text-gray-500">Draft</span>
-                            </div>
+
                           </div>
 
                           <div className="h-4 bg-gray-200 rounded w-32 mb-2 animate-pulse"></div>
@@ -1174,13 +1156,7 @@ export default function Playbooks() {
                     <BookOpen className="w-5 h-5 text-[#E51636]" />
                     <AlertDialogTitle className="flex items-center gap-2 m-0">
                       {selectedPlaybook.title}
-                      <span className={`text-sm px-2 py-1 rounded-full ${
-                        selectedPlaybook.isPublished
-                          ? 'bg-green-100 text-green-800'
-                          : 'bg-orange-100 text-orange-800'
-                      }`}>
-                        {selectedPlaybook.isPublished ? 'Published' : 'Draft'}
-                      </span>
+
                     </AlertDialogTitle>
                   </div>
                   <div className="flex items-center gap-2">
