@@ -615,7 +615,9 @@ export default function LandingPage() {
                 Leadership Development & Performance Evaluations
               </div>
               <h1 className="text-4xl sm:text-5xl lg:text-6xl font-bold tracking-tight">
-                <span className="text-amber-300 font-extrabold">L</span>eadership <span className="text-amber-300 font-extrabold">D</span>evelopment. Lasting <span className="text-amber-300 font-extrabold">Growth</span>.
+                <span className="text-amber-300 font-extrabold">L</span>eadership<br />
+                <span className="text-amber-300 font-extrabold">D</span>evelopment. Lasting<br />
+                <span className="text-amber-300 font-extrabold">Growth</span>.
               </h1>
               <p className="text-xl sm:text-2xl text-red-100 font-medium italic">
                 "You're not just managing today's operations - you're building tomorrow's leaders"
