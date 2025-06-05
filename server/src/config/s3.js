@@ -38,6 +38,23 @@ const testS3Config = async () => {
   }
 };
 
+// Generate a fresh signed URL for an existing S3 object
+const generateSignedUrl = async (key, expiresIn = 3600) => {
+  try {
+    const command = new GetObjectCommand({
+      Bucket: bucketName,
+      Key: key
+    });
+
+    // Generate a signed URL with specified expiration (default 1 hour)
+    const url = await getSignedUrl(s3Client, command, { expiresIn });
+    return url;
+  } catch (error) {
+    logger.error('Error generating signed URL:', error);
+    throw error;
+  }
+};
+
 // Upload a file to S3
 const uploadFileToS3 = async (fileBuffer, fileName, mimeType) => {
   try {
@@ -56,14 +73,8 @@ const uploadFileToS3 = async (fileBuffer, fileName, mimeType) => {
     const command = new PutObjectCommand(params);
     await s3Client.send(command);
 
-    // Generate a signed URL for the uploaded file
-    const getCommand = new GetObjectCommand({
-      Bucket: bucketName,
-      Key: uniqueFileName
-    });
-
-    // Create a URL that expires in 1 week (604800 seconds)
-    const url = await getSignedUrl(s3Client, getCommand, { expiresIn: 604800 });
+    // Generate a signed URL for the uploaded file (1 hour expiration)
+    const url = await generateSignedUrl(uniqueFileName, 3600);
 
     return {
       url,
@@ -100,4 +111,4 @@ const deleteFileFromS3 = async (key) => {
   }
 };
 
-export { s3Client, uploadFileToS3, deleteFileFromS3, testS3Config };
+export { s3Client, uploadFileToS3, deleteFileFromS3, testS3Config, generateSignedUrl };

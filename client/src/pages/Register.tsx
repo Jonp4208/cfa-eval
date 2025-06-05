@@ -220,7 +220,7 @@ export default function Register() {
                   </div>
                   <h2 className="text-2xl font-bold text-[#E51636] mb-3">Thank You!</h2>
                   <p className="text-gray-700 mb-8 max-w-sm mx-auto">
-                    Your request for a 14-day free trial has been received. We'll contact you shortly to get you set up with your LD Growth account and selected features.
+                    Get ready to take your leadership to the next level! Be on the lookout for an email from Jonathon@ld-growth.com in the next couple of hours.
                   </p>
                   <Button
                     onClick={() => navigate('/')}

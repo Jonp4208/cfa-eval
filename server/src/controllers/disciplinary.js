@@ -5,6 +5,27 @@ import { handleAsync } from '../utils/errorHandler.js';
 import { ApiError } from '../utils/ApiError.js';
 import { sendEmail } from '../utils/email.js';
 import logger from '../utils/logger.js';
+import { generateSignedUrl } from '../config/s3.js';
+
+// Utility function to refresh expired document URLs
+const refreshDocumentUrls = async (documents) => {
+  if (!documents || documents.length === 0) return documents;
+
+  for (const doc of documents) {
+    if (doc.s3Key) {
+      try {
+        // Generate a fresh URL with 1 hour expiration
+        const freshUrl = await generateSignedUrl(doc.s3Key, 3600);
+        doc.url = freshUrl;
+      } catch (error) {
+        logger.error(`Failed to refresh URL for document ${doc._id}:`, error);
+        // Keep the old URL if refresh fails
+      }
+    }
+  }
+
+  return documents;
+};
 
 // Get all disciplinary incidents
 export const getAllIncidents = handleAsync(async (req, res) => {
@@ -71,6 +92,11 @@ export const getIncidentById = handleAsync(async (req, res) => {
   // If user has restricted access, verify they own the incident
   if (hasRestrictedAccess && incident.employee._id.toString() !== _id.toString()) {
     return res.status(403).json({ message: 'Not authorized to view this incident' });
+  }
+
+  // Refresh document URLs if they have S3 keys
+  if (incident.documents && incident.documents.length > 0) {
+    await refreshDocumentUrls(incident.documents);
   }
 
   res.json(incident);
@@ -440,19 +466,26 @@ export const completeFollowUp = handleAsync(async (req, res) => {
 
 // Add a document to an incident
 export const addDocument = handleAsync(async (req, res) => {
-  const { name, type, url } = req.body;
+  const { name, type, url, s3Key } = req.body;
 
   const incident = await Disciplinary.findById(req.params.id);
   if (!incident) {
     return res.status(404).json({ message: 'Incident not found' });
   }
 
-  incident.documents.push({
+  const documentData = {
     name,
     type,
     url,
     uploadedBy: req.user._id
-  });
+  };
+
+  // Add S3 key if provided
+  if (s3Key) {
+    documentData.s3Key = s3Key;
+  }
+
+  incident.documents.push(documentData);
 
   await incident.save();
   await incident.populate('documents.uploadedBy', 'firstName lastName');

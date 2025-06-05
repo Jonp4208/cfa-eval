@@ -5,7 +5,8 @@ import { Button } from '@/components/ui/button'
 import { Progress } from '@/components/ui/progress'
 import { Input } from '@/components/ui/input'
 import { useToast } from '@/components/ui/use-toast'
-import { Users, BookOpen, TrendingUp, Award, Plus, Eye, Target, Brain, Heart, Shield, Zap, GraduationCap, Rocket, Star, Sparkles, Trophy, BarChart3, PieChart, Activity, Calendar, Clock, CheckCircle, ArrowUp, ArrowDown, Minus, Search, CheckSquare, PlayCircle, FileText } from 'lucide-react'
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
+import { Users, BookOpen, TrendingUp, Award, Plus, Eye, Target, Brain, Heart, Shield, Zap, GraduationCap, Rocket, Star, Sparkles, Trophy, BarChart3, PieChart, Activity, Calendar, Clock, CheckCircle, ArrowUp, ArrowDown, Minus, Search, CheckSquare, PlayCircle, FileText, Crown } from 'lucide-react'
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { useNavigate } from 'react-router-dom'
@@ -44,6 +45,39 @@ interface TeamOverviewData {
   }
 }
 
+interface Leader {
+  _id: string
+  name: string
+  email: string
+  position: string
+  startDate: string
+}
+
+interface LeaderProgress {
+  leader: Leader
+  enrollments: Array<{
+    _id: string
+    planId: string
+    status: string
+    progress: number
+    enrolledAt: string
+    completedAt?: string
+  }>
+  totalPlans: number
+  completedPlans: number
+  inProgressPlans: number
+}
+
+interface LeaderOverviewData {
+  leaders: LeaderProgress[]
+  summary: {
+    totalLeaders: number
+    enrolledLeaders: number
+    totalEnrollments: number
+    completedPlans: number
+  }
+}
+
 interface AvailablePlan {
   id: string
   title: string
@@ -69,15 +103,20 @@ interface PlanTask {
 
 const TeamOverview: React.FC = () => {
   const [overviewData, setOverviewData] = useState<TeamOverviewData | null>(null)
+  const [leaderOverviewData, setLeaderOverviewData] = useState<LeaderOverviewData | null>(null)
   const [availablePlans, setAvailablePlans] = useState<AvailablePlan[]>([])
+  const [availableLeadershipPlans, setAvailableLeadershipPlans] = useState<AvailablePlan[]>([])
   const [loading, setLoading] = useState(true)
+  const [leaderLoading, setLeaderLoading] = useState(true)
   const [enrollDialogOpen, setEnrollDialogOpen] = useState(false)
   const [selectedTeamMember, setSelectedTeamMember] = useState<string>('')
   const [selectedPlan, setSelectedPlan] = useState<string>('')
   const [enrolling, setEnrolling] = useState(false)
   const [progressDialogOpen, setProgressDialogOpen] = useState(false)
+  const [leaderProgressDialogOpen, setLeaderProgressDialogOpen] = useState(false)
   const [analyticsDialogOpen, setAnalyticsDialogOpen] = useState(false)
   const [progressSearchTerm, setProgressSearchTerm] = useState('')
+  const [leaderProgressSearchTerm, setLeaderProgressSearchTerm] = useState('')
   const [analyticsSearchTerm, setAnalyticsSearchTerm] = useState('')
   const [planDetailsDialogOpen, setPlanDetailsDialogOpen] = useState(false)
   const [selectedPlanForDetails, setSelectedPlanForDetails] = useState<string>('')
@@ -89,6 +128,8 @@ const TeamOverview: React.FC = () => {
   useEffect(() => {
     fetchTeamOverview()
     fetchAvailablePlans()
+    fetchLeaderOverview()
+    fetchAvailableLeadershipPlans()
   }, [])
 
   const fetchTeamOverview = async () => {
@@ -113,6 +154,31 @@ const TeamOverview: React.FC = () => {
       setAvailablePlans(response.data)
     } catch (error) {
       console.error('Error fetching available plans:', error)
+    }
+  }
+
+  const fetchLeaderOverview = async () => {
+    try {
+      const response = await api.get('/leadership/leader-overview')
+      setLeaderOverviewData(response.data)
+    } catch (error) {
+      console.error('Error fetching leader overview:', error)
+      toast({
+        title: 'Error',
+        description: 'Failed to load leader development overview.',
+        variant: 'destructive'
+      })
+    } finally {
+      setLeaderLoading(false)
+    }
+  }
+
+  const fetchAvailableLeadershipPlans = async () => {
+    try {
+      const response = await api.get('/leadership/plans')
+      setAvailableLeadershipPlans(response.data)
+    } catch (error) {
+      console.error('Error fetching available leadership plans:', error)
     }
   }
 
@@ -192,6 +258,23 @@ const TeamOverview: React.FC = () => {
     return plan?.title || planId
   }
 
+  const getLeadershipPlanTitle = (planId: string) => {
+    const plan = availableLeadershipPlans.find(p => p.id === planId)
+    if (plan?.title) return plan.title
+
+    // Fallback to hardcoded titles for leadership plans
+    const planTitles: { [key: string]: string } = {
+      'heart-of-leadership': 'The Heart of Leadership',
+      'communication-influence': 'Communication & Influence Excellence',
+      'restaurant-culture-builder': 'Restaurant Culture Builder',
+      'team-development': 'Team Development Expert',
+      'guest-experience-mastery': 'Guest Experience Mastery',
+      'strategic-leadership': 'Strategic Leadership Mastery',
+      'operational-excellence': 'Operational Excellence'
+    }
+    return planTitles[planId] || planId
+  }
+
   const getPlanIcon = (planId: string) => {
     switch (planId) {
       case 'growth-mindset-champion':
@@ -225,6 +308,48 @@ const TeamOverview: React.FC = () => {
         return 'from-indigo-500 to-purple-500'
       case 'positive-energy-creator':
         return 'from-yellow-500 to-orange-500'
+      default:
+        return 'from-gray-500 to-gray-600'
+    }
+  }
+
+  const getLeadershipPlanIcon = (planId: string) => {
+    switch (planId) {
+      case 'heart-of-leadership':
+        return <Heart className="h-5 w-5" />
+      case 'communication-influence':
+        return <Users className="h-5 w-5" />
+      case 'restaurant-culture-builder':
+        return <Sparkles className="h-5 w-5" />
+      case 'team-development':
+        return <GraduationCap className="h-5 w-5" />
+      case 'guest-experience-mastery':
+        return <Star className="h-5 w-5" />
+      case 'strategic-leadership':
+        return <Crown className="h-5 w-5" />
+      case 'operational-excellence':
+        return <Target className="h-5 w-5" />
+      default:
+        return <Shield className="h-5 w-5" />
+    }
+  }
+
+  const getLeadershipPlanGradient = (planId: string) => {
+    switch (planId) {
+      case 'heart-of-leadership':
+        return 'from-red-500 to-pink-500'
+      case 'communication-influence':
+        return 'from-blue-500 to-cyan-500'
+      case 'restaurant-culture-builder':
+        return 'from-purple-500 to-indigo-500'
+      case 'team-development':
+        return 'from-green-500 to-emerald-500'
+      case 'guest-experience-mastery':
+        return 'from-yellow-500 to-orange-500'
+      case 'strategic-leadership':
+        return 'from-indigo-500 to-purple-500'
+      case 'operational-excellence':
+        return 'from-gray-500 to-slate-500'
       default:
         return 'from-gray-500 to-gray-600'
     }
@@ -335,9 +460,22 @@ const TeamOverview: React.FC = () => {
         <div className="absolute bottom-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-white/30 to-transparent"></div>
       </div>
 
-      <div className="max-w-7xl mx-auto px-6 py-12 space-y-12">
-        {/* Key Metrics Cards */}
-        <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4">
+      <div className="max-w-7xl mx-auto px-6 py-12">
+        <Tabs defaultValue="team-members" className="space-y-8">
+          <TabsList className="grid w-full grid-cols-2">
+            <TabsTrigger value="team-members" className="flex items-center gap-2">
+              <Users className="h-4 w-4" />
+              Team Members
+            </TabsTrigger>
+            <TabsTrigger value="leaders" className="flex items-center gap-2">
+              <Crown className="h-4 w-4" />
+              Leaders
+            </TabsTrigger>
+          </TabsList>
+
+          <TabsContent value="team-members" className="space-y-12">
+            {/* Team Member Key Metrics Cards */}
+            <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4">
           <Card className="border-0 shadow-xl bg-gradient-to-br from-blue-50 to-cyan-50 overflow-hidden">
             <div className="h-2 bg-gradient-to-r from-blue-500 to-cyan-500"></div>
             <CardContent className="p-6">
@@ -982,6 +1120,253 @@ const TeamOverview: React.FC = () => {
             </Dialog>
           </div>
         </div>
+        </TabsContent>
+
+        <TabsContent value="leaders" className="space-y-12">
+          {leaderLoading ? (
+            <div className="flex items-center justify-center h-64">
+              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
+            </div>
+          ) : !leaderOverviewData ? (
+            <div className="text-center py-12">
+              <p className="text-gray-600">Failed to load leader development data.</p>
+            </div>
+          ) : (
+            <>
+              {/* Leader Key Metrics Cards */}
+              <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4">
+                <Card className="border-0 shadow-xl bg-gradient-to-br from-blue-50 to-cyan-50 overflow-hidden">
+                  <div className="h-2 bg-gradient-to-r from-blue-500 to-cyan-500"></div>
+                  <CardContent className="p-6">
+                    <div className="flex items-center gap-4">
+                      <div className="p-3 bg-gradient-to-r from-blue-500 to-cyan-500 rounded-xl text-white shadow-lg">
+                        <Crown className="h-6 w-6" />
+                      </div>
+                      <div>
+                        <div className="text-2xl font-bold text-gray-900">{leaderOverviewData.summary.enrolledLeaders}</div>
+                        <div className="text-sm text-gray-600">Enrolled Leaders</div>
+                        <div className="text-xs text-blue-600 font-medium">
+                          {leaderOverviewData.summary.totalLeaders > 0
+                            ? Math.round((leaderOverviewData.summary.enrolledLeaders / leaderOverviewData.summary.totalLeaders) * 100)
+                            : 0}% of leaders engaged
+                        </div>
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+
+                <Card className="border-0 shadow-xl bg-gradient-to-br from-green-50 to-emerald-50 overflow-hidden">
+                  <div className="h-2 bg-gradient-to-r from-green-500 to-emerald-500"></div>
+                  <CardContent className="p-6">
+                    <div className="flex items-center gap-4">
+                      <div className="p-3 bg-gradient-to-r from-green-500 to-emerald-500 rounded-xl text-white shadow-lg">
+                        <Trophy className="h-6 w-6" />
+                      </div>
+                      <div>
+                        <div className="text-2xl font-bold text-gray-900">{leaderOverviewData.summary.completedPlans}</div>
+                        <div className="text-sm text-gray-600">Completed Plans</div>
+                        <div className="text-xs text-green-600 font-medium">
+                          {leaderOverviewData.summary.totalEnrollments > 0
+                            ? Math.round((leaderOverviewData.summary.completedPlans / leaderOverviewData.summary.totalEnrollments) * 100)
+                            : 0}% success rate
+                        </div>
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+
+                <Card className="border-0 shadow-xl bg-gradient-to-br from-purple-50 to-pink-50 overflow-hidden">
+                  <div className="h-2 bg-gradient-to-r from-purple-500 to-pink-500"></div>
+                  <CardContent className="p-6">
+                    <div className="flex items-center gap-4">
+                      <div className="p-3 bg-gradient-to-r from-purple-500 to-pink-500 rounded-xl text-white shadow-lg">
+                        <Activity className="h-6 w-6" />
+                      </div>
+                      <div>
+                        <div className="text-2xl font-bold text-gray-900">{leaderOverviewData.summary.totalEnrollments}</div>
+                        <div className="text-sm text-gray-600">Active Plans</div>
+                        <div className="text-xs text-purple-600 font-medium">
+                          Currently in progress
+                        </div>
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+
+                <Card className="border-0 shadow-xl bg-gradient-to-br from-orange-50 to-red-50 overflow-hidden">
+                  <div className="h-2 bg-gradient-to-r from-orange-500 to-red-500"></div>
+                  <CardContent className="p-6">
+                    <div className="flex items-center gap-4">
+                      <div className="p-3 bg-gradient-to-r from-orange-500 to-red-500 rounded-xl text-white shadow-lg">
+                        <Target className="h-6 w-6" />
+                      </div>
+                      <div>
+                        <div className="text-2xl font-bold text-gray-900">{availableLeadershipPlans.length}</div>
+                        <div className="text-sm text-gray-600">Available Plans</div>
+                        <div className="text-xs text-orange-600 font-medium">
+                          Ready for enrollment
+                        </div>
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+              </div>
+
+              {/* Leader Progress Dialog */}
+              <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+                <Dialog
+                  open={leaderProgressDialogOpen}
+                  onOpenChange={(open) => {
+                    setLeaderProgressDialogOpen(open)
+                    if (!open) setLeaderProgressSearchTerm('')
+                  }}
+                >
+                  <DialogTrigger asChild>
+                    <Card className="border-0 shadow-xl hover:shadow-2xl transition-all duration-300 hover:-translate-y-1 bg-gradient-to-br from-purple-50 to-pink-50 overflow-hidden group cursor-pointer">
+                      <div className="h-2 bg-gradient-to-r from-purple-500 to-pink-500"></div>
+                      <CardContent className="p-6">
+                        <div className="flex items-center gap-4 mb-4">
+                          <div className="p-3 bg-gradient-to-r from-purple-500 to-pink-500 rounded-xl text-white shadow-lg group-hover:scale-110 transition-transform">
+                            <Crown className="h-6 w-6" />
+                          </div>
+                          <div>
+                            <h3 className="text-xl font-bold text-gray-900 mb-1">View Leader Progress</h3>
+                            <p className="text-sm text-gray-600">Track leadership development</p>
+                          </div>
+                        </div>
+                        <Button className="w-full bg-gradient-to-r from-purple-500 to-pink-500 hover:from-purple-600 hover:to-pink-600 border-0 shadow-lg">
+                          <Crown className="h-4 w-4 mr-2" />
+                          View Details
+                        </Button>
+                      </CardContent>
+                    </Card>
+                  </DialogTrigger>
+                  <DialogContent className="max-w-4xl max-h-[80vh] overflow-y-auto">
+                    <DialogHeader>
+                      <DialogTitle className="flex items-center gap-2">
+                        <Crown className="h-5 w-5" />
+                        Leader Development Progress
+                      </DialogTitle>
+                      <DialogDescription>
+                        Detailed view of each leader's development journey and progress
+                      </DialogDescription>
+                    </DialogHeader>
+
+                    {/* Search Bar */}
+                    <div className="relative">
+                      <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
+                      <Input
+                        placeholder="Search leaders by name or email..."
+                        value={leaderProgressSearchTerm}
+                        onChange={(e) => setLeaderProgressSearchTerm(e.target.value)}
+                        className="pl-10"
+                      />
+                    </div>
+
+                    <div className="space-y-6">
+                      {(() => {
+                        const enrolledLeaders = leaderOverviewData?.leaders.filter(leader => leader.enrollments.length > 0) || []
+                        const filteredLeaders = enrolledLeaders.filter(leader =>
+                          leader.leader.name.toLowerCase().includes(leaderProgressSearchTerm.toLowerCase()) ||
+                          leader.leader.email.toLowerCase().includes(leaderProgressSearchTerm.toLowerCase())
+                        )
+
+                        if (enrolledLeaders.length === 0) {
+                          return (
+                            <div className="text-center py-12">
+                              <div className="p-4 bg-gray-100 rounded-full w-fit mx-auto mb-4">
+                                <Crown className="h-12 w-12 text-gray-400" />
+                              </div>
+                              <h3 className="text-lg font-semibold text-gray-900 mb-2">No Leaders Enrolled Yet</h3>
+                              <p className="text-gray-600 mb-4">
+                                Leaders can enroll themselves in development plans to see their progress here.
+                              </p>
+                            </div>
+                          )
+                        }
+
+                        if (filteredLeaders.length === 0) {
+                          return (
+                            <div className="text-center py-12">
+                              <div className="p-4 bg-gray-100 rounded-full w-fit mx-auto mb-4">
+                                <Search className="h-12 w-12 text-gray-400" />
+                              </div>
+                              <h3 className="text-lg font-semibold text-gray-900 mb-2">No Results Found</h3>
+                              <p className="text-gray-600 mb-4">
+                                No leaders match your search criteria. Try adjusting your search terms.
+                              </p>
+                              <Button
+                                onClick={() => setLeaderProgressSearchTerm('')}
+                                variant="outline"
+                              >
+                                Clear Search
+                              </Button>
+                            </div>
+                          )
+                        }
+
+                        return filteredLeaders.map((leader) => (
+                          <Card key={leader.leader._id} className="border border-gray-200">
+                            <CardHeader className="pb-3">
+                              <div className="flex items-center justify-between">
+                                <div>
+                                  <CardTitle className="text-lg flex items-center gap-2">
+                                    <Crown className="h-5 w-5 text-yellow-600" />
+                                    {leader.leader.name}
+                                  </CardTitle>
+                                  <CardDescription>{leader.leader.email} • {leader.leader.position}</CardDescription>
+                                </div>
+                                <div className="flex gap-2">
+                                  <Badge className="bg-blue-100 text-blue-800">
+                                    {leader.totalPlans} Plans
+                                  </Badge>
+                                  <Badge className="bg-green-100 text-green-800">
+                                    {leader.completedPlans} Completed
+                                  </Badge>
+                                </div>
+                              </div>
+                            </CardHeader>
+                            <CardContent>
+                              <div className="space-y-3">
+                                {leader.enrollments.map((enrollment) => (
+                                  <div key={enrollment._id} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
+                                    <div className="flex items-center gap-3">
+                                      <div className={`p-2 bg-gradient-to-r ${getLeadershipPlanGradient(enrollment.planId)} rounded-lg text-white`}>
+                                        {getLeadershipPlanIcon(enrollment.planId)}
+                                      </div>
+                                      <div>
+                                        <p className="font-medium text-gray-900">{getLeadershipPlanTitle(enrollment.planId)}</p>
+                                        <p className="text-sm text-gray-600">
+                                          Leadership Development Plan
+                                        </p>
+                                      </div>
+                                    </div>
+                                    <div className="flex items-center gap-3">
+                                      <div className="text-right">
+                                        <div className="text-lg font-bold text-gray-900">{enrollment.progress}%</div>
+                                        <Badge className={`text-xs ${getStatusColor(enrollment.status)}`}>
+                                          {enrollment.status}
+                                        </Badge>
+                                      </div>
+                                      <div className="w-20">
+                                        <Progress value={enrollment.progress} className="h-2" />
+                                      </div>
+                                    </div>
+                                  </div>
+                                ))}
+                              </div>
+                            </CardContent>
+                          </Card>
+                        ))
+                      })()}
+                    </div>
+                  </DialogContent>
+                </Dialog>
+              </div>
+            </>
+          )}
+        </TabsContent>
+        </Tabs>
       </div>
 
       {/* Plan Details Dialog */}

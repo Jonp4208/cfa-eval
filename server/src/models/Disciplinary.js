@@ -34,6 +34,10 @@ const documentSchema = new mongoose.Schema({
     type: String,
     required: true
   },
+  s3Key: {
+    type: String,
+    required: false // Optional for backward compatibility
+  },
   uploadedBy: {
     type: mongoose.Schema.Types.ObjectId,
     ref: 'User',

@@ -6,7 +6,27 @@ import { handleAsync } from '../utils/errorHandler.js';
 import { ApiError } from '../utils/ApiError.js';
 import { sendEmail } from '../utils/email.js';
 import logger from '../utils/logger.js';
-import { deleteFileFromS3 } from '../config/s3.js';
+import { deleteFileFromS3, generateSignedUrl } from '../config/s3.js';
+
+// Utility function to refresh expired document URLs
+const refreshDocumentUrls = async (documents) => {
+  if (!documents || documents.length === 0) return documents;
+
+  for (const doc of documents) {
+    if (doc.s3Key) {
+      try {
+        // Generate a fresh URL with 1 hour expiration
+        const freshUrl = await generateSignedUrl(doc.s3Key, 3600);
+        doc.url = freshUrl;
+      } catch (error) {
+        logger.error(`Failed to refresh URL for document ${doc._id}:`, error);
+        // Keep the old URL if refresh fails
+      }
+    }
+  }
+
+  return documents;
+};
 
 // Get all documentation and disciplinary records combined
 export const getAllCombinedRecords = handleAsync(async (req, res) => {
@@ -174,6 +194,11 @@ export const getDocumentById = handleAsync(async (req, res) => {
     
     if (Object.keys(debugData).length > 0) {
       console.log('Population issues detected:', debugData);
+    }
+
+    // Refresh document URLs if they have S3 keys
+    if (document.documents && document.documents.length > 0) {
+      await refreshDocumentUrls(document.documents);
     }
 
     // Return the document
@@ -839,20 +864,27 @@ export const completeFollowUp = handleAsync(async (req, res) => {
 
 // Add a document attachment
 export const addDocumentAttachment = handleAsync(async (req, res) => {
-  const { name, type, category, url } = req.body;
+  const { name, type, category, url, s3Key } = req.body;
 
   const document = await Documentation.findById(req.params.id);
   if (!document) {
     return res.status(404).json({ message: 'Document not found' });
   }
 
-  document.documents.push({
+  const documentData = {
     name,
     type,
     category,
     url,
     uploadedBy: req.user._id
-  });
+  };
+
+  // Add S3 key if provided
+  if (s3Key) {
+    documentData.s3Key = s3Key;
+  }
+
+  document.documents.push(documentData);
 
   await document.save();
   await document.populate('documents.uploadedBy', 'name');

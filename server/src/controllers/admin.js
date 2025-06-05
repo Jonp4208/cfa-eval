@@ -52,11 +52,12 @@ export const addStore = async (req, res) => {
       name,
       storeAddress,
       storePhone,
-      storeEmail,
       adminEmail,
-      adminName,
-      adminPassword
+      adminName
     } = req.body;
+
+    // Generate standardized store email based on store number
+    const storeEmail = `${storeNumber}@chick-fil-a.com`;
 
     // Validate required fields
     if (!storeNumber || !name || !storeAddress) {
@@ -65,9 +66,9 @@ export const addStore = async (req, res) => {
       });
     }
 
-    if (!adminEmail || !adminName || !adminPassword) {
+    if (!adminEmail || !adminName) {
       return res.status(400).json({
-        message: 'Admin email, name, and password are required'
+        message: 'Admin email and name are required'
       });
     }
 
@@ -87,11 +88,14 @@ export const addStore = async (req, res) => {
       });
     }
 
+    // Generate a secure random password for the admin
+    const generatedPassword = User.generateRandomPassword();
+
     // Create admin user
     const adminUser = new User({
       email: adminEmail,
       name: adminName,
-      password: adminPassword, // Will be hashed by the User model
+      password: generatedPassword, // Will be hashed by the User model
       position: 'Director',
       departments: ['Everything'],
       shift: 'day',
@@ -106,7 +110,7 @@ export const addStore = async (req, res) => {
       name,
       storeAddress,
       storePhone: storePhone || undefined,
-      storeEmail: storeEmail || undefined,
+      storeEmail: storeEmail, // Always set the generated email
       admins: []
     });
 
@@ -130,7 +134,7 @@ export const addStore = async (req, res) => {
       // Don't fail the store creation if template setup fails
     }
 
-    // Send welcome email to admin
+    // Send welcome email to admin with login credentials
     try {
       await sendEmail({
         to: adminUser.email,
@@ -140,22 +144,58 @@ export const addStore = async (req, res) => {
             <div style="background-color: #E4002B; padding: 20px; border-radius: 8px; margin-bottom: 30px;">
               <h1 style="color: white; margin: 0;">Welcome to LD Growth!</h1>
             </div>
+
             <div style="background-color: #f8f8f8; padding: 20px; border-radius: 8px; margin-bottom: 30px;">
               <h2 style="color: #333; margin-top: 0;">Hi ${adminUser.name},</h2>
-              <p>Your admin account for <strong>${store.name}</strong> has been created.</p>
-              <p><strong>Email:</strong> ${adminUser.email}</p>
-              <p>You can now log in and start managing your store and team.</p>
-              <div style="margin: 30px 0;">
-                <a href="https://www.ld-growth.com" style="display: inline-block; background-color: #E4002B; color: white; padding: 12px 24px; text-decoration: none; border-radius: 8px; font-weight: 500;">Log In to LD Growth</a>
+              <p>Your admin account for <strong>${store.name}</strong> (Store #${store.storeNumber}) has been created successfully!</p>
+
+              <div style="background-color: #e8f5e8; border: 1px solid #4caf50; border-radius: 8px; padding: 15px; margin: 20px 0;">
+                <h3 style="color: #2e7d32; margin-top: 0;">Store Information</h3>
+                <p style="margin: 5px 0;"><strong>Store Name:</strong> ${store.name}</p>
+                <p style="margin: 5px 0;"><strong>Store Number:</strong> ${store.storeNumber}</p>
+                <p style="margin: 5px 0;"><strong>Store Email:</strong> ${store.storeEmail}</p>
               </div>
-              <p>If you have any questions, reply to this email or contact support.</p>
+
+              <p>Here are your login credentials:</p>
+
+              <div style="background-color: #fff; padding: 20px; border: 2px solid #E4002B; border-radius: 8px; margin: 20px 0;">
+                <h3 style="color: #E4002B; margin-top: 0;">Login Information</h3>
+                <p style="margin: 10px 0;"><strong>Website:</strong> <a href="https://www.ld-growth.com" style="color: #E4002B;">www.ld-growth.com</a></p>
+                <p style="margin: 10px 0;"><strong>Email:</strong> ${adminUser.email}</p>
+                <p style="margin: 10px 0;"><strong>Password:</strong> <code style="background-color: #f5f5f5; padding: 4px 8px; border-radius: 4px; font-family: monospace;">${generatedPassword}</code></p>
+              </div>
+
+              <div style="background-color: #fff3cd; border: 1px solid #ffeaa7; border-radius: 8px; padding: 15px; margin: 20px 0;">
+                <p style="margin: 0; color: #856404;"><strong>Important:</strong> For security reasons, please change your password after your first login.</p>
+              </div>
+
+              <p>As a store admin, you can:</p>
+              <ul style="color: #333;">
+                <li>Manage your team members and their evaluations</li>
+                <li>Create and track documentation</li>
+                <li>Set up training plans and development goals</li>
+                <li>Access analytics and reports</li>
+                <li>Configure store settings and preferences</li>
+              </ul>
+
+              <div style="margin: 30px 0; text-align: center;">
+                <a href="https://www.ld-growth.com" style="display: inline-block; background-color: #E4002B; color: white; padding: 15px 30px; text-decoration: none; border-radius: 8px; font-weight: 600; font-size: 16px;">Get Started Now</a>
+              </div>
+
+              <p>If you have any questions or need assistance getting started, please don't hesitate to reach out to our support team.</p>
             </div>
-            <p style="color: #666; font-size: 14px;">This is an automated message. Please do not reply to this email.</p>
+
+            <div style="text-align: center; color: #666; font-size: 12px; margin-top: 30px;">
+              <p>This is an automated message from LD Growth. Please do not reply to this email.</p>
+              <p>&copy; ${new Date().getFullYear()} LD Growth. All rights reserved.</p>
+            </div>
           </div>
         `
-      })
+      });
+      console.log(`✅ Welcome email sent to admin: ${adminUser.email}`);
     } catch (emailError) {
-      console.error('Failed to send admin welcome email:', emailError)
+      console.error('❌ Failed to send admin welcome email:', emailError);
+      // Don't fail the store creation if email fails
     }
 
     res.status(201).json({
@@ -175,6 +215,85 @@ export const addStore = async (req, res) => {
     console.error('Error adding store:', error);
     res.status(500).json({
       message: 'Error adding store',
+      error: error.message
+    });
+  }
+};
+
+/**
+ * Update store details
+ */
+export const updateStore = async (req, res) => {
+  try {
+    const { storeId } = req.params;
+    const {
+      storeNumber,
+      name,
+      storeAddress,
+      storePhone,
+      storeEmail,
+      createdAt
+    } = req.body;
+
+    // Validate required fields
+    if (!storeId) {
+      return res.status(400).json({
+        message: 'Store ID is required'
+      });
+    }
+
+    // Check if store exists
+    const store = await Store.findById(storeId);
+    if (!store) {
+      return res.status(404).json({ message: 'Store not found' });
+    }
+
+    // If store number is being changed, check for conflicts
+    if (storeNumber && storeNumber !== store.storeNumber) {
+      const existingStore = await Store.findOne({
+        storeNumber,
+        _id: { $ne: storeId }
+      });
+      if (existingStore) {
+        return res.status(400).json({
+          message: `Store with number ${storeNumber} already exists`
+        });
+      }
+    }
+
+    // Prepare update object
+    const updateData = {};
+    if (storeNumber !== undefined) updateData.storeNumber = storeNumber;
+    if (name !== undefined) updateData.name = name;
+    if (storeAddress !== undefined) updateData.storeAddress = storeAddress;
+    if (storePhone !== undefined) updateData.storePhone = storePhone;
+    if (storeEmail !== undefined) updateData.storeEmail = storeEmail;
+    if (createdAt !== undefined) updateData.createdAt = new Date(createdAt);
+
+    // Update the store
+    const updatedStore = await Store.findByIdAndUpdate(
+      storeId,
+      updateData,
+      { new: true, runValidators: true }
+    );
+
+    res.json({
+      message: 'Store updated successfully',
+      store: {
+        _id: updatedStore._id,
+        storeNumber: updatedStore.storeNumber,
+        name: updatedStore.name,
+        storeAddress: updatedStore.storeAddress,
+        storePhone: updatedStore.storePhone,
+        storeEmail: updatedStore.storeEmail,
+        createdAt: updatedStore.createdAt,
+        status: updatedStore.status
+      }
+    });
+  } catch (error) {
+    console.error('Error updating store:', error);
+    res.status(500).json({
+      message: 'Error updating store',
       error: error.message
     });
   }

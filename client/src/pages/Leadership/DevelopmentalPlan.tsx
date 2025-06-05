@@ -1046,12 +1046,16 @@ export default function DevelopmentalPlan() {
   const [enrolling, setEnrolling] = useState<string | null>(null)
   const [planStatuses, setPlanStatuses] = useState<Record<string, PlanStatus>>({})
 
-  // Get planId from URL query parameters
+  // Get planId or recommended from URL query parameters
   useEffect(() => {
     const queryParams = new URLSearchParams(location.search)
     const planId = queryParams.get('planId')
+    const recommended = queryParams.get('recommended')
+
     if (planId) {
       setSelectedPlan(planId)
+    } else if (recommended) {
+      setSelectedPlan(recommended)
     }
   }, [location.search])
 
@@ -1247,6 +1251,41 @@ export default function DevelopmentalPlan() {
       ) : (
 
       <div className="space-y-6">
+        {/* Recommended Plan Header */}
+        {(() => {
+          const queryParams = new URLSearchParams(location.search)
+          const recommendedPlanId = queryParams.get('recommended')
+          const recommendedPlan = LEADERSHIP_PLANS.find(plan => plan.id === recommendedPlanId)
+
+          if (recommendedPlan) {
+            return (
+              <Card className="bg-gradient-to-r from-[#E51636]/10 to-[#E51636]/5 border border-[#E51636]/20 rounded-[20px]">
+                <div className="p-6">
+                  <div className="flex items-center gap-3 mb-3">
+                    <div className="h-10 w-10 bg-[#E51636] text-white rounded-xl flex items-center justify-center">
+                      <Lightbulb className="h-5 w-5" />
+                    </div>
+                    <div>
+                      <h2 className="text-xl font-bold text-[#27251F]">Recommended Development Plan</h2>
+                      <p className="text-[#27251F]/70 text-sm">Based on your recent assessment results</p>
+                    </div>
+                  </div>
+                  <div className="bg-white rounded-lg p-4 border border-[#E51636]/10">
+                    <div className="flex items-center gap-3">
+                      <recommendedPlan.icon className="h-6 w-6 text-[#E51636]" />
+                      <div>
+                        <h3 className="font-semibold text-[#27251F]">{recommendedPlan.title}</h3>
+                        <p className="text-sm text-[#27251F]/70">{recommendedPlan.description}</p>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </Card>
+            )
+          }
+          return null
+        })()}
+
         {LEADERSHIP_PLANS.map((plan) => {
           const Icon = plan.icon
           const isSelected = selectedPlan === plan.id
@@ -1254,10 +1293,19 @@ export default function DevelopmentalPlan() {
           const isEnrolled = planStatus.enrolled
           const isPlanCompleted = planStatus.status === 'completed'
 
+          // Check if this is the recommended plan from URL
+          const queryParams = new URLSearchParams(location.search)
+          const recommendedPlanId = queryParams.get('recommended')
+          const isRecommended = recommendedPlanId === plan.id
+
           return (
             <div key={plan.id} className="space-y-4">
               <Card
-                className="bg-white p-6 hover:shadow-xl transition-all duration-300 relative cursor-pointer border-l-4 border-l-transparent hover:border-l-[#E51636]"
+                className={`p-6 hover:shadow-xl transition-all duration-300 relative cursor-pointer border-l-4 ${
+                  isRecommended
+                    ? 'bg-gradient-to-br from-[#E51636]/5 to-[#E51636]/10 border-l-[#E51636] border border-[#E51636]/20'
+                    : 'bg-white border-l-transparent hover:border-l-[#E51636]'
+                }`}
                 onClick={() => planStatuses[plan.id]?.enrolled ? navigate(`/leadership/plans/${plan.id}/tasks`) : null}
               >
                 <div className="space-y-4">
@@ -1269,6 +1317,11 @@ export default function DevelopmentalPlan() {
                       <div className="space-y-1">
                         <div className="flex items-center gap-2 flex-wrap">
                           <h3 className="text-lg font-semibold text-[#27251F]">{plan.title}</h3>
+                          {isRecommended && (
+                            <Badge variant="outline" className="bg-[#E51636] text-white border-[#E51636] text-xs">
+                              ⭐ Recommended for You
+                            </Badge>
+                          )}
                           {plan.id === 'heart-of-leadership' && (
                             <Badge variant="outline" className="bg-green-50 text-green-700 border-green-200 text-xs">
                               🆓 Free Access

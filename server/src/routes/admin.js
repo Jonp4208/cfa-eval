@@ -4,6 +4,7 @@ import { isJonathonPope } from '../middleware/roles.js';
 import {
   getAllStores,
   addStore,
+  updateStore,
   updateStoreStatus,
   getStoreUsers,
   addStoreUser,
@@ -39,6 +40,9 @@ router.get('/stores', getAllStores);
 
 // Add a new store
 router.post('/stores', addStore);
+
+// Update store details
+router.put('/stores/:storeId', updateStore);
 
 // Update store status
 router.put('/stores/status', updateStoreStatus);

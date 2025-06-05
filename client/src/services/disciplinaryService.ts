@@ -125,7 +125,7 @@ const disciplinaryService = {
   },
 
   // Add document
-  addDocument: async (id: string, data: { name: string; type: string; url: string }): Promise<DisciplinaryIncident> => {
+  addDocument: async (id: string, data: { name: string; type: string; url: string; s3Key?: string }): Promise<DisciplinaryIncident> => {
     const response = await api.post(`/api/disciplinary/${id}/document`, data);
     return response.data;
   },

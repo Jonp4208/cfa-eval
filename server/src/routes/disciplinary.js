@@ -50,6 +50,37 @@ router.post('/:id/send-email', sendDisciplinaryEmail);
 router.post('/:id/notify-unacknowledged', sendUnacknowledgedNotification);
 router.post('/:id/follow-up/:followUpId/complete', completeFollowUp);
 
+// Refresh document URLs
+router.post('/:id/refresh-urls', async (req, res) => {
+  try {
+    const { generateSignedUrl } = await import('../config/s3.js');
+    const Disciplinary = (await import('../models/Disciplinary.js')).default;
+
+    const incident = await Disciplinary.findById(req.params.id);
+    if (!incident) {
+      return res.status(404).json({ message: 'Incident not found' });
+    }
+
+    // Refresh URLs for all documents with S3 keys
+    for (const doc of incident.documents) {
+      if (doc.s3Key) {
+        try {
+          const freshUrl = await generateSignedUrl(doc.s3Key, 3600);
+          doc.url = freshUrl;
+        } catch (error) {
+          console.error(`Failed to refresh URL for document ${doc._id}:`, error);
+        }
+      }
+    }
+
+    await incident.save();
+    res.json({ message: 'URLs refreshed successfully', incident });
+  } catch (error) {
+    console.error('Error refreshing URLs:', error);
+    res.status(500).json({ message: 'Failed to refresh URLs' });
+  }
+});
+
 // Individual incident routes - MUST come last
 router.route('/:id')
   .get(getIncidentById)

@@ -143,7 +143,14 @@ export default function Assessments() {
         ? completedResponses.reduce((sum: number, r: AssessmentResponse) => sum + (r.overallScore || 0), 0) / completedResponses.length
         : 0
 
-      setStats({
+      console.log('Calculating stats:')
+      console.log('- Total responses:', responsesData.length)
+      console.log('- Completed responses:', completedResponses.length)
+      console.log('- Average score:', averageScore)
+      console.log('- Responses data:', responsesData)
+      console.log('- Completed responses data:', completedResponses)
+
+      const newStats = {
         totalAssessments: responsesData.length,
         completedAssessments: completedResponses.length,
         averageScore: Math.round(averageScore * 100) / 100,
@@ -151,7 +158,10 @@ export default function Assessments() {
         upcomingAssessments: templatesData.filter((t: AssessmentTemplate) =>
           !responsesData.some((r: AssessmentResponse) => r.template && r.template._id === t._id)
         ).slice(0, 3)
-      })
+      }
+
+      console.log('New stats:', newStats)
+      setStats(newStats)
 
     } catch (error: any) {
       console.error('Error fetching assessment data:', error)

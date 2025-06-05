@@ -28,7 +28,7 @@ import {
   ArrowDown
 } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
-import adminService, { Store, NewStoreData, StoreUser, NewUserData } from '@/services/adminService';
+import adminService, { Store, NewStoreData, UpdateStoreData, StoreUser, NewUserData } from '@/services/adminService';
 import { format } from 'date-fns';
 import PageHeader, { headerButtonClass } from '@/components/PageHeader';
 import {
@@ -76,15 +76,23 @@ export default function AdminPage() {
 
   // Store management state
   const [showAddStoreDialog, setShowAddStoreDialog] = useState(false);
+  const [showEditStoreDialog, setShowEditStoreDialog] = useState(false);
+  const [editingStore, setEditingStore] = useState<Store | null>(null);
   const [newStoreData, setNewStoreData] = useState<NewStoreData>({
     storeNumber: '',
     name: '',
     storeAddress: '',
     storePhone: '',
-    storeEmail: '',
     adminEmail: '',
-    adminName: '',
-    adminPassword: ''
+    adminName: ''
+  });
+  const [editStoreData, setEditStoreData] = useState<UpdateStoreData>({
+    storeNumber: '',
+    name: '',
+    storeAddress: '',
+    storePhone: '',
+    storeEmail: '',
+    createdAt: ''
   });
 
   // User management state
@@ -132,8 +140,8 @@ export default function AdminPage() {
     mutationFn: adminService.addStore,
     onSuccess: () => {
       toast({
-        title: 'Store Added',
-        description: 'The store has been added successfully.',
+        title: 'Store Added Successfully',
+        description: 'The store has been created and login credentials have been emailed to the admin.',
         variant: 'default'
       });
       setShowAddStoreDialog(false);
@@ -144,10 +152,8 @@ export default function AdminPage() {
         name: '',
         storeAddress: '',
         storePhone: '',
-        storeEmail: '',
         adminEmail: '',
-        adminName: '',
-        adminPassword: ''
+        adminName: ''
       });
     },
     onError: (error: any) => {
@@ -285,6 +291,38 @@ export default function AdminPage() {
     }
   });
 
+  // Update store mutation
+  const updateStoreMutation = useMutation({
+    mutationFn: ({ storeId, storeData }: { storeId: string, storeData: UpdateStoreData }) =>
+      adminService.updateStore(storeId, storeData),
+    onSuccess: () => {
+      toast({
+        title: 'Store Updated Successfully',
+        description: 'The store details have been updated.',
+        variant: 'default'
+      });
+      setShowEditStoreDialog(false);
+      setEditingStore(null);
+      queryClient.invalidateQueries({ queryKey: ['admin-stores'] });
+      // Reset form
+      setEditStoreData({
+        storeNumber: '',
+        name: '',
+        storeAddress: '',
+        storePhone: '',
+        storeEmail: '',
+        createdAt: ''
+      });
+    },
+    onError: (error: any) => {
+      toast({
+        title: 'Error',
+        description: `Failed to update store: ${error.response?.data?.message || error.message}`,
+        variant: 'destructive'
+      });
+    }
+  });
+
   // Update subscription status mutation
   const updateSubscriptionStatusMutation = useMutation({
     mutationFn: ({ storeId, subscriptionStatus }: { storeId: string, subscriptionStatus: 'active' | 'expired' | 'trial' | 'none' }) =>
@@ -315,10 +353,41 @@ export default function AdminPage() {
     setNewStoreData(prev => ({ ...prev, [name]: value }));
   };
 
+  // Handle edit store form input changes
+  const handleEditStoreInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const { name, value } = e.target;
+    setEditStoreData(prev => ({ ...prev, [name]: value }));
+  };
+
   // Handle store form submission
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     addStoreMutation.mutate(newStoreData);
+  };
+
+  // Handle edit store form submission
+  const handleEditStoreSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (editingStore) {
+      updateStoreMutation.mutate({
+        storeId: editingStore._id,
+        storeData: editStoreData
+      });
+    }
+  };
+
+  // Handle opening the edit store dialog
+  const handleEditStore = (store: Store) => {
+    setEditingStore(store);
+    setEditStoreData({
+      storeNumber: store.storeNumber,
+      name: store.name,
+      storeAddress: store.storeAddress,
+      storePhone: store.storePhone || '',
+      storeEmail: store.storeEmail || '',
+      createdAt: store.createdAt ? new Date(store.createdAt).toISOString().split('T')[0] : ''
+    });
+    setShowEditStoreDialog(true);
   };
 
   // Handle store status change
@@ -674,7 +743,12 @@ export default function AdminPage() {
                     </thead>
                     <tbody className="divide-y divide-gray-100">
                       {sortedStores.map((store: Store, index) => (
-                        <tr key={store._id} className={`hover:bg-gray-50 transition-colors duration-150 ${index % 2 === 0 ? 'bg-white' : 'bg-gray-25'}`}>
+                        <tr
+                          key={store._id}
+                          className={`hover:bg-gray-50 transition-colors duration-150 cursor-pointer ${index % 2 === 0 ? 'bg-white' : 'bg-gray-25'}`}
+                          onClick={() => handleEditStore(store)}
+                          title="Click to edit store details"
+                        >
                           <td className="py-4 px-6">
                             <div className="flex items-center">
                               <div className="flex-shrink-0 w-8 h-8 bg-red-100 rounded-full flex items-center justify-center">
@@ -743,7 +817,10 @@ export default function AdminPage() {
                                 size="sm"
                                 className="h-8 w-8 p-0 hover:bg-blue-50 hover:text-blue-600 transition-colors"
                                 title="View Users"
-                                onClick={() => handleViewUsers(store._id)}
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  handleViewUsers(store._id);
+                                }}
                               >
                                 <Users className="h-4 w-4" />
                               </Button>
@@ -752,7 +829,10 @@ export default function AdminPage() {
                                 size="sm"
                                 className="h-8 w-8 p-0 hover:bg-purple-50 hover:text-purple-600 transition-colors"
                                 title="Manage Subscription"
-                                onClick={() => navigate(`/admin/stores/${store._id}/subscription`)}
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  navigate(`/admin/stores/${store._id}/subscription`);
+                                }}
                               >
                                 <CreditCard className="h-4 w-4" />
                               </Button>
@@ -761,7 +841,10 @@ export default function AdminPage() {
                                 size="sm"
                                 className="h-8 w-8 p-0 hover:bg-gray-50 hover:text-gray-600 transition-colors"
                                 title={store.status === 'inactive' ? 'Activate Store' : 'Deactivate Store'}
-                                onClick={() => handleStatusChange(store._id, store.status || 'active')}
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  handleStatusChange(store._id, store.status || 'active');
+                                }}
                               >
                                 {store.status === 'inactive' ? (
                                   <CheckCircle className="h-4 w-4 text-green-500" />
@@ -781,7 +864,12 @@ export default function AdminPage() {
               {/* Mobile view - Enhanced Cards */}
               <div className="grid grid-cols-1 gap-4 md:hidden">
                 {sortedStores.map((store: Store) => (
-                  <div key={store._id} className="bg-white border border-gray-200 rounded-lg p-4 shadow-sm hover:shadow-md transition-shadow">
+                  <div
+                    key={store._id}
+                    className="bg-white border border-gray-200 rounded-lg p-4 shadow-sm hover:shadow-md transition-shadow cursor-pointer"
+                    onClick={() => handleEditStore(store)}
+                    title="Click to edit store details"
+                  >
                     <div className="flex justify-between items-start mb-3">
                       <div className="flex items-center">
                         <div className="flex-shrink-0 w-10 h-10 bg-red-100 rounded-full flex items-center justify-center mr-3">
@@ -798,7 +886,10 @@ export default function AdminPage() {
                           size="sm"
                           className="h-8 w-8 p-0 hover:bg-blue-50 hover:text-blue-600 transition-colors"
                           title="View Users"
-                          onClick={() => handleViewUsers(store._id)}
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            handleViewUsers(store._id);
+                          }}
                         >
                           <Users className="h-4 w-4" />
                         </Button>
@@ -807,7 +898,10 @@ export default function AdminPage() {
                           size="sm"
                           className="h-8 w-8 p-0 hover:bg-purple-50 hover:text-purple-600 transition-colors"
                           title="Manage Subscription"
-                          onClick={() => navigate(`/admin/stores/${store._id}/subscription`)}
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            navigate(`/admin/stores/${store._id}/subscription`);
+                          }}
                         >
                           <CreditCard className="h-4 w-4" />
                         </Button>
@@ -816,7 +910,10 @@ export default function AdminPage() {
                           size="sm"
                           className="h-8 w-8 p-0 hover:bg-gray-50 hover:text-gray-600 transition-colors"
                           title={store.status === 'inactive' ? 'Activate Store' : 'Deactivate Store'}
-                          onClick={() => handleStatusChange(store._id, store.status || 'active')}
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            handleStatusChange(store._id, store.status || 'active');
+                          }}
                         >
                           {store.status === 'inactive' ? (
                             <CheckCircle className="h-4 w-4 text-green-500" />
@@ -861,7 +958,10 @@ export default function AdminPage() {
                               'outline'
                             }
                             className="cursor-pointer hover:shadow-sm transition-shadow"
-                            onClick={() => handleOpenSubscriptionDialog(store)}
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              handleOpenSubscriptionDialog(store);
+                            }}
                           >
                             {store.subscription.status}
                           </Badge>
@@ -869,7 +969,10 @@ export default function AdminPage() {
                           <Badge
                             variant="outline"
                             className="cursor-pointer hover:shadow-sm transition-shadow"
-                            onClick={() => handleOpenSubscriptionDialog(store)}
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              handleOpenSubscriptionDialog(store);
+                            }}
                           >
                             none
                           </Badge>
@@ -879,7 +982,10 @@ export default function AdminPage() {
                         <Badge
                           variant={store.status === 'active' ? 'default' : 'destructive'}
                           className="cursor-pointer hover:shadow-sm transition-shadow"
-                          onClick={() => handleStatusChange(store._id, store.status || 'active')}
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            handleStatusChange(store._id, store.status || 'active');
+                          }}
                         >
                           {store.status || 'active'}
                         </Badge>
@@ -903,7 +1009,7 @@ export default function AdminPage() {
           <DialogHeader>
             <DialogTitle>Add New Store</DialogTitle>
             <DialogDescription>
-              Enter the details for the new store and its admin user.
+              Enter the details for the new store and its admin user. The store email will be automatically set to [store-number]@chick-fil-a.com and login credentials will be generated and emailed to the admin.
             </DialogDescription>
           </DialogHeader>
           <form onSubmit={handleSubmit}>
@@ -940,26 +1046,19 @@ export default function AdminPage() {
                   required
                 />
               </div>
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                <div className="space-y-2">
-                  <Label htmlFor="storePhone">Store Phone</Label>
-                  <Input
-                    id="storePhone"
-                    name="storePhone"
-                    value={newStoreData.storePhone}
-                    onChange={handleInputChange}
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="storeEmail">Store Email</Label>
-                  <Input
-                    id="storeEmail"
-                    name="storeEmail"
-                    type="email"
-                    value={newStoreData.storeEmail}
-                    onChange={handleInputChange}
-                  />
-                </div>
+              <div className="space-y-2">
+                <Label htmlFor="storePhone">Store Phone</Label>
+                <Input
+                  id="storePhone"
+                  name="storePhone"
+                  value={newStoreData.storePhone}
+                  onChange={handleInputChange}
+                />
+              </div>
+              <div className="bg-blue-50 border border-blue-200 rounded-lg p-3">
+                <p className="text-sm text-blue-700">
+                  <strong>Store Email:</strong> Will be automatically set to <code className="bg-blue-100 px-1 rounded">{newStoreData.storeNumber || '[store-number]'}@chick-fil-a.com</code>
+                </p>
               </div>
               <div className="space-y-2">
                 <Label htmlFor="adminName">Admin Name *</Label>
@@ -981,17 +1080,9 @@ export default function AdminPage() {
                   onChange={handleInputChange}
                   required
                 />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="adminPassword">Admin Password *</Label>
-                <Input
-                  id="adminPassword"
-                  name="adminPassword"
-                  type="password"
-                  value={newStoreData.adminPassword}
-                  onChange={handleInputChange}
-                  required
-                />
+                <p className="text-sm text-gray-500">
+                  Login credentials will be automatically generated and emailed to this address.
+                </p>
               </div>
             </div>
             <DialogFooter>
@@ -1000,6 +1091,97 @@ export default function AdminPage() {
               </Button>
               <Button type="submit" disabled={addStoreMutation.isPending}>
                 {addStoreMutation.isPending ? 'Adding...' : 'Add Store'}
+              </Button>
+            </DialogFooter>
+          </form>
+        </DialogContent>
+      </Dialog>
+
+      {/* Edit Store Dialog */}
+      <Dialog open={showEditStoreDialog} onOpenChange={setShowEditStoreDialog}>
+        <DialogContent className="sm:max-w-[500px]">
+          <DialogHeader>
+            <DialogTitle>Edit Store Details</DialogTitle>
+            <DialogDescription>
+              Update the store information. All fields can be modified including the creation date.
+            </DialogDescription>
+          </DialogHeader>
+          <form onSubmit={handleEditStoreSubmit}>
+            <div className="grid gap-4 py-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <Label htmlFor="editStoreNumber">Store Number *</Label>
+                  <Input
+                    id="editStoreNumber"
+                    name="storeNumber"
+                    value={editStoreData.storeNumber}
+                    onChange={handleEditStoreInputChange}
+                    required
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="editName">Store Name *</Label>
+                  <Input
+                    id="editName"
+                    name="name"
+                    value={editStoreData.name}
+                    onChange={handleEditStoreInputChange}
+                    required
+                  />
+                </div>
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="editStoreAddress">Store Address *</Label>
+                <Input
+                  id="editStoreAddress"
+                  name="storeAddress"
+                  value={editStoreData.storeAddress}
+                  onChange={handleEditStoreInputChange}
+                  required
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="editStorePhone">Store Phone</Label>
+                <Input
+                  id="editStorePhone"
+                  name="storePhone"
+                  value={editStoreData.storePhone}
+                  onChange={handleEditStoreInputChange}
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="editStoreEmail">Store Email</Label>
+                <Input
+                  id="editStoreEmail"
+                  name="storeEmail"
+                  type="email"
+                  value={editStoreData.storeEmail}
+                  onChange={handleEditStoreInputChange}
+                />
+                <p className="text-sm text-gray-500">
+                  Usually follows the format: [store-number]@chick-fil-a.com
+                </p>
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="editCreatedAt">Creation Date</Label>
+                <Input
+                  id="editCreatedAt"
+                  name="createdAt"
+                  type="date"
+                  value={editStoreData.createdAt}
+                  onChange={handleEditStoreInputChange}
+                />
+                <p className="text-sm text-gray-500">
+                  The date when this store was created in the system.
+                </p>
+              </div>
+            </div>
+            <DialogFooter>
+              <Button type="button" variant="outline" onClick={() => setShowEditStoreDialog(false)}>
+                Cancel
+              </Button>
+              <Button type="submit" disabled={updateStoreMutation.isPending}>
+                {updateStoreMutation.isPending ? 'Updating...' : 'Update Store'}
               </Button>
             </DialogFooter>
           </form>

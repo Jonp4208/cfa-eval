@@ -238,6 +238,26 @@ export default function DocumentDetail() {
     }
   };
 
+  const handleRefreshDocumentUrl = async (docId: string) => {
+    try {
+      const response = await api.post(`/documentation/${id}/refresh-urls`);
+
+      if (response.data.document) {
+        // Find the refreshed document and open it
+        const refreshedDoc = response.data.document.documents.find((d: any) => d._id === docId);
+        if (refreshedDoc) {
+          window.open(refreshedDoc.url, '_blank');
+          toast.success('Document URL refreshed and opened');
+          // Reload the document to get the fresh URLs
+          loadDocument();
+        }
+      }
+    } catch (error) {
+      console.error('Error refreshing document URL:', error);
+      toast.error('Failed to refresh document URL. The document may have been moved or deleted.');
+    }
+  };
+
   const getCategoryIcon = () => {
     if (!document) return null;
 
@@ -685,7 +705,33 @@ export default function DocumentDetail() {
                           <Button
                             variant="ghost"
                             size="sm"
-                            onClick={() => window.open(doc.url, '_blank')}
+                            onClick={async () => {
+                              try {
+                                // Try to open the URL first
+                                const newWindow = window.open(doc.url, '_blank');
+
+                                // If the window opened, check if it loads successfully
+                                if (newWindow) {
+                                  // Set a timeout to check if the page loaded
+                                  setTimeout(async () => {
+                                    try {
+                                      // If the page title indicates an error, refresh the URL
+                                      if (newWindow.document && newWindow.document.title.includes('Error')) {
+                                        newWindow.close();
+                                        await handleRefreshDocumentUrl(doc._id);
+                                      }
+                                    } catch (e) {
+                                      // Cross-origin error means the page loaded successfully
+                                      // or we can't access it due to CORS, which is fine
+                                    }
+                                  }, 2000);
+                                }
+                              } catch (error) {
+                                console.error('Error opening document:', error);
+                                // Try to refresh the URL and open again
+                                await handleRefreshDocumentUrl(doc._id);
+                              }
+                            }}
                             className="text-blue-600 hover:bg-blue-50 hover:text-blue-700 flex items-center gap-1.5"
                           >
                             <Eye className="w-4 h-4" />

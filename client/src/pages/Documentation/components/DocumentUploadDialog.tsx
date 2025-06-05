@@ -83,7 +83,8 @@ export default function DocumentUploadDialog({ documentId, isOpen, onClose, onUp
         name,
         type,
         category,
-        url: fileData.url
+        url: fileData.url,
+        s3Key: fileData.key
       });
 
       toast.success('Document uploaded successfully');
