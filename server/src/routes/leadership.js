@@ -306,6 +306,60 @@ router.delete('/360-evaluations/:evaluationId', auth, deleteLeadership360Evaluat
 router.get('/360-evaluations/:evaluationId/summary', auth, getEvaluationSummary);
 router.get('/360-evaluations/:evaluationId/development-plan', auth, generateDevelopmentPlan);
 
+// Get leadership development overview for admins/directors
+router.get('/leader-overview', auth, checkSubscription, isManager, async (req, res) => {
+  try {
+    if (!req.hasActiveSubscription) {
+      return res.status(403).json({
+        message: 'Leadership subscription required for leader development overview'
+      });
+    }
+
+    const storeId = extractStoreId(req.user);
+
+    // Get all leaders in the store (managers and directors)
+    const leaders = await User.find({
+      store: storeId,
+      position: { $in: ['Manager', 'Director'] },
+      status: 'active'
+    }).select('name email position startDate');
+
+    // Get all leadership plan enrollments for leaders
+    const enrollments = await LeadershipProgress.find({
+      store: storeId
+    }).populate('user', 'name email position startDate')
+      .sort({ enrolledAt: -1 });
+
+    // Group enrollments by user
+    const leaderProgress = leaders.map(leader => {
+      const leaderEnrollments = enrollments.filter(e =>
+        e.user._id.toString() === leader._id.toString()
+      );
+
+      return {
+        leader: leader,
+        enrollments: leaderEnrollments,
+        totalPlans: leaderEnrollments.length,
+        completedPlans: leaderEnrollments.filter(e => e.status === 'completed').length,
+        inProgressPlans: leaderEnrollments.filter(e => e.status === 'in-progress').length
+      };
+    });
+
+    res.json({
+      leaders: leaderProgress,
+      summary: {
+        totalLeaders: leaders.length,
+        enrolledLeaders: leaderProgress.filter(lp => lp.totalPlans > 0).length,
+        totalEnrollments: enrollments.length,
+        completedPlans: enrollments.filter(e => e.status === 'completed').length
+      }
+    });
+  } catch (error) {
+    console.error('Error fetching leader development overview:', error);
+    res.status(500).json({ message: 'Error fetching leader development overview' });
+  }
+});
+
 // Get subscription status
 router.get('/subscription-status', auth, async (req, res) => {
   // Use logger.debug instead of console.log for subscription status checks
