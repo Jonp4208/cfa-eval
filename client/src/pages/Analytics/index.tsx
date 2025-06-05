@@ -2,6 +2,7 @@
 import React, { useState, useEffect } from 'react';
 import { Link, Outlet, useLocation, useNavigate } from 'react-router-dom';
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
+import '@/styles/analytics.css';
 import {
   ArrowLeft,
   Heart,
@@ -59,24 +60,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import PageHeader from '@/components/PageHeader';
 import { toast } from '@/components/ui/use-toast';
 
-// Page Header Component for Analytics Pages
-export const AnalyticsPageHeader = ({ title }: { title: string }) => {
-  const navigate = useNavigate();
 
-  return (
-    <div className="flex items-center gap-4 mb-6">
-      <Button
-        variant="ghost"
-        size="icon"
-        onClick={() => navigate('/analytics')}
-        className="hover:bg-red-50 hover:text-red-600 rounded-xl"
-      >
-        <ArrowLeft className="h-5 w-5" />
-      </Button>
-      <h1 className="text-2xl font-semibold">{title}</h1>
-    </div>
-  );
-};
 
 interface QuickStats {
   teamMembers: number;
@@ -409,7 +393,7 @@ const AnalyticsHub = () => {
                 <>
                   {/* Average Performance Card */}
                   <Card
-                    className="bg-gradient-to-br from-blue-50 to-indigo-50 rounded-[20px] shadow-md hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1 cursor-pointer border border-blue-100"
+                    className="analytics-stat-card bg-gradient-to-br from-blue-50 to-indigo-50 rounded-[24px] shadow-xl hover:shadow-2xl cursor-pointer border border-blue-100 stagger-1"
                     onClick={() => navigate('team-scores')}
                   >
                     <CardContent className="p-6">
@@ -590,12 +574,13 @@ const AnalyticsHub = () => {
             )}
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {filteredAnalyticsCards.map((card) => (
-              <Link key={card.link} to={card.link}>
-                <Card className={`${card.bgColor} rounded-[20px] shadow-md hover:shadow-xl transition-all duration-300 transform hover:-translate-y-2 cursor-pointer h-full border-0 group overflow-hidden relative`}>
-                  {/* Gradient overlay on hover */}
-                  <div className={`absolute inset-0 bg-gradient-to-br ${card.gradient} opacity-0 group-hover:opacity-10 transition-opacity duration-300`} />
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+            {filteredAnalyticsCards.map((card, index) => (
+              <Link key={card.link} to={card.link} className={`group analytics-card stagger-${(index % 4) + 1}`}>
+                <Card className={`${card.bgColor} rounded-[24px] shadow-xl hover:shadow-2xl transition-all duration-500 transform hover:-translate-y-3 cursor-pointer h-full border border-white/30 group overflow-hidden relative analytics-interactive backdrop-blur-sm`}>
+                  {/* Enhanced gradient overlay on hover */}
+                  <div className={`absolute inset-0 bg-gradient-to-br ${card.gradient} opacity-0 group-hover:opacity-15 transition-opacity duration-500`} />
+                  <div className="absolute top-0 right-0 w-32 h-32 bg-gradient-to-br from-white/20 to-transparent rounded-full -translate-y-16 translate-x-16 group-hover:scale-150 transition-transform duration-700" />
 
                   <CardContent className="p-6 relative">
                     <div className="flex items-start justify-between mb-4">

@@ -1,12 +1,12 @@
 // client/src/pages/Analytics/HeartsAndHands.tsx
 import { useState, useMemo, useRef } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { AlertCircle, Users, Search, Download, Filter, Info, ArrowRight, ChevronDown, Medal } from 'lucide-react';
+import { AlertCircle, Users, Search, Download, Filter, Info, ArrowRight, ChevronDown, Medal, Heart, Activity } from 'lucide-react';
 import { useQuery } from '@tanstack/react-query';
 import api from '@/lib/axios';
 import { useAuth } from '@/contexts/AuthContext';
 import { useNavigate } from 'react-router-dom';
-import { AnalyticsPageHeader } from '.';
+import PageHeader from '@/components/PageHeader';
 import {
   Tooltip,
   TooltipContent,
@@ -441,56 +441,60 @@ const HeartsAndHands = () => {
   };
 
   return (
-    <div className="min-h-screen p-4 md:p-6">
-      <div className="max-w-7xl mx-auto space-y-6">
-        {/* Header */}
-        <div className="bg-gradient-to-r from-[#E51636] to-[#DD0031] rounded-[20px] p-6 md:p-8 text-white shadow-xl relative overflow-hidden">
-          <div className="absolute inset-0 bg-[url('/pattern.png')] opacity-10" />
-          <div className="relative">
-            <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
-              <div>
-                <h1 className="text-2xl md:text-4xl font-bold">Hearts & Hands Analysis</h1>
-                <p className="text-white/80 mt-2 text-sm md:text-lg">Team Development Matrix</p>
-                <Button
-                  variant="ghost"
-                  onClick={() => navigate('/analytics')}
-                  className="mt-4 hover:bg-white/10 text-white border border-white/20 px-4 py-2 h-10 rounded-xl"
-                >
-                  Back to Analytics
-                </Button>
-              </div>
-            </div>
-          </div>
-        </div>
+    <div className="min-h-screen bg-gradient-to-br from-gray-50 via-white to-gray-100 p-4 md:p-6">
+      <div className="max-w-7xl mx-auto space-y-8">
+        {/* Page Header */}
+        <PageHeader
+          title="Hearts & Hands Analysis"
+          subtitle="Team Development Matrix • Advanced Performance Insights"
+          showBackButton={true}
+          icon={<Heart className="h-5 w-5" />}
+          className="shadow-2xl border border-white/20 backdrop-blur-sm"
+          actions={
+            <Button
+              onClick={handleExportData}
+              className="w-full md:w-auto bg-white/95 hover:bg-white text-[#E51636] flex items-center justify-center gap-2 py-2 px-4 md:py-3 md:px-6 rounded-xl transition-all duration-300 text-sm md:text-base font-medium shadow-lg border border-white/30 hover:shadow-xl hover:scale-105"
+            >
+              <Download className="w-4 h-4" />
+              <span>Export Data</span>
+            </Button>
+          }
+        />
 
-        {/* Filters Card */}
-        <Card className="bg-white rounded-[20px] shadow-md hover:shadow-xl transition-all duration-300">
-          <CardContent className="p-4 md:p-6">
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-              {/* Search Input */}
+        {/* Enhanced Filters Card */}
+        <Card className="bg-white/80 backdrop-blur-sm rounded-[24px] shadow-xl hover:shadow-2xl transition-all duration-500 border border-white/50 hover:border-white/70">
+          <CardContent className="p-6 md:p-8">
+            <div className="flex items-center gap-3 mb-6">
+              <div className="h-10 w-10 bg-gradient-to-br from-[#E51636]/10 to-[#E51636]/20 rounded-xl flex items-center justify-center">
+                <Filter className="h-5 w-5 text-[#E51636]" />
+              </div>
+              <h3 className="text-lg font-semibold text-[#27251F]">Filter & Search</h3>
+            </div>
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+              {/* Enhanced Search Input */}
               <div className="sm:col-span-2 lg:col-span-1">
-                <p className="text-sm font-medium mb-2 text-[#27251F]/60">Search</p>
-                <div className="relative">
-                  <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-[#27251F]/40" />
+                <p className="text-sm font-medium mb-3 text-[#27251F]/70">Search Team Members</p>
+                <div className="relative group">
+                  <Search className="absolute left-4 top-1/2 transform -translate-y-1/2 h-4 w-4 text-[#27251F]/40 group-focus-within:text-[#E51636] transition-colors" />
                   <input
                     type="text"
-                    placeholder="Search team members..."
+                    placeholder="Search by name, position..."
                     value={searchTerm}
                     onChange={(e) => setSearchTerm(e.target.value)}
-                    className="pl-10 pr-4 py-2 bg-white text-[#27251F] placeholder:text-[#27251F]/60 rounded-md border border-gray-200 focus:outline-none focus:ring-2 focus:ring-[#E51636]/20 w-full h-10"
+                    className="pl-12 pr-4 py-3 bg-white/90 text-[#27251F] placeholder:text-[#27251F]/50 rounded-xl border border-gray-200/60 focus:outline-none focus:ring-2 focus:ring-[#E51636]/30 focus:border-[#E51636]/50 w-full h-12 transition-all duration-300 shadow-sm hover:shadow-md"
                   />
                 </div>
               </div>
 
-              {/* Department Filter */}
+              {/* Enhanced Department Filter */}
               <div>
-                <p className="text-sm font-medium mb-2 text-[#27251F]/60">Department</p>
-                <div className="flex rounded-md overflow-hidden border border-gray-200 w-full">
+                <p className="text-sm font-medium mb-3 text-[#27251F]/70">Department</p>
+                <div className="flex rounded-xl overflow-hidden border border-gray-200/60 w-full shadow-sm bg-white/50">
                   <button
-                    className={`flex-1 px-4 py-2 h-10 transition-colors ${
+                    className={`flex-1 px-4 py-3 h-12 transition-all duration-300 font-medium ${
                       activeDepartment === 'all'
-                        ? 'bg-[#E51636] text-white font-medium'
-                        : 'text-[#27251F] hover:bg-gray-50'
+                        ? 'bg-gradient-to-r from-[#E51636] to-[#D01530] text-white shadow-lg transform scale-105'
+                        : 'text-[#27251F] hover:bg-gradient-to-r hover:from-gray-50 hover:to-gray-100 hover:shadow-md'
                     }`}
                     onClick={() => setActiveDepartment('all')}
                     disabled={isLoading}
@@ -498,10 +502,10 @@ const HeartsAndHands = () => {
                     All
                   </button>
                   <button
-                    className={`flex-1 px-4 py-2 h-10 transition-colors ${
+                    className={`flex-1 px-4 py-3 h-12 transition-all duration-300 font-medium ${
                       activeDepartment === 'foh'
-                        ? 'bg-[#E51636] text-white font-medium'
-                        : 'text-[#27251F] hover:bg-gray-50'
+                        ? 'bg-gradient-to-r from-[#E51636] to-[#D01530] text-white shadow-lg transform scale-105'
+                        : 'text-[#27251F] hover:bg-gradient-to-r hover:from-gray-50 hover:to-gray-100 hover:shadow-md'
                     }`}
                     onClick={() => setActiveDepartment('foh')}
                     disabled={isLoading}
@@ -509,10 +513,10 @@ const HeartsAndHands = () => {
                     FOH
                   </button>
                   <button
-                    className={`flex-1 px-4 py-2 h-10 transition-colors ${
+                    className={`flex-1 px-4 py-3 h-12 transition-all duration-300 font-medium ${
                       activeDepartment === 'boh'
-                        ? 'bg-[#E51636] text-white font-medium'
-                        : 'text-[#27251F] hover:bg-gray-50'
+                        ? 'bg-gradient-to-r from-[#E51636] to-[#D01530] text-white shadow-lg transform scale-105'
+                        : 'text-[#27251F] hover:bg-gradient-to-r hover:from-gray-50 hover:to-gray-100 hover:shadow-md'
                     }`}
                     onClick={() => setActiveDepartment('boh')}
                     disabled={isLoading}
@@ -522,16 +526,20 @@ const HeartsAndHands = () => {
                 </div>
               </div>
 
-              {/* Position Filter */}
+              {/* Enhanced Position Filter */}
               <div>
-                <p className="text-sm font-medium mb-2 text-[#27251F]/60">Position</p>
+                <p className="text-sm font-medium mb-3 text-[#27251F]/70">Position</p>
                 <Select value={activePosition} onValueChange={setActivePosition}>
-                  <SelectTrigger className="w-full">
+                  <SelectTrigger className="w-full h-12 bg-white/90 border-gray-200/60 rounded-xl shadow-sm hover:shadow-md transition-all duration-300 focus:ring-2 focus:ring-[#E51636]/30 focus:border-[#E51636]/50">
                     <SelectValue placeholder="All Positions" />
                   </SelectTrigger>
-                  <SelectContent>
+                  <SelectContent className="rounded-xl border-gray-200/60 shadow-xl">
                     {positions.map((pos) => (
-                      <SelectItem key={pos} value={pos}>
+                      <SelectItem
+                        key={pos}
+                        value={pos}
+                        className="rounded-lg hover:bg-gradient-to-r hover:from-[#E51636]/10 hover:to-[#E51636]/5 focus:bg-gradient-to-r focus:from-[#E51636]/10 focus:to-[#E51636]/5"
+                      >
                         {pos === 'all' ? 'All Positions' : pos}
                       </SelectItem>
                     ))}
@@ -542,14 +550,26 @@ const HeartsAndHands = () => {
           </CardContent>
         </Card>
 
-        {/* Tabs for different views */}
+        {/* Enhanced Tabs for different views */}
         <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-          <TabsList className="bg-white p-1 rounded-xl mb-6">
-            <TabsTrigger value="matrix" className="rounded-lg data-[state=active]:bg-[#E51636] data-[state=active]:text-white">
-              Matrix View
+          <TabsList className="bg-white/80 backdrop-blur-sm p-2 rounded-2xl mb-8 shadow-lg border border-white/50">
+            <TabsTrigger
+              value="matrix"
+              className="rounded-xl px-6 py-3 font-medium transition-all duration-300 data-[state=active]:bg-gradient-to-r data-[state=active]:from-[#E51636] data-[state=active]:to-[#D01530] data-[state=active]:text-white data-[state=active]:shadow-lg data-[state=active]:scale-105 hover:bg-gray-50"
+            >
+              <div className="flex items-center gap-2">
+                <Activity className="w-4 h-4" />
+                Matrix View
+              </div>
             </TabsTrigger>
-            <TabsTrigger value="summary" className="rounded-lg data-[state=active]:bg-[#E51636] data-[state=active]:text-white">
-              Summary
+            <TabsTrigger
+              value="summary"
+              className="rounded-xl px-6 py-3 font-medium transition-all duration-300 data-[state=active]:bg-gradient-to-r data-[state=active]:from-[#E51636] data-[state=active]:to-[#D01530] data-[state=active]:text-white data-[state=active]:shadow-lg data-[state=active]:scale-105 hover:bg-gray-50"
+            >
+              <div className="flex items-center gap-2">
+                <Users className="w-4 h-4" />
+                Summary
+              </div>
             </TabsTrigger>
           </TabsList>
 

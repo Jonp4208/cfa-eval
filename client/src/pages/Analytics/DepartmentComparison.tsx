@@ -1,11 +1,12 @@
 import { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { useQuery } from '@tanstack/react-query';
-import { AlertCircle, Download, Filter, BarChart4, TrendingUp, Users, Medal, Clock } from 'lucide-react';
+import { AlertCircle, Download, Filter, BarChart4, TrendingUp, Users, Medal, Clock, Calendar } from 'lucide-react';
 import api from '@/lib/axios';
 import { useAuth } from '@/contexts/AuthContext';
 import { Button } from '@/components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import PageHeader from '@/components/PageHeader';
 import {
   ResponsiveContainer,
   BarChart,
@@ -16,12 +17,7 @@ import {
   Tooltip,
   Legend,
   LineChart,
-  Line,
-  RadarChart,
-  PolarGrid,
-  PolarAngleAxis,
-  PolarRadiusAxis,
-  Radar
+  Line
 } from 'recharts';
 
 interface DepartmentMetric {
@@ -33,16 +29,8 @@ interface DepartmentMetric {
   improvementRate: number;
 }
 
-interface SkillMetric {
-  skill: string;
-  'Front Counter': number;
-  'Drive Thru': number;
-  'Kitchen': number;
-}
-
 interface DepartmentComparisonData {
   departments: DepartmentMetric[];
-  skillComparison: SkillMetric[];
   performanceTrends: Array<{
     period: string;
     'Front Counter': number;
@@ -125,13 +113,6 @@ export default function DepartmentComparison() {
         improvementRate: 4.2
       }
     ],
-    skillComparison: [
-      { skill: 'Customer Service', 'Front Counter': 92, 'Drive Thru': 85, 'Kitchen': 78 },
-      { skill: 'Speed', 'Front Counter': 84, 'Drive Thru': 90, 'Kitchen': 86 },
-      { skill: 'Accuracy', 'Front Counter': 88, 'Drive Thru': 82, 'Kitchen': 91 },
-      { skill: 'Teamwork', 'Front Counter': 86, 'Drive Thru': 84, 'Kitchen': 90 },
-      { skill: 'Cleanliness', 'Front Counter': 89, 'Drive Thru': 83, 'Kitchen': 92 }
-    ],
     performanceTrends: [
       { period: 'Jan', 'Front Counter': 84, 'Drive Thru': 82, 'Kitchen': 86 },
       { period: 'Feb', 'Front Counter': 85, 'Drive Thru': 83, 'Kitchen': 87 },
@@ -145,58 +126,165 @@ export default function DepartmentComparison() {
   // Use mock data for development
   const departmentData = data || mockData;
 
-  return (
-    <div className="min-h-screen p-4 md:p-6">
-      <div className="max-w-7xl mx-auto space-y-6">
-        {/* Header */}
-        <div className="bg-gradient-to-r from-[#E51636] to-[#DD0031] rounded-[20px] p-8 text-white shadow-xl relative overflow-hidden">
-          <div className="absolute inset-0 bg-[url('/pattern.png')] opacity-10" />
-          <div className="relative">
-            <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-6">
-              <div>
-                <h1 className="text-3xl md:text-4xl font-bold">Department Comparison</h1>
-                <p className="text-white/80 mt-2 text-lg">Compare performance metrics across different departments</p>
-              </div>
-              <div className="flex flex-col sm:flex-row gap-4">
-                {/* Header buttons removed */}
-              </div>
+  if (isLoading) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-purple-50 via-white to-violet-50 p-4 md:p-6">
+        <div className="max-w-7xl mx-auto space-y-8">
+          <PageHeader
+            title="Department Comparison"
+            subtitle="Compare performance metrics across different departments • Advanced Department Analytics"
+            showBackButton={true}
+            icon={<BarChart4 className="h-5 w-5" />}
+            className="shadow-2xl border border-white/20 backdrop-blur-sm"
+          />
+          <div className="flex items-center justify-center py-12">
+            <div className="text-center">
+              <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[#E51636] mx-auto mb-4"></div>
+              <p className="text-gray-600">Loading department comparison data...</p>
             </div>
           </div>
         </div>
+      </div>
+    );
+  }
 
-        {/* Department Cards */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-          {departmentData.departments.map((dept) => (
-            <Card key={dept.department} className="bg-white rounded-[20px] shadow-md hover:shadow-xl transition-all duration-300">
-              <CardHeader className="pb-0">
-                <CardTitle className="text-xl font-semibold">{dept.department}</CardTitle>
-              </CardHeader>
-              <CardContent className="p-6">
-                <div className="grid grid-cols-2 gap-4">
-                  <div className="flex flex-col items-center justify-center p-3 bg-[#F4F4F4] rounded-xl">
-                    <Medal className="h-6 w-6 text-[#E51636] mb-1" />
-                    <p className="text-xs text-[#27251F]/60">Performance</p>
-                    <p className="text-xl font-bold text-[#27251F]">{dept.performance}%</p>
+  if (error) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-purple-50 via-white to-violet-50 p-4 md:p-6">
+        <div className="max-w-7xl mx-auto space-y-8">
+          <PageHeader
+            title="Department Comparison"
+            subtitle="Compare performance metrics across different departments • Advanced Department Analytics"
+            showBackButton={true}
+            icon={<BarChart4 className="h-5 w-5" />}
+            className="shadow-2xl border border-white/20 backdrop-blur-sm"
+          />
+          <Card className="bg-white rounded-[20px] shadow-lg">
+            <CardContent className="p-8 text-center">
+              <AlertCircle className="h-12 w-12 text-red-500 mx-auto mb-4" />
+              <h3 className="text-lg font-semibold text-gray-900 mb-2">Error Loading Data</h3>
+              <p className="text-gray-600 mb-4">
+                {error instanceof Error ? error.message : 'Failed to load department comparison data'}
+              </p>
+              <Button
+                onClick={() => window.location.reload()}
+                className="bg-[#E51636] hover:bg-[#E51636]/90"
+              >
+                Try Again
+              </Button>
+            </CardContent>
+          </Card>
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div className="min-h-screen bg-gradient-to-br from-purple-50 via-white to-violet-50 p-4 md:p-6">
+      <div className="max-w-7xl mx-auto space-y-8">
+        {/* Enhanced Page Header */}
+        <PageHeader
+          title="Department Comparison"
+          subtitle="Compare performance metrics across different departments • Advanced Department Analytics"
+          showBackButton={true}
+          icon={<BarChart4 className="h-5 w-5" />}
+          className="shadow-2xl border border-white/20 backdrop-blur-sm"
+          actions={
+            <Button
+              onClick={handleExportData}
+              className="w-full md:w-auto bg-white/95 hover:bg-white text-[#E51636] flex items-center justify-center gap-2 py-2 px-4 md:py-3 md:px-6 rounded-xl transition-all duration-300 text-sm md:text-base font-medium shadow-lg border border-white/30 hover:shadow-xl hover:scale-105"
+            >
+              <Download className="w-4 h-4" />
+              <span>Export Data</span>
+            </Button>
+          }
+        />
+
+        {/* Timeframe Selector */}
+        <Card className="bg-white/80 backdrop-blur-sm rounded-[20px] shadow-lg border border-white/50">
+          <CardContent className="p-6">
+            <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4">
+              <div className="flex items-center gap-2">
+                <Calendar className="h-5 w-5 text-[#E51636]" />
+                <span className="text-sm font-medium text-[#27251F]">Time Period:</span>
+              </div>
+              <Select value={timeframe} onValueChange={setTimeframe}>
+                <SelectTrigger className="w-full sm:w-48 bg-white border-gray-200 focus:border-[#E51636] focus:ring-[#E51636]">
+                  <SelectValue placeholder="Select timeframe" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="last7">Last 7 Days</SelectItem>
+                  <SelectItem value="last14">Last 14 Days</SelectItem>
+                  <SelectItem value="last30">Last 30 Days</SelectItem>
+                  <SelectItem value="last60">Last 60 Days</SelectItem>
+                  <SelectItem value="last90">Last 90 Days</SelectItem>
+                  <SelectItem value="last180">Last 6 Months</SelectItem>
+                  <SelectItem value="last365">Last Year</SelectItem>
+                </SelectContent>
+              </Select>
+              <div className="text-sm text-gray-600">
+                {timeframe === 'last7' && 'Showing data from the past week'}
+                {timeframe === 'last14' && 'Showing data from the past 2 weeks'}
+                {timeframe === 'last30' && 'Showing data from the past month'}
+                {timeframe === 'last60' && 'Showing data from the past 2 months'}
+                {timeframe === 'last90' && 'Showing data from the past 3 months'}
+                {timeframe === 'last180' && 'Showing data from the past 6 months'}
+                {timeframe === 'last365' && 'Showing data from the past year'}
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* Enhanced Department Cards */}
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+          {departmentData.departments.map((dept, index) => {
+            const gradients = [
+              'from-purple-50 via-purple-100/50 to-violet-100/60',
+              'from-blue-50 via-blue-100/50 to-indigo-100/60',
+              'from-green-50 via-green-100/50 to-emerald-100/60'
+            ];
+            const iconGradients = [
+              'from-purple-500 to-violet-600',
+              'from-blue-500 to-indigo-600',
+              'from-green-500 to-emerald-600'
+            ];
+            return (
+              <Card key={dept.department} className={`bg-gradient-to-br ${gradients[index]} rounded-[24px] shadow-xl hover:shadow-2xl transition-all duration-500 transform hover:-translate-y-2 border border-white/50 backdrop-blur-sm hover:border-white/70`}>
+                <CardHeader className="pb-0">
+                  <div className="flex items-center gap-3">
+                    <div className={`h-12 w-12 bg-gradient-to-br ${iconGradients[index]} rounded-xl flex items-center justify-center shadow-lg`}>
+                      <BarChart4 className="h-6 w-6 text-white" />
+                    </div>
+                    <CardTitle className="text-xl font-bold text-[#27251F]">{dept.department}</CardTitle>
                   </div>
-                  <div className="flex flex-col items-center justify-center p-3 bg-[#F4F4F4] rounded-xl">
-                    <Users className="h-6 w-6 text-[#E51636] mb-1" />
-                    <p className="text-xs text-[#27251F]/60">Team Members</p>
-                    <p className="text-xl font-bold text-[#27251F]">{dept.teamMembers}</p>
+                </CardHeader>
+                <CardContent className="p-6">
+                  <div className="grid grid-cols-2 gap-4">
+                    <div className="flex flex-col items-center justify-center p-4 bg-white/60 backdrop-blur-sm rounded-2xl border border-white/50 shadow-sm">
+                      <Medal className="h-7 w-7 text-[#E51636] mb-2" />
+                      <p className="text-xs text-[#27251F]/70 font-medium">Performance</p>
+                      <p className="text-2xl font-bold text-[#27251F] tracking-tight">{dept.performance}%</p>
+                    </div>
+                    <div className="flex flex-col items-center justify-center p-4 bg-white/60 backdrop-blur-sm rounded-2xl border border-white/50 shadow-sm">
+                      <Users className="h-7 w-7 text-[#E51636] mb-2" />
+                      <p className="text-xs text-[#27251F]/70 font-medium">Team Members</p>
+                      <p className="text-2xl font-bold text-[#27251F] tracking-tight">{dept.teamMembers}</p>
+                    </div>
+                    <div className="flex flex-col items-center justify-center p-4 bg-white/60 backdrop-blur-sm rounded-2xl border border-white/50 shadow-sm">
+                      <TrendingUp className="h-7 w-7 text-[#E51636] mb-2" />
+                      <p className="text-xs text-[#27251F]/70 font-medium">Improvement</p>
+                      <p className="text-2xl font-bold text-[#27251F] tracking-tight">+{dept.improvementRate}%</p>
+                    </div>
+                    <div className="flex flex-col items-center justify-center p-4 bg-white/60 backdrop-blur-sm rounded-2xl border border-white/50 shadow-sm">
+                      <Clock className="h-7 w-7 text-[#E51636] mb-2" />
+                      <p className="text-xs text-[#27251F]/70 font-medium">Avg Time</p>
+                      <p className="text-2xl font-bold text-[#27251F] tracking-tight">{dept.avgCompletionTime}d</p>
+                    </div>
                   </div>
-                  <div className="flex flex-col items-center justify-center p-3 bg-[#F4F4F4] rounded-xl">
-                    <TrendingUp className="h-6 w-6 text-[#E51636] mb-1" />
-                    <p className="text-xs text-[#27251F]/60">Improvement</p>
-                    <p className="text-xl font-bold text-[#27251F]">+{dept.improvementRate}%</p>
-                  </div>
-                  <div className="flex flex-col items-center justify-center p-3 bg-[#F4F4F4] rounded-xl">
-                    <Clock className="h-6 w-6 text-[#E51636] mb-1" />
-                    <p className="text-xs text-[#27251F]/60">Avg Time</p>
-                    <p className="text-xl font-bold text-[#27251F]">{dept.avgCompletionTime}d</p>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-          ))}
+                </CardContent>
+              </Card>
+            );
+          })}
         </div>
 
         {/* Charts */}
@@ -327,53 +415,7 @@ export default function DepartmentComparison() {
           </Card>
         </div>
 
-        {/* Skill Comparison */}
-        <Card className="bg-white rounded-[20px] shadow-md hover:shadow-xl transition-all duration-300">
-          <CardHeader className="pb-0">
-            <CardTitle className="text-xl font-semibold">Skill Comparison by Department</CardTitle>
-          </CardHeader>
-          <CardContent className="p-6">
-            <div className="h-[400px]">
-              <ResponsiveContainer width="100%" height="100%">
-                <RadarChart outerRadius={150} data={departmentData.skillComparison}>
-                  <PolarGrid />
-                  <PolarAngleAxis dataKey="skill" tick={{ fill: '#27251F', fontSize: 12 }} />
-                  <PolarRadiusAxis angle={30} domain={[0, 100]} />
-                  <Radar
-                    name="Front Counter"
-                    dataKey="Front Counter"
-                    stroke="#E51636"
-                    fill="#E51636"
-                    fillOpacity={0.2}
-                  />
-                  <Radar
-                    name="Drive Thru"
-                    dataKey="Drive Thru"
-                    stroke="#27251F"
-                    fill="#27251F"
-                    fillOpacity={0.2}
-                  />
-                  <Radar
-                    name="Kitchen"
-                    dataKey="Kitchen"
-                    stroke="#4CAF50"
-                    fill="#4CAF50"
-                    fillOpacity={0.2}
-                  />
-                  <Tooltip
-                    contentStyle={{
-                      backgroundColor: 'white',
-                      border: 'none',
-                      borderRadius: '12px',
-                      boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1)'
-                    }}
-                  />
-                  <Legend />
-                </RadarChart>
-              </ResponsiveContainer>
-            </div>
-          </CardContent>
-        </Card>
+
       </div>
     </div>
   );

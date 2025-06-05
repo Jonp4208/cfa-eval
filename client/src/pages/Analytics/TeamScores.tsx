@@ -13,6 +13,7 @@ import {
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Loader2, TrendingUp, Download, Filter, ArrowUpDown, ChevronUp, ChevronDown, FileText, Users, Medal } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import PageHeader from '@/components/PageHeader';
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import {
@@ -248,82 +249,58 @@ export default function TeamScores() {
   const teamStats = calculateTeamStats();
 
   return (
-    <div className="min-h-screen p-4 md:p-6">
-      <div className="max-w-7xl mx-auto space-y-6">
-        {/* Enhanced Header */}
-        <div className="bg-gradient-to-r from-[#E51636] to-[#DD0031] rounded-[20px] p-6 md:p-8 text-white shadow-xl relative overflow-hidden">
-          <div className="absolute inset-0 bg-[url('/pattern.png')] opacity-10" />
-          <div className="relative">
-            <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
-              <div>
-                <div className="flex items-center gap-3 mb-2">
-                  <Medal className="h-8 w-8" />
-                  <h1 className="text-2xl md:text-4xl font-bold">Team Performance Scores</h1>
-                </div>
-                <p className="text-white/80 mt-2 text-sm md:text-lg">Comprehensive overview of all team members' evaluation scores</p>
-                <div className="flex items-center gap-4 mt-4">
-                  <div className="flex items-center gap-2 text-white/80">
-                    <Users className="w-4 h-4" />
-                    <span className="text-sm">{data?.teamMembers?.length || 0} Team Members</span>
-                  </div>
-                  <div className="flex items-center gap-2 text-white/80">
-                    <FileText className="w-4 h-4" />
-                    <span className="text-sm">Performance Tracking</span>
-                  </div>
-                </div>
-                <Button
-                  variant="ghost"
-                  onClick={() => navigate('/analytics')}
-                  className="mt-4 hover:bg-white/10 text-white border border-white/20 px-4 py-2 h-10 rounded-xl"
-                >
-                  Back to Analytics
-                </Button>
-              </div>
-              <div className="flex gap-2">
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  onClick={handleExportData}
-                  className="bg-white/10 hover:bg-white/20 text-white border-white/20"
-                >
-                  <Download className="h-4 w-4" />
-                </Button>
-              </div>
-            </div>
-          </div>
-        </div>
+    <div className="min-h-screen bg-gradient-to-br from-amber-50 via-white to-orange-50 p-4 md:p-6">
+      <div className="max-w-7xl mx-auto space-y-8">
+        {/* Enhanced Page Header */}
+        <PageHeader
+          title="Team Performance Scores"
+          subtitle={`Comprehensive overview of all team members' evaluation scores • ${data?.teamMembers?.length || 0} Team Members • Performance Excellence Dashboard`}
+          showBackButton={true}
+          icon={<Medal className="h-5 w-5" />}
+          className="shadow-2xl border border-white/20 backdrop-blur-sm"
+          actions={
+            <Button
+              onClick={handleExportData}
+              className="w-full md:w-auto bg-white/95 hover:bg-white text-[#E51636] flex items-center justify-center gap-2 py-2 px-4 md:py-3 md:px-6 rounded-xl transition-all duration-300 text-sm md:text-base font-medium shadow-lg border border-white/30 hover:shadow-xl hover:scale-105"
+            >
+              <Download className="w-4 h-4" />
+              <span>Export Data</span>
+            </Button>
+          }
+        />
 
         {/* Enhanced Team Summary Stats */}
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-6">
-          <Card className="bg-gradient-to-br from-blue-50 to-indigo-50 rounded-[20px] shadow-md hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1 border border-blue-100">
-            <CardContent className="p-6">
-              <div className="flex items-start justify-between">
+          <Card className="bg-gradient-to-br from-blue-50 via-blue-100/50 to-indigo-100/60 rounded-[24px] shadow-xl hover:shadow-2xl transition-all duration-500 transform hover:-translate-y-2 border border-blue-200/50 backdrop-blur-sm hover:border-blue-300/60">
+            <CardContent className="p-6 relative overflow-hidden">
+              <div className="absolute top-0 right-0 w-20 h-20 bg-gradient-to-br from-blue-400/20 to-indigo-400/10 rounded-full -translate-y-10 translate-x-10"></div>
+              <div className="flex items-start justify-between relative z-10">
                 <div>
-                  <p className="text-[#27251F]/60 font-medium">Team Average</p>
-                  <h3 className="text-3xl font-bold mt-2 text-[#27251F]">
+                  <p className="text-[#27251F]/70 font-semibold text-sm">Team Average</p>
+                  <h3 className="text-4xl font-bold mt-2 text-[#27251F] tracking-tight">
                     {formatScore(teamStats.avgScore)}
                   </h3>
-                  <div className="mt-2">
+                  <div className="mt-3">
                     {teamStats.avgScore && teamStats.avgScore >= 85 ? (
-                      <div className="flex items-center gap-1 text-green-600">
-                        <TrendingUp className="h-3 w-3" />
-                        <span className="text-xs font-medium">Excellent</span>
+                      <div className="flex items-center gap-2 text-green-600 bg-green-50 px-3 py-1 rounded-full">
+                        <TrendingUp className="h-4 w-4" />
+                        <span className="text-sm font-semibold">Excellent</span>
                       </div>
                     ) : teamStats.avgScore && teamStats.avgScore >= 75 ? (
-                      <div className="flex items-center gap-1 text-blue-600">
-                        <TrendingUp className="h-3 w-3" />
-                        <span className="text-xs font-medium">Good</span>
+                      <div className="flex items-center gap-2 text-blue-600 bg-blue-50 px-3 py-1 rounded-full">
+                        <TrendingUp className="h-4 w-4" />
+                        <span className="text-sm font-semibold">Good</span>
                       </div>
                     ) : (
-                      <div className="flex items-center gap-1 text-orange-600">
-                        <TrendingUp className="h-3 w-3" />
-                        <span className="text-xs font-medium">Improving</span>
+                      <div className="flex items-center gap-2 text-orange-600 bg-orange-50 px-3 py-1 rounded-full">
+                        <TrendingUp className="h-4 w-4" />
+                        <span className="text-sm font-semibold">Improving</span>
                       </div>
                     )}
                   </div>
                 </div>
-                <div className="h-14 w-14 bg-blue-100 rounded-2xl flex items-center justify-center">
-                  <TrendingUp className="h-7 w-7 text-blue-600" />
+                <div className="h-16 w-16 bg-gradient-to-br from-blue-500 to-indigo-600 rounded-2xl flex items-center justify-center shadow-lg">
+                  <TrendingUp className="h-8 w-8 text-white" />
                 </div>
               </div>
             </CardContent>

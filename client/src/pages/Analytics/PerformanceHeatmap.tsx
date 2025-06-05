@@ -8,6 +8,7 @@ import { Button } from '@/components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Badge } from '@/components/ui/badge';
 import { useNavigate } from 'react-router-dom';
+import PageHeader from '@/components/PageHeader';
 
 interface HeatmapData {
   day: string;
@@ -81,55 +82,50 @@ export default function PerformanceHeatmap() {
   };
 
   return (
-    <div className="min-h-screen p-4 md:p-6">
-      <div className="max-w-7xl mx-auto space-y-6">
-        {/* Header */}
-        <div className="bg-gradient-to-r from-[#E51636] to-[#DD0031] rounded-[20px] p-6 md:p-8 text-white shadow-xl relative overflow-hidden">
-          <div className="absolute inset-0 bg-[url('/pattern.png')] opacity-10" />
-          <div className="relative">
-            <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
-              <div>
-                <h1 className="text-2xl md:text-4xl font-bold">Performance Heatmap</h1>
-                <p className="text-white/80 mt-2 text-sm md:text-lg">Visual performance patterns across time and departments</p>
-                <Button
-                  variant="ghost"
-                  onClick={() => navigate('/analytics')}
-                  className="mt-4 hover:bg-white/10 text-white border border-white/20 px-4 py-2 h-10 rounded-xl"
-                >
-                  Back to Analytics
-                </Button>
-              </div>
-            </div>
-          </div>
-        </div>
+    <div className="min-h-screen bg-gradient-to-br from-red-50 via-white to-pink-50 p-4 md:p-6">
+      <div className="max-w-7xl mx-auto space-y-8">
+        {/* Enhanced Page Header */}
+        <PageHeader
+          title="Performance Heatmap"
+          subtitle="Visual performance patterns across time and departments • Advanced Heat Analytics"
+          showBackButton={true}
+          icon={<Activity className="h-5 w-5" />}
+          className="shadow-2xl border border-white/20 backdrop-blur-sm"
+        />
 
-        {/* Controls */}
-        <Card className="bg-white rounded-[20px] shadow-md">
-          <CardContent className="p-6">
-            <div className="flex flex-col sm:flex-row gap-4 items-end">
+        {/* Enhanced Controls */}
+        <Card className="bg-white/80 backdrop-blur-sm rounded-[24px] shadow-xl hover:shadow-2xl transition-all duration-500 border border-white/50 hover:border-white/70">
+          <CardContent className="p-6 md:p-8">
+            <div className="flex items-center gap-3 mb-6">
+              <div className="h-10 w-10 bg-gradient-to-br from-[#E51636]/10 to-[#E51636]/20 rounded-xl flex items-center justify-center">
+                <Filter className="h-5 w-5 text-[#E51636]" />
+              </div>
+              <h3 className="text-lg font-semibold text-[#27251F]">Analysis Controls</h3>
+            </div>
+            <div className="flex flex-col sm:flex-row gap-6 items-end">
               <div>
-                <p className="text-sm font-medium mb-2 text-[#27251F]/60">Time Period</p>
+                <p className="text-sm font-medium mb-3 text-[#27251F]/70">Time Period</p>
                 <Select value={timeframe} onValueChange={setTimeframe}>
-                  <SelectTrigger className="w-[180px]">
+                  <SelectTrigger className="w-[200px] h-12 bg-white/90 border-gray-200/60 rounded-xl shadow-sm hover:shadow-md transition-all duration-300 focus:ring-2 focus:ring-[#E51636]/30 focus:border-[#E51636]/50">
                     <SelectValue placeholder="Select timeframe" />
                   </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="last30">Last 30 Days</SelectItem>
-                    <SelectItem value="last90">Last 90 Days</SelectItem>
-                    <SelectItem value="last180">Last 6 Months</SelectItem>
+                  <SelectContent className="rounded-xl border-gray-200/60 shadow-xl">
+                    <SelectItem value="last30" className="rounded-lg hover:bg-gradient-to-r hover:from-[#E51636]/10 hover:to-[#E51636]/5">Last 30 Days</SelectItem>
+                    <SelectItem value="last90" className="rounded-lg hover:bg-gradient-to-r hover:from-[#E51636]/10 hover:to-[#E51636]/5">Last 90 Days</SelectItem>
+                    <SelectItem value="last180" className="rounded-lg hover:bg-gradient-to-r hover:from-[#E51636]/10 hover:to-[#E51636]/5">Last 6 Months</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
               <div>
-                <p className="text-sm font-medium mb-2 text-[#27251F]/60">Department</p>
+                <p className="text-sm font-medium mb-3 text-[#27251F]/70">Department</p>
                 <Select value={selectedDepartment} onValueChange={setSelectedDepartment}>
-                  <SelectTrigger className="w-[180px]">
+                  <SelectTrigger className="w-[200px] h-12 bg-white/90 border-gray-200/60 rounded-xl shadow-sm hover:shadow-md transition-all duration-300 focus:ring-2 focus:ring-[#E51636]/30 focus:border-[#E51636]/50">
                     <SelectValue placeholder="All Departments" />
                   </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="all">All Departments</SelectItem>
+                  <SelectContent className="rounded-xl border-gray-200/60 shadow-xl">
+                    <SelectItem value="all" className="rounded-lg hover:bg-gradient-to-r hover:from-[#E51636]/10 hover:to-[#E51636]/5">All Departments</SelectItem>
                     {DEPARTMENTS.map((dept) => (
-                      <SelectItem key={dept} value={dept}>{dept}</SelectItem>
+                      <SelectItem key={dept} value={dept} className="rounded-lg hover:bg-gradient-to-r hover:from-[#E51636]/10 hover:to-[#E51636]/5">{dept}</SelectItem>
                     ))}
                   </SelectContent>
                 </Select>
