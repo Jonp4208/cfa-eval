@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Card, CardContent } from '@/components/ui/card';
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import {
   AlertTriangle,
@@ -18,7 +18,18 @@ import {
   Plus,
   FileCheck,
   FilePlus,
-  User2
+  User2,
+  Sparkles,
+  TrendingUp,
+  Shield,
+  Archive,
+  Users,
+  Calendar,
+  Eye,
+  BarChart3,
+  Activity,
+  Star,
+  Zap
 } from 'lucide-react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import documentationService, { DocumentationRecord, CombinedRecord } from '@/services/documentationService';
@@ -258,8 +269,8 @@ export default function DocumentationPage() {
   };
 
   return (
-    <div className="min-h-screen p-4 md:p-6">
-      <div className="max-w-7xl mx-auto space-y-6">
+    <div className="min-h-screen bg-gradient-to-br from-gray-50 via-white to-gray-50 p-4 md:p-6">
+      <div className="max-w-7xl mx-auto space-y-8">
         {/* Replace the custom header with PageHeader */}
         {employeeFilter ? (
           <PageHeader
@@ -281,7 +292,7 @@ export default function DocumentationPage() {
         ) : (
           <PageHeader
             title="Team Documentation"
-            subtitle="Track and manage team member documentation, disciplinary actions, call outs, and doctor's notes"
+            subtitle="Professional documentation system for tracking team member records, performance, and administrative notes"
             icon={<ClipboardList className="h-5 w-5" />}
             actions={
               (user?.position === 'Leader' || user?.position === 'Director') && (
@@ -301,237 +312,409 @@ export default function DocumentationPage() {
 
         {/* Stats Cards - Only show when not filtering by employee */}
         {!employeeFilter && (
-          <div className="grid grid-cols-2 gap-4">
-          <Card className="bg-white rounded-[20px] shadow-sm">
-            <CardContent className="p-3 sm:p-6">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-xs sm:text-sm font-medium text-gray-500">Disciplinary</p>
-                  <p className="text-xl sm:text-2xl font-bold mt-1">{stats.disciplinary}</p>
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-3 md:gap-6">
+            {/* Total Documents Card */}
+            <Card className="border-0 shadow-xl bg-gradient-to-br from-blue-500 to-blue-600 text-white overflow-hidden relative group hover:shadow-2xl transition-all duration-300 transform hover:scale-[1.02]">
+              <div className="absolute inset-0 bg-gradient-to-br from-blue-400/20 to-transparent"></div>
+              <CardContent className="p-3 md:p-6 relative z-10">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="text-blue-100 text-xs md:text-sm font-medium mb-1">Total Documents</p>
+                    <p className="text-xl md:text-3xl font-bold">{stats.disciplinary + stats.administrative}</p>
+                    <p className="text-blue-200 text-xs mt-1">All records</p>
+                  </div>
+                  <div className="bg-white/20 p-2 md:p-3 rounded-xl backdrop-blur-sm group-hover:bg-white/30 transition-colors">
+                    <FileText className="w-4 h-4 md:w-6 md:h-6" />
+                  </div>
                 </div>
-                <div className="w-8 h-8 sm:w-10 sm:h-10 rounded-full bg-red-100 flex items-center justify-center">
-                  <AlertTriangle className="w-4 h-4 sm:w-5 sm:h-5 text-red-500" />
-                </div>
-              </div>
-            </CardContent>
-          </Card>
+              </CardContent>
+            </Card>
 
-          <Card className="bg-white rounded-[20px] shadow-sm">
-            <CardContent className="p-3 sm:p-6">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-xs sm:text-sm font-medium text-gray-500">Administrative</p>
-                  <p className="text-xl sm:text-2xl font-bold mt-1">{stats.administrative}</p>
+            {/* Disciplinary Card */}
+            <Card className="border-0 shadow-xl bg-gradient-to-br from-red-500 to-red-600 text-white overflow-hidden relative group hover:shadow-2xl transition-all duration-300 transform hover:scale-[1.02]">
+              <div className="absolute inset-0 bg-gradient-to-br from-red-400/20 to-transparent"></div>
+              <CardContent className="p-3 md:p-6 relative z-10">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="text-red-100 text-xs md:text-sm font-medium mb-1">Disciplinary</p>
+                    <p className="text-xl md:text-3xl font-bold">{stats.disciplinary}</p>
+                    <p className="text-red-200 text-xs mt-1">Action items</p>
+                  </div>
+                  <div className="bg-white/20 p-2 md:p-3 rounded-xl backdrop-blur-sm group-hover:bg-white/30 transition-colors">
+                    <Shield className="w-4 h-4 md:w-6 md:h-6" />
+                  </div>
                 </div>
-                <div className="w-8 h-8 sm:w-10 sm:h-10 rounded-full bg-[#E51636]/10 flex items-center justify-center">
-                  <ClipboardList className="w-4 h-4 sm:w-5 sm:h-5 text-[#E51636]" />
+              </CardContent>
+            </Card>
+
+            {/* Administrative Card */}
+            <Card className="border-0 shadow-xl bg-gradient-to-br from-[#E51636] to-[#DD0031] text-white overflow-hidden relative group hover:shadow-2xl transition-all duration-300 transform hover:scale-[1.02]">
+              <div className="absolute inset-0 bg-gradient-to-br from-[#E51636]/20 to-transparent"></div>
+              <CardContent className="p-3 md:p-6 relative z-10">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="text-red-100 text-xs md:text-sm font-medium mb-1">Administrative</p>
+                    <p className="text-xl md:text-3xl font-bold">{stats.administrative}</p>
+                    <p className="text-red-200 text-xs mt-1">General records</p>
+                  </div>
+                  <div className="bg-white/20 p-2 md:p-3 rounded-xl backdrop-blur-sm group-hover:bg-white/30 transition-colors">
+                    <Archive className="w-4 h-4 md:w-6 md:h-6" />
+                  </div>
                 </div>
-              </div>
-            </CardContent>
-          </Card>
+              </CardContent>
+            </Card>
+
+            {/* Active Employees Card */}
+            <Card className="border-0 shadow-xl bg-gradient-to-br from-green-500 to-green-600 text-white overflow-hidden relative group hover:shadow-2xl transition-all duration-300 transform hover:scale-[1.02]">
+              <div className="absolute inset-0 bg-gradient-to-br from-green-400/20 to-transparent"></div>
+              <CardContent className="p-3 md:p-6 relative z-10">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="text-green-100 text-xs md:text-sm font-medium mb-1">Active Employees</p>
+                    <p className="text-xl md:text-3xl font-bold">{getGroupedDocuments().length}</p>
+                    <p className="text-green-200 text-xs mt-1">With records</p>
+                  </div>
+                  <div className="bg-white/20 p-2 md:p-3 rounded-xl backdrop-blur-sm group-hover:bg-white/30 transition-colors">
+                    <Users className="w-4 h-4 md:w-6 md:h-6" />
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
           </div>
         )}
 
         {/* Filters and Search */}
-        <div className="flex flex-col sm:flex-row gap-4">
-          <div className="flex items-center gap-2 bg-white rounded-[20px] p-2 flex-1">
-            <div className="p-2">
-              <Search className="w-5 h-5 text-gray-400" />
-            </div>
-            <Input
-              type="text"
-              placeholder="Search by employee, type, or description..."
-              className="border-none shadow-none focus-visible:ring-0 flex-1"
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-            />
-          </div>
+        <Card className="border-0 shadow-xl bg-gradient-to-r from-white to-gray-50 overflow-hidden">
+          <CardContent className="p-6">
+            <div className="flex flex-col lg:flex-row gap-6">
+              {/* Search Section */}
+              <div className="flex-1">
+                <div className="relative">
+                  <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
+                    <Search className="h-5 w-5 text-gray-400" />
+                  </div>
+                  <Input
+                    type="text"
+                    placeholder="Search by employee name, document type, or description..."
+                    className="pl-12 h-12 border-gray-300 focus:border-[#E51636] focus:ring-[#E51636] bg-white text-base shadow-sm"
+                    value={searchQuery}
+                    onChange={(e) => setSearchQuery(e.target.value)}
+                  />
+                </div>
+              </div>
 
-          <div className="flex gap-2">
-            <Button
-              variant={filter === 'all' ? 'default' : 'outline'}
-              className={filter === 'all' ? 'bg-[#E51636] hover:bg-[#E51636]/90' : ''}
-              onClick={() => setFilter('all')}
-            >
-              All
-            </Button>
-            <Button
-              variant={filter === 'disciplinary' ? 'default' : 'outline'}
-              className={filter === 'disciplinary' ? 'bg-[#E51636] hover:bg-[#E51636]/90' : ''}
-              onClick={() => setFilter('disciplinary')}
-            >
-              <AlertTriangle className="w-4 h-4 mr-1" />
-              Disciplinary
-            </Button>
-            <Button
-              variant={filter === 'administrative' ? 'default' : 'outline'}
-              className={filter === 'administrative' ? 'bg-[#E51636] hover:bg-[#E51636]/90' : ''}
-              onClick={() => setFilter('administrative')}
-            >
-              <ClipboardList className="w-4 h-4 mr-1" />
-              Admin
-            </Button>
-          </div>
-        </div>
+              {/* Filter Buttons */}
+              <div className="flex gap-3">
+                <Button
+                  variant={filter === 'all' ? 'default' : 'outline'}
+                  className={`h-12 px-6 transition-all duration-200 ${
+                    filter === 'all'
+                      ? 'bg-gradient-to-r from-[#E51636] to-[#DD0031] hover:from-[#DD0031] hover:to-[#C41E3A] text-white shadow-lg'
+                      : 'border-gray-300 hover:border-[#E51636] hover:text-[#E51636] hover:bg-[#E51636]/5'
+                  }`}
+                  onClick={() => setFilter('all')}
+                >
+                  <Sparkles className="w-4 h-4 mr-2" />
+                  All Documents
+                </Button>
+                <Button
+                  variant={filter === 'disciplinary' ? 'default' : 'outline'}
+                  className={`h-12 px-6 transition-all duration-200 ${
+                    filter === 'disciplinary'
+                      ? 'bg-gradient-to-r from-red-500 to-red-600 hover:from-red-600 hover:to-red-700 text-white shadow-lg'
+                      : 'border-gray-300 hover:border-red-500 hover:text-red-500 hover:bg-red-50'
+                  }`}
+                  onClick={() => setFilter('disciplinary')}
+                >
+                  <Shield className="w-4 h-4 mr-2" />
+                  Disciplinary
+                </Button>
+                <Button
+                  variant={filter === 'administrative' ? 'default' : 'outline'}
+                  className={`h-12 px-6 transition-all duration-200 ${
+                    filter === 'administrative'
+                      ? 'bg-gradient-to-r from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700 text-white shadow-lg'
+                      : 'border-gray-300 hover:border-blue-500 hover:text-blue-500 hover:bg-blue-50'
+                  }`}
+                  onClick={() => setFilter('administrative')}
+                >
+                  <Archive className="w-4 h-4 mr-2" />
+                  Administrative
+                </Button>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
 
         {/* Documents List */}
-        <Card className="bg-white rounded-[20px] shadow-sm overflow-hidden">
+        <Card className="border-0 shadow-xl bg-white overflow-hidden">
+          <CardHeader className="bg-gradient-to-r from-blue-50 to-indigo-50 border-b p-4 md:p-6">
+            <div className="flex flex-col md:flex-row md:items-center gap-3 md:gap-4">
+              <div className="bg-blue-500 p-2 md:p-3 rounded-xl shadow-lg">
+                <FileText className="h-5 w-5 md:h-6 md:w-6 text-white" />
+              </div>
+              <div className="flex-1">
+                <CardTitle className="text-xl md:text-2xl font-bold text-gray-900">
+                  {employeeFilter ? 'Employee Documents' : 'Team Documentation Overview'}
+                </CardTitle>
+                <CardDescription className="text-gray-600 text-sm md:text-base mt-1">
+                  {employeeFilter
+                    ? 'Detailed view of all documents for this team member'
+                    : 'Comprehensive view of all team member documentation and records'
+                  }
+                </CardDescription>
+              </div>
+            </div>
+          </CardHeader>
           <CardContent className="p-0">
             {loading ? (
-              <div className="flex items-center justify-center p-8">
-                <Loader2 className="w-8 h-8 animate-spin text-[#E51636]" />
+              <div className="flex flex-col items-center justify-center p-12">
+                <div className="relative">
+                  <div className="w-16 h-16 border-4 border-[#E51636]/20 border-t-[#E51636] rounded-full animate-spin"></div>
+                  <div className="absolute inset-0 flex items-center justify-center">
+                    <Sparkles className="w-6 h-6 text-[#E51636] animate-pulse" />
+                  </div>
+                </div>
+                <p className="mt-4 text-gray-600 font-medium">Loading documentation...</p>
               </div>
             ) : getFilteredDocuments().length === 0 ? (
-              <div className="text-center p-8">
-                <FileText className="w-12 h-12 mx-auto text-gray-300" />
-                <h3 className="mt-2 text-lg font-medium text-gray-900">No documents found</h3>
-                <p className="mt-1 text-sm text-gray-500">
+              <div className="text-center p-12">
+                <div className="bg-gradient-to-br from-gray-100 to-gray-200 w-24 h-24 rounded-full flex items-center justify-center mx-auto mb-6">
+                  <FileText className="w-12 h-12 text-gray-400" />
+                </div>
+                <h3 className="text-2xl font-bold text-gray-900 mb-2">No documents found</h3>
+                <p className="text-gray-600 mb-8 max-w-md mx-auto">
                   {searchQuery
-                    ? "No documents match your search criteria."
-                    : "There are no documents in this category yet."}
+                    ? "No documents match your search criteria. Try adjusting your search terms or filters."
+                    : "There are no documents in this category yet. Create your first document to get started."}
                 </p>
                 {(user?.position === 'Leader' || user?.position === 'Director') && (
-                  <div className="mt-6">
-                    <Button
-                      onClick={handleNewDocument}
-                      className="bg-[#E51636] hover:bg-[#E51636]/90"
-                    >
-                      <FilePlus className="w-4 h-4 mr-2" />
-                      Create New Document
-                    </Button>
-                  </div>
+                  <Button
+                    onClick={handleNewDocument}
+                    className="bg-gradient-to-r from-[#E51636] to-[#DD0031] hover:from-[#DD0031] hover:to-[#C41E3A] text-white px-8 py-3 shadow-lg transform hover:scale-105 transition-all duration-200"
+                  >
+                    <FilePlus className="w-5 h-5 mr-2" />
+                    Create New Document
+                  </Button>
                 )}
               </div>
             ) : employeeFilter ? (
               // Show individual documents when filtering by employee
-              <div className="divide-y divide-gray-200">
-                {getFilteredDocuments().map((doc) => (
-                  <div
+              <div className="p-3 md:p-6 space-y-3 md:space-y-4">
+                {getFilteredDocuments().map((doc, index) => (
+                  <Card
                     key={doc._id}
-                    className="p-6 hover:bg-gray-50 transition-colors cursor-pointer"
+                    className="border shadow-md bg-white hover:shadow-lg transition-all duration-300 cursor-pointer overflow-hidden"
                     onClick={() => handleViewDocument(doc)}
                   >
-                    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-                      <div className="flex items-start gap-4">
-                        <div className="mt-1">
-                          {getCategoryIcon(doc.category)}
-                        </div>
-                        <div>
-                          <div className="flex items-center gap-2">
-                            <p className={`text-sm font-medium ${doc.category === 'Disciplinary' ? 'text-red-600' : 'text-green-600'}`}>
-                              {doc.type}
-                            </p>
-                            {doc.source === 'disciplinary' && (
-                              <span className="text-xs px-1.5 py-0.5 bg-orange-100 text-orange-800 rounded-full">Legacy</span>
-                            )}
-                            {getStatusBadge(doc.status)}
+                    <CardContent className="p-4 md:p-6">
+                      <div className="flex flex-col gap-4">
+                        <div className="flex items-start gap-3 md:gap-4">
+                          <div className={`p-2 md:p-3 rounded-xl shadow-sm ${
+                            doc.category === 'Disciplinary'
+                              ? 'bg-red-100 text-red-600'
+                              : 'bg-blue-100 text-blue-600'
+                          }`}>
+                            {getCategoryIcon(doc.category)}
                           </div>
-                          <p className="text-sm text-gray-500">
-                            {new Date(doc.date).toLocaleDateString()}
-                          </p>
-                          <p className="mt-1 text-sm text-gray-700 line-clamp-2">
-                            {doc.description}
-                          </p>
-                        </div>
-                      </div>
-                      <div className="flex flex-col sm:items-end gap-2">
-                        <div className="text-sm text-gray-500">
-                          Created by {doc.createdBy.name}
-                        </div>
-                        <div className="text-xs text-gray-400">
-                          {new Date(doc.createdAt).toLocaleDateString()}
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            ) : (
-              // Show grouped documents by employee when not filtering
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                {getGroupedDocuments().map((employeeData) => (
-                  <Card
-                    key={employeeData.employee._id}
-                    className="bg-white rounded-[20px] shadow-sm hover:shadow-md transition-shadow duration-300 overflow-hidden"
-                  >
-                    <CardContent className="p-0">
-                      {/* Employee Header */}
-                      <div className="p-4 border-b bg-gray-50 flex justify-between items-center">
-                        <div className="flex items-center gap-3">
-                          <div className="h-10 w-10 rounded-full bg-[#E51636]/10 flex items-center justify-center">
-                            <User2 className="h-5 w-5 text-[#E51636]" />
-                          </div>
-                          <div>
-                            <h3 className="font-semibold text-lg">{employeeData.employee.name}</h3>
-                            <p className="text-sm text-gray-500">{employeeData.employee.position}</p>
-                          </div>
-                        </div>
-                        <div className="flex items-center gap-2">
-                          {employeeData.disciplinaryCount > 0 && (
-                            <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-red-100 text-red-800">
-                              {employeeData.disciplinaryCount} Disciplinary
-                            </span>
-                          )}
-                          {employeeData.administrativeCount > 0 && (
-                            <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-[#E51636]/10 text-[#E51636]">
-                              {employeeData.administrativeCount} Admin
-                            </span>
-                          )}
-                        </div>
-                      </div>
-
-                      {/* Latest Document Preview */}
-                      <div className="p-4">
-                        <div className="flex items-start gap-3">
-                          <div className="mt-1">
-                            {getCategoryIcon(employeeData.latestDocument.category)}
-                          </div>
-                          <div>
-                            <div className="flex items-center gap-2 mb-1">
-                              <p className={`text-sm font-medium ${employeeData.latestDocument.category === 'Disciplinary' ? 'text-red-600' : 'text-[#E51636]'}`}>
-                                {employeeData.latestDocument.type}
-                              </p>
-                              {employeeData.latestDocument.source === 'disciplinary' && (
-                                <span className="text-xs px-1.5 py-0.5 bg-orange-100 text-orange-800 rounded-full">Legacy</span>
-                              )}
-                              {getStatusBadge(employeeData.latestDocument.status)}
+                          <div className="flex-1 min-w-0">
+                            <div className="flex flex-col sm:flex-row sm:items-center gap-2 mb-2">
+                              <h3 className={`text-base md:text-lg font-bold ${
+                                doc.category === 'Disciplinary' ? 'text-red-700' : 'text-blue-700'
+                              }`}>
+                                {doc.type}
+                              </h3>
+                              <div className="flex items-center gap-2">
+                                {doc.source === 'disciplinary' && (
+                                  <span className="text-xs px-2 py-1 bg-orange-100 text-orange-800 rounded-full font-medium">
+                                    Legacy
+                                  </span>
+                                )}
+                                {getStatusBadge(doc.status)}
+                              </div>
                             </div>
-                            <p className="text-sm text-gray-500 mb-2">
-                              Latest document: {new Date(employeeData.latestDocument.date).toLocaleDateString()}
-                            </p>
-                            <p className="text-sm text-gray-700 line-clamp-2">
-                              {employeeData.latestDocument.description}
+                            <div className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-4 text-sm text-gray-600 mb-3">
+                              <div className="flex items-center gap-1">
+                                <Calendar className="w-4 h-4 flex-shrink-0" />
+                                <span className="truncate">
+                                  {new Date(doc.date).toLocaleDateString('en-US', {
+                                    month: 'short',
+                                    day: 'numeric',
+                                    year: 'numeric'
+                                  })}
+                                </span>
+                              </div>
+                              <div className="flex items-center gap-1">
+                                <User2 className="w-4 h-4 flex-shrink-0" />
+                                <span className="truncate">Created by {doc.createdBy.name}</span>
+                              </div>
+                            </div>
+                            <p className="text-gray-700 text-sm md:text-base line-clamp-2 leading-relaxed">
+                              {doc.description}
                             </p>
                           </div>
                         </div>
-                      </div>
-
-                      {/* Footer with Actions */}
-                      <div className="p-3 bg-gray-50 border-t flex justify-between items-center">
-                        <span className="text-xs text-gray-500">
-                          {employeeData.documents.length} document{employeeData.documents.length !== 1 ? 's' : ''} total
-                        </span>
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          className="text-[#E51636] border-[#E51636]/20 hover:bg-[#E51636]/10"
-                          onClick={() => handleViewEmployeeDocuments(employeeData.employee._id)}
-                        >
-                          View All
-                        </Button>
+                        <div className="flex justify-between items-center pt-2 border-t border-gray-100">
+                          <div className="text-xs text-gray-500 bg-gray-100 px-2 py-1 rounded-full">
+                            #{index + 1}
+                          </div>
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            className="border-gray-300 hover:border-[#E51636] hover:text-[#E51636] hover:bg-[#E51636]/5"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              handleViewDocument(doc);
+                            }}
+                          >
+                            <Eye className="w-4 h-4 mr-1" />
+                            <span className="hidden sm:inline">View Details</span>
+                            <span className="sm:hidden">View</span>
+                          </Button>
+                        </div>
                       </div>
                     </CardContent>
                   </Card>
                 ))}
+              </div>
+            ) : (
+              // Show grouped documents by employee when not filtering
+              <div className="p-3 md:p-6">
+                <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4 md:gap-6">
+                  {getGroupedDocuments().map((employeeData, index) => (
+                    <Card
+                      key={employeeData.employee._id}
+                      className="border border-gray-200 shadow-lg bg-white hover:shadow-xl hover:border-gray-300 transition-all duration-300 overflow-hidden group"
+                    >
+                      <CardContent className="p-0">
+                        {/* Employee Header */}
+                        <div className="p-5 md:p-6">
+                          <div className="flex items-center justify-between gap-4">
+                            <div className="flex-1 min-w-0">
+                              <h3 className="font-semibold text-xl md:text-2xl text-gray-900 mb-1">{employeeData.employee.name}</h3>
+                              <p className="text-gray-500 text-base md:text-lg">{employeeData.employee.position}</p>
+                              {employeeData.employee.department && (
+                                <p className="text-gray-400 text-sm mt-1">{employeeData.employee.department}</p>
+                              )}
+                            </div>
+                            <div className="flex-shrink-0">
+                              <div className="bg-blue-50 text-blue-600 rounded-full px-3 py-1.5 flex items-center gap-2">
+                                <FileText className="w-4 h-4" />
+                                <span className="text-sm font-medium">
+                                  {employeeData.documents.length} Doc{employeeData.documents.length !== 1 ? 's' : ''}
+                                </span>
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+
+                        {/* Stats Section */}
+                        <div className="px-4 md:px-5 py-3 bg-gray-50 border-b border-gray-100">
+                          <div className="flex flex-wrap gap-2">
+                            {employeeData.disciplinaryCount > 0 && (
+                              <div className="flex items-center gap-1.5 bg-red-100 px-2.5 py-1 rounded-full">
+                                <Shield className="w-3 h-3 text-red-600" />
+                                <span className="text-xs font-medium text-red-700">
+                                  {employeeData.disciplinaryCount} Disciplinary
+                                </span>
+                              </div>
+                            )}
+                            {employeeData.administrativeCount > 0 && (
+                              <div className="flex items-center gap-1.5 bg-blue-100 px-2.5 py-1 rounded-full">
+                                <Archive className="w-3 h-3 text-blue-600" />
+                                <span className="text-xs font-medium text-blue-700">
+                                  {employeeData.administrativeCount} Admin
+                                </span>
+                              </div>
+                            )}
+                          </div>
+                        </div>
+
+                        {/* Latest Document Preview */}
+                        <div className="p-4 md:p-5">
+                          <div className="flex items-start gap-3">
+                            <div className="relative">
+                              <div className={`w-6 h-6 ${
+                                employeeData.latestDocument.category === 'Disciplinary'
+                                  ? 'text-red-500'
+                                  : 'text-blue-500'
+                              }`}>
+                                {getCategoryIcon(employeeData.latestDocument.category)}
+                              </div>
+                              <div className={`absolute -top-1 -right-1 w-3 h-3 rounded-full border-2 border-white ${
+                                employeeData.latestDocument.status === 'Completed' ? 'bg-green-500' : 'bg-yellow-500'
+                              }`}></div>
+                            </div>
+                            <div className="flex-1 min-w-0">
+                              <div className="flex flex-col sm:flex-row sm:items-center gap-2 mb-2">
+                                <h4 className={`font-semibold text-base ${
+                                  employeeData.latestDocument.category === 'Disciplinary' ? 'text-red-700' : 'text-blue-700'
+                                } truncate`}>
+                                  {employeeData.latestDocument.type}
+                                </h4>
+                                <div className="flex items-center gap-2">
+                                  {employeeData.latestDocument.source === 'disciplinary' && (
+                                    <span className="text-xs px-2 py-1 bg-orange-100 text-orange-700 rounded-full font-medium">
+                                      Legacy
+                                    </span>
+                                  )}
+                                  {getStatusBadge(employeeData.latestDocument.status)}
+                                </div>
+                              </div>
+                              <div className="flex items-center gap-2 text-sm text-gray-500 mb-3">
+                                <Calendar className="w-4 h-4" />
+                                <span>
+                                  {new Date(employeeData.latestDocument.date).toLocaleDateString('en-US', {
+                                    month: 'short',
+                                    day: 'numeric',
+                                    year: 'numeric'
+                                  })}
+                                </span>
+                              </div>
+                              <div className="bg-gray-50 rounded-lg p-3">
+                                <p className="text-sm text-gray-700 line-clamp-2 leading-relaxed">
+                                  {employeeData.latestDocument.description}
+                                </p>
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+
+                        {/* Footer with Actions */}
+                        <div className="px-4 md:px-5 py-3 bg-gray-50 border-t border-gray-100">
+                          <div className="flex justify-between items-center gap-3">
+                            <div className="flex items-center gap-2">
+                              <Activity className="w-4 h-4 text-gray-500" />
+                              <span className="text-sm font-medium text-gray-700">
+                                {employeeData.documents.length} total record{employeeData.documents.length !== 1 ? 's' : ''}
+                              </span>
+                            </div>
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              className="border-gray-300 hover:border-[#E51636] hover:text-white hover:bg-[#E51636] transition-all duration-200 font-medium text-sm px-4 py-2"
+                              onClick={() => handleViewEmployeeDocuments(employeeData.employee._id)}
+                            >
+                              <Eye className="w-4 h-4 mr-2" />
+                              View All
+                            </Button>
+                          </div>
+                        </div>
+                      </CardContent>
+                    </Card>
+                  ))}
+                </div>
 
                 {getGroupedDocuments().length === 0 && (
-                  <div className="col-span-full text-center p-8">
-                    <FileText className="w-12 h-12 mx-auto text-gray-300" />
-                    <h3 className="mt-2 text-lg font-medium text-gray-900">No employees with documents found</h3>
-                    <p className="mt-1 text-sm text-gray-500">
+                  <div className="col-span-full text-center p-12">
+                    <div className="bg-gradient-to-br from-gray-100 to-gray-200 w-24 h-24 rounded-full flex items-center justify-center mx-auto mb-6">
+                      <Users className="w-12 h-12 text-gray-400" />
+                    </div>
+                    <h3 className="text-2xl font-bold text-gray-900 mb-2">No employees with documents found</h3>
+                    <p className="text-gray-600 max-w-md mx-auto">
                       {searchQuery
-                        ? "No employees match your search criteria."
-                        : "There are no documents in this category yet."}
+                        ? "No employees match your search criteria. Try adjusting your search terms or filters."
+                        : "There are no employees with documents in this category yet."}
                     </p>
                   </div>
                 )}

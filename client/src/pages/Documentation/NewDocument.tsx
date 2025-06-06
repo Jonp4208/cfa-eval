@@ -381,8 +381,8 @@ export default function NewDocument() {
   const categoryInfo = getCategoryInfo(formData.category);
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-gray-50 via-white to-gray-50 p-4 md:p-6">
-      <div className="max-w-5xl mx-auto space-y-8">
+    <div className="min-h-screen bg-gradient-to-br from-gray-50 via-white to-gray-50 p-3 md:p-6">
+      <div className="max-w-5xl mx-auto space-y-4 md:space-y-8">
         {/* Page Header */}
         <PageHeader
           title="Create New Document"
@@ -404,35 +404,35 @@ export default function NewDocument() {
 
 
         {/* Main Form */}
-        <form onSubmit={handleSubmit} className="space-y-8">
+        <form onSubmit={handleSubmit} className="space-y-4 md:space-y-8">
           {/* Step 1: Basic Information */}
           <Card className="border-0 shadow-xl bg-gradient-to-br from-white to-gray-50 overflow-hidden">
-            <CardHeader className="bg-gradient-to-r from-blue-600 to-blue-700 text-white p-6">
-              <div className="flex items-center gap-4">
-                <div className="bg-white/20 p-3 rounded-xl backdrop-blur-sm">
-                  <Users className="h-6 w-6" />
+            <CardHeader className="bg-gradient-to-r from-blue-600 to-blue-700 text-white p-4 md:p-6">
+              <div className="flex items-center gap-3 md:gap-4">
+                <div className="bg-white/20 p-2 md:p-3 rounded-xl backdrop-blur-sm">
+                  <Users className="h-5 w-5 md:h-6 md:w-6" />
                 </div>
                 <div>
-                  <CardTitle className="text-2xl font-bold">Step 1: Basic Information</CardTitle>
-                  <CardDescription className="text-white/90 text-base">
+                  <CardTitle className="text-lg md:text-2xl font-bold">Step 1: Basic Information</CardTitle>
+                  <CardDescription className="text-white/90 text-sm md:text-base">
                     Select the employee and document category
                   </CardDescription>
                 </div>
               </div>
             </CardHeader>
-            <CardContent className="p-8">
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+            <CardContent className="p-4 md:p-8">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-8">
                 <div className="space-y-4">
-                  <div className="bg-blue-50 rounded-xl p-4 border border-blue-200">
-                    <div className="flex items-center gap-3 mb-3">
-                      <div className="bg-blue-500 text-white p-2 rounded-lg">
-                        <UserIcon className="h-5 w-5" />
+                  <div className="bg-blue-50 rounded-xl p-3 md:p-4 border border-blue-200">
+                    <div className="flex items-center gap-2 md:gap-3 mb-3">
+                      <div className="bg-blue-500 text-white p-1.5 md:p-2 rounded-lg">
+                        <UserIcon className="h-4 w-4 md:h-5 md:w-5" />
                       </div>
                       <div>
-                        <Label className="text-lg font-semibold text-blue-900">
+                        <Label className="text-base md:text-lg font-semibold text-blue-900">
                           Select Employee <span className="text-red-500">*</span>
                         </Label>
-                        <p className="text-sm text-blue-700">Choose the team member this document is for</p>
+                        <p className="text-xs md:text-sm text-blue-700">Choose the team member this document is for</p>
                       </div>
                     </div>
                     <Select
@@ -441,19 +441,19 @@ export default function NewDocument() {
                       value={formData.employeeId}
                       onValueChange={(value) => handleSelectChange('employeeId', value)}
                     >
-                      <SelectTrigger className="h-12 border-blue-300 focus:border-blue-500 focus:ring-blue-500 bg-white">
+                      <SelectTrigger className="h-10 md:h-12 border-blue-300 focus:border-blue-500 focus:ring-blue-500 bg-white text-sm md:text-base">
                         <SelectValue placeholder="Choose an employee..." />
                       </SelectTrigger>
                       <SelectContent>
                         {employees.map((employee) => (
-                          <SelectItem key={employee._id} value={employee._id} className="py-3">
-                            <div className="flex items-center gap-3">
-                              <div className="bg-blue-100 p-2 rounded-full">
-                                <UserIcon className="h-4 w-4 text-blue-600" />
+                          <SelectItem key={employee._id} value={employee._id} className="py-2 md:py-3">
+                            <div className="flex items-center gap-2 md:gap-3">
+                              <div className="bg-blue-100 p-1.5 md:p-2 rounded-full">
+                                <UserIcon className="h-3 w-3 md:h-4 md:w-4 text-blue-600" />
                               </div>
                               <div>
-                                <div className="font-medium">{employee.name}</div>
-                                <div className="text-sm text-gray-500">{employee.position}</div>
+                                <div className="font-medium text-sm md:text-base">{employee.name}</div>
+                                <div className="text-xs md:text-sm text-gray-500">{employee.position}</div>
                               </div>
                             </div>
                           </SelectItem>
@@ -464,16 +464,16 @@ export default function NewDocument() {
                 </div>
 
                 <div className="space-y-4">
-                  <div className="bg-green-50 rounded-xl p-4 border border-green-200">
-                    <div className="flex items-center gap-3 mb-3">
-                      <div className="bg-green-500 text-white p-2 rounded-lg">
-                        <Calendar className="h-5 w-5" />
+                  <div className="bg-green-50 rounded-xl p-3 md:p-4 border border-green-200">
+                    <div className="flex items-center gap-2 md:gap-3 mb-3">
+                      <div className="bg-green-500 text-white p-1.5 md:p-2 rounded-lg">
+                        <Calendar className="h-4 w-4 md:h-5 md:w-5" />
                       </div>
                       <div>
-                        <Label className="text-lg font-semibold text-green-900">
+                        <Label className="text-base md:text-lg font-semibold text-green-900">
                           Document Date <span className="text-red-500">*</span>
                         </Label>
-                        <p className="text-sm text-green-700">When this incident occurred or document was created</p>
+                        <p className="text-xs md:text-sm text-green-700">When this incident occurred or document was created</p>
                       </div>
                     </div>
                     <Input
@@ -482,26 +482,26 @@ export default function NewDocument() {
                       name="date"
                       value={formData.date}
                       onChange={handleInputChange}
-                      className="h-12 border-green-300 focus:border-green-500 focus:ring-green-500 bg-white text-lg"
+                      className="h-10 md:h-12 border-green-300 focus:border-green-500 focus:ring-green-500 bg-white text-sm md:text-lg"
                       required
                     />
                   </div>
                 </div>
 
                 <div className="col-span-full space-y-4">
-                  <div className="flex items-center gap-3 mb-4">
-                    <div className="bg-purple-500 text-white p-2 rounded-lg">
-                      <Building className="h-5 w-5" />
+                  <div className="flex items-center gap-2 md:gap-3 mb-4">
+                    <div className="bg-purple-500 text-white p-1.5 md:p-2 rounded-lg">
+                      <Building className="h-4 w-4 md:h-5 md:w-5" />
                     </div>
                     <div>
-                      <Label className="text-lg font-semibold text-gray-900">
+                      <Label className="text-base md:text-lg font-semibold text-gray-900">
                         Document Category <span className="text-red-500">*</span>
                       </Label>
-                      <p className="text-sm text-gray-600">Choose the type of documentation you're creating</p>
+                      <p className="text-xs md:text-sm text-gray-600">Choose the type of documentation you're creating</p>
                     </div>
                   </div>
 
-                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-3 md:gap-4">
                     {[
                       {
                         value: 'Disciplinary',
@@ -538,32 +538,32 @@ export default function NewDocument() {
                         <div
                           key={category.value}
                           onClick={() => handleSelectChange('category', category.value)}
-                          className={`p-6 rounded-xl border-2 cursor-pointer transition-all duration-200 hover:shadow-lg transform hover:scale-[1.02] ${
+                          className={`p-4 md:p-6 rounded-xl border-2 cursor-pointer transition-all duration-200 hover:shadow-lg transform hover:scale-[1.02] ${
                             isSelected
                               ? `${category.borderColor} ${category.bgColor} shadow-lg scale-[1.02]`
                               : 'border-gray-200 hover:border-gray-300 bg-white'
                           }`}
                         >
                           <div className="text-center">
-                            <div className={`mx-auto mb-4 p-3 rounded-xl w-fit ${
+                            <div className={`mx-auto mb-3 md:mb-4 p-2 md:p-3 rounded-xl w-fit ${
                               isSelected
                                 ? `bg-gradient-to-r ${category.color} text-white`
                                 : 'bg-gray-100 text-gray-600'
                             }`}>
-                              <IconComponent className="h-6 w-6" />
+                              <IconComponent className="h-5 w-5 md:h-6 md:w-6" />
                             </div>
-                            <h3 className={`font-semibold mb-2 ${
+                            <h3 className={`font-semibold mb-2 text-sm md:text-base ${
                               isSelected ? 'text-gray-900' : 'text-gray-700'
                             }`}>
                               {category.label}
                             </h3>
-                            <p className="text-sm text-gray-600 mb-3">
+                            <p className="text-xs md:text-sm text-gray-600 mb-3">
                               {category.description}
                             </p>
                             {isSelected && (
                               <div className="flex items-center justify-center gap-2 text-green-600">
-                                <CheckCircle2 className="h-4 w-4" />
-                                <span className="text-sm font-medium">Selected</span>
+                                <CheckCircle2 className="h-3 w-3 md:h-4 md:w-4" />
+                                <span className="text-xs md:text-sm font-medium">Selected</span>
                               </div>
                             )}
                           </div>
@@ -575,19 +575,19 @@ export default function NewDocument() {
 
                 {formData.category && (
                   <div className="col-span-full space-y-4">
-                    <div className="flex items-center gap-3 mb-4">
-                      <div className="bg-indigo-500 text-white p-2 rounded-lg">
-                        <ClipboardList className="h-5 w-5" />
+                    <div className="flex items-center gap-2 md:gap-3 mb-4">
+                      <div className="bg-indigo-500 text-white p-1.5 md:p-2 rounded-lg">
+                        <ClipboardList className="h-4 w-4 md:h-5 md:w-5" />
                       </div>
                       <div>
-                        <Label className="text-lg font-semibold text-gray-900">
+                        <Label className="text-base md:text-lg font-semibold text-gray-900">
                           Document Type <span className="text-red-500">*</span>
                         </Label>
-                        <p className="text-sm text-gray-600">Select the specific type of {formData.category.toLowerCase()} document</p>
+                        <p className="text-xs md:text-sm text-gray-600">Select the specific type of {formData.category.toLowerCase()} document</p>
                       </div>
                     </div>
 
-                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3 md:gap-4">
                       {getDocumentTypeOptions().map((option) => {
                         const isSelected = formData.type === option.value;
                         const IconComponent = option.icon;
@@ -596,30 +596,30 @@ export default function NewDocument() {
                           <div
                             key={option.value}
                             onClick={() => handleSelectChange('type', option.value)}
-                            className={`p-4 rounded-xl border-2 cursor-pointer transition-all duration-200 hover:shadow-md ${
+                            className={`p-3 md:p-4 rounded-xl border-2 cursor-pointer transition-all duration-200 hover:shadow-md ${
                               isSelected
                                 ? 'border-indigo-500 bg-indigo-50 shadow-md'
                                 : 'border-gray-200 hover:border-gray-300 bg-white'
                             }`}
                           >
-                            <div className="flex items-center gap-3">
-                              <div className={`p-2 rounded-lg ${
+                            <div className="flex items-center gap-2 md:gap-3">
+                              <div className={`p-1.5 md:p-2 rounded-lg ${
                                 isSelected
                                   ? 'bg-indigo-500 text-white'
                                   : 'bg-gray-100 text-gray-600'
                               }`}>
-                                <IconComponent className="h-5 w-5" />
+                                <IconComponent className="h-4 w-4 md:h-5 md:w-5" />
                               </div>
                               <div className="flex-1">
-                                <h4 className={`font-medium ${
+                                <h4 className={`font-medium text-sm md:text-base ${
                                   isSelected ? 'text-indigo-900' : 'text-gray-900'
                                 }`}>
                                   {option.label}
                                 </h4>
                                 {option.severity && (
-                                  <div className="flex items-center gap-2 mt-1">
+                                  <div className="flex items-center gap-1 md:gap-2 mt-1">
                                     <span className="text-xs text-gray-500">Severity:</span>
-                                    <span className={`text-xs px-2 py-1 rounded-full ${
+                                    <span className={`text-xs px-1.5 md:px-2 py-0.5 md:py-1 rounded-full ${
                                       option.severity === 'Critical' ? 'bg-red-100 text-red-700' :
                                       option.severity === 'Major' ? 'bg-orange-100 text-orange-700' :
                                       option.severity === 'Moderate' ? 'bg-yellow-100 text-yellow-700' :
@@ -631,7 +631,7 @@ export default function NewDocument() {
                                 )}
                               </div>
                               {isSelected && (
-                                <CheckCircle2 className="h-5 w-5 text-indigo-500" />
+                                <CheckCircle2 className="h-4 w-4 md:h-5 md:w-5 text-indigo-500" />
                               )}
                             </div>
                           </div>
@@ -663,21 +663,21 @@ export default function NewDocument() {
           {/* Severity Selection */}
           {showSeverity && (
             <Card className="border-0 shadow-xl bg-gradient-to-br from-white to-gray-50">
-              <CardHeader className="bg-gradient-to-r from-amber-500 to-orange-500 text-white p-6">
-                <div className="flex items-center gap-4">
-                  <div className="bg-white/20 p-3 rounded-xl backdrop-blur-sm">
-                    <AlertCircle className="h-6 w-6" />
+              <CardHeader className="bg-gradient-to-r from-amber-500 to-orange-500 text-white p-4 md:p-6">
+                <div className="flex items-center gap-3 md:gap-4">
+                  <div className="bg-white/20 p-2 md:p-3 rounded-xl backdrop-blur-sm">
+                    <AlertCircle className="h-5 w-5 md:h-6 md:w-6" />
                   </div>
                   <div>
-                    <CardTitle className="text-2xl font-bold">Severity Level</CardTitle>
-                    <CardDescription className="text-white/90 text-base">
+                    <CardTitle className="text-lg md:text-2xl font-bold">Severity Level</CardTitle>
+                    <CardDescription className="text-white/90 text-sm md:text-base">
                       Rate the severity of this {formData.category?.toLowerCase()} issue
                     </CardDescription>
                   </div>
                 </div>
               </CardHeader>
-              <CardContent className="p-8">
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+              <CardContent className="p-4 md:p-8">
+                <div className="grid grid-cols-2 md:grid-cols-2 lg:grid-cols-4 gap-3 md:gap-4">
                   {[
                     { value: 'Minor', color: 'from-green-400 to-green-500', bgColor: 'bg-green-50', borderColor: 'border-green-200', icon: '🟢' },
                     { value: 'Moderate', color: 'from-yellow-400 to-yellow-500', bgColor: 'bg-yellow-50', borderColor: 'border-yellow-200', icon: '🟡' },
@@ -690,29 +690,29 @@ export default function NewDocument() {
                       <div
                         key={severity.value}
                         onClick={() => handleSelectChange('severity', severity.value)}
-                        className={`p-6 rounded-xl border-2 cursor-pointer transition-all duration-200 hover:shadow-lg transform hover:scale-[1.02] ${
+                        className={`p-4 md:p-6 rounded-xl border-2 cursor-pointer transition-all duration-200 hover:shadow-lg transform hover:scale-[1.02] ${
                           isSelected
                             ? `${severity.borderColor} ${severity.bgColor} shadow-lg scale-[1.02]`
                             : 'border-gray-200 hover:border-gray-300 bg-white'
                         }`}
                       >
                         <div className="text-center">
-                          <div className="text-4xl mb-3">{severity.icon}</div>
-                          <h3 className={`font-bold text-lg mb-2 ${
+                          <div className="text-2xl md:text-4xl mb-2 md:mb-3">{severity.icon}</div>
+                          <h3 className={`font-bold text-sm md:text-lg mb-1 md:mb-2 ${
                             isSelected ? 'text-gray-900' : 'text-gray-700'
                           }`}>
                             {severity.value}
                           </h3>
-                          <p className="text-sm text-gray-600 mb-3">
+                          <p className="text-xs md:text-sm text-gray-600 mb-2 md:mb-3">
                             {severity.value === 'Minor' && 'Low impact issues'}
                             {severity.value === 'Moderate' && 'Medium impact issues'}
                             {severity.value === 'Major' && 'Significant impact issues'}
                             {severity.value === 'Critical' && 'Severe impact issues'}
                           </p>
                           {isSelected && (
-                            <div className="flex items-center justify-center gap-2 text-green-600">
-                              <CheckCircle2 className="h-4 w-4" />
-                              <span className="text-sm font-medium">Selected</span>
+                            <div className="flex items-center justify-center gap-1 md:gap-2 text-green-600">
+                              <CheckCircle2 className="h-3 w-3 md:h-4 md:w-4" />
+                              <span className="text-xs md:text-sm font-medium">Selected</span>
                             </div>
                           )}
                         </div>
@@ -726,31 +726,31 @@ export default function NewDocument() {
 
           {/* Step 2: Document Details */}
           <Card className="border-0 shadow-xl bg-gradient-to-br from-white to-gray-50">
-            <CardHeader className="bg-gradient-to-r from-purple-500 to-purple-600 text-white p-6">
-              <div className="flex items-center gap-4">
-                <div className="bg-white/20 p-3 rounded-xl backdrop-blur-sm">
-                  <FileText className="h-6 w-6" />
+            <CardHeader className="bg-gradient-to-r from-purple-500 to-purple-600 text-white p-4 md:p-6">
+              <div className="flex items-center gap-3 md:gap-4">
+                <div className="bg-white/20 p-2 md:p-3 rounded-xl backdrop-blur-sm">
+                  <FileText className="h-5 w-5 md:h-6 md:w-6" />
                 </div>
                 <div>
-                  <CardTitle className="text-2xl font-bold">Step 2: Detailed Description</CardTitle>
-                  <CardDescription className="text-white/90 text-base">
+                  <CardTitle className="text-lg md:text-2xl font-bold">Step 2: Detailed Description</CardTitle>
+                  <CardDescription className="text-white/90 text-sm md:text-base">
                     Provide a comprehensive description of the situation
                   </CardDescription>
                 </div>
               </div>
             </CardHeader>
-            <CardContent className="p-8">
-              <div className="space-y-6">
-                <div className="bg-purple-50 rounded-xl p-6 border border-purple-200">
-                  <div className="flex items-start gap-4 mb-4">
-                    <div className="bg-purple-500 text-white p-3 rounded-xl">
-                      <FileText className="h-6 w-6" />
+            <CardContent className="p-4 md:p-8">
+              <div className="space-y-4 md:space-y-6">
+                <div className="bg-purple-50 rounded-xl p-4 md:p-6 border border-purple-200">
+                  <div className="flex items-start gap-3 md:gap-4 mb-4">
+                    <div className="bg-purple-500 text-white p-2 md:p-3 rounded-xl">
+                      <FileText className="h-5 w-5 md:h-6 md:w-6" />
                     </div>
                     <div className="flex-1">
-                      <Label className="text-lg font-semibold text-purple-900 mb-2 block">
+                      <Label className="text-base md:text-lg font-semibold text-purple-900 mb-2 block">
                         Description <span className="text-red-500">*</span>
                       </Label>
-                      <p className="text-purple-700 mb-4">
+                      <p className="text-purple-700 mb-4 text-sm md:text-base">
                         {formData.category === 'Disciplinary'
                           ? "Provide a clear, factual account of what happened, when, and who was involved"
                           : formData.category === 'PIP'
@@ -762,7 +762,7 @@ export default function NewDocument() {
                         name="description"
                         value={formData.description}
                         onChange={handleInputChange}
-                        className="min-h-[150px] border-purple-300 focus:border-purple-500 focus:ring-purple-500 bg-white text-base"
+                        className="min-h-[120px] md:min-h-[150px] border-purple-300 focus:border-purple-500 focus:ring-purple-500 bg-white text-sm md:text-base"
                         placeholder={
                           formData.category === 'Disciplinary'
                             ? "Example: On [date] at approximately [time], [employee name] was observed [specific behavior/incident]. The incident occurred in [location] and was witnessed by [witnesses if any]. The employee [describe actions taken or not taken]. This behavior/incident [explain impact on operations, customers, or team]..."
@@ -775,12 +775,12 @@ export default function NewDocument() {
                     </div>
                   </div>
 
-                  <div className="bg-purple-100 rounded-lg p-4">
+                  <div className="bg-purple-100 rounded-lg p-3 md:p-4">
                     <div className="flex items-center gap-2 mb-2">
-                      <Lightbulb className="h-5 w-5 text-purple-600" />
-                      <span className="font-medium text-purple-800">Writing Tips</span>
+                      <Lightbulb className="h-4 w-4 md:h-5 md:w-5 text-purple-600" />
+                      <span className="font-medium text-purple-800 text-sm md:text-base">Writing Tips</span>
                     </div>
-                    <ul className="text-sm text-purple-700 space-y-1">
+                    <ul className="text-xs md:text-sm text-purple-700 space-y-1">
                       <li>• Be specific and factual - avoid opinions or assumptions</li>
                       <li>• Include dates, times, and locations when relevant</li>
                       <li>• Describe the impact on operations, team, or customers</li>
@@ -789,16 +789,16 @@ export default function NewDocument() {
                   </div>
                 </div>
 
-                <div className="bg-blue-50 rounded-xl p-6 border border-blue-200">
-                  <div className="flex items-start gap-4">
-                    <div className="bg-blue-500 text-white p-3 rounded-xl">
-                      <Users className="h-6 w-6" />
+                <div className="bg-blue-50 rounded-xl p-4 md:p-6 border border-blue-200">
+                  <div className="flex items-start gap-3 md:gap-4">
+                    <div className="bg-blue-500 text-white p-2 md:p-3 rounded-xl">
+                      <Users className="h-5 w-5 md:h-6 md:w-6" />
                     </div>
                     <div className="flex-1">
-                      <Label className="text-lg font-semibold text-blue-900 mb-2 block">
+                      <Label className="text-base md:text-lg font-semibold text-blue-900 mb-2 block">
                         Witnesses (Optional)
                       </Label>
-                      <p className="text-blue-700 mb-4">
+                      <p className="text-blue-700 mb-4 text-sm md:text-base">
                         List any team members or others who witnessed the incident
                       </p>
                       <Input
@@ -806,7 +806,7 @@ export default function NewDocument() {
                         name="witnesses"
                         value={formData.witnesses}
                         onChange={handleInputChange}
-                        className="border-blue-300 focus:border-blue-500 focus:ring-blue-500 bg-white"
+                        className="h-10 md:h-12 border-blue-300 focus:border-blue-500 focus:ring-blue-500 bg-white text-sm md:text-base"
                         placeholder="Example: John Smith (Team Lead), Sarah Johnson (Customer present), Mike Davis (Shift Manager)"
                       />
                       <p className="text-xs text-blue-600 mt-2">Separate multiple names with commas</p>
@@ -850,32 +850,32 @@ export default function NewDocument() {
 
           {/* Step 3: Follow-up Information */}
           <Card className="border-0 shadow-xl bg-gradient-to-br from-white to-gray-50">
-            <CardHeader className="bg-gradient-to-r from-teal-500 to-teal-600 text-white p-6">
-              <div className="flex items-center gap-4">
-                <div className="bg-white/20 p-3 rounded-xl backdrop-blur-sm">
-                  <Calendar className="h-6 w-6" />
+            <CardHeader className="bg-gradient-to-r from-teal-500 to-teal-600 text-white p-4 md:p-6">
+              <div className="flex items-center gap-3 md:gap-4">
+                <div className="bg-white/20 p-2 md:p-3 rounded-xl backdrop-blur-sm">
+                  <Calendar className="h-5 w-5 md:h-6 md:w-6" />
                 </div>
                 <div>
-                  <CardTitle className="text-2xl font-bold">Step 3: Follow-up & Options</CardTitle>
-                  <CardDescription className="text-white/90 text-base">
+                  <CardTitle className="text-lg md:text-2xl font-bold">Step 3: Follow-up & Options</CardTitle>
+                  <CardDescription className="text-white/90 text-sm md:text-base">
                     Set follow-up dates and configure notification preferences
                   </CardDescription>
                 </div>
               </div>
             </CardHeader>
-            <CardContent className="p-8">
+            <CardContent className="p-4 md:p-8">
 
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-                <div className="bg-teal-50 rounded-xl p-6 border border-teal-200">
-                  <div className="flex items-center gap-3 mb-4">
-                    <div className="bg-teal-500 text-white p-2 rounded-lg">
-                      <Calendar className="h-5 w-5" />
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-8">
+                <div className="bg-teal-50 rounded-xl p-4 md:p-6 border border-teal-200">
+                  <div className="flex items-center gap-2 md:gap-3 mb-4">
+                    <div className="bg-teal-500 text-white p-1.5 md:p-2 rounded-lg">
+                      <Calendar className="h-4 w-4 md:h-5 md:w-5" />
                     </div>
                     <div>
-                      <Label className="text-lg font-semibold text-teal-900">
+                      <Label className="text-base md:text-lg font-semibold text-teal-900">
                         Follow-up Date
                       </Label>
-                      <p className="text-sm text-teal-700">When to check back on this issue</p>
+                      <p className="text-xs md:text-sm text-teal-700">When to check back on this issue</p>
                     </div>
                   </div>
                   <Input
@@ -884,20 +884,20 @@ export default function NewDocument() {
                     name="followUpDate"
                     value={formData.followUpDate}
                     onChange={handleInputChange}
-                    className="h-12 border-teal-300 focus:border-teal-500 focus:ring-teal-500 bg-white text-lg"
+                    className="h-10 md:h-12 border-teal-300 focus:border-teal-500 focus:ring-teal-500 bg-white text-sm md:text-lg"
                   />
                 </div>
 
-                <div className="bg-indigo-50 rounded-xl p-6 border border-indigo-200">
-                  <div className="flex items-center gap-3 mb-4">
-                    <div className="bg-indigo-500 text-white p-2 rounded-lg">
-                      <ClipboardList className="h-5 w-5" />
+                <div className="bg-indigo-50 rounded-xl p-4 md:p-6 border border-indigo-200">
+                  <div className="flex items-center gap-2 md:gap-3 mb-4">
+                    <div className="bg-indigo-500 text-white p-1.5 md:p-2 rounded-lg">
+                      <ClipboardList className="h-4 w-4 md:h-5 md:w-5" />
                     </div>
                     <div>
-                      <Label className="text-lg font-semibold text-indigo-900">
+                      <Label className="text-base md:text-lg font-semibold text-indigo-900">
                         Follow-up Actions
                       </Label>
-                      <p className="text-sm text-indigo-700">What needs to be done during follow-up</p>
+                      <p className="text-xs md:text-sm text-indigo-700">What needs to be done during follow-up</p>
                     </div>
                   </div>
                   <Input
@@ -905,20 +905,20 @@ export default function NewDocument() {
                     name="followUpActions"
                     value={formData.followUpActions}
                     onChange={handleInputChange}
-                    className="h-12 border-indigo-300 focus:border-indigo-500 focus:ring-indigo-500 bg-white"
+                    className="h-10 md:h-12 border-indigo-300 focus:border-indigo-500 focus:ring-indigo-500 bg-white text-sm md:text-base"
                     placeholder="Example: Review performance metrics, conduct check-in meeting"
                   />
                 </div>
               </div>
 
-              <div className="mt-8">
-                <h3 className="text-lg font-semibold text-gray-900 mb-6 flex items-center gap-2">
-                  <Star className="h-5 w-5 text-yellow-500" />
+              <div className="mt-6 md:mt-8">
+                <h3 className="text-base md:text-lg font-semibold text-gray-900 mb-4 md:mb-6 flex items-center gap-2">
+                  <Star className="h-4 w-4 md:h-5 md:w-5 text-yellow-500" />
                   Additional Options
                 </h3>
 
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                  <div className={`p-6 rounded-xl border-2 transition-all duration-200 cursor-pointer hover:shadow-lg ${
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4 md:gap-6">
+                  <div className={`p-4 md:p-6 rounded-xl border-2 transition-all duration-200 cursor-pointer hover:shadow-lg ${
                     formData.previousIncidents
                       ? 'border-red-300 bg-red-50 shadow-md'
                       : 'border-gray-200 bg-white hover:border-gray-300'
@@ -926,13 +926,13 @@ export default function NewDocument() {
                   onClick={() => handleCheckboxChange({
                     target: { name: 'previousIncidents', checked: !formData.previousIncidents }
                   } as any)}>
-                    <div className="flex items-start gap-4">
-                      <div className={`p-3 rounded-xl ${
+                    <div className="flex items-start gap-3 md:gap-4">
+                      <div className={`p-2 md:p-3 rounded-xl ${
                         formData.previousIncidents
                           ? 'bg-red-500 text-white'
                           : 'bg-gray-100 text-gray-600'
                       }`}>
-                        <AlertTriangle className="h-5 w-5" />
+                        <AlertTriangle className="h-4 w-4 md:h-5 md:w-5" />
                       </div>
                       <div className="flex-1">
                         <div className="flex items-center gap-2 mb-2">
@@ -946,11 +946,11 @@ export default function NewDocument() {
                             }
                             className="data-[state=checked]:bg-[#E51636] data-[state=checked]:border-[#E51636]"
                           />
-                          <Label className="font-semibold text-gray-900 cursor-pointer">
+                          <Label className="font-semibold text-gray-900 cursor-pointer text-sm md:text-base">
                             Previous Incidents
                           </Label>
                         </div>
-                        <p className="text-sm text-gray-600">
+                        <p className="text-xs md:text-sm text-gray-600">
                           Similar incidents have occurred with this employee before
                         </p>
                       </div>
@@ -1042,33 +1042,33 @@ export default function NewDocument() {
           {/* Step 4: Document Attachment - Only show when documentationAttached is checked */}
           {formData.documentationAttached && (
             <Card className="border-0 shadow-xl bg-gradient-to-br from-white to-gray-50">
-              <CardHeader className="bg-gradient-to-r from-blue-500 to-blue-600 text-white p-6">
-                <div className="flex items-center gap-4">
-                  <div className="bg-white/20 p-3 rounded-xl backdrop-blur-sm">
-                    <Upload className="h-6 w-6" />
+              <CardHeader className="bg-gradient-to-r from-blue-500 to-blue-600 text-white p-4 md:p-6">
+                <div className="flex items-center gap-3 md:gap-4">
+                  <div className="bg-white/20 p-2 md:p-3 rounded-xl backdrop-blur-sm">
+                    <Upload className="h-5 w-5 md:h-6 md:w-6" />
                   </div>
                   <div>
-                    <CardTitle className="text-2xl font-bold">Step 4: Document Attachment</CardTitle>
-                    <CardDescription className="text-white/90 text-base">
+                    <CardTitle className="text-lg md:text-2xl font-bold">Step 4: Document Attachment</CardTitle>
+                    <CardDescription className="text-white/90 text-sm md:text-base">
                       Upload supporting documents or evidence
                     </CardDescription>
                   </div>
                 </div>
               </CardHeader>
-              <CardContent className="p-8">
+              <CardContent className="p-4 md:p-8">
 
-                <div className="space-y-6">
-                  <div className="bg-blue-50 rounded-xl p-6 border border-blue-200">
+                <div className="space-y-4 md:space-y-6">
+                  <div className="bg-blue-50 rounded-xl p-4 md:p-6 border border-blue-200">
                     <div className="flex justify-between items-start mb-4">
-                      <div className="flex items-center gap-3">
-                        <div className="bg-blue-500 text-white p-2 rounded-lg">
-                          <FileText className="h-5 w-5" />
+                      <div className="flex items-center gap-2 md:gap-3">
+                        <div className="bg-blue-500 text-white p-1.5 md:p-2 rounded-lg">
+                          <FileText className="h-4 w-4 md:h-5 md:w-5" />
                         </div>
                         <div>
-                          <Label className="text-lg font-semibold text-blue-900">
+                          <Label className="text-base md:text-lg font-semibold text-blue-900">
                             Supporting Document <span className="text-red-500">*</span>
                           </Label>
-                          <p className="text-sm text-blue-700">Upload evidence or supporting materials</p>
+                          <p className="text-xs md:text-sm text-blue-700">Upload evidence or supporting materials</p>
                         </div>
                       </div>
                       {uploadedFile && (
@@ -1079,40 +1079,40 @@ export default function NewDocument() {
                           onClick={clearFileSelection}
                           className="text-red-600 hover:text-red-700 hover:bg-red-50 p-2 h-auto"
                         >
-                          <Trash2 className="w-4 h-4" />
+                          <Trash2 className="w-3 h-3 md:w-4 md:h-4" />
                         </Button>
                       )}
                     </div>
 
                     {uploadedFile ? (
-                      <div className="bg-white rounded-xl border-2 border-green-200 p-6 shadow-sm">
-                        <div className="flex items-center gap-4">
-                          <div className="bg-green-100 p-4 rounded-xl">
-                            <FileCheck className="w-8 h-8 text-green-600" />
+                      <div className="bg-white rounded-xl border-2 border-green-200 p-4 md:p-6 shadow-sm">
+                        <div className="flex items-center gap-3 md:gap-4">
+                          <div className="bg-green-100 p-3 md:p-4 rounded-xl">
+                            <FileCheck className="w-6 h-6 md:w-8 md:h-8 text-green-600" />
                           </div>
                           <div className="flex-1">
-                            <h4 className="font-semibold text-green-900 mb-1">{uploadedFile.name}</h4>
-                            <p className="text-sm text-green-700">
+                            <h4 className="font-semibold text-green-900 mb-1 text-sm md:text-base">{uploadedFile.name}</h4>
+                            <p className="text-xs md:text-sm text-green-700">
                               {(uploadedFile.size / 1024 / 1024).toFixed(2)} MB · {uploadedFile.type || 'Unknown type'}
                             </p>
                             <div className="flex items-center gap-2 mt-2">
-                              <CheckCircle2 className="h-4 w-4 text-green-600" />
-                              <span className="text-sm font-medium text-green-800">File uploaded successfully</span>
+                              <CheckCircle2 className="h-3 w-3 md:h-4 md:w-4 text-green-600" />
+                              <span className="text-xs md:text-sm font-medium text-green-800">File uploaded successfully</span>
                             </div>
                           </div>
                         </div>
                       </div>
                     ) : (
                       <label htmlFor="documentFile" className="relative cursor-pointer w-full">
-                        <div className="flex flex-col items-center justify-center p-12 border-2 border-dashed border-blue-300 rounded-xl bg-white hover:bg-blue-50 transition-all duration-200 hover:border-blue-400">
-                          <div className="bg-blue-100 p-6 rounded-2xl mb-6">
-                            <Upload className="w-12 h-12 text-blue-600" />
+                        <div className="flex flex-col items-center justify-center p-8 md:p-12 border-2 border-dashed border-blue-300 rounded-xl bg-white hover:bg-blue-50 transition-all duration-200 hover:border-blue-400">
+                          <div className="bg-blue-100 p-4 md:p-6 rounded-2xl mb-4 md:mb-6">
+                            <Upload className="w-8 h-8 md:w-12 md:h-12 text-blue-600" />
                           </div>
-                          <h3 className="text-xl font-semibold text-gray-900 mb-2">Upload Supporting Document</h3>
-                          <p className="text-gray-600 text-center mb-4 max-w-sm">
+                          <h3 className="text-lg md:text-xl font-semibold text-gray-900 mb-2">Upload Supporting Document</h3>
+                          <p className="text-gray-600 text-center mb-4 max-w-sm text-sm md:text-base">
                             Drag and drop your file here, or click to browse and select from your device
                           </p>
-                          <div className="flex items-center gap-4 text-sm text-gray-500">
+                          <div className="flex flex-wrap items-center justify-center gap-2 md:gap-4 text-xs md:text-sm text-gray-500">
                             <span>PDF</span>
                             <span>•</span>
                             <span>Word</span>
@@ -1157,25 +1157,25 @@ export default function NewDocument() {
 
           {/* Submit Buttons */}
           <Card className="border-0 shadow-xl bg-gradient-to-br from-white to-gray-50">
-            <CardContent className="p-8">
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-4">
-                  <div className="bg-gradient-to-r from-[#E51636] to-[#DD0031] text-white p-4 rounded-2xl">
-                    <Sparkles className="h-8 w-8" />
+            <CardContent className="p-4 md:p-8">
+              <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4 md:gap-0">
+                <div className="flex items-center gap-3 md:gap-4">
+                  <div className="bg-gradient-to-r from-[#E51636] to-[#DD0031] text-white p-3 md:p-4 rounded-2xl">
+                    <Sparkles className="h-6 w-6 md:h-8 md:w-8" />
                   </div>
                   <div>
-                    <h3 className="text-2xl font-bold text-gray-900">Ready to Create Document?</h3>
-                    <p className="text-gray-600">Review all information before submitting</p>
+                    <h3 className="text-lg md:text-2xl font-bold text-gray-900">Ready to Create Document?</h3>
+                    <p className="text-gray-600 text-sm md:text-base">Review all information before submitting</p>
                   </div>
                 </div>
 
-                <div className="flex gap-4">
+                <div className="flex flex-col sm:flex-row gap-3 md:gap-4 w-full md:w-auto">
                   <Button
                     type="button"
                     variant="outline"
                     onClick={() => navigate('/documentation')}
                     disabled={loading || isUploading}
-                    className="px-8 py-3 border-gray-300 text-gray-700 hover:bg-gray-50"
+                    className="px-6 md:px-8 py-2 md:py-3 border-gray-300 text-gray-700 hover:bg-gray-50 w-full sm:w-auto"
                   >
                     Cancel
                   </Button>
@@ -1183,16 +1183,16 @@ export default function NewDocument() {
                   <Button
                     type="submit"
                     disabled={loading || isUploading || formData.category === 'PIP'}
-                    className="bg-gradient-to-r from-[#E51636] to-[#DD0031] hover:from-[#DD0031] hover:to-[#C41E3A] text-white px-8 py-3 shadow-lg min-w-[200px]"
+                    className="bg-gradient-to-r from-[#E51636] to-[#DD0031] hover:from-[#DD0031] hover:to-[#C41E3A] text-white px-6 md:px-8 py-2 md:py-3 shadow-lg min-w-[160px] md:min-w-[200px] w-full sm:w-auto"
                   >
                     {loading || isUploading ? (
                       <div className="flex items-center gap-2">
-                        <div className="animate-spin rounded-full h-5 w-5 border-2 border-white border-t-transparent"></div>
+                        <div className="animate-spin rounded-full h-4 w-4 md:h-5 md:w-5 border-2 border-white border-t-transparent"></div>
                         {isUploading ? 'Uploading...' : 'Creating...'}
                       </div>
                     ) : (
                       <div className="flex items-center gap-2">
-                        <FilePlus className="w-5 h-5" />
+                        <FilePlus className="w-4 h-4 md:w-5 md:h-5" />
                         Create Document
                       </div>
                     )}
