@@ -6,6 +6,7 @@ import { Checkbox } from '@/components/ui/checkbox';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Input } from '@/components/ui/input';
+import { Progress } from '@/components/ui/progress';
 import {
   AlertTriangle,
   Check,
@@ -23,7 +24,29 @@ import {
   Calendar,
   FileText,
   ClipboardList,
-  AlertCircle
+  AlertCircle,
+  Target,
+  Clock,
+  BookOpen,
+  Shield,
+  Users,
+  Building,
+  Star,
+  Zap,
+  CheckCircle2,
+  Eye,
+  EyeOff,
+  Mail,
+  Bell,
+  Archive,
+  Briefcase,
+  Heart,
+  Award,
+  TrendingUp,
+  Sparkles,
+  Crown,
+  Flame,
+  Lightbulb
 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import documentationService, { CreateDocumentData } from '@/services/documentationService';
@@ -32,6 +55,7 @@ import { toast } from 'sonner';
 import { useAuth } from '@/hooks/useAuth';
 import PageHeader, { headerButtonClass } from '@/components/PageHeader';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
+import PIPForm from '@/components/PIPForm';
 
 export default function NewDocument() {
   const navigate = useNavigate();
@@ -46,7 +70,7 @@ export default function NewDocument() {
     employeeId: '',
     date: new Date().toISOString().split('T')[0],
     type: '',
-    category: 'Administrative',
+    category: '',
     description: '',
     witnesses: '',
     actionTaken: '',
@@ -57,15 +81,40 @@ export default function NewDocument() {
     notifyEmployee: true
   });
   const [showSeverity, setShowSeverity] = useState(false);
+  const [showPIPForm, setShowPIPForm] = useState(false);
+  const [currentStep, setCurrentStep] = useState(1);
+  const [completionProgress, setCompletionProgress] = useState(0);
 
   useEffect(() => {
     loadEmployees();
   }, []);
 
   useEffect(() => {
-    // Show severity field only for disciplinary category
-    setShowSeverity(formData.category === 'Disciplinary');
-  }, [formData.category]);
+    // Show severity field for disciplinary and PIP categories
+    setShowSeverity(formData.category === 'Disciplinary' || formData.category === 'PIP');
+    // Show PIP form when PIP category is selected
+    setShowPIPForm(formData.category === 'PIP');
+  }, [formData.category, formData.type]);
+
+  // Calculate completion progress
+  useEffect(() => {
+    let progress = 0;
+    const totalFields = 6;
+
+    if (formData.employeeId) progress += 1;
+    if (formData.category) progress += 1;
+    if (formData.type) progress += 1;
+    if (formData.description.trim()) progress += 1;
+    if (!showSeverity || formData.severity) progress += 1;
+    if (formData.category !== 'Disciplinary' && formData.category !== 'PIP' || formData.actionTaken.trim()) progress += 1;
+
+    // For PIP documents, completion is 0% until the PIP form is completed
+    if (formData.category === 'PIP') {
+      setCompletionProgress(0);
+    } else {
+      setCompletionProgress(Math.round((progress / totalFields) * 100));
+    }
+  }, [formData, showSeverity]);
 
   const loadEmployees = async () => {
     try {
@@ -109,6 +158,37 @@ export default function NewDocument() {
     setUploadedFile(null);
     if (fileInputRef.current) {
       fileInputRef.current.value = '';
+    }
+  };
+
+  const handlePIPSubmit = async (pipData: any) => {
+    try {
+      setLoading(true);
+
+      const documentData = {
+        ...formData,
+        pipDetails: pipData
+      };
+
+      const result = await documentationService.createDocument(documentData);
+      toast.success('🎯 Performance Improvement Plan created successfully! The employee will be notified and can begin their improvement journey.', {
+        duration: 5000,
+        style: {
+          background: 'linear-gradient(135deg, #10B981 0%, #059669 100%)',
+          color: 'white',
+          border: 'none',
+          borderRadius: '12px',
+          fontSize: '14px',
+          fontWeight: '500'
+        }
+      });
+      navigate(`/documentation/${result._id}`);
+    } catch (error: any) {
+      const errorMessage = error.response?.data?.message || 'Failed to create PIP';
+      toast.error(errorMessage);
+      console.error('Error creating PIP:', error);
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -160,8 +240,8 @@ export default function NewDocument() {
       return;
     }
 
-    // Check if severity is selected for disciplinary documents
-    if (formData.category === 'Disciplinary' && !formData.severity) {
+    // Check if severity is selected for disciplinary and PIP documents
+    if ((formData.category === 'Disciplinary' || formData.category === 'PIP') && !formData.severity) {
       const errorMsg = 'Please select a severity level';
       setValidationError(errorMsg);
       toast.error(errorMsg, {
@@ -233,20 +313,65 @@ export default function NewDocument() {
     }
   };
 
+  // Helper function to get category information
+  const getCategoryInfo = (category: string) => {
+    switch (category) {
+      case 'Disciplinary':
+        return {
+          icon: Shield,
+          color: 'from-red-500 to-red-600',
+          bgColor: 'bg-red-50',
+          borderColor: 'border-red-200',
+          textColor: 'text-red-700',
+          description: 'Performance or conduct issues requiring formal documentation'
+        };
+      case 'PIP':
+        return {
+          icon: TrendingUp,
+          color: 'from-orange-500 to-orange-600',
+          bgColor: 'bg-orange-50',
+          borderColor: 'border-orange-200',
+          textColor: 'text-orange-700',
+          description: 'Structured improvement plans with goals and support'
+        };
+      case 'Administrative':
+        return {
+          icon: Archive,
+          color: 'from-blue-500 to-blue-600',
+          bgColor: 'bg-blue-50',
+          borderColor: 'border-blue-200',
+          textColor: 'text-blue-700',
+          description: 'General documentation like call-outs and medical notes'
+        };
+      default:
+        return {
+          icon: FileText,
+          color: 'from-gray-500 to-gray-600',
+          bgColor: 'bg-gray-50',
+          borderColor: 'border-gray-200',
+          textColor: 'text-gray-700',
+          description: 'Select a category to continue'
+        };
+    }
+  };
+
   const getDocumentTypeOptions = () => {
     // No common options anymore - each category has its own specific options
     const categorySpecificOptions = {
       'Disciplinary': [
-        { value: 'Verbal Warning', label: 'Verbal Warning' },
-        { value: 'Written Warning', label: 'Written Warning' },
-        { value: 'Final Warning', label: 'Final Warning' },
-        { value: 'Suspension', label: 'Suspension' },
-        { value: 'Termination', label: 'Termination' }
+        { value: 'Verbal Warning', label: 'Verbal Warning', icon: AlertTriangle, severity: 'Minor' },
+        { value: 'Written Warning', label: 'Written Warning', icon: FileText, severity: 'Moderate' },
+        { value: 'Final Warning', label: 'Final Warning', icon: AlertCircle, severity: 'Major' },
+        { value: 'Suspension', label: 'Suspension', icon: Clock, severity: 'Major' },
+        { value: 'Termination', label: 'Termination', icon: X, severity: 'Critical' }
+      ],
+      'PIP': [
+        { value: 'Performance Improvement Plan', label: 'Performance Improvement Plan', icon: Target, severity: 'Moderate' }
       ],
       'Administrative': [
-        { value: 'Call Out', label: 'Call Out' },
-        { value: 'Doctor Note', label: 'Doctor Note' },
-        { value: 'Other', label: 'Other' }
+        { value: 'Call Out', label: 'Call Out', icon: Calendar, severity: null },
+        { value: 'Doctor Note', label: 'Doctor Note', icon: Heart, severity: null },
+        { value: 'Other', label: 'Other', icon: File, severity: null }
       ]
     };
 
@@ -261,6 +386,7 @@ export default function NewDocument() {
       'Verbal Warning': 'A formal conversation about a performance or conduct issue that is documented.',
       'Written Warning': 'A formal written notice about a performance or conduct issue.',
       'Final Warning': 'A final notice before termination if issues are not resolved.',
+      'Performance Improvement Plan': 'A structured plan with specific goals, timeline, and support to help an employee improve performance.',
       'Suspension': 'Temporary removal from work duties.',
       'Termination': 'End of employment relationship.',
       'Call Out': 'Documentation of an employee calling out from work.',
@@ -271,465 +397,745 @@ export default function NewDocument() {
     return descriptions[formData.type as keyof typeof descriptions];
   };
 
+  const categoryInfo = getCategoryInfo(formData.category);
+
   return (
-    <div className="min-h-screen p-4 md:p-6">
-      <div className="max-w-4xl mx-auto space-y-6">
+    <div className="min-h-screen bg-gradient-to-br from-gray-50 via-white to-gray-50 p-4 md:p-6">
+      <div className="max-w-5xl mx-auto space-y-8">
+        {/* Page Header */}
         <PageHeader
-          title="New Document"
-          subtitle="Create a new document for a team member"
+          title="Create New Document"
+          subtitle="Professional documentation for team member records"
           icon={<FilePlus className="h-5 w-5" />}
           actions={
             <Button
-              className={headerButtonClass}
               onClick={() => navigate('/documentation')}
+              className={headerButtonClass}
             >
-              <ChevronLeft className="w-4 h-4 mr-2" />
-              Back to Documents
+              <ChevronLeft className="w-4 h-4" />
+              <span>Back to Documents</span>
             </Button>
           }
         />
 
-        {/* Introduction Card */}
-        <Card className="bg-white rounded-[20px] shadow-sm border-l-4 border-l-blue-500">
+        {/* Progress Section */}
+        <Card className="border-0 shadow-xl bg-gradient-to-br from-white to-gray-50">
           <CardContent className="p-6">
-            <div className="flex items-start gap-4">
-              <div className="bg-blue-100 p-2 rounded-full">
-                <Info className="h-5 w-5 text-blue-600" />
+            <div className="flex items-center justify-between mb-4">
+              <div className="flex items-center gap-3">
+                <div className="bg-gradient-to-r from-[#E51636] to-[#DD0031] text-white p-3 rounded-xl">
+                  <Sparkles className="h-6 w-6" />
+                </div>
+                <div>
+                  <h3 className="text-lg font-semibold text-gray-900">Form Completion</h3>
+                  <p className="text-sm text-gray-600">Track your progress</p>
+                </div>
               </div>
-              <div>
-                <h3 className="text-lg font-medium text-gray-900 mb-1">Creating a New Document</h3>
-                <p className="text-gray-600">
-                  This form allows you to create documentation for team members. Choose the appropriate category and document type based on your needs.
-                  All fields marked with <span className="text-red-500">*</span> are required.
-                </p>
+              <div className="text-right">
+                <div className="text-2xl font-bold text-gray-900">{completionProgress}%</div>
+                <div className="text-sm text-gray-500">Complete</div>
+              </div>
+            </div>
+
+            <div className="w-full bg-gray-200 rounded-full h-3 mb-4">
+              <div
+                className="bg-gradient-to-r from-[#E51636] to-[#DD0031] h-3 rounded-full transition-all duration-500 ease-out"
+                style={{ width: `${completionProgress}%` }}
+              ></div>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+              <div className="text-center p-4 bg-gray-50 rounded-xl">
+                <div className="text-2xl font-bold mb-2 text-gray-900">
+                  {formData.category ? '✓' : '○'}
+                </div>
+                <div className="text-sm text-gray-600">Category Selected</div>
+              </div>
+              <div className="text-center p-4 bg-gray-50 rounded-xl">
+                <div className="text-2xl font-bold mb-2 text-gray-900">
+                  {formData.type ? '✓' : '○'}
+                </div>
+                <div className="text-sm text-gray-600">Type Chosen</div>
+              </div>
+              <div className="text-center p-4 bg-gray-50 rounded-xl">
+                <div className="text-2xl font-bold mb-2 text-gray-900">
+                  {formData.description.trim() ? '✓' : '○'}
+                </div>
+                <div className="text-sm text-gray-600">Details Added</div>
               </div>
             </div>
           </CardContent>
         </Card>
 
-        {/* Main Form Card */}
-        <Card className="bg-white rounded-[20px] shadow-sm">
-          <CardHeader className="pb-0 pt-6 px-6">
-            <CardTitle className="text-xl font-semibold flex items-center gap-2">
-              <ClipboardList className="h-5 w-5 text-[#E51636]" />
-              Document Information
-            </CardTitle>
-            <CardDescription>
-              Fill out the details below to create a new document
-            </CardDescription>
-          </CardHeader>
-          <CardContent className="p-6">
-            <form onSubmit={handleSubmit} className="space-y-8">
-              {/* Step 1: Basic Information */}
-              <div className="border border-gray-200 rounded-lg p-5 bg-gray-50">
-                <div className="flex items-center gap-3 mb-4">
-                  <div className="flex items-center justify-center w-8 h-8 rounded-full bg-[#E51636] text-white font-bold">
-                    1
-                  </div>
-                  <h3 className="text-lg font-medium">Basic Information</h3>
-                </div>
 
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                  <div>
-                    <Label htmlFor="employeeId" className="flex items-center gap-1">
-                      <UserIcon className="h-4 w-4 text-gray-500" />
-                      Employee <span className="text-red-500">*</span>
-                    </Label>
+
+        {/* Main Form */}
+        <form onSubmit={handleSubmit} className="space-y-8">
+          {/* Step 1: Basic Information */}
+          <Card className="border-0 shadow-xl bg-gradient-to-br from-white to-gray-50 overflow-hidden">
+            <CardHeader className="bg-gradient-to-r from-[#E51636] to-[#DD0031] text-white p-6">
+              <div className="flex items-center gap-4">
+                <div className="bg-white/20 p-3 rounded-xl backdrop-blur-sm">
+                  <Users className="h-6 w-6" />
+                </div>
+                <div>
+                  <CardTitle className="text-2xl font-bold">Step 1: Basic Information</CardTitle>
+                  <CardDescription className="text-white/90 text-base">
+                    Select the employee and document category
+                  </CardDescription>
+                </div>
+              </div>
+            </CardHeader>
+            <CardContent className="p-8">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                <div className="space-y-4">
+                  <div className="bg-blue-50 rounded-xl p-4 border border-blue-200">
+                    <div className="flex items-center gap-3 mb-3">
+                      <div className="bg-blue-500 text-white p-2 rounded-lg">
+                        <UserIcon className="h-5 w-5" />
+                      </div>
+                      <div>
+                        <Label className="text-lg font-semibold text-blue-900">
+                          Select Employee <span className="text-red-500">*</span>
+                        </Label>
+                        <p className="text-sm text-blue-700">Choose the team member this document is for</p>
+                      </div>
+                    </div>
                     <Select
                       id="employeeId"
                       name="employeeId"
                       value={formData.employeeId}
                       onValueChange={(value) => handleSelectChange('employeeId', value)}
                     >
-                      <SelectTrigger className="mt-1.5">
-                        <SelectValue placeholder="Select employee" />
+                      <SelectTrigger className="h-12 border-blue-300 focus:border-blue-500 focus:ring-blue-500 bg-white">
+                        <SelectValue placeholder="Choose an employee..." />
                       </SelectTrigger>
                       <SelectContent>
                         {employees.map((employee) => (
-                          <SelectItem key={employee._id} value={employee._id}>
-                            {employee.name}
+                          <SelectItem key={employee._id} value={employee._id} className="py-3">
+                            <div className="flex items-center gap-3">
+                              <div className="bg-blue-100 p-2 rounded-full">
+                                <UserIcon className="h-4 w-4 text-blue-600" />
+                              </div>
+                              <div>
+                                <div className="font-medium">{employee.name}</div>
+                                <div className="text-sm text-gray-500">{employee.position}</div>
+                              </div>
+                            </div>
                           </SelectItem>
                         ))}
                       </SelectContent>
                     </Select>
-                    <p className="text-xs text-gray-500 mt-1">The team member this document is for</p>
                   </div>
+                </div>
 
-                  <div>
-                    <Label htmlFor="date" className="flex items-center gap-1">
-                      <Calendar className="h-4 w-4 text-gray-500" />
-                      Date <span className="text-red-500">*</span>
-                    </Label>
+                <div className="space-y-4">
+                  <div className="bg-green-50 rounded-xl p-4 border border-green-200">
+                    <div className="flex items-center gap-3 mb-3">
+                      <div className="bg-green-500 text-white p-2 rounded-lg">
+                        <Calendar className="h-5 w-5" />
+                      </div>
+                      <div>
+                        <Label className="text-lg font-semibold text-green-900">
+                          Document Date <span className="text-red-500">*</span>
+                        </Label>
+                        <p className="text-sm text-green-700">When this incident occurred or document was created</p>
+                      </div>
+                    </div>
                     <Input
                       type="date"
                       id="date"
                       name="date"
                       value={formData.date}
                       onChange={handleInputChange}
-                      className="mt-1.5"
+                      className="h-12 border-green-300 focus:border-green-500 focus:ring-green-500 bg-white text-lg"
                       required
                     />
-                    <p className="text-xs text-gray-500 mt-1">When this document was created or incident occurred</p>
                   </div>
+                </div>
 
-                  <div>
-                    <div className="flex items-center gap-1">
-                      <Label htmlFor="category" className="flex items-center gap-1">
-                        <FileText className="h-4 w-4 text-gray-500" />
-                        Category <span className="text-red-500">*</span>
-                      </Label>
-                      <TooltipProvider>
-                        <Tooltip>
-                          <TooltipTrigger asChild>
-                            <HelpCircle className="h-4 w-4 text-gray-400" />
-                          </TooltipTrigger>
-                          <TooltipContent className="max-w-xs">
-                            <p>Disciplinary: For performance or conduct issues</p>
-                            <p>Administrative: For general documentation like call-outs or doctor's notes</p>
-                          </TooltipContent>
-                        </Tooltip>
-                      </TooltipProvider>
+                <div className="col-span-full space-y-4">
+                  <div className="flex items-center gap-3 mb-4">
+                    <div className="bg-purple-500 text-white p-2 rounded-lg">
+                      <Building className="h-5 w-5" />
                     </div>
-                    <Select
-                      id="category"
-                      name="category"
-                      value={formData.category}
-                      onValueChange={(value) => handleSelectChange('category', value)}
-                    >
-                      <SelectTrigger className="mt-1.5">
-                        <SelectValue placeholder="Select category" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="Disciplinary">Disciplinary</SelectItem>
-                        <SelectItem value="Administrative">Administrative</SelectItem>
-                      </SelectContent>
-                    </Select>
-                    <p className="text-xs text-gray-500 mt-1">The general category of this document</p>
+                    <div>
+                      <Label className="text-lg font-semibold text-gray-900">
+                        Document Category <span className="text-red-500">*</span>
+                      </Label>
+                      <p className="text-sm text-gray-600">Choose the type of documentation you're creating</p>
+                    </div>
                   </div>
 
-                  <div>
-                    <Label htmlFor="type" className="flex items-center gap-1">
-                      <ClipboardList className="h-4 w-4 text-gray-500" />
-                      Document Type <span className="text-red-500">*</span>
-                    </Label>
-                    <Select
-                      id="type"
-                      name="type"
-                      value={formData.type}
-                      onValueChange={(value) => handleSelectChange('type', value)}
-                    >
-                      <SelectTrigger
-                        className={`mt-1.5 ${!formData.type && formData.category ? 'border-amber-500 ring-1 ring-amber-500' : ''}`}
-                      >
-                        <SelectValue placeholder="Select document type" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {getDocumentTypeOptions().map(option => (
-                          <SelectItem key={option.value} value={option.value}>
-                            {option.label}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                    <p className={`text-xs mt-1 ${!formData.type && formData.category ? 'text-amber-600 font-medium' : 'text-gray-500'}`}>
-                      {!formData.type && formData.category
-                        ? "Please select a document type to continue"
-                        : "The specific type of document"}
-                    </p>
-                  </div>
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                    {[
+                      {
+                        value: 'Disciplinary',
+                        label: 'Disciplinary',
+                        icon: Shield,
+                        color: 'from-red-500 to-red-600',
+                        bgColor: 'bg-red-50',
+                        borderColor: 'border-red-200',
+                        description: 'Performance or conduct issues'
+                      },
+                      {
+                        value: 'PIP',
+                        label: 'Performance Improvement Plan',
+                        icon: TrendingUp,
+                        color: 'from-orange-500 to-orange-600',
+                        bgColor: 'bg-orange-50',
+                        borderColor: 'border-orange-200',
+                        description: 'Structured improvement plans'
+                      },
+                      {
+                        value: 'Administrative',
+                        label: 'Administrative',
+                        icon: Archive,
+                        color: 'from-blue-500 to-blue-600',
+                        bgColor: 'bg-blue-50',
+                        borderColor: 'border-blue-200',
+                        description: 'General documentation'
+                      }
+                    ].map((category) => {
+                      const isSelected = formData.category === category.value;
+                      const IconComponent = category.icon;
 
-                  {formData.type && getDocumentTypeDescription() && (
-                    <div className="col-span-full mt-2 bg-blue-50 p-3 rounded-md border border-blue-100">
-                      <div className="flex gap-2">
-                        <Info className="h-5 w-5 text-blue-500 flex-shrink-0 mt-0.5" />
+                      return (
+                        <div
+                          key={category.value}
+                          onClick={() => handleSelectChange('category', category.value)}
+                          className={`p-6 rounded-xl border-2 cursor-pointer transition-all duration-200 hover:shadow-lg transform hover:scale-[1.02] ${
+                            isSelected
+                              ? `${category.borderColor} ${category.bgColor} shadow-lg scale-[1.02]`
+                              : 'border-gray-200 hover:border-gray-300 bg-white'
+                          }`}
+                        >
+                          <div className="text-center">
+                            <div className={`mx-auto mb-4 p-3 rounded-xl w-fit ${
+                              isSelected
+                                ? `bg-gradient-to-r ${category.color} text-white`
+                                : 'bg-gray-100 text-gray-600'
+                            }`}>
+                              <IconComponent className="h-6 w-6" />
+                            </div>
+                            <h3 className={`font-semibold mb-2 ${
+                              isSelected ? 'text-gray-900' : 'text-gray-700'
+                            }`}>
+                              {category.label}
+                            </h3>
+                            <p className="text-sm text-gray-600 mb-3">
+                              {category.description}
+                            </p>
+                            {isSelected && (
+                              <div className="flex items-center justify-center gap-2 text-green-600">
+                                <CheckCircle2 className="h-4 w-4" />
+                                <span className="text-sm font-medium">Selected</span>
+                              </div>
+                            )}
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                </div>
+
+                {formData.category && (
+                  <div className="col-span-full space-y-4">
+                    <div className="flex items-center gap-3 mb-4">
+                      <div className="bg-indigo-500 text-white p-2 rounded-lg">
+                        <ClipboardList className="h-5 w-5" />
+                      </div>
+                      <div>
+                        <Label className="text-lg font-semibold text-gray-900">
+                          Document Type <span className="text-red-500">*</span>
+                        </Label>
+                        <p className="text-sm text-gray-600">Select the specific type of {formData.category.toLowerCase()} document</p>
+                      </div>
+                    </div>
+
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                      {getDocumentTypeOptions().map((option) => {
+                        const isSelected = formData.type === option.value;
+                        const IconComponent = option.icon;
+
+                        return (
+                          <div
+                            key={option.value}
+                            onClick={() => handleSelectChange('type', option.value)}
+                            className={`p-4 rounded-xl border-2 cursor-pointer transition-all duration-200 hover:shadow-md ${
+                              isSelected
+                                ? 'border-indigo-500 bg-indigo-50 shadow-md'
+                                : 'border-gray-200 hover:border-gray-300 bg-white'
+                            }`}
+                          >
+                            <div className="flex items-center gap-3">
+                              <div className={`p-2 rounded-lg ${
+                                isSelected
+                                  ? 'bg-indigo-500 text-white'
+                                  : 'bg-gray-100 text-gray-600'
+                              }`}>
+                                <IconComponent className="h-5 w-5" />
+                              </div>
+                              <div className="flex-1">
+                                <h4 className={`font-medium ${
+                                  isSelected ? 'text-indigo-900' : 'text-gray-900'
+                                }`}>
+                                  {option.label}
+                                </h4>
+                                {option.severity && (
+                                  <div className="flex items-center gap-2 mt-1">
+                                    <span className="text-xs text-gray-500">Severity:</span>
+                                    <span className={`text-xs px-2 py-1 rounded-full ${
+                                      option.severity === 'Critical' ? 'bg-red-100 text-red-700' :
+                                      option.severity === 'Major' ? 'bg-orange-100 text-orange-700' :
+                                      option.severity === 'Moderate' ? 'bg-yellow-100 text-yellow-700' :
+                                      'bg-green-100 text-green-700'
+                                    }`}>
+                                      {option.severity}
+                                    </span>
+                                  </div>
+                                )}
+                              </div>
+                              {isSelected && (
+                                <CheckCircle2 className="h-5 w-5 text-indigo-500" />
+                              )}
+                            </div>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  </div>
+                )}
+
+                {formData.type && getDocumentTypeDescription() && (
+                  <div className="col-span-full">
+                    <div className="bg-gradient-to-r from-blue-50 to-indigo-50 p-6 rounded-xl border border-blue-200">
+                      <div className="flex gap-4">
+                        <div className="bg-blue-500 text-white p-3 rounded-xl">
+                          <Info className="h-6 w-6" />
+                        </div>
                         <div>
-                          <p className="text-sm font-medium text-blue-700">About {formData.type}</p>
-                          <p className="text-sm text-blue-600">{getDocumentTypeDescription()}</p>
+                          <h4 className="text-lg font-semibold text-blue-900 mb-2">About {formData.type}</h4>
+                          <p className="text-blue-800">{getDocumentTypeDescription()}</p>
                         </div>
                       </div>
                     </div>
-                  )}
+                  </div>
+                )}
+              </div>
+            </CardContent>
+          </Card>
 
-                  {showSeverity && (
-                    <div>
-                      <div className="flex items-center gap-1">
-                        <Label htmlFor="severity" className="flex items-center gap-1">
-                          <AlertCircle className="h-4 w-4 text-gray-500" />
-                          Severity <span className="text-red-500">*</span>
-                        </Label>
-                        <TooltipProvider>
-                          <Tooltip>
-                            <TooltipTrigger asChild>
-                              <HelpCircle className="h-4 w-4 text-gray-400" />
-                            </TooltipTrigger>
-                            <TooltipContent>
-                              <p>Minor: Low impact issues</p>
-                              <p>Moderate: Medium impact issues</p>
-                              <p>Major: Significant impact issues</p>
-                              <p>Critical: Severe impact issues</p>
-                            </TooltipContent>
-                          </Tooltip>
-                        </TooltipProvider>
-                      </div>
-                      <Select
-                        id="severity"
-                        name="severity"
-                        value={formData.severity || ''}
-                        onValueChange={(value) => handleSelectChange('severity', value)}
+          {/* Severity Selection */}
+          {showSeverity && (
+            <Card className="border-0 shadow-xl bg-gradient-to-br from-white to-gray-50">
+              <CardHeader className="bg-gradient-to-r from-amber-500 to-orange-500 text-white p-6">
+                <div className="flex items-center gap-4">
+                  <div className="bg-white/20 p-3 rounded-xl backdrop-blur-sm">
+                    <AlertCircle className="h-6 w-6" />
+                  </div>
+                  <div>
+                    <CardTitle className="text-2xl font-bold">Severity Level</CardTitle>
+                    <CardDescription className="text-white/90 text-base">
+                      Rate the severity of this {formData.category?.toLowerCase()} issue
+                    </CardDescription>
+                  </div>
+                </div>
+              </CardHeader>
+              <CardContent className="p-8">
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+                  {[
+                    { value: 'Minor', color: 'from-green-400 to-green-500', bgColor: 'bg-green-50', borderColor: 'border-green-200', icon: '🟢' },
+                    { value: 'Moderate', color: 'from-yellow-400 to-yellow-500', bgColor: 'bg-yellow-50', borderColor: 'border-yellow-200', icon: '🟡' },
+                    { value: 'Major', color: 'from-orange-400 to-orange-500', bgColor: 'bg-orange-50', borderColor: 'border-orange-200', icon: '🟠' },
+                    { value: 'Critical', color: 'from-red-400 to-red-500', bgColor: 'bg-red-50', borderColor: 'border-red-200', icon: '🔴' }
+                  ].map((severity) => {
+                    const isSelected = formData.severity === severity.value;
+
+                    return (
+                      <div
+                        key={severity.value}
+                        onClick={() => handleSelectChange('severity', severity.value)}
+                        className={`p-6 rounded-xl border-2 cursor-pointer transition-all duration-200 hover:shadow-lg transform hover:scale-[1.02] ${
+                          isSelected
+                            ? `${severity.borderColor} ${severity.bgColor} shadow-lg scale-[1.02]`
+                            : 'border-gray-200 hover:border-gray-300 bg-white'
+                        }`}
                       >
-                        <SelectTrigger className="mt-1.5">
-                          <SelectValue placeholder="Select severity" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="Minor">Minor</SelectItem>
-                          <SelectItem value="Moderate">Moderate</SelectItem>
-                          <SelectItem value="Major">Major</SelectItem>
-                          <SelectItem value="Critical">Critical</SelectItem>
-                        </SelectContent>
-                      </Select>
-                      <p className="text-xs text-gray-500 mt-1">How serious the issue is</p>
-                    </div>
-                  )}
+                        <div className="text-center">
+                          <div className="text-4xl mb-3">{severity.icon}</div>
+                          <h3 className={`font-bold text-lg mb-2 ${
+                            isSelected ? 'text-gray-900' : 'text-gray-700'
+                          }`}>
+                            {severity.value}
+                          </h3>
+                          <p className="text-sm text-gray-600 mb-3">
+                            {severity.value === 'Minor' && 'Low impact issues'}
+                            {severity.value === 'Moderate' && 'Medium impact issues'}
+                            {severity.value === 'Major' && 'Significant impact issues'}
+                            {severity.value === 'Critical' && 'Severe impact issues'}
+                          </p>
+                          {isSelected && (
+                            <div className="flex items-center justify-center gap-2 text-green-600">
+                              <CheckCircle2 className="h-4 w-4" />
+                              <span className="text-sm font-medium">Selected</span>
+                            </div>
+                          )}
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              </CardContent>
+            </Card>
+          )}
+
+          {/* Step 2: Document Details */}
+          <Card className="border-0 shadow-xl bg-gradient-to-br from-white to-gray-50">
+            <CardHeader className="bg-gradient-to-r from-purple-500 to-purple-600 text-white p-6">
+              <div className="flex items-center gap-4">
+                <div className="bg-white/20 p-3 rounded-xl backdrop-blur-sm">
+                  <FileText className="h-6 w-6" />
+                </div>
+                <div>
+                  <CardTitle className="text-2xl font-bold">Step 2: Detailed Description</CardTitle>
+                  <CardDescription className="text-white/90 text-base">
+                    Provide a comprehensive description of the situation
+                  </CardDescription>
                 </div>
               </div>
-
-              {/* Step 2: Document Details */}
-              <div className="border border-gray-200 rounded-lg p-5 bg-gray-50">
-                <div className="flex items-center gap-3 mb-4">
-                  <div className="flex items-center justify-center w-8 h-8 rounded-full bg-[#E51636] text-white font-bold">
-                    2
-                  </div>
-                  <h3 className="text-lg font-medium">Document Details</h3>
-                </div>
-
-                <div className="space-y-6">
-                  <div>
-                    <Label htmlFor="description" className="flex items-center gap-1">
-                      <FileText className="h-4 w-4 text-gray-500" />
-                      Description <span className="text-red-500">*</span>
-                    </Label>
-                    <Textarea
-                      id="description"
-                      name="description"
-                      value={formData.description}
-                      onChange={handleInputChange}
-                      className="mt-1.5 min-h-[120px]"
-                      placeholder={formData.category === 'Disciplinary'
-                        ? "Describe the incident or performance issue in detail..."
-                        : "Describe the reason for this documentation..."}
-                      required
-                    />
-                    <p className="text-xs text-gray-500 mt-1">
-                      {formData.category === 'Disciplinary'
-                        ? "Provide a clear, factual account of what happened, when, and who was involved"
-                        : "Provide relevant details about this documentation"}
-                    </p>
-                  </div>
-
-                  <div>
-                    <div className="flex items-center gap-1">
-                      <Label htmlFor="witnesses" className="flex items-center gap-1">
-                        <UserIcon className="h-4 w-4 text-gray-500" />
-                        Witnesses
-                      </Label>
-                      <TooltipProvider>
-                        <Tooltip>
-                          <TooltipTrigger asChild>
-                            <HelpCircle className="h-4 w-4 text-gray-400" />
-                          </TooltipTrigger>
-                          <TooltipContent>
-                            <p>List any team members or others who witnessed the incident</p>
-                          </TooltipContent>
-                        </Tooltip>
-                      </TooltipProvider>
+            </CardHeader>
+            <CardContent className="p-8">
+              <div className="space-y-6">
+                <div className="bg-purple-50 rounded-xl p-6 border border-purple-200">
+                  <div className="flex items-start gap-4 mb-4">
+                    <div className="bg-purple-500 text-white p-3 rounded-xl">
+                      <FileText className="h-6 w-6" />
                     </div>
-                    <Input
-                      id="witnesses"
-                      name="witnesses"
-                      value={formData.witnesses}
-                      onChange={handleInputChange}
-                      className="mt-1.5"
-                      placeholder="Names of any witnesses (optional)"
-                    />
-                    <p className="text-xs text-gray-500 mt-1">Separate multiple names with commas</p>
-                  </div>
-
-                  {formData.category === 'Disciplinary' && (
-                    <div>
-                      <Label htmlFor="actionTaken" className="flex items-center gap-1">
-                        <ClipboardList className="h-4 w-4 text-gray-500" />
-                        Action Taken <span className="text-red-500">*</span>
+                    <div className="flex-1">
+                      <Label className="text-lg font-semibold text-purple-900 mb-2 block">
+                        Description <span className="text-red-500">*</span>
                       </Label>
-                      <Textarea
-                        id="actionTaken"
-                        name="actionTaken"
-                        value={formData.actionTaken}
-                        onChange={handleInputChange}
-                        className="mt-1.5 min-h-[120px]"
-                        placeholder="Describe the corrective action taken or consequences..."
-                        required={formData.category === 'Disciplinary'}
-                      />
-                      <p className="text-xs text-gray-500 mt-1">
-                        Explain what steps were taken to address the issue and any consequences for the employee
+                      <p className="text-purple-700 mb-4">
+                        {formData.category === 'Disciplinary'
+                          ? "Provide a clear, factual account of what happened, when, and who was involved"
+                          : formData.category === 'PIP'
+                          ? "Provide a detailed description of the performance issues that need improvement"
+                          : "Provide relevant details about this documentation"}
                       </p>
+                      <Textarea
+                        id="description"
+                        name="description"
+                        value={formData.description}
+                        onChange={handleInputChange}
+                        className="min-h-[150px] border-purple-300 focus:border-purple-500 focus:ring-purple-500 bg-white text-base"
+                        placeholder={
+                          formData.category === 'Disciplinary'
+                            ? "Example: On [date] at approximately [time], [employee name] was observed [specific behavior/incident]. The incident occurred in [location] and was witnessed by [witnesses if any]. The employee [describe actions taken or not taken]. This behavior/incident [explain impact on operations, customers, or team]..."
+                            : formData.category === 'PIP'
+                            ? "Example: [Employee name] has been experiencing challenges in [specific areas]. Recent performance reviews and observations have identified the following areas for improvement: [list specific issues]. These performance gaps have resulted in [impact on team/operations/customers]..."
+                            : "Provide a detailed description of the situation, including relevant dates, times, and circumstances..."
+                        }
+                        required
+                      />
                     </div>
-                  )}
+                  </div>
+
+                  <div className="bg-purple-100 rounded-lg p-4">
+                    <div className="flex items-center gap-2 mb-2">
+                      <Lightbulb className="h-5 w-5 text-purple-600" />
+                      <span className="font-medium text-purple-800">Writing Tips</span>
+                    </div>
+                    <ul className="text-sm text-purple-700 space-y-1">
+                      <li>• Be specific and factual - avoid opinions or assumptions</li>
+                      <li>• Include dates, times, and locations when relevant</li>
+                      <li>• Describe the impact on operations, team, or customers</li>
+                      <li>• Use professional, objective language</li>
+                    </ul>
+                  </div>
+                </div>
+
+                <div className="bg-blue-50 rounded-xl p-6 border border-blue-200">
+                  <div className="flex items-start gap-4">
+                    <div className="bg-blue-500 text-white p-3 rounded-xl">
+                      <Users className="h-6 w-6" />
+                    </div>
+                    <div className="flex-1">
+                      <Label className="text-lg font-semibold text-blue-900 mb-2 block">
+                        Witnesses (Optional)
+                      </Label>
+                      <p className="text-blue-700 mb-4">
+                        List any team members or others who witnessed the incident
+                      </p>
+                      <Input
+                        id="witnesses"
+                        name="witnesses"
+                        value={formData.witnesses}
+                        onChange={handleInputChange}
+                        className="border-blue-300 focus:border-blue-500 focus:ring-blue-500 bg-white"
+                        placeholder="Example: John Smith (Team Lead), Sarah Johnson (Customer present), Mike Davis (Shift Manager)"
+                      />
+                      <p className="text-xs text-blue-600 mt-2">Separate multiple names with commas</p>
+                    </div>
+                  </div>
+                </div>
+
+                {(formData.category === 'Disciplinary' || formData.category === 'PIP') && (
+                  <div className="bg-orange-50 rounded-xl p-6 border border-orange-200">
+                    <div className="flex items-start gap-4">
+                      <div className="bg-orange-500 text-white p-3 rounded-xl">
+                        <ClipboardList className="h-6 w-6" />
+                      </div>
+                      <div className="flex-1">
+                        <Label className="text-lg font-semibold text-orange-900 mb-2 block">
+                          {formData.category === 'PIP' ? 'Initial Action/Context' : 'Action Taken'} <span className="text-red-500">*</span>
+                        </Label>
+                        <p className="text-orange-700 mb-4">
+                          {formData.category === 'PIP'
+                            ? "Explain the background and initial steps taken before creating this PIP"
+                            : "Explain what steps were taken to address the issue and any consequences for the employee"}
+                        </p>
+                        <Textarea
+                          id="actionTaken"
+                          name="actionTaken"
+                          value={formData.actionTaken}
+                          onChange={handleInputChange}
+                          className="min-h-[120px] border-orange-300 focus:border-orange-500 focus:ring-orange-500 bg-white"
+                          placeholder={formData.category === 'PIP'
+                            ? "Example: Previous coaching sessions were conducted on [dates]. Employee was provided with additional training on [topics]. Despite these efforts, performance gaps persist in [areas]. This PIP is being implemented to provide structured support..."
+                            : "Example: Employee was immediately counseled about the behavior. A verbal warning was issued and documented. Employee acknowledged understanding of expectations. Follow-up training scheduled for [date]..."}
+                          required={formData.category === 'Disciplinary' || formData.category === 'PIP'}
+                        />
+                      </div>
+                    </div>
+                  </div>
+                )}
+              </div>
+            </CardContent>
+          </Card>
+
+          {/* Step 3: Follow-up Information */}
+          <Card className="border-0 shadow-xl bg-gradient-to-br from-white to-gray-50">
+            <CardHeader className="bg-gradient-to-r from-teal-500 to-teal-600 text-white p-6">
+              <div className="flex items-center gap-4">
+                <div className="bg-white/20 p-3 rounded-xl backdrop-blur-sm">
+                  <Calendar className="h-6 w-6" />
+                </div>
+                <div>
+                  <CardTitle className="text-2xl font-bold">Step 3: Follow-up & Options</CardTitle>
+                  <CardDescription className="text-white/90 text-base">
+                    Set follow-up dates and configure notification preferences
+                  </CardDescription>
                 </div>
               </div>
+            </CardHeader>
+            <CardContent className="p-8">
 
-              {/* Step 3: Follow-up Information */}
-              <div className="border border-gray-200 rounded-lg p-5 bg-gray-50">
-                <div className="flex items-center gap-3 mb-4">
-                  <div className="flex items-center justify-center w-8 h-8 rounded-full bg-[#E51636] text-white font-bold">
-                    3
-                  </div>
-                  <h3 className="text-lg font-medium">Follow-up Information</h3>
-                </div>
-
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                  <div>
-                    <div className="flex items-center gap-1">
-                      <Label htmlFor="followUpDate" className="flex items-center gap-1">
-                        <Calendar className="h-4 w-4 text-gray-500" />
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                <div className="bg-teal-50 rounded-xl p-6 border border-teal-200">
+                  <div className="flex items-center gap-3 mb-4">
+                    <div className="bg-teal-500 text-white p-2 rounded-lg">
+                      <Calendar className="h-5 w-5" />
+                    </div>
+                    <div>
+                      <Label className="text-lg font-semibold text-teal-900">
                         Follow-up Date
                       </Label>
-                      <TooltipProvider>
-                        <Tooltip>
-                          <TooltipTrigger asChild>
-                            <HelpCircle className="h-4 w-4 text-gray-400" />
-                          </TooltipTrigger>
-                          <TooltipContent>
-                            <p>When to check back on this issue</p>
-                          </TooltipContent>
-                        </Tooltip>
-                      </TooltipProvider>
+                      <p className="text-sm text-teal-700">When to check back on this issue</p>
                     </div>
-                    <Input
-                      type="date"
-                      id="followUpDate"
-                      name="followUpDate"
-                      value={formData.followUpDate}
-                      onChange={handleInputChange}
-                      className="mt-1.5"
-                    />
-                    <p className="text-xs text-gray-500 mt-1">When to follow up on this document (optional)</p>
                   </div>
-
-                  <div>
-                    <Label htmlFor="followUpActions" className="flex items-center gap-1">
-                      <ClipboardList className="h-4 w-4 text-gray-500" />
-                      Follow-up Actions
-                    </Label>
-                    <Input
-                      id="followUpActions"
-                      name="followUpActions"
-                      value={formData.followUpActions}
-                      onChange={handleInputChange}
-                      className="mt-1.5"
-                      placeholder="Actions to be taken during follow-up"
-                    />
-                    <p className="text-xs text-gray-500 mt-1">What needs to be done during the follow-up (optional)</p>
-                  </div>
+                  <Input
+                    type="date"
+                    id="followUpDate"
+                    name="followUpDate"
+                    value={formData.followUpDate}
+                    onChange={handleInputChange}
+                    className="h-12 border-teal-300 focus:border-teal-500 focus:ring-teal-500 bg-white text-lg"
+                  />
                 </div>
 
-                <div className="mt-6 grid grid-cols-1 md:grid-cols-3 gap-4">
-                  <div className="bg-white p-4 rounded-lg border border-gray-200">
-                    <div className="flex items-start space-x-2">
-                      <Checkbox
-                        id="previousIncidents"
-                        checked={formData.previousIncidents}
-                        onCheckedChange={(checked) =>
-                          handleCheckboxChange({
-                            target: { name: 'previousIncidents', checked: checked === true }
-                          } as any)
-                        }
-                        className="mt-1 data-[state=checked]:bg-[#E51636] data-[state=checked]:border-[#E51636]"
-                      />
-                      <div className="space-y-1">
-                        <Label
-                          htmlFor="previousIncidents"
-                          className="font-medium text-gray-700"
-                        >
-                          Previous incidents
-                        </Label>
-                        <p className="text-xs text-gray-500">
-                          Check if there have been similar incidents with this employee before
+                <div className="bg-indigo-50 rounded-xl p-6 border border-indigo-200">
+                  <div className="flex items-center gap-3 mb-4">
+                    <div className="bg-indigo-500 text-white p-2 rounded-lg">
+                      <ClipboardList className="h-5 w-5" />
+                    </div>
+                    <div>
+                      <Label className="text-lg font-semibold text-indigo-900">
+                        Follow-up Actions
+                      </Label>
+                      <p className="text-sm text-indigo-700">What needs to be done during follow-up</p>
+                    </div>
+                  </div>
+                  <Input
+                    id="followUpActions"
+                    name="followUpActions"
+                    value={formData.followUpActions}
+                    onChange={handleInputChange}
+                    className="h-12 border-indigo-300 focus:border-indigo-500 focus:ring-indigo-500 bg-white"
+                    placeholder="Example: Review performance metrics, conduct check-in meeting"
+                  />
+                </div>
+              </div>
+
+              <div className="mt-8">
+                <h3 className="text-lg font-semibold text-gray-900 mb-6 flex items-center gap-2">
+                  <Star className="h-5 w-5 text-yellow-500" />
+                  Additional Options
+                </h3>
+
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                  <div className={`p-6 rounded-xl border-2 transition-all duration-200 cursor-pointer hover:shadow-lg ${
+                    formData.previousIncidents
+                      ? 'border-red-300 bg-red-50 shadow-md'
+                      : 'border-gray-200 bg-white hover:border-gray-300'
+                  }`}
+                  onClick={() => handleCheckboxChange({
+                    target: { name: 'previousIncidents', checked: !formData.previousIncidents }
+                  } as any)}>
+                    <div className="flex items-start gap-4">
+                      <div className={`p-3 rounded-xl ${
+                        formData.previousIncidents
+                          ? 'bg-red-500 text-white'
+                          : 'bg-gray-100 text-gray-600'
+                      }`}>
+                        <AlertTriangle className="h-5 w-5" />
+                      </div>
+                      <div className="flex-1">
+                        <div className="flex items-center gap-2 mb-2">
+                          <Checkbox
+                            id="previousIncidents"
+                            checked={formData.previousIncidents}
+                            onCheckedChange={(checked) =>
+                              handleCheckboxChange({
+                                target: { name: 'previousIncidents', checked: checked === true }
+                              } as any)
+                            }
+                            className="data-[state=checked]:bg-[#E51636] data-[state=checked]:border-[#E51636]"
+                          />
+                          <Label className="font-semibold text-gray-900 cursor-pointer">
+                            Previous Incidents
+                          </Label>
+                        </div>
+                        <p className="text-sm text-gray-600">
+                          Similar incidents have occurred with this employee before
                         </p>
                       </div>
                     </div>
                   </div>
 
-                  <div className="bg-white p-4 rounded-lg border border-gray-200">
-                    <div className="flex items-start space-x-2">
-                      <Checkbox
-                        id="documentationAttached"
-                        checked={formData.documentationAttached}
-                        onCheckedChange={(checked) =>
-                          handleCheckboxChange({
-                            target: { name: 'documentationAttached', checked: checked === true }
-                          } as any)
-                        }
-                        className="mt-1 data-[state=checked]:bg-[#E51636] data-[state=checked]:border-[#E51636]"
-                      />
-                      <div className="space-y-1">
-                        <Label
-                          htmlFor="documentationAttached"
-                          className="font-medium text-gray-700"
-                        >
-                          Documentation attached
-                        </Label>
-                        <p className="text-xs text-gray-500">
-                          Check if you need to upload supporting documents
+                  <div className={`p-6 rounded-xl border-2 transition-all duration-200 cursor-pointer hover:shadow-lg ${
+                    formData.documentationAttached
+                      ? 'border-blue-300 bg-blue-50 shadow-md'
+                      : 'border-gray-200 bg-white hover:border-gray-300'
+                  }`}
+                  onClick={() => handleCheckboxChange({
+                    target: { name: 'documentationAttached', checked: !formData.documentationAttached }
+                  } as any)}>
+                    <div className="flex items-start gap-4">
+                      <div className={`p-3 rounded-xl ${
+                        formData.documentationAttached
+                          ? 'bg-blue-500 text-white'
+                          : 'bg-gray-100 text-gray-600'
+                      }`}>
+                        <FileText className="h-5 w-5" />
+                      </div>
+                      <div className="flex-1">
+                        <div className="flex items-center gap-2 mb-2">
+                          <Checkbox
+                            id="documentationAttached"
+                            checked={formData.documentationAttached}
+                            onCheckedChange={(checked) =>
+                              handleCheckboxChange({
+                                target: { name: 'documentationAttached', checked: checked === true }
+                              } as any)
+                            }
+                            className="data-[state=checked]:bg-[#E51636] data-[state=checked]:border-[#E51636]"
+                          />
+                          <Label className="font-semibold text-gray-900 cursor-pointer">
+                            Attach Documents
+                          </Label>
+                        </div>
+                        <p className="text-sm text-gray-600">
+                          Upload supporting documents or evidence
                         </p>
                       </div>
                     </div>
                   </div>
 
-                  <div className="bg-white p-4 rounded-lg border border-gray-200">
-                    <div className="flex items-start space-x-2">
-                      <Checkbox
-                        id="notifyEmployee"
-                        checked={formData.notifyEmployee}
-                        onCheckedChange={(checked) =>
-                          handleCheckboxChange({
-                            target: { name: 'notifyEmployee', checked: checked === true }
-                          } as any)
-                        }
-                        className="mt-1 data-[state=checked]:bg-[#E51636] data-[state=checked]:border-[#E51636]"
-                      />
-                      <div className="space-y-1">
-                        <Label
-                          htmlFor="notifyEmployee"
-                          className="font-medium text-gray-700"
-                        >
-                          Notify employee
-                        </Label>
-                        <p className="text-xs text-gray-500">
-                          Send an email notification to the employee
+                  <div className={`p-6 rounded-xl border-2 transition-all duration-200 cursor-pointer hover:shadow-lg ${
+                    formData.notifyEmployee
+                      ? 'border-green-300 bg-green-50 shadow-md'
+                      : 'border-gray-200 bg-white hover:border-gray-300'
+                  }`}
+                  onClick={() => handleCheckboxChange({
+                    target: { name: 'notifyEmployee', checked: !formData.notifyEmployee }
+                  } as any)}>
+                    <div className="flex items-start gap-4">
+                      <div className={`p-3 rounded-xl ${
+                        formData.notifyEmployee
+                          ? 'bg-green-500 text-white'
+                          : 'bg-gray-100 text-gray-600'
+                      }`}>
+                        <Mail className="h-5 w-5" />
+                      </div>
+                      <div className="flex-1">
+                        <div className="flex items-center gap-2 mb-2">
+                          <Checkbox
+                            id="notifyEmployee"
+                            checked={formData.notifyEmployee}
+                            onCheckedChange={(checked) =>
+                              handleCheckboxChange({
+                                target: { name: 'notifyEmployee', checked: checked === true }
+                              } as any)
+                            }
+                            className="data-[state=checked]:bg-[#E51636] data-[state=checked]:border-[#E51636]"
+                          />
+                          <Label className="font-semibold text-gray-900 cursor-pointer">
+                            Notify Employee
+                          </Label>
+                        </div>
+                        <p className="text-sm text-gray-600">
+                          Send email notification to the employee
                         </p>
                       </div>
                     </div>
                   </div>
                 </div>
               </div>
+            </CardContent>
+          </Card>
 
-              {/* Step 4: Document Attachment - Only show when documentationAttached is checked */}
-              {formData.documentationAttached && (
-                <div className="border border-gray-200 rounded-lg p-5 bg-gray-50">
-                  <div className="flex items-center gap-3 mb-4">
-                    <div className="flex items-center justify-center w-8 h-8 rounded-full bg-[#E51636] text-white font-bold">
-                      4
-                    </div>
-                    <h3 className="text-lg font-medium">Document Attachment</h3>
+          {/* Step 4: Document Attachment - Only show when documentationAttached is checked */}
+          {formData.documentationAttached && (
+            <Card className="border-0 shadow-xl bg-gradient-to-br from-white to-gray-50">
+              <CardHeader className="bg-gradient-to-r from-blue-500 to-blue-600 text-white p-6">
+                <div className="flex items-center gap-4">
+                  <div className="bg-white/20 p-3 rounded-xl backdrop-blur-sm">
+                    <Upload className="h-6 w-6" />
                   </div>
+                  <div>
+                    <CardTitle className="text-2xl font-bold">Step 4: Document Attachment</CardTitle>
+                    <CardDescription className="text-white/90 text-base">
+                      Upload supporting documents or evidence
+                    </CardDescription>
+                  </div>
+                </div>
+              </CardHeader>
+              <CardContent className="p-8">
 
-                  <div className="space-y-4">
-                    <div className="flex justify-between items-center">
-                      <div className="flex items-center gap-2">
-                        <FileText className="h-5 w-5 text-[#E51636]" />
-                        <Label className="font-medium">
-                          Attach Supporting Document <span className="text-red-500">*</span>
-                        </Label>
+                <div className="space-y-6">
+                  <div className="bg-blue-50 rounded-xl p-6 border border-blue-200">
+                    <div className="flex justify-between items-start mb-4">
+                      <div className="flex items-center gap-3">
+                        <div className="bg-blue-500 text-white p-2 rounded-lg">
+                          <FileText className="h-5 w-5" />
+                        </div>
+                        <div>
+                          <Label className="text-lg font-semibold text-blue-900">
+                            Supporting Document <span className="text-red-500">*</span>
+                          </Label>
+                          <p className="text-sm text-blue-700">Upload evidence or supporting materials</p>
+                        </div>
                       </div>
                       {uploadedFile && (
                         <Button
@@ -745,30 +1151,42 @@ export default function NewDocument() {
                     </div>
 
                     {uploadedFile ? (
-                      <div className="flex items-center p-4 bg-white rounded-lg border border-gray-200">
-                        <div className="h-10 w-10 rounded-full bg-green-100 flex items-center justify-center mr-3">
-                          <FileCheck className="w-5 h-5 text-green-600" />
-                        </div>
-                        <div className="flex-grow">
-                          <p className="text-sm font-medium truncate">{uploadedFile.name}</p>
-                          <p className="text-xs text-gray-500">
-                            {(uploadedFile.size / 1024 / 1024).toFixed(2)} MB · {uploadedFile.type || 'Unknown type'}
-                          </p>
+                      <div className="bg-white rounded-xl border-2 border-green-200 p-6 shadow-sm">
+                        <div className="flex items-center gap-4">
+                          <div className="bg-green-100 p-4 rounded-xl">
+                            <FileCheck className="w-8 h-8 text-green-600" />
+                          </div>
+                          <div className="flex-1">
+                            <h4 className="font-semibold text-green-900 mb-1">{uploadedFile.name}</h4>
+                            <p className="text-sm text-green-700">
+                              {(uploadedFile.size / 1024 / 1024).toFixed(2)} MB · {uploadedFile.type || 'Unknown type'}
+                            </p>
+                            <div className="flex items-center gap-2 mt-2">
+                              <CheckCircle2 className="h-4 w-4 text-green-600" />
+                              <span className="text-sm font-medium text-green-800">File uploaded successfully</span>
+                            </div>
+                          </div>
                         </div>
                       </div>
                     ) : (
                       <label htmlFor="documentFile" className="relative cursor-pointer w-full">
-                        <div className="flex flex-col items-center justify-center p-8 border-2 border-dashed border-gray-300 rounded-lg bg-white hover:bg-gray-50 transition duration-150">
-                          <div className="h-16 w-16 rounded-full bg-blue-50 flex items-center justify-center mb-4">
-                            <Upload className="w-8 h-8 text-blue-500" />
+                        <div className="flex flex-col items-center justify-center p-12 border-2 border-dashed border-blue-300 rounded-xl bg-white hover:bg-blue-50 transition-all duration-200 hover:border-blue-400">
+                          <div className="bg-blue-100 p-6 rounded-2xl mb-6">
+                            <Upload className="w-12 h-12 text-blue-600" />
                           </div>
-                          <p className="text-base font-medium text-gray-700 mb-1">Click to upload a file</p>
-                          <p className="text-sm text-gray-500 text-center mb-2">
-                            Drag and drop files here or click to browse
+                          <h3 className="text-xl font-semibold text-gray-900 mb-2">Upload Supporting Document</h3>
+                          <p className="text-gray-600 text-center mb-4 max-w-sm">
+                            Drag and drop your file here, or click to browse and select from your device
                           </p>
-                          <p className="text-xs text-gray-400 text-center">
-                            PDF, Word documents, or images up to 5MB
-                          </p>
+                          <div className="flex items-center gap-4 text-sm text-gray-500">
+                            <span>PDF</span>
+                            <span>•</span>
+                            <span>Word</span>
+                            <span>•</span>
+                            <span>Images</span>
+                            <span>•</span>
+                            <span>Up to 5MB</span>
+                          </div>
                         </div>
                         <input
                           ref={fileInputRef}
@@ -782,60 +1200,161 @@ export default function NewDocument() {
                     )}
                   </div>
                 </div>
-              )}
+              </CardContent>
+            </Card>
+          )}
 
-              {/* Validation Error Message */}
-              {validationError && (
-                <div className="bg-red-50 border border-red-200 rounded-lg p-4 flex items-start gap-3">
-                  <AlertTriangle className="h-5 w-5 text-red-500 flex-shrink-0 mt-0.5" />
+          {/* Validation Error Message */}
+          {validationError && (
+            <Card className="border-0 shadow-lg bg-red-50 border-l-4 border-l-red-500">
+              <CardContent className="p-6">
+                <div className="flex items-start gap-4">
+                  <div className="bg-red-500 text-white p-3 rounded-xl">
+                    <AlertTriangle className="h-6 w-6" />
+                  </div>
                   <div>
-                    <h4 className="font-medium text-red-800">Please fix the following error:</h4>
-                    <p className="text-red-700">{validationError}</p>
+                    <h4 className="text-lg font-semibold text-red-900 mb-2">Please fix the following error:</h4>
+                    <p className="text-red-800">{validationError}</p>
                   </div>
                 </div>
-              )}
+              </CardContent>
+            </Card>
+          )}
 
-              {/* Submit Buttons */}
-              <div className="flex flex-col-reverse sm:flex-row sm:justify-between sm:items-center gap-4 pt-4 border-t border-gray-200">
-                <Button
-                  type="button"
-                  variant="outline"
-                  onClick={() => navigate('/documentation')}
-                  disabled={loading || isUploading}
-                  className="w-full sm:w-auto"
-                >
-                  Cancel
-                </Button>
+          {/* Submit Buttons */}
+          <Card className="border-0 shadow-xl bg-gradient-to-br from-white to-gray-50">
+            <CardContent className="p-8">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-4">
+                  <div className="bg-gradient-to-r from-[#E51636] to-[#DD0031] text-white p-4 rounded-2xl">
+                    <Sparkles className="h-8 w-8" />
+                  </div>
+                  <div>
+                    <h3 className="text-2xl font-bold text-gray-900">Ready to Create Document?</h3>
+                    <p className="text-gray-600">Review all information before submitting</p>
+                    <div className="flex items-center gap-2 mt-2">
+                      <div className="text-sm text-gray-500">Completion:</div>
+                      <div className="bg-gray-200 rounded-full h-2 w-32">
+                        <div
+                          className="bg-gradient-to-r from-[#E51636] to-[#DD0031] h-2 rounded-full transition-all duration-500"
+                          style={{ width: `${completionProgress}%` }}
+                        ></div>
+                      </div>
+                      <div className="text-sm font-medium text-gray-700">{completionProgress}%</div>
+                    </div>
+                  </div>
+                </div>
 
-                <div className="flex flex-col items-end gap-2">
-                  {validationError && (
-                    <p className="text-sm text-red-600 font-medium flex items-center">
-                      <AlertTriangle className="h-4 w-4 mr-1" />
-                      {validationError}
-                    </p>
-                  )}
+                <div className="flex gap-4">
+                  <Button
+                    type="button"
+                    variant="outline"
+                    onClick={() => navigate('/documentation')}
+                    disabled={loading || isUploading}
+                    className="px-8 py-3 border-gray-300 text-gray-700 hover:bg-gray-50"
+                  >
+                    Cancel
+                  </Button>
+
                   <Button
                     type="submit"
-                    className="bg-[#E51636] hover:bg-[#E51636]/90 text-white w-full sm:w-auto"
-                    disabled={loading || isUploading}
+                    disabled={loading || isUploading || completionProgress < 100 || formData.category === 'PIP'}
+                    className="bg-gradient-to-r from-[#E51636] to-[#DD0031] hover:from-[#DD0031] hover:to-[#C41E3A] text-white px-8 py-3 shadow-lg min-w-[200px]"
                   >
                     {loading || isUploading ? (
-                      <>
-                        <Loader2 className="w-5 h-5 mr-2 animate-spin" />
-                        {isUploading ? 'Uploading File...' : 'Creating Document...'}
-                      </>
+                      <div className="flex items-center gap-2">
+                        <div className="animate-spin rounded-full h-5 w-5 border-2 border-white border-t-transparent"></div>
+                        {isUploading ? 'Uploading...' : 'Creating...'}
+                      </div>
                     ) : (
-                      <>
-                        <FilePlus className="w-5 h-5 mr-2" />
+                      <div className="flex items-center gap-2">
+                        <FilePlus className="w-5 h-5" />
                         Create Document
-                      </>
+                      </div>
                     )}
                   </Button>
                 </div>
               </div>
-            </form>
-          </CardContent>
-        </Card>
+
+              {(completionProgress < 100 || formData.category === 'PIP') && (
+                <div className="mt-6 p-4 bg-amber-50 border border-amber-200 rounded-xl">
+                  <div className="flex items-center gap-3">
+                    <AlertTriangle className="h-5 w-5 text-amber-600" />
+                    <span className="text-sm font-medium text-amber-800">
+                      {formData.category === 'PIP'
+                        ? 'Please complete the Performance Improvement Plan below before creating the document'
+                        : `Please complete all required fields (${completionProgress}% complete)`
+                      }
+                    </span>
+                  </div>
+                </div>
+              )}
+            </CardContent>
+          </Card>
+        </form>
+
+        {/* PIP Form - Show when Performance Improvement Plan is selected */}
+        {showPIPForm && (
+          <div className="space-y-6 animate-in slide-in-from-bottom-4 duration-500">
+            {/* PIP Introduction Banner */}
+            <div className="bg-gradient-to-r from-[#E51636] via-[#DD0031] to-[#C41E3A] rounded-2xl p-8 text-white shadow-xl transform hover:scale-[1.01] transition-transform duration-200">
+              <div className="flex items-center gap-4 mb-4">
+                <div className="bg-white/20 p-4 rounded-2xl backdrop-blur-sm">
+                  <AlertTriangle className="h-8 w-8" />
+                </div>
+                <div>
+                  <h2 className="text-3xl font-bold mb-2">Performance Improvement Plan</h2>
+                  <p className="text-white/90 text-lg">
+                    Creating a structured path to success and professional growth
+                  </p>
+                </div>
+              </div>
+
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mt-6">
+                <div className="bg-white/10 rounded-xl p-4 backdrop-blur-sm">
+                  <div className="flex items-center gap-3 mb-2">
+                    <Target className="h-5 w-5" />
+                    <span className="font-semibold">Goal-Oriented</span>
+                  </div>
+                  <p className="text-sm text-white/80">
+                    Clear, measurable objectives for improvement
+                  </p>
+                </div>
+
+                <div className="bg-white/10 rounded-xl p-4 backdrop-blur-sm">
+                  <div className="flex items-center gap-3 mb-2">
+                    <Clock className="h-5 w-5" />
+                    <span className="font-semibold">Time-Bound</span>
+                  </div>
+                  <p className="text-sm text-white/80">
+                    Structured timeline with regular check-ins
+                  </p>
+                </div>
+
+                <div className="bg-white/10 rounded-xl p-4 backdrop-blur-sm">
+                  <div className="flex items-center gap-3 mb-2">
+                    <BookOpen className="h-5 w-5" />
+                    <span className="font-semibold">Supportive</span>
+                  </div>
+                  <p className="text-sm text-white/80">
+                    Resources and guidance for success
+                  </p>
+                </div>
+              </div>
+            </div>
+
+            {/* PIP Form Container */}
+            <Card className="bg-white rounded-2xl shadow-xl border-0 overflow-hidden">
+              <CardContent className="p-0">
+                <PIPForm
+                  onSubmit={handlePIPSubmit}
+                  onCancel={() => setShowPIPForm(false)}
+                  isLoading={loading}
+                />
+              </CardContent>
+            </Card>
+          </div>
+        )}
       </div>
     </div>
   );

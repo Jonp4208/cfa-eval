@@ -5,6 +5,45 @@ export interface CombinedRecord extends Omit<DocumentationRecord, 'source'> {
   source: 'documentation' | 'disciplinary';
 }
 
+export interface PIPGoal {
+  description: string;
+  targetDate: string;
+  completed: boolean;
+  completedDate?: string;
+  evidence?: string;
+}
+
+export interface PIPCheckIn {
+  date: string;
+  completed: boolean;
+  notes?: string;
+  rating?: number;
+  completedBy?: {
+    _id: string;
+    name: string;
+  };
+}
+
+export interface PIPResource {
+  title: string;
+  type: 'training' | 'document' | 'video' | 'meeting';
+  url?: string;
+  completed: boolean;
+  completedDate?: string;
+}
+
+export interface PIPDetails {
+  goals: PIPGoal[];
+  timeline: number;
+  checkInDates: PIPCheckIn[];
+  resources: PIPResource[];
+  successCriteria: string;
+  consequences: string;
+  finalOutcome: 'successful' | 'unsuccessful' | 'extended' | 'pending';
+  finalNotes?: string;
+  completedDate?: string;
+}
+
 export interface DocumentationRecord {
   _id: string;
   employee: {
@@ -15,7 +54,7 @@ export interface DocumentationRecord {
   };
   date: string;
   type: string;
-  category: 'Disciplinary' | 'Administrative';
+  category: 'Disciplinary' | 'PIP' | 'Administrative';
   severity?: 'Minor' | 'Moderate' | 'Major' | 'Critical';
   status: 'Open' | 'Pending Acknowledgment' | 'Pending Follow-up' | 'Resolved' | 'Documented';
   description: string;
@@ -33,6 +72,7 @@ export interface DocumentationRecord {
   previousIncidents: boolean;
   documentationAttached: boolean;
   notifyEmployee: boolean;
+  pipDetails?: PIPDetails;
   supervisor: {
     _id: string;
     name: string;
@@ -51,7 +91,7 @@ export interface DocumentationRecord {
     _id: string;
     name: string;
     type: string;
-    category: 'Disciplinary' | 'Administrative';
+    category: 'Disciplinary' | 'PIP' | 'Administrative';
     url: string;
     uploadedBy: {
       _id: string;
@@ -81,6 +121,7 @@ export interface CreateDocumentData {
   previousIncidents: boolean;
   documentationAttached: boolean;
   notifyEmployee: boolean;
+  pipDetails?: PIPDetails;
   documentAttachment?: {
     name: string;
     type: string;

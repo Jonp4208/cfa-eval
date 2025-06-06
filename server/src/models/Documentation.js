@@ -74,6 +74,7 @@ const documentationSchema = new mongoose.Schema({
       'Verbal Warning',
       'Written Warning',
       'Final Warning',
+      'Performance Improvement Plan',
       'Suspension',
       'Termination',
       'Other'
@@ -81,14 +82,14 @@ const documentationSchema = new mongoose.Schema({
   },
   category: {
     type: String,
-    enum: ['Disciplinary', 'Administrative'],
+    enum: ['Disciplinary', 'PIP', 'Administrative'],
     default: 'Administrative'
   },
   severity: {
     type: String,
     enum: ['Minor', 'Moderate', 'Major', 'Critical'],
     required: function() {
-      return this.category === 'Disciplinary';
+      return this.category === 'Disciplinary' || this.category === 'PIP';
     }
   },
   status: {
@@ -107,7 +108,7 @@ const documentationSchema = new mongoose.Schema({
   actionTaken: {
     type: String,
     required: function() {
-      return this.category === 'Disciplinary';
+      return this.category === 'Disciplinary' || this.category === 'PIP';
     }
   },
   requiresFollowUp: {
@@ -149,6 +150,46 @@ const documentationSchema = new mongoose.Schema({
   notifyEmployee: {
     type: Boolean,
     default: true
+  },
+  // Performance Improvement Plan specific fields
+  pipDetails: {
+    goals: [{
+      description: String,
+      targetDate: Date,
+      completed: { type: Boolean, default: false },
+      completedDate: Date,
+      evidence: String
+    }],
+    timeline: {
+      type: Number, // Days (30, 60, 90)
+      default: 90
+    },
+    checkInDates: [{
+      date: Date,
+      completed: { type: Boolean, default: false },
+      notes: String,
+      rating: { type: Number, min: 1, max: 5 },
+      completedBy: {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: 'User'
+      }
+    }],
+    resources: [{
+      title: String,
+      type: { type: String, enum: ['training', 'document', 'video', 'meeting'] },
+      url: String,
+      completed: { type: Boolean, default: false },
+      completedDate: Date
+    }],
+    successCriteria: String,
+    consequences: String,
+    finalOutcome: {
+      type: String,
+      enum: ['successful', 'unsuccessful', 'extended', 'pending'],
+      default: 'pending'
+    },
+    finalNotes: String,
+    completedDate: Date
   },
   followUps: [followUpSchema],
   documents: [documentSchema],

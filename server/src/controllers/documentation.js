@@ -228,7 +228,8 @@ export const createDocument = handleAsync(async (req, res) => {
     followUpActions,
     previousIncidents,
     documentationAttached,
-    notifyEmployee = true // Default to true if not provided
+    notifyEmployee = true, // Default to true if not provided
+    pipDetails
   } = req.body;
 
   // Get employee's supervisor
@@ -239,7 +240,7 @@ export const createDocument = handleAsync(async (req, res) => {
 
   // Set default status based on category
   let status = 'Documented';
-  if (category === 'Disciplinary') {
+  if (category === 'Disciplinary' || category === 'PIP') {
     status = 'Pending Acknowledgment';
   }
 
@@ -257,6 +258,7 @@ export const createDocument = handleAsync(async (req, res) => {
     previousIncidents,
     documentationAttached,
     notifyEmployee, // Save the notifyEmployee value to the document
+    pipDetails, // Add PIP details if provided
     supervisor: employee.supervisor || req.user._id,
     createdBy: req.user._id,
     store: req.user.store,
@@ -275,8 +277,8 @@ export const createDocument = handleAsync(async (req, res) => {
       user: employee._id,
       store: req.user.store._id,
       type: 'documentation',
-      priority: category === 'Disciplinary' ? 'high' : 'medium',
-      title: `New ${category} Documentation`,
+      priority: (category === 'Disciplinary' || category === 'PIP') ? 'high' : 'medium',
+      title: `New ${category === 'PIP' ? 'Performance Improvement Plan' : category} Documentation`,
       message: `A new ${type.toLowerCase()} documentation has been created.`,
       relatedId: document._id,
       relatedModel: 'Documentation'
@@ -452,6 +454,145 @@ export const createDocument = handleAsync(async (req, res) => {
           `
         });
         console.log('Disciplinary document email sent to employee:', document.employee.email);
+      } else if (category === 'PIP') {
+        // Performance Improvement Plan email template
+        await sendEmail({
+          to: document.employee.email,
+          subject: 'Important: Performance Improvement Plan Created',
+          html: `
+            <!DOCTYPE html>
+            <html>
+            <head>
+              <meta charset="utf-8">
+              <meta name="viewport" content="width=device-width, initial-scale=1.0">
+              <title>Performance Improvement Plan</title>
+            </head>
+            <body style="margin: 0; padding: 0; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; color: #333; background-color: #f9f9f9;">
+              <table cellpadding="0" cellspacing="0" border="0" width="100%" style="max-width: 600px; margin: 0 auto; background-color: #ffffff; box-shadow: 0 4px 10px rgba(0,0,0,0.1);">
+                <!-- Header with Logo -->
+                <tr>
+                  <td style="background: linear-gradient(135deg, #E51636 0%, #DD0031 100%); padding: 30px; text-align: center;">
+                    <table width="100%" cellpadding="0" cellspacing="0" border="0">
+                      <tr>
+                        <td style="font-size: 24px; font-weight: bold; color: white;">
+                          Chick-fil-A
+                        </td>
+                      </tr>
+                      <tr>
+                        <td style="padding-top: 20px;">
+                          <h1 style="color: white; margin: 0; font-size: 28px; font-weight: 600;">Performance Improvement Plan</h1>
+                        </td>
+                      </tr>
+                    </table>
+                  </td>
+                </tr>
+
+                <!-- Main Content -->
+                <tr>
+                  <td style="padding: 30px 40px;">
+                    <p style="font-size: 16px; line-height: 1.5; margin-bottom: 25px;">
+                      Dear ${document.employee.name},
+                    </p>
+                    <p style="font-size: 16px; line-height: 1.5; margin-bottom: 25px;">
+                      A Performance Improvement Plan (PIP) has been created to support your professional development and help you achieve success in your role. This plan includes specific goals, resources, and a timeline for improvement.
+                    </p>
+
+                    <!-- Document Details Card -->
+                    <table width="100%" cellpadding="0" cellspacing="0" border="0" style="margin-bottom: 25px; border-collapse: separate; border-radius: 8px; overflow: hidden; border: 1px solid #e0e0e0;">
+                      <tr>
+                        <td style="background-color: #f5f5f5; padding: 15px; border-bottom: 1px solid #e0e0e0;">
+                          <h2 style="margin: 0; font-size: 18px; color: #E51636;">PIP Details</h2>
+                        </td>
+                      </tr>
+                      <tr>
+                        <td style="padding: 20px;">
+                          <table width="100%" cellpadding="0" cellspacing="0" border="0">
+                            <tr>
+                              <td width="40%" style="padding: 8px 0; font-weight: 600; color: #555;">Start Date:</td>
+                              <td width="60%" style="padding: 8px 0;">${new Date(date).toLocaleDateString()}</td>
+                            </tr>
+                            <tr>
+                              <td width="40%" style="padding: 8px 0; font-weight: 600; color: #555;">Timeline:</td>
+                              <td width="60%" style="padding: 8px 0;">${pipDetails?.timeline || 90} days</td>
+                            </tr>
+                            <tr>
+                              <td width="40%" style="padding: 8px 0; font-weight: 600; color: #555;">Severity:</td>
+                              <td width="60%" style="padding: 8px 0;">${severity}</td>
+                            </tr>
+                            <tr>
+                              <td width="40%" style="padding: 8px 0; font-weight: 600; color: #555;">Created By:</td>
+                              <td width="60%" style="padding: 8px 0;">${document.createdBy.name}</td>
+                            </tr>
+                            <tr>
+                              <td width="40%" style="padding: 8px 0; font-weight: 600; color: #555;">Supervisor:</td>
+                              <td width="60%" style="padding: 8px 0;">${document.supervisor.name}</td>
+                            </tr>
+                          </table>
+                        </td>
+                      </tr>
+                    </table>
+
+                    <!-- Performance Issues Card -->
+                    <table width="100%" cellpadding="0" cellspacing="0" border="0" style="margin-bottom: 25px; border-collapse: separate; border-radius: 8px; overflow: hidden; border: 1px solid #e0e0e0;">
+                      <tr>
+                        <td style="background-color: #f5f5f5; padding: 15px; border-bottom: 1px solid #e0e0e0;">
+                          <h2 style="margin: 0; font-size: 18px; color: #E51636;">Performance Areas for Improvement</h2>
+                        </td>
+                      </tr>
+                      <tr>
+                        <td style="padding: 20px;">
+                          <p style="margin: 0; line-height: 1.6;">${description}</p>
+                        </td>
+                      </tr>
+                    </table>
+
+                    <!-- Initial Context Card -->
+                    <table width="100%" cellpadding="0" cellspacing="0" border="0" style="margin-bottom: 25px; border-collapse: separate; border-radius: 8px; overflow: hidden; border: 1px solid #e0e0e0;">
+                      <tr>
+                        <td style="background-color: #f5f5f5; padding: 15px; border-bottom: 1px solid #e0e0e0;">
+                          <h2 style="margin: 0; font-size: 18px; color: #E51636;">Background & Context</h2>
+                        </td>
+                      </tr>
+                      <tr>
+                        <td style="padding: 20px;">
+                          <p style="margin: 0; line-height: 1.6;">${actionTaken}</p>
+                        </td>
+                      </tr>
+                    </table>
+
+                    <p style="font-size: 16px; line-height: 1.5; margin-bottom: 25px;">
+                      <strong>Next Steps:</strong> Please log in to the LD Growth platform to review your complete Performance Improvement Plan, including specific goals, resources, and check-in dates. Your success is important to us, and we're committed to providing the support you need.
+                    </p>
+
+                    <!-- CTA Button -->
+                    <table width="100%" cellpadding="0" cellspacing="0" border="0" style="margin-bottom: 30px;">
+                      <tr>
+                        <td align="center">
+                          <a href="https://cfa-eval-7eb74e14c3a4.herokuapp.com/" style="display: inline-block; padding: 12px 30px; background-color: #E51636; color: white; text-decoration: none; font-weight: 600; border-radius: 4px; font-size: 16px;">View Your PIP</a>
+                        </td>
+                      </tr>
+                    </table>
+                  </td>
+                </tr>
+
+                <!-- Footer -->
+                <tr>
+                  <td style="background-color: #f5f5f5; padding: 20px 40px; text-align: center; border-top: 1px solid #e0e0e0;">
+                    <p style="margin: 0; font-size: 14px; color: #777; line-height: 1.5;">
+                      This is an automated message from the LD Growth platform.<br>
+                      Please do not reply to this email.
+                    </p>
+                    <p style="margin: 15px 0 0; font-size: 14px; color: #777;">
+                      &copy; ${new Date().getFullYear()} Chick-fil-A. All rights reserved.
+                    </p>
+                  </td>
+                </tr>
+              </table>
+            </body>
+            </html>
+          `
+        });
+        console.log('PIP document email sent to employee:', document.employee.email);
       } else if (category === 'Administrative') {
         // Administrative document email template
         await sendEmail({
