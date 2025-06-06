@@ -229,6 +229,7 @@ const emailTemplates = {
   }),
 
   welcomeNewUser: (user, password, storeName) => ({
+    to: user.email,
     subject: '🚀 Welcome to Your Leadership Journey - LD Growth',
     html: `
       <div style="font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; max-width: 700px; margin: 0 auto; background-color: #ffffff; border-radius: 12px; overflow: hidden; box-shadow: 0 10px 30px rgba(0,0,0,0.1);">
