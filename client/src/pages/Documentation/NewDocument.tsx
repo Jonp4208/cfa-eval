@@ -83,7 +83,6 @@ export default function NewDocument() {
   const [showSeverity, setShowSeverity] = useState(false);
   const [showPIPForm, setShowPIPForm] = useState(false);
   const [currentStep, setCurrentStep] = useState(1);
-  const [completionProgress, setCompletionProgress] = useState(0);
 
   useEffect(() => {
     loadEmployees();
@@ -96,25 +95,7 @@ export default function NewDocument() {
     setShowPIPForm(formData.category === 'PIP');
   }, [formData.category, formData.type]);
 
-  // Calculate completion progress
-  useEffect(() => {
-    let progress = 0;
-    const totalFields = 6;
 
-    if (formData.employeeId) progress += 1;
-    if (formData.category) progress += 1;
-    if (formData.type) progress += 1;
-    if (formData.description.trim()) progress += 1;
-    if (!showSeverity || formData.severity) progress += 1;
-    if (formData.category !== 'Disciplinary' && formData.category !== 'PIP' || formData.actionTaken.trim()) progress += 1;
-
-    // For PIP documents, completion is 0% until the PIP form is completed
-    if (formData.category === 'PIP') {
-      setCompletionProgress(0);
-    } else {
-      setCompletionProgress(Math.round((progress / totalFields) * 100));
-    }
-  }, [formData, showSeverity]);
 
   const loadEmployees = async () => {
     try {
@@ -1185,16 +1166,6 @@ export default function NewDocument() {
                   <div>
                     <h3 className="text-2xl font-bold text-gray-900">Ready to Create Document?</h3>
                     <p className="text-gray-600">Review all information before submitting</p>
-                    <div className="flex items-center gap-2 mt-2">
-                      <div className="text-sm text-gray-500">Completion:</div>
-                      <div className="bg-gray-200 rounded-full h-2 w-32">
-                        <div
-                          className="bg-gradient-to-r from-[#E51636] to-[#DD0031] h-2 rounded-full transition-all duration-500"
-                          style={{ width: `${completionProgress}%` }}
-                        ></div>
-                      </div>
-                      <div className="text-sm font-medium text-gray-700">{completionProgress}%</div>
-                    </div>
                   </div>
                 </div>
 
@@ -1211,7 +1182,7 @@ export default function NewDocument() {
 
                   <Button
                     type="submit"
-                    disabled={loading || isUploading || completionProgress < 100 || formData.category === 'PIP'}
+                    disabled={loading || isUploading || formData.category === 'PIP'}
                     className="bg-gradient-to-r from-[#E51636] to-[#DD0031] hover:from-[#DD0031] hover:to-[#C41E3A] text-white px-8 py-3 shadow-lg min-w-[200px]"
                   >
                     {loading || isUploading ? (
@@ -1229,15 +1200,12 @@ export default function NewDocument() {
                 </div>
               </div>
 
-              {(completionProgress < 100 || formData.category === 'PIP') && (
+              {formData.category === 'PIP' && (
                 <div className="mt-6 p-4 bg-amber-50 border border-amber-200 rounded-xl">
                   <div className="flex items-center gap-3">
                     <AlertTriangle className="h-5 w-5 text-amber-600" />
                     <span className="text-sm font-medium text-amber-800">
-                      {formData.category === 'PIP'
-                        ? 'Please complete the Performance Improvement Plan below before creating the document'
-                        : `Please complete all required fields (${completionProgress}% complete)`
-                      }
+                      Please complete the Performance Improvement Plan below before creating the document
                     </span>
                   </div>
                 </div>
@@ -1249,53 +1217,6 @@ export default function NewDocument() {
         {/* PIP Form - Show when Performance Improvement Plan is selected */}
         {showPIPForm && (
           <div className="space-y-6 animate-in slide-in-from-bottom-4 duration-500">
-            {/* PIP Introduction Banner */}
-            <div className="bg-gradient-to-r from-[#E51636] via-[#DD0031] to-[#C41E3A] rounded-2xl p-8 text-white shadow-xl transform hover:scale-[1.01] transition-transform duration-200">
-              <div className="flex items-center gap-4 mb-4">
-                <div className="bg-white/20 p-4 rounded-2xl backdrop-blur-sm">
-                  <AlertTriangle className="h-8 w-8" />
-                </div>
-                <div>
-                  <h2 className="text-3xl font-bold mb-2">Performance Improvement Plan</h2>
-                  <p className="text-white/90 text-lg">
-                    Creating a structured path to success and professional growth
-                  </p>
-                </div>
-              </div>
-
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mt-6">
-                <div className="bg-white/10 rounded-xl p-4 backdrop-blur-sm">
-                  <div className="flex items-center gap-3 mb-2">
-                    <Target className="h-5 w-5" />
-                    <span className="font-semibold">Goal-Oriented</span>
-                  </div>
-                  <p className="text-sm text-white/80">
-                    Clear, measurable objectives for improvement
-                  </p>
-                </div>
-
-                <div className="bg-white/10 rounded-xl p-4 backdrop-blur-sm">
-                  <div className="flex items-center gap-3 mb-2">
-                    <Clock className="h-5 w-5" />
-                    <span className="font-semibold">Time-Bound</span>
-                  </div>
-                  <p className="text-sm text-white/80">
-                    Structured timeline with regular check-ins
-                  </p>
-                </div>
-
-                <div className="bg-white/10 rounded-xl p-4 backdrop-blur-sm">
-                  <div className="flex items-center gap-3 mb-2">
-                    <BookOpen className="h-5 w-5" />
-                    <span className="font-semibold">Supportive</span>
-                  </div>
-                  <p className="text-sm text-white/80">
-                    Resources and guidance for success
-                  </p>
-                </div>
-              </div>
-            </div>
-
             {/* PIP Form Container */}
             <Card className="bg-white rounded-2xl shadow-xl border-0 overflow-hidden">
               <CardContent className="p-0">

@@ -50,18 +50,6 @@ export default function PIPForm({ onSubmit, onCancel, isLoading }: PIPFormProps)
   const [successCriteria, setSuccessCriteria] = useState('');
   const [consequences, setConsequences] = useState('');
   const [currentStep, setCurrentStep] = useState(1);
-  const [completionProgress, setCompletionProgress] = useState(0);
-
-  // Calculate completion progress
-  useEffect(() => {
-    let progress = 0;
-    if (timeline > 0) progress += 20;
-    if (goals.some(g => g.description.trim())) progress += 30;
-    if (resources.some(r => r.title.trim())) progress += 20;
-    if (successCriteria.trim()) progress += 15;
-    if (consequences.trim()) progress += 15;
-    setCompletionProgress(progress);
-  }, [timeline, goals, resources, successCriteria, consequences]);
 
   const addGoal = () => {
     setGoals([...goals, { description: '', targetDate: '', completed: false }]);
@@ -181,26 +169,6 @@ export default function PIPForm({ onSubmit, onCancel, isLoading }: PIPFormProps)
 
   return (
     <div className="space-y-8">
-      {/* Header with Progress */}
-      <div className="bg-gradient-to-r from-[#E51636] to-[#DD0031] rounded-2xl p-6 text-white">
-        <div className="flex items-center justify-between mb-4">
-          <div className="flex items-center gap-3">
-            <div className="bg-white/20 p-3 rounded-xl">
-              <TrendingUp className="h-6 w-6" />
-            </div>
-            <div>
-              <h2 className="text-2xl font-bold">Performance Improvement Plan</h2>
-              <p className="text-white/90">Building a path to success together</p>
-            </div>
-          </div>
-          <div className="text-right">
-            <div className="text-sm text-white/80">Completion Progress</div>
-            <div className="text-2xl font-bold">{completionProgress}%</div>
-          </div>
-        </div>
-        <Progress value={completionProgress} className="h-2 bg-white/20" />
-      </div>
-
       <form onSubmit={handleSubmit} className="space-y-8">
         {/* Step 1: Timeline Selection */}
         <Card className="border-0 shadow-lg bg-gradient-to-br from-white to-gray-50">
@@ -665,7 +633,7 @@ export default function PIPForm({ onSubmit, onCancel, isLoading }: PIPFormProps)
               </Button>
               <Button
                 type="submit"
-                disabled={isLoading || completionProgress < 100}
+                disabled={isLoading}
                 className="bg-gradient-to-r from-[#E51636] to-[#DD0031] hover:from-[#DD0031] hover:to-[#C41E3A] text-white shadow-lg min-w-[200px]"
               >
                 {isLoading ? (
@@ -682,17 +650,6 @@ export default function PIPForm({ onSubmit, onCancel, isLoading }: PIPFormProps)
               </Button>
             </div>
           </div>
-
-          {completionProgress < 100 && (
-            <div className="mt-4 p-3 bg-amber-50 border border-amber-200 rounded-lg">
-              <div className="flex items-center gap-2">
-                <AlertTriangle className="h-4 w-4 text-amber-600" />
-                <span className="text-sm font-medium text-amber-800">
-                  Please complete all sections ({completionProgress}% complete)
-                </span>
-              </div>
-            </div>
-          )}
         </div>
       </form>
     </div>
