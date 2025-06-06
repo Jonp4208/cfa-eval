@@ -418,54 +418,7 @@ export default function NewDocument() {
           }
         />
 
-        {/* Progress Section */}
-        <Card className="border-0 shadow-xl bg-gradient-to-br from-white to-gray-50">
-          <CardContent className="p-6">
-            <div className="flex items-center justify-between mb-4">
-              <div className="flex items-center gap-3">
-                <div className="bg-gradient-to-r from-[#E51636] to-[#DD0031] text-white p-3 rounded-xl">
-                  <Sparkles className="h-6 w-6" />
-                </div>
-                <div>
-                  <h3 className="text-lg font-semibold text-gray-900">Form Completion</h3>
-                  <p className="text-sm text-gray-600">Track your progress</p>
-                </div>
-              </div>
-              <div className="text-right">
-                <div className="text-2xl font-bold text-gray-900">{completionProgress}%</div>
-                <div className="text-sm text-gray-500">Complete</div>
-              </div>
-            </div>
 
-            <div className="w-full bg-gray-200 rounded-full h-3 mb-4">
-              <div
-                className="bg-gradient-to-r from-[#E51636] to-[#DD0031] h-3 rounded-full transition-all duration-500 ease-out"
-                style={{ width: `${completionProgress}%` }}
-              ></div>
-            </div>
-
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-              <div className="text-center p-4 bg-gray-50 rounded-xl">
-                <div className="text-2xl font-bold mb-2 text-gray-900">
-                  {formData.category ? '✓' : '○'}
-                </div>
-                <div className="text-sm text-gray-600">Category Selected</div>
-              </div>
-              <div className="text-center p-4 bg-gray-50 rounded-xl">
-                <div className="text-2xl font-bold mb-2 text-gray-900">
-                  {formData.type ? '✓' : '○'}
-                </div>
-                <div className="text-sm text-gray-600">Type Chosen</div>
-              </div>
-              <div className="text-center p-4 bg-gray-50 rounded-xl">
-                <div className="text-2xl font-bold mb-2 text-gray-900">
-                  {formData.description.trim() ? '✓' : '○'}
-                </div>
-                <div className="text-sm text-gray-600">Details Added</div>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
 
 
 
@@ -473,7 +426,7 @@ export default function NewDocument() {
         <form onSubmit={handleSubmit} className="space-y-8">
           {/* Step 1: Basic Information */}
           <Card className="border-0 shadow-xl bg-gradient-to-br from-white to-gray-50 overflow-hidden">
-            <CardHeader className="bg-gradient-to-r from-[#E51636] to-[#DD0031] text-white p-6">
+            <CardHeader className="bg-gradient-to-r from-blue-600 to-blue-700 text-white p-6">
               <div className="flex items-center gap-4">
                 <div className="bg-white/20 p-3 rounded-xl backdrop-blur-sm">
                   <Users className="h-6 w-6" />
