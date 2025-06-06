@@ -56,6 +56,10 @@ import Assessments from '@/pages/Leadership/Assessments';
 import AssessmentDetails from '@/pages/Leadership/AssessmentDetails';
 import AssessmentTaking from '@/pages/Leadership/AssessmentTaking';
 import AssessmentResults from '@/pages/Leadership/AssessmentResults';
+import LeadershipStyleResults from '@/pages/Leadership/LeadershipStyleResults';
+import SituationalLeadershipTraining from '@/pages/Leadership/SituationalLeadershipTraining';
+import SituationalLeadershipAssessment from '@/pages/Leadership/SituationalLeadershipAssessment';
+import SituationalLeadershipResources from '@/pages/Leadership/SituationalLeadershipResources';
 import Subscription from '@/pages/Leadership/Subscription';
 import Evaluations360 from '@/pages/Leadership/Evaluations360';
 import New360Evaluation from '@/pages/Leadership/Evaluations360/New360Evaluation';
@@ -266,7 +270,12 @@ export default function AppRoutes() {
         <Route path="assessments" element={<Assessments />} />
         <Route path="assessments/:assessmentId/take" element={<AssessmentTaking />} />
         <Route path="assessments/:assessmentId/results" element={<AssessmentResults />} />
+        <Route path="assessments/:assessmentId/leadership-style-results" element={<LeadershipStyleResults />} />
         <Route path="assessments/:id" element={<AssessmentDetails />} />
+        <Route path="situational-training" element={<SituationalLeadershipTraining />} />
+        <Route path="situational-training/:week" element={<SituationalLeadershipTraining />} />
+        <Route path="situational-assessment" element={<SituationalLeadershipAssessment />} />
+        <Route path="situational-resources" element={<SituationalLeadershipResources />} />
         <Route path="360-evaluations" element={<Evaluations360 />} />
         <Route path="360-evaluations/new" element={<New360Evaluation />} />
         <Route path="360-evaluations/:evaluationId" element={<View360Evaluation />} />

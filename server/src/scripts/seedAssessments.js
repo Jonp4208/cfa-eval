@@ -1711,6 +1711,504 @@ const createCustomerServiceLeadershipAssessment = () => ({
   ]
 });
 
+const createLeadershipStyleAdaptationAssessment = () => ({
+  title: 'Leadership Style & Adaptation Assessment',
+  description: 'Discover your natural leadership style based on DISC principles and learn how to adapt your approach for maximum effectiveness with different team members and situations. This comprehensive 28-question assessment identifies your primary leadership style and provides specific strategies for leading different personality types.',
+  type: 'self_assessment',
+  category: 'leadership',
+  timeEstimate: 25,
+  scoringMethod: 'weighted_average',
+  areas: [
+    { name: 'Dominant Leadership', description: 'Results-focused, direct, and decisive leadership approach', weight: 1 },
+    { name: 'Influential Leadership', description: 'People-focused, enthusiastic, and inspiring leadership style', weight: 1 },
+    { name: 'Steady Leadership', description: 'Supportive, patient, and team-oriented leadership approach', weight: 1 },
+    { name: 'Conscientious Leadership', description: 'Process-focused, analytical, and quality-driven leadership style', weight: 1 },
+    { name: 'Situational Adaptation', description: 'Ability to adapt leadership style based on situation and team needs', weight: 1.2 },
+    { name: 'Team Dynamics Understanding', description: 'Understanding and managing different personality types on your team', weight: 1.1 }
+  ],
+  questions: [
+    // Dominant Leadership Questions (7 questions)
+    {
+      id: 'dom_1',
+      text: 'When facing a tight deadline, how do you typically lead your team?',
+      type: 'multiple_choice',
+      area: 'Dominant Leadership',
+      options: [
+        { value: 1, label: 'Collaborate extensively', description: 'Spend significant time getting everyone\'s input and building consensus' },
+        { value: 2, label: 'Seek some input', description: 'Get key perspectives but make decisions relatively quickly' },
+        { value: 3, label: 'Balance input and action', description: 'Get essential input while maintaining momentum toward the goal' },
+        { value: 4, label: 'Take charge decisively', description: 'Make quick decisions and direct the team with clear expectations' },
+        { value: 5, label: 'Drive results immediately', description: 'Take immediate control, set clear priorities, and push for fast execution' }
+      ]
+    },
+    {
+      id: 'dom_2',
+      text: 'How comfortable are you with making difficult decisions that may be unpopular?',
+      type: 'multiple_choice',
+      area: 'Dominant Leadership',
+      options: [
+        { value: 1, label: 'Very uncomfortable', description: 'Avoid difficult decisions and seek to please everyone' },
+        { value: 2, label: 'Somewhat uncomfortable', description: 'Hesitate but eventually make necessary decisions' },
+        { value: 3, label: 'Moderately comfortable', description: 'Can make tough decisions when clearly necessary' },
+        { value: 4, label: 'Comfortable', description: 'Willing to make unpopular decisions for the greater good' },
+        { value: 5, label: 'Very comfortable', description: 'Readily make tough decisions and stand by them confidently' }
+      ]
+    },
+    {
+      id: 'dom_3',
+      text: 'When your team faces a challenge, what\'s your first instinct?',
+      type: 'multiple_choice',
+      area: 'Dominant Leadership',
+      options: [
+        { value: 1, label: 'Support and encourage', description: 'Focus on team morale and emotional support first' },
+        { value: 2, label: 'Analyze the situation', description: 'Gather data and carefully study the problem' },
+        { value: 3, label: 'Facilitate discussion', description: 'Bring the team together to brainstorm solutions' },
+        { value: 4, label: 'Develop action plan', description: 'Quickly assess and create a clear plan of attack' },
+        { value: 5, label: 'Take immediate action', description: 'Jump in and start solving the problem directly' }
+      ]
+    },
+    {
+      id: 'dom_4',
+      text: 'How do you prefer to communicate expectations to your team?',
+      type: 'multiple_choice',
+      area: 'Dominant Leadership',
+      options: [
+        { value: 1, label: 'Gentle suggestions', description: 'Offer ideas and let team members decide how to proceed' },
+        { value: 2, label: 'Collaborative planning', description: 'Work together to establish mutual expectations' },
+        { value: 3, label: 'Clear guidelines', description: 'Provide structured expectations with some flexibility' },
+        { value: 4, label: 'Direct instructions', description: 'Give clear, specific directions about what needs to be done' },
+        { value: 5, label: 'Firm directives', description: 'Set non-negotiable expectations with clear consequences' }
+      ]
+    },
+    {
+      id: 'dom_5',
+      text: 'When delegating tasks, how much control do you typically maintain?',
+      type: 'multiple_choice',
+      area: 'Dominant Leadership',
+      options: [
+        { value: 1, label: 'Full autonomy', description: 'Give complete freedom and check in only when asked' },
+        { value: 2, label: 'Minimal oversight', description: 'Provide guidance and check in occasionally' },
+        { value: 3, label: 'Regular check-ins', description: 'Monitor progress with scheduled updates' },
+        { value: 4, label: 'Close monitoring', description: 'Stay closely involved and provide frequent direction' },
+        { value: 5, label: 'Tight control', description: 'Maintain detailed oversight and frequent course corrections' }
+      ]
+    },
+    {
+      id: 'dom_6',
+      text: 'How do you handle team members who resist your leadership?',
+      type: 'multiple_choice',
+      area: 'Dominant Leadership',
+      options: [
+        { value: 1, label: 'Accommodate their concerns', description: 'Adjust your approach to address their resistance' },
+        { value: 2, label: 'Seek to understand', description: 'Explore their perspective and find common ground' },
+        { value: 3, label: 'Address directly', description: 'Have an honest conversation about expectations' },
+        { value: 4, label: 'Assert authority', description: 'Make it clear that your leadership decisions stand' },
+        { value: 5, label: 'Demand compliance', description: 'Insist on immediate alignment with your direction' }
+      ]
+    },
+    {
+      id: 'dom_7',
+      text: 'In high-pressure situations, how do you maintain team performance?',
+      type: 'multiple_choice',
+      area: 'Dominant Leadership',
+      options: [
+        { value: 1, label: 'Emotional support', description: 'Focus on reducing stress and maintaining team morale' },
+        { value: 2, label: 'Collaborative problem-solving', description: 'Work together to find solutions and share the load' },
+        { value: 3, label: 'Structured approach', description: 'Create clear processes and systems to manage pressure' },
+        { value: 4, label: 'Direct leadership', description: 'Take charge and guide the team through decisive action' },
+        { value: 5, label: 'Drive results', description: 'Push hard for performance and maintain high standards' }
+      ]
+    },
+
+    // Influential Leadership Questions (7 questions)
+    {
+      id: 'inf_1',
+      text: 'How do you typically motivate your team members?',
+      type: 'multiple_choice',
+      area: 'Influential Leadership',
+      options: [
+        { value: 1, label: 'Clear processes', description: 'Provide structured systems and detailed procedures' },
+        { value: 2, label: 'Stable environment', description: 'Create predictable, supportive working conditions' },
+        { value: 3, label: 'Achievement goals', description: 'Set challenging targets and track progress' },
+        { value: 4, label: 'Personal connection', description: 'Build relationships and inspire through enthusiasm' },
+        { value: 5, label: 'Vision and excitement', description: 'Paint compelling pictures of success and celebrate wins' }
+      ]
+    },
+    {
+      id: 'inf_2',
+      text: 'When introducing changes to your team, what\'s your approach?',
+      type: 'multiple_choice',
+      area: 'Influential Leadership',
+      options: [
+        { value: 1, label: 'Detailed analysis', description: 'Present comprehensive data and logical reasoning' },
+        { value: 2, label: 'Gradual implementation', description: 'Introduce changes slowly with plenty of support' },
+        { value: 3, label: 'Direct communication', description: 'Explain the change clearly and expect compliance' },
+        { value: 4, label: 'Enthusiastic presentation', description: 'Generate excitement about the benefits and possibilities' },
+        { value: 5, label: 'Inspiring vision', description: 'Paint a compelling picture of the positive future state' }
+      ]
+    },
+    {
+      id: 'inf_3',
+      text: 'How do you prefer to conduct team meetings?',
+      type: 'multiple_choice',
+      area: 'Influential Leadership',
+      options: [
+        { value: 1, label: 'Structured agenda', description: 'Follow detailed agendas with specific time allocations' },
+        { value: 2, label: 'Supportive discussion', description: 'Create safe spaces for everyone to contribute' },
+        { value: 3, label: 'Efficient and focused', description: 'Cover key points quickly and make decisions' },
+        { value: 4, label: 'Interactive and engaging', description: 'Encourage participation and build energy' },
+        { value: 5, label: 'Dynamic and inspiring', description: 'Create excitement and momentum around goals' }
+      ]
+    },
+    {
+      id: 'inf_4',
+      text: 'How do you handle team conflicts?',
+      type: 'multiple_choice',
+      area: 'Influential Leadership',
+      options: [
+        { value: 1, label: 'Systematic analysis', description: 'Gather facts and analyze the situation objectively' },
+        { value: 2, label: 'Patient mediation', description: 'Listen carefully and help parties find common ground' },
+        { value: 3, label: 'Direct resolution', description: 'Address the issue head-on and make decisions' },
+        { value: 4, label: 'Positive reframing', description: 'Help parties see opportunities and focus on solutions' },
+        { value: 5, label: 'Inspiring unity', description: 'Rally the team around shared vision and common goals' }
+      ]
+    },
+    {
+      id: 'inf_5',
+      text: 'What\'s your communication style during one-on-one meetings?',
+      type: 'multiple_choice',
+      area: 'Influential Leadership',
+      options: [
+        { value: 1, label: 'Detailed and thorough', description: 'Cover all points systematically with documentation' },
+        { value: 2, label: 'Supportive and patient', description: 'Listen carefully and provide steady encouragement' },
+        { value: 3, label: 'Direct and efficient', description: 'Get to the point quickly and make clear decisions' },
+        { value: 4, label: 'Warm and engaging', description: 'Build rapport and create positive energy' },
+        { value: 5, label: 'Inspiring and motivational', description: 'Focus on possibilities and generate excitement' }
+      ]
+    },
+    {
+      id: 'inf_6',
+      text: 'How do you recognize and celebrate team achievements?',
+      type: 'multiple_choice',
+      area: 'Influential Leadership',
+      options: [
+        { value: 1, label: 'Formal documentation', description: 'Record achievements systematically in performance reviews' },
+        { value: 2, label: 'Personal appreciation', description: 'Offer sincere, private thanks and recognition' },
+        { value: 3, label: 'Results-focused praise', description: 'Acknowledge achievements and set next targets' },
+        { value: 4, label: 'Public recognition', description: 'Celebrate successes openly and enthusiastically' },
+        { value: 5, label: 'Big celebrations', description: 'Create memorable events and share success stories widely' }
+      ]
+    },
+    {
+      id: 'inf_7',
+      text: 'When building team culture, what do you emphasize most?',
+      type: 'multiple_choice',
+      area: 'Influential Leadership',
+      options: [
+        { value: 1, label: 'Quality standards', description: 'Focus on excellence, accuracy, and continuous improvement' },
+        { value: 2, label: 'Team harmony', description: 'Emphasize cooperation, stability, and mutual support' },
+        { value: 3, label: 'Performance results', description: 'Prioritize achievement, efficiency, and goal attainment' },
+        { value: 4, label: 'Positive energy', description: 'Create enthusiasm, optimism, and team spirit' },
+        { value: 5, label: 'Shared vision', description: 'Build excitement around common goals and possibilities' }
+      ]
+    },
+
+    // Steady Leadership Questions (7 questions)
+    {
+      id: 'ste_1',
+      text: 'How do you approach building relationships with team members?',
+      type: 'multiple_choice',
+      area: 'Steady Leadership',
+      options: [
+        { value: 1, label: 'Professional boundaries', description: 'Maintain clear professional relationships focused on work' },
+        { value: 2, label: 'Gradual trust building', description: 'Slowly develop trust through consistent, reliable interactions' },
+        { value: 3, label: 'Goal-oriented connection', description: 'Build relationships that support achieving objectives' },
+        { value: 4, label: 'Personal interest', description: 'Show genuine interest in team members as individuals' },
+        { value: 5, label: 'Deep personal bonds', description: 'Invest heavily in knowing and caring for each person' }
+      ]
+    },
+    {
+      id: 'ste_2',
+      text: 'When team members are struggling, what\'s your typical response?',
+      type: 'multiple_choice',
+      area: 'Steady Leadership',
+      options: [
+        { value: 1, label: 'Provide resources', description: 'Offer tools, training, or information to help them improve' },
+        { value: 2, label: 'Patient support', description: 'Give them time and steady encouragement to work through it' },
+        { value: 3, label: 'Direct intervention', description: 'Step in quickly to address the issue and get back on track' },
+        { value: 4, label: 'Emotional support', description: 'Focus on their feelings and provide encouragement' },
+        { value: 5, label: 'Comprehensive care', description: 'Address both professional and personal factors affecting them' }
+      ]
+    },
+    {
+      id: 'ste_3',
+      text: 'How do you handle team members who need extra guidance?',
+      type: 'multiple_choice',
+      area: 'Steady Leadership',
+      options: [
+        { value: 1, label: 'Systematic training', description: 'Provide structured learning programs and clear procedures' },
+        { value: 2, label: 'Patient mentoring', description: 'Work with them consistently over time at their pace' },
+        { value: 3, label: 'Clear expectations', description: 'Set specific goals and monitor progress closely' },
+        { value: 4, label: 'Encouraging coaching', description: 'Build their confidence while providing guidance' },
+        { value: 5, label: 'Nurturing development', description: 'Invest deeply in their growth and potential' }
+      ]
+    },
+    {
+      id: 'ste_4',
+      text: 'What\'s your approach to team decision-making?',
+      type: 'multiple_choice',
+      area: 'Steady Leadership',
+      options: [
+        { value: 1, label: 'Data-driven analysis', description: 'Base decisions on thorough research and facts' },
+        { value: 2, label: 'Consensus building', description: 'Ensure everyone feels heard and agrees with the direction' },
+        { value: 3, label: 'Efficient decisions', description: 'Make decisions quickly based on available information' },
+        { value: 4, label: 'Collaborative input', description: 'Gather perspectives and build team buy-in' },
+        { value: 5, label: 'Inclusive process', description: 'Ensure every voice is heard and valued in decisions' }
+      ]
+    },
+    {
+      id: 'ste_5',
+      text: 'How do you maintain team morale during difficult periods?',
+      type: 'multiple_choice',
+      area: 'Steady Leadership',
+      options: [
+        { value: 1, label: 'Focus on facts', description: 'Provide clear information and logical perspective' },
+        { value: 2, label: 'Steady reassurance', description: 'Offer consistent support and remind them of stability' },
+        { value: 3, label: 'Drive forward', description: 'Keep the team focused on goals and moving ahead' },
+        { value: 4, label: 'Positive outlook', description: 'Maintain optimism and help them see opportunities' },
+        { value: 5, label: 'Emotional support', description: 'Provide deep care and understanding for their struggles' }
+      ]
+    },
+    {
+      id: 'ste_6',
+      text: 'When giving feedback, what\'s your typical style?',
+      type: 'multiple_choice',
+      area: 'Steady Leadership',
+      options: [
+        { value: 1, label: 'Detailed and specific', description: 'Provide comprehensive, fact-based feedback' },
+        { value: 2, label: 'Gentle and supportive', description: 'Deliver feedback kindly with encouragement' },
+        { value: 3, label: 'Direct and clear', description: 'Give straightforward feedback focused on results' },
+        { value: 4, label: 'Encouraging and positive', description: 'Frame feedback in an uplifting, motivational way' },
+        { value: 5, label: 'Caring and personal', description: 'Consider their feelings deeply and provide nurturing guidance' }
+      ]
+    },
+    {
+      id: 'ste_7',
+      text: 'How do you handle changes that affect your team?',
+      type: 'multiple_choice',
+      area: 'Steady Leadership',
+      options: [
+        { value: 1, label: 'Thorough preparation', description: 'Research all aspects and prepare detailed implementation plans' },
+        { value: 2, label: 'Gradual transition', description: 'Implement changes slowly with lots of support and communication' },
+        { value: 3, label: 'Swift implementation', description: 'Move quickly to implement changes and adapt as needed' },
+        { value: 4, label: 'Positive framing', description: 'Help team see benefits and maintain enthusiasm' },
+        { value: 5, label: 'Comprehensive support', description: 'Provide extensive emotional and practical support throughout' }
+      ]
+    },
+
+    // Conscientious Leadership Questions (7 questions)
+    {
+      id: 'con_1',
+      text: 'How do you approach planning and organizing team work?',
+      type: 'multiple_choice',
+      area: 'Conscientious Leadership',
+      options: [
+        { value: 1, label: 'Flexible adaptation', description: 'Keep plans loose and adapt as situations change' },
+        { value: 2, label: 'Collaborative planning', description: 'Work with team to create plans everyone supports' },
+        { value: 3, label: 'Results-focused planning', description: 'Plan efficiently to achieve goals quickly' },
+        { value: 4, label: 'Structured organization', description: 'Create clear systems and organized approaches' },
+        { value: 5, label: 'Detailed systematization', description: 'Develop comprehensive, thorough planning systems' }
+      ]
+    },
+    {
+      id: 'con_2',
+      text: 'How do you ensure quality in your team\'s work?',
+      type: 'multiple_choice',
+      area: 'Conscientious Leadership',
+      options: [
+        { value: 1, label: 'Trust and flexibility', description: 'Trust team members to maintain their own quality standards' },
+        { value: 2, label: 'Supportive guidance', description: 'Provide gentle reminders and encouragement for quality' },
+        { value: 3, label: 'Results monitoring', description: 'Focus on end results and address quality issues as they arise' },
+        { value: 4, label: 'Regular quality checks', description: 'Implement systematic quality review processes' },
+        { value: 5, label: 'Detailed standards', description: 'Establish comprehensive quality standards and procedures' }
+      ]
+    },
+    {
+      id: 'con_3',
+      text: 'When problems arise, how do you investigate and solve them?',
+      type: 'multiple_choice',
+      area: 'Conscientious Leadership',
+      options: [
+        { value: 1, label: 'Quick solutions', description: 'Address problems quickly and move forward' },
+        { value: 2, label: 'Team collaboration', description: 'Work with team to understand and solve problems together' },
+        { value: 3, label: 'Direct action', description: 'Take immediate action to resolve issues efficiently' },
+        { value: 4, label: 'Systematic analysis', description: 'Gather information and analyze problems methodically' },
+        { value: 5, label: 'Thorough investigation', description: 'Conduct comprehensive analysis to understand root causes' }
+      ]
+    },
+    {
+      id: 'con_4',
+      text: 'How do you handle documentation and record-keeping?',
+      type: 'multiple_choice',
+      area: 'Conscientious Leadership',
+      options: [
+        { value: 1, label: 'Minimal documentation', description: 'Keep only essential records and focus on action' },
+        { value: 2, label: 'Basic record-keeping', description: 'Maintain necessary documentation with team input' },
+        { value: 3, label: 'Results-focused records', description: 'Document key outcomes and performance metrics' },
+        { value: 4, label: 'Organized documentation', description: 'Maintain systematic, well-organized records' },
+        { value: 5, label: 'Comprehensive records', description: 'Keep detailed, thorough documentation of all activities' }
+      ]
+    },
+    {
+      id: 'con_5',
+      text: 'How do you approach training and development for your team?',
+      type: 'multiple_choice',
+      area: 'Conscientious Leadership',
+      options: [
+        { value: 1, label: 'Learning by doing', description: 'Let team members learn through experience and practice' },
+        { value: 2, label: 'Supportive learning', description: 'Provide patient, encouraging learning environments' },
+        { value: 3, label: 'Goal-oriented training', description: 'Focus training on achieving specific performance targets' },
+        { value: 4, label: 'Structured programs', description: 'Develop organized, systematic training approaches' },
+        { value: 5, label: 'Comprehensive development', description: 'Create detailed, thorough development programs' }
+      ]
+    },
+    {
+      id: 'con_6',
+      text: 'When setting standards and procedures, what\'s your approach?',
+      type: 'multiple_choice',
+      area: 'Conscientious Leadership',
+      options: [
+        { value: 1, label: 'Flexible guidelines', description: 'Provide general direction and let team adapt as needed' },
+        { value: 2, label: 'Collaborative standards', description: 'Work with team to establish mutually agreed standards' },
+        { value: 3, label: 'Performance-based standards', description: 'Set standards that focus on achieving results' },
+        { value: 4, label: 'Clear procedures', description: 'Establish well-defined, systematic procedures' },
+        { value: 5, label: 'Detailed protocols', description: 'Create comprehensive, thorough procedural documentation' }
+      ]
+    },
+    {
+      id: 'con_7',
+      text: 'How do you monitor and evaluate team performance?',
+      type: 'multiple_choice',
+      area: 'Conscientious Leadership',
+      options: [
+        { value: 1, label: 'Informal observation', description: 'Monitor performance through casual observation and feedback' },
+        { value: 2, label: 'Regular check-ins', description: 'Have consistent, supportive conversations about performance' },
+        { value: 3, label: 'Results tracking', description: 'Focus on measuring and tracking key performance outcomes' },
+        { value: 4, label: 'Systematic evaluation', description: 'Use organized, consistent performance evaluation methods' },
+        { value: 5, label: 'Comprehensive assessment', description: 'Conduct thorough, detailed performance analysis and documentation' }
+      ]
+    },
+
+    // Situational Adaptation Questions (4 questions)
+    {
+      id: 'sit_1',
+      text: 'How well do you adjust your leadership style based on the situation?',
+      type: 'multiple_choice',
+      area: 'Situational Adaptation',
+      options: [
+        { value: 1, label: 'Rarely adjust', description: 'Use the same leadership approach in most situations' },
+        { value: 2, label: 'Sometimes adjust', description: 'Occasionally modify approach when clearly necessary' },
+        { value: 3, label: 'Regularly adjust', description: 'Often adapt leadership style based on circumstances' },
+        { value: 4, label: 'Frequently adjust', description: 'Consistently modify approach to match situations' },
+        { value: 5, label: 'Always adapt', description: 'Seamlessly adjust leadership style for optimal effectiveness' }
+      ]
+    },
+    {
+      id: 'sit_2',
+      text: 'When working with a new team member, how do you adapt your leadership?',
+      type: 'multiple_choice',
+      area: 'Situational Adaptation',
+      options: [
+        { value: 1, label: 'Standard approach', description: 'Use your normal leadership style regardless of experience' },
+        { value: 2, label: 'Slight modifications', description: 'Make minor adjustments to your usual approach' },
+        { value: 3, label: 'Moderate adaptation', description: 'Adjust your style somewhat based on their needs' },
+        { value: 4, label: 'Significant adaptation', description: 'Substantially modify your approach for new team members' },
+        { value: 5, label: 'Complete customization', description: 'Fully tailor your leadership to their experience and learning style' }
+      ]
+    },
+    {
+      id: 'sit_3',
+      text: 'How do you modify your communication style for different team members?',
+      type: 'multiple_choice',
+      area: 'Situational Adaptation',
+      options: [
+        { value: 1, label: 'Consistent style', description: 'Communicate the same way with everyone' },
+        { value: 2, label: 'Minor adjustments', description: 'Make small changes based on obvious differences' },
+        { value: 3, label: 'Moderate adaptation', description: 'Adjust communication style for different personalities' },
+        { value: 4, label: 'Significant customization', description: 'Substantially modify communication for each person' },
+        { value: 5, label: 'Complete personalization', description: 'Fully customize communication style for maximum effectiveness' }
+      ]
+    },
+    {
+      id: 'sit_4',
+      text: 'When facing different types of challenges, how do you vary your leadership approach?',
+      type: 'multiple_choice',
+      area: 'Situational Adaptation',
+      options: [
+        { value: 1, label: 'Same approach', description: 'Handle all challenges with your standard leadership style' },
+        { value: 2, label: 'Slight variations', description: 'Make minor adjustments for obviously different challenges' },
+        { value: 3, label: 'Moderate flexibility', description: 'Adapt approach based on the type of challenge' },
+        { value: 4, label: 'High flexibility', description: 'Significantly modify leadership based on challenge characteristics' },
+        { value: 5, label: 'Complete adaptability', description: 'Fully customize leadership approach for each unique challenge' }
+      ]
+    },
+
+    // Team Dynamics Understanding Questions (4 questions)
+    {
+      id: 'team_1',
+      text: 'How well do you understand the different personality types on your team?',
+      type: 'multiple_choice',
+      area: 'Team Dynamics Understanding',
+      options: [
+        { value: 1, label: 'Basic awareness', description: 'Notice obvious personality differences but don\'t analyze deeply' },
+        { value: 2, label: 'General understanding', description: 'Have a general sense of different personality types' },
+        { value: 3, label: 'Good insight', description: 'Understand most team members\' personality preferences' },
+        { value: 4, label: 'Strong understanding', description: 'Have detailed insight into each team member\'s personality' },
+        { value: 5, label: 'Expert insight', description: 'Deeply understand personality types and their implications for leadership' }
+      ]
+    },
+    {
+      id: 'team_2',
+      text: 'How effectively do you manage conflicts between different personality types?',
+      type: 'multiple_choice',
+      area: 'Team Dynamics Understanding',
+      options: [
+        { value: 1, label: 'Basic intervention', description: 'Address conflicts when they become obvious problems' },
+        { value: 2, label: 'Standard mediation', description: 'Use general conflict resolution approaches' },
+        { value: 3, label: 'Personality-aware resolution', description: 'Consider personality differences in conflict resolution' },
+        { value: 4, label: 'Tailored intervention', description: 'Customize conflict resolution based on personality types involved' },
+        { value: 5, label: 'Expert mediation', description: 'Expertly navigate conflicts using deep personality understanding' }
+      ]
+    },
+    {
+      id: 'team_3',
+      text: 'How do you leverage different personality strengths on your team?',
+      type: 'multiple_choice',
+      area: 'Team Dynamics Understanding',
+      options: [
+        { value: 1, label: 'Standard assignments', description: 'Assign tasks based on availability and basic skills' },
+        { value: 2, label: 'Skill-based assignments', description: 'Consider individual skills and preferences' },
+        { value: 3, label: 'Personality-aware assignments', description: 'Factor in personality strengths when assigning work' },
+        { value: 4, label: 'Strategic personality use', description: 'Strategically leverage personality strengths for team success' },
+        { value: 5, label: 'Expert optimization', description: 'Expertly optimize team performance using personality insights' }
+      ]
+    },
+    {
+      id: 'team_4',
+      text: 'How well do you help team members understand and work with each other\'s differences?',
+      type: 'multiple_choice',
+      area: 'Team Dynamics Understanding',
+      options: [
+        { value: 1, label: 'Minimal guidance', description: 'Let team members figure out how to work together' },
+        { value: 2, label: 'Basic facilitation', description: 'Provide general guidance on working together' },
+        { value: 3, label: 'Personality education', description: 'Help team understand basic personality differences' },
+        { value: 4, label: 'Active facilitation', description: 'Actively help team members appreciate and leverage differences' },
+        { value: 5, label: 'Expert development', description: 'Expertly develop team understanding and appreciation of personality diversity' }
+      ]
+    }
+  ]
+});
+
 const seedAssessments = async () => {
   try {
     await connectDB();
@@ -1733,7 +2231,8 @@ const seedAssessments = async () => {
       createServantLeadershipAssessment(),
       createEmotionalIntelligenceAssessment(),
       createStrategicThinkingAssessment(),
-      createCoachingPerformanceAssessment()
+      createCoachingPerformanceAssessment(),
+      createLeadershipStyleAdaptationAssessment()
     ];
 
     for (const templateData of templates) {

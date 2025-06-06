@@ -129,6 +129,13 @@ import ConflictAssessmentExerciseForm from '@/components/leadership/ConflictAsse
 import ProblemSolvingFrameworksForm from '@/components/leadership/ProblemSolvingFrameworksForm'
 import ConflictPreventionSystemForm from '@/components/leadership/ConflictPreventionSystemForm'
 import ConflictResolutionPhilosophyForm from '@/components/leadership/ConflictResolutionPhilosophyForm'
+import {
+  LeadershipStyleAssessmentForm,
+  TeamMemberDevelopmentForm,
+  InteractiveTrainingScenariosForm,
+  CommunicationStyleAdaptationForm,
+  SituationalLeadershipApplicationTestForm
+} from '@/components/Leadership/SituationalLeadershipForms'
 
 interface Task {
   id: string
@@ -454,8 +461,8 @@ export default function PlanTasks() {
     // For "The Art of Feedback" task, we save progress but don't mark as completed unless they have substantial content
     const isFeedbackTask = selectedTask.title === 'The Art of Feedback'
 
-    // Validate that evidence is provided for tasks that require it (except feedback task)
-    const requiresEvidence = !isFeedbackTask && ['reading', 'video', 'reflection', 'assessment'].includes(selectedTask.type)
+    // Validate that evidence is provided for tasks that require it (except feedback task and assessments)
+    const requiresEvidence = !isFeedbackTask && ['reading', 'video', 'reflection'].includes(selectedTask.type)
     if (requiresEvidence && !completionEvidence.trim()) {
       toast({
         title: 'Evidence Required',
@@ -666,6 +673,25 @@ export default function PlanTasks() {
 
         case 'The Art of Feedback':
           return 'Complete the form to practice the SBI feedback model with 3 real examples from your restaurant...'
+
+        // Situational Leadership Tasks
+        case 'Leadership Style & Adaptation Assessment':
+          return 'Based on your assessment results, describe your natural leadership style preferences (Dominant, Influential, Steady, Conscientious). What did you learn about your adaptation abilities? How will you use this knowledge to better lead your team members?'
+
+        case 'Introduction to Situational Leadership':
+          return 'Summarize the four leadership styles (Directing, Coaching, Supporting, Delegating) from the video. Give a specific example of when you would use each style with your restaurant team members.'
+
+        case 'Team Member Development Assessment':
+          return 'Document your assessment of 2-3 team members across different tasks. For each person, identify their competence and commitment levels, and explain which leadership style you should use with them and why.'
+
+        case 'Interactive Training Scenarios':
+          return 'Describe 2-3 scenarios you completed in the training module. What leadership style did you choose for each situation and why? What feedback did you receive, and how will you apply these lessons?'
+
+        case 'Situational Leadership Application Test':
+          return 'What was your score on the application test? Which scenarios were most challenging for you? Based on your results, what specific areas of situational leadership do you need to practice more?'
+
+        case 'Communication Style Adaptation Practice':
+          return 'Describe how you practiced adapting your communication style for different leadership situations. Give specific examples of how you would communicate differently when Directing vs. Coaching vs. Supporting vs. Delegating.'
       }
     }
 
@@ -755,6 +781,13 @@ export default function PlanTasks() {
 
         case 'Team Development Philosophy':
           return 'Team Development Philosophy Statement'
+
+        // Situational Leadership Tasks
+        case 'Leadership Style & Adaptation Assessment':
+          return 'Leadership Style Assessment Results'
+
+        case 'Situational Leadership Application Test':
+          return 'Situational Leadership Application Results'
       }
     }
 
@@ -871,6 +904,25 @@ export default function PlanTasks() {
 
         case 'Develop Your Restaurant\'s Why':
           return 'Create a clear "Why" statement for your restaurant that goes beyond making money. Define the purpose that drives your team and the impact you want to have on guests and the community. Test this with 2-3 team members to ensure it resonates.'
+
+        // Situational Leadership Tasks
+        case 'Leadership Style & Adaptation Assessment':
+          return 'Based on your assessment results, describe your natural leadership style preferences (Dominant, Influential, Steady, Conscientious). What did you learn about your adaptation abilities? How will you use this knowledge to better lead your team members?'
+
+        case 'Introduction to Situational Leadership':
+          return 'Summarize the four leadership styles (Directing, Coaching, Supporting, Delegating) from the video. Give a specific example of when you would use each style with your restaurant team members.'
+
+        case 'Team Member Development Assessment':
+          return 'Document your assessment of 2-3 team members across different tasks. For each person, identify their competence and commitment levels, and explain which leadership style you should use with them and why.'
+
+        case 'Interactive Training Scenarios':
+          return 'Describe 2-3 scenarios you completed in the training module. What leadership style did you choose for each situation and why? What feedback did you receive, and how will you apply these lessons?'
+
+        case 'Situational Leadership Application Test':
+          return 'What was your score on the application test? Which scenarios were most challenging for you? Based on your results, what specific areas of situational leadership do you need to practice more?'
+
+        case 'Communication Style Adaptation Practice':
+          return 'Describe how you practiced adapting your communication style for different leadership situations. Give specific examples of how you would communicate differently when Directing vs. Coaching vs. Supporting vs. Delegating.'
       }
     }
 
@@ -3982,7 +4034,7 @@ export default function PlanTasks() {
                 'Practice the SBI feedback model with real examples from your restaurant. You can save your progress and come back to add more examples later.' :
                 selectedTask && getCompletionPrompt(selectedTask.type, selectedTask.title)
               }
-              {selectedTask && selectedTask.title !== 'The Art of Feedback' && ['reading', 'video', 'reflection', 'assessment'].includes(selectedTask.type) && (
+              {selectedTask && selectedTask.title !== 'The Art of Feedback' && ['reading', 'video', 'reflection'].includes(selectedTask.type) && (
                 <div className="mt-2 p-2 bg-amber-50 border border-amber-200 rounded-md">
                   <div className="flex items-center gap-2 text-amber-800">
                     <AlertCircle className="h-4 w-4 flex-shrink-0" />
@@ -4514,6 +4566,42 @@ export default function PlanTasks() {
                     />
                   )}
 
+                  {/* Situational Leadership Forms */}
+                  {selectedTask.title === "Leadership Style & Adaptation Assessment" && (
+                    <LeadershipStyleAssessmentForm
+                      value={completionEvidence}
+                      onChange={setCompletionEvidence}
+                    />
+                  )}
+
+                  {selectedTask.title === "Team Member Development Assessment" && (
+                    <TeamMemberDevelopmentForm
+                      value={completionEvidence}
+                      onChange={setCompletionEvidence}
+                    />
+                  )}
+
+                  {selectedTask.title === "Interactive Training Scenarios" && (
+                    <InteractiveTrainingScenariosForm
+                      value={completionEvidence}
+                      onChange={setCompletionEvidence}
+                    />
+                  )}
+
+                  {selectedTask.title === "Communication Style Adaptation Practice" && (
+                    <CommunicationStyleAdaptationForm
+                      value={completionEvidence}
+                      onChange={setCompletionEvidence}
+                    />
+                  )}
+
+                  {selectedTask.title === "Situational Leadership Application Test" && (
+                    <SituationalLeadershipApplicationTestForm
+                      value={completionEvidence}
+                      onChange={setCompletionEvidence}
+                    />
+                  )}
+
                   {/* Default textarea for tasks without a custom form */}
                   {![
                     "Character vs. Capacity Reflection",
@@ -4585,7 +4673,12 @@ export default function PlanTasks() {
                     "Conflict Assessment Exercise",
                     "Problem-Solving Frameworks",
                     "Conflict Prevention System",
-                    "Conflict Resolution Philosophy"
+                    "Conflict Resolution Philosophy",
+                    "Leadership Style & Adaptation Assessment",
+                    "Team Member Development Assessment",
+                    "Interactive Training Scenarios",
+                    "Communication Style Adaptation Practice",
+                    "Situational Leadership Application Test"
                   ].includes(selectedTask.title) && (
                     <div className="space-y-2">
                       <div className="text-xs font-medium">

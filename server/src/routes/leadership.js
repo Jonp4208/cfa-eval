@@ -201,7 +201,8 @@ function getPlanTitle(planId) {
     'operational-excellence': 'Operational Excellence',
     'team-development': 'Team Development',
     'guest-experience-mastery': 'Guest Experience Mastery',
-    'strategic-leadership': 'Strategic Leadership Mastery'
+    'strategic-leadership': 'Strategic Leadership Mastery',
+    'situational-leadership': 'Situational Leadership Mastery'
   };
 
   return planTitles[planId] || 'Leadership Plan';
@@ -532,6 +533,12 @@ router.get('/plans', auth, async (req, res) => {
         id: 'emotional-intelligence',
         title: 'Emotional Intelligence Leader',
         description: 'Develop emotional intelligence to better understand yourself and others, build stronger relationships, and lead with empathy. This comprehensive 10-week plan focuses on self-awareness, social skills, and emotional regulation.',
+        isFree: false
+      },
+      {
+        id: 'situational-leadership',
+        title: 'Situational Leadership Mastery',
+        description: 'Master the art of adapting your leadership style to match the situation and development level of your team members. This comprehensive 12-week plan teaches you the four leadership styles and when to use each for maximum effectiveness.',
         isFree: false
       }
     ];
@@ -1500,6 +1507,57 @@ router.post('/plans/:planId/enroll', auth, checkSubscription, async (req, res) =
           estimatedTime: '30 minutes'
         }
       ];
+    } else if (planId === 'situational-leadership') {
+      learningTasks = [
+        {
+          id: 'sl-task-1',
+          type: 'assessment',
+          title: 'Leadership Style & Adaptation Assessment',
+          description: 'Complete our comprehensive 28-question assessment to discover your natural leadership style and adaptation abilities. This DISC-style assessment evaluates your preferences across Dominant, Influential, Steady, and Conscientious leadership approaches, plus your situational adaptation skills.',
+          resourceUrl: '/leadership/assessments',
+          estimatedTime: '25 minutes'
+        },
+        {
+          id: 'sl-task-2',
+          type: 'video',
+          title: 'Introduction to Situational Leadership',
+          description: 'Watch this comprehensive introduction to situational leadership. Learn the four leadership styles (Directing, Coaching, Supporting, Delegating) and how to match your approach to your team member\'s development level. Also includes book recommendations: "Leadership and the One Minute Manager" by Ken Blanchard.',
+          resourceUrl: 'https://www.youtube.com/watch?v=kSZbqA7lXtE',
+          estimatedTime: '25 minutes'
+        },
+        {
+          id: 'sl-task-3',
+          type: 'activity',
+          title: 'Team Member Development Assessment',
+          description: 'Use our Team Member Development Level Assessment tool to evaluate each of your team members across different tasks. Identify their competence and commitment levels to determine the appropriate leadership style for each situation.',
+          resourceUrl: '/leadership/situational-resources',
+          estimatedTime: '45 minutes'
+        },
+        {
+          id: 'sl-task-4',
+          type: 'activity',
+          title: 'Interactive Training Scenarios',
+          description: 'Complete all practice scenarios in our Situational Leadership Training module. Apply your knowledge to real restaurant situations and receive immediate feedback on your leadership style choices.',
+          resourceUrl: '/leadership/situational-training',
+          estimatedTime: '60 minutes'
+        },
+        {
+          id: 'sl-task-5',
+          type: 'assessment',
+          title: 'Situational Leadership Application Test',
+          description: 'Take our practical assessment that tests your ability to choose the right leadership style for different team member situations. This scenario-based test measures your real-world application skills.',
+          resourceUrl: '/leadership/situational-assessment',
+          estimatedTime: '15 minutes'
+        },
+        {
+          id: 'sl-task-6',
+          type: 'activity',
+          title: 'Communication Style Adaptation Practice',
+          description: 'Practice adapting your communication style using our downloadable scripts and templates. Focus on matching your communication approach to each leadership style and team member\'s development level.',
+          resourceUrl: '/leadership/situational-resources',
+          estimatedTime: '30 minutes'
+        }
+      ];
     }
 
     // Create enrollment with learning tasks
@@ -1603,6 +1661,12 @@ router.get('/my-plans', auth, async (req, res) => {
         id: 'emotional-intelligence',
         title: 'Emotional Intelligence Leader',
         description: 'Develop emotional intelligence to better understand yourself and others, build stronger relationships, and lead with empathy. This comprehensive 10-week plan focuses on self-awareness, social skills, and emotional regulation.',
+        isFree: false
+      },
+      {
+        id: 'situational-leadership',
+        title: 'Situational Leadership Mastery',
+        description: 'Master the art of adapting your leadership style to match the situation and development level of your team members. This comprehensive 12-week plan teaches you the four leadership styles and when to use each for maximum effectiveness.',
         isFree: false
       }
     ];
@@ -1774,7 +1838,7 @@ router.patch('/my-plans/:planId/tasks/:taskId', auth, async (req, res) => {
       // Special handling for "The Art of Feedback" task - allow saving progress without evidence
       const isFeedbackTask = taskTitle === 'The Art of Feedback';
 
-      if (['reading', 'video', 'reflection', 'assessment'].includes(taskType) && !evidence && !isFeedbackTask) {
+      if (['reading', 'video', 'reflection'].includes(taskType) && !evidence && !isFeedbackTask) {
         return res.status(400).json({
           message: `Evidence of completion is required for ${taskType} tasks`
         });
@@ -2186,6 +2250,57 @@ router.post('/my-plans/:planId/update-tasks', auth, async (req, res) => {
           title: 'Team Development Philosophy',
           description: 'Write a 1-page statement describing your philosophy on team development. Include your beliefs about how people learn and grow, your role as a developer of others, and the connection between team development and business results.',
           estimatedTime: '45 minutes'
+        }
+      ];
+    } else if (planId === 'situational-leadership') {
+      learningTasks = [
+        {
+          id: 'sl-task-1',
+          type: 'assessment',
+          title: 'Leadership Style & Adaptation Assessment',
+          description: 'Complete our comprehensive 28-question assessment to discover your natural leadership style and adaptation abilities. This DISC-style assessment evaluates your preferences across Dominant, Influential, Steady, and Conscientious leadership approaches, plus your situational adaptation skills.',
+          resourceUrl: '/leadership/assessments',
+          estimatedTime: '25 minutes'
+        },
+        {
+          id: 'sl-task-2',
+          type: 'video',
+          title: 'Introduction to Situational Leadership',
+          description: 'Watch this comprehensive introduction to situational leadership. Learn the four leadership styles (Directing, Coaching, Supporting, Delegating) and how to match your approach to your team member\'s development level. Also includes book recommendations: "Leadership and the One Minute Manager" by Ken Blanchard.',
+          resourceUrl: 'https://www.youtube.com/watch?v=kSZbqA7lXtE',
+          estimatedTime: '25 minutes'
+        },
+        {
+          id: 'sl-task-3',
+          type: 'activity',
+          title: 'Team Member Development Assessment',
+          description: 'Use our Team Member Development Level Assessment tool to evaluate each of your team members across different tasks. Identify their competence and commitment levels to determine the appropriate leadership style for each situation.',
+          resourceUrl: '/leadership/situational-resources',
+          estimatedTime: '45 minutes'
+        },
+        {
+          id: 'sl-task-4',
+          type: 'activity',
+          title: 'Interactive Training Scenarios',
+          description: 'Complete all practice scenarios in our Situational Leadership Training module. Apply your knowledge to real restaurant situations and receive immediate feedback on your leadership style choices.',
+          resourceUrl: '/leadership/situational-training',
+          estimatedTime: '60 minutes'
+        },
+        {
+          id: 'sl-task-5',
+          type: 'assessment',
+          title: 'Situational Leadership Application Test',
+          description: 'Take our practical assessment that tests your ability to choose the right leadership style for different team member situations. This scenario-based test measures your real-world application skills.',
+          resourceUrl: '/leadership/situational-assessment',
+          estimatedTime: '15 minutes'
+        },
+        {
+          id: 'sl-task-6',
+          type: 'activity',
+          title: 'Communication Style Adaptation Practice',
+          description: 'Practice adapting your communication style using our downloadable scripts and templates. Focus on matching your communication approach to each leadership style and team member\'s development level.',
+          resourceUrl: '/leadership/situational-resources',
+          estimatedTime: '30 minutes'
         }
       ];
     }

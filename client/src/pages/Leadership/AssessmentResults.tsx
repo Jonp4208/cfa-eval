@@ -277,6 +277,66 @@ const LEADERSHIP_PLANS: DevelopmentPlan[] = [
         status: 'not-started'
       }
     ]
+  },
+  {
+    id: 'situational-leadership',
+    title: 'Situational Leadership Mastery',
+    description: 'Master the art of adapting your leadership style to match the situation and development level of your team members.',
+    icon: Target,
+    skills: [
+      {
+        area: 'Situational Assessment',
+        currentLevel: 1,
+        targetLevel: 5,
+        developmentPlan: {
+          actions: [
+            'Learn to assess team member competence and commitment levels',
+            'Practice diagnosing readiness for different tasks and responsibilities',
+            'Develop skills in recognizing when leadership style changes are needed'
+          ],
+          resources: [
+            'Book: "Leadership and the One Minute Manager" by Ken Blanchard',
+            'Situational Leadership Assessment Tool',
+            'YouTube: "Situational Leadership Explained"'
+          ],
+          timeline: '3-weeks'
+        }
+      },
+      {
+        area: 'Leadership Style Flexibility',
+        currentLevel: 1,
+        targetLevel: 5,
+        developmentPlan: {
+          actions: [
+            'Master the four leadership styles: Directing, Coaching, Supporting, Delegating',
+            'Practice switching between styles based on team member needs',
+            'Develop comfort with all four leadership approaches'
+          ],
+          resources: [
+            'Situational Leadership Style Practice Scenarios',
+            'Leadership Style Self-Assessment Tool',
+            'Book: "The New One Minute Manager"'
+          ],
+          timeline: '4-weeks'
+        }
+      }
+    ],
+    activities: [
+      {
+        title: 'Situational Leadership Assessment',
+        type: 'assessment',
+        description: 'Complete a comprehensive assessment of your current situational leadership skills.',
+        timeline: '1 week',
+        status: 'not-started'
+      },
+      {
+        title: 'Leadership Style Practice Sessions',
+        type: 'training',
+        description: 'Practice each of the four leadership styles in controlled scenarios.',
+        timeline: '2 weeks',
+        status: 'not-started'
+      }
+    ]
   }
 ]
 
@@ -329,6 +389,16 @@ const getRecommendedPlan = (result: AssessmentResult): DevelopmentPlan | null =>
     'Service Orientation': ['heart-of-leadership', 'restaurant-culture-builder'],
     'Vision Sharing': ['strategic-leadership', 'communication-influence'],
     'Stewardship': ['heart-of-leadership', 'team-development'],
+
+    // Leadership Style & Adaptation Areas
+    'Dominant Leadership': ['situational-leadership', 'strategic-leadership'],
+    'Influential Leadership': ['situational-leadership', 'communication-influence'],
+    'Steady Leadership': ['situational-leadership', 'team-development'],
+    'Conscientious Leadership': ['situational-leadership', 'operational-excellence'],
+    'Situational Adaptation': ['situational-leadership', 'strategic-leadership'],
+    'Team Dynamics Understanding': ['situational-leadership', 'team-development'],
+    'Leadership Style Flexibility': ['situational-leadership', 'communication-influence'],
+    'Situational Assessment': ['situational-leadership', 'team-development'],
 
     // General Areas
     'Coaching': ['team-development', 'heart-of-leadership'],

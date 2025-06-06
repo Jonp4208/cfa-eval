@@ -1013,6 +1013,340 @@ const LEADERSHIP_PLANS = [
         status: 'not-started'
       }
     ],
+  },
+  {
+    id: 'situational-leadership',
+    title: 'Situational Leadership Mastery',
+    description: 'Master the art of adapting your leadership style to match the situation and development level of your team members. This comprehensive 12-week plan teaches you the four leadership styles and when to use each for maximum effectiveness.',
+    icon: Target,
+    skills: [
+      {
+        area: 'Situational Assessment',
+        currentLevel: 1,
+        targetLevel: 5,
+        developmentPlan: {
+          actions: [
+            'Learn to assess team member competence and commitment levels',
+            'Practice diagnosing readiness for different tasks and responsibilities',
+            'Develop skills in recognizing when leadership style changes are needed',
+            'Master the art of reading situational cues and team dynamics',
+            'Create assessment frameworks for different leadership scenarios'
+          ],
+          resources: [
+            'Book: "Leadership and the One Minute Manager" by Ken Blanchard (free at local library)',
+            'Situational Leadership Assessment Tool (free download)',
+            'YouTube: "Situational Leadership Explained" by Ken Blanchard Companies',
+            'Free webinar: "Diagnosing Development Levels" (Center for Creative Leadership)',
+            'Situational Leadership Quick Reference Guide (printable PDF)'
+          ],
+          timeline: '3-weeks'
+        }
+      },
+      {
+        area: 'Leadership Style Flexibility',
+        currentLevel: 1,
+        targetLevel: 5,
+        developmentPlan: {
+          actions: [
+            'Master the four leadership styles: Directing, Coaching, Supporting, Delegating',
+            'Practice switching between styles based on team member needs',
+            'Develop comfort with all four leadership approaches',
+            'Learn to communicate style changes clearly to team members',
+            'Build confidence in using non-preferred leadership styles'
+          ],
+          resources: [
+            'Situational Leadership Style Practice Scenarios (free download)',
+            'Leadership Style Self-Assessment Tool',
+            'Book: "The New One Minute Manager" by Ken Blanchard',
+            'Free online course: "Adaptive Leadership" (Coursera audit)',
+            'Leadership Style Quick Reference Cards (printable)'
+          ],
+          timeline: '4-weeks'
+        }
+      },
+      {
+        area: 'Communication Adaptation',
+        currentLevel: 1,
+        targetLevel: 5,
+        developmentPlan: {
+          actions: [
+            'Learn to match communication style to leadership approach',
+            'Practice directive communication for new or struggling team members',
+            'Develop coaching conversation skills for developing team members',
+            'Master supportive communication for competent but unmotivated individuals',
+            'Perfect delegating communication for high performers'
+          ],
+          resources: [
+            'Communication Style Guide for Each Leadership Approach',
+            'Free template: "Situational Communication Scripts"',
+            'Book: "Crucial Conversations" by Kerry Patterson (library)',
+            'YouTube: "Communication Styles for Leaders" playlist',
+            'Practice conversation starters for each leadership style'
+          ],
+          timeline: '3-weeks'
+        }
+      },
+      {
+        area: 'Performance Coaching Through Development Stages',
+        currentLevel: 1,
+        targetLevel: 5,
+        developmentPlan: {
+          actions: [
+            'Learn to move team members through the four development stages',
+            'Practice providing appropriate support for each development level',
+            'Develop skills in accelerating team member growth',
+            'Master the art of knowing when to increase or decrease support',
+            'Create individual development plans using situational leadership'
+          ],
+          resources: [
+            'Development Stage Assessment Worksheet',
+            'Free guide: "Coaching Through Development Levels"',
+            'Book: "The Coaching Habit" by Michael Bungay Stanier',
+            'Situational Coaching Conversation Templates',
+            'Team Member Development Tracking Sheet'
+          ],
+          timeline: '2-weeks'
+        }
+      }
+    ],
+    activities: [
+      {
+        title: 'Situational Leadership Assessment',
+        type: 'assessment',
+        description: 'Complete a comprehensive assessment of your current situational leadership skills.',
+        timeline: '1 week',
+        status: 'not-started'
+      },
+      {
+        title: 'Team Member Development Level Analysis',
+        type: 'development',
+        description: 'Assess each team member\'s development level for their key responsibilities.',
+        timeline: '1 week',
+        status: 'not-started'
+      },
+      {
+        title: 'Leadership Style Practice Sessions',
+        type: 'training',
+        description: 'Practice each of the four leadership styles in controlled scenarios.',
+        timeline: '2 weeks',
+        status: 'not-started'
+      },
+      {
+        title: 'Real-World Application Project',
+        type: 'assignment',
+        description: 'Apply situational leadership with different team members and document results.',
+        timeline: '4 weeks',
+        status: 'not-started'
+      },
+      {
+        title: 'Peer Leadership Style Exchange',
+        type: 'mentoring',
+        description: 'Partner with another leader to practice and provide feedback on style adaptation.',
+        timeline: '2 weeks',
+        status: 'not-started'
+      },
+      {
+        title: 'Team Dynamics Optimization',
+        type: 'assignment',
+        description: 'Use situational leadership to optimize your team\'s overall performance.',
+        timeline: '3 weeks',
+        status: 'not-started'
+      }
+    ],
+    learningPath: [
+      {
+        week: 1,
+        focus: 'Foundation & Assessment',
+        objectives: [
+          'Understand the four leadership styles',
+          'Learn the development level framework',
+          'Assess your current leadership flexibility',
+          'Evaluate your team members\' development levels'
+        ],
+        activities: [
+          'Read "Leadership and the One Minute Manager" chapters 1-3',
+          'Complete Situational Leadership self-assessment',
+          'Analyze your team using the development level framework',
+          'Identify your preferred and least comfortable leadership styles'
+        ]
+      },
+      {
+        week: 2,
+        focus: 'Directing Style Mastery',
+        objectives: [
+          'Master when and how to use the Directing style',
+          'Practice clear, specific instruction giving',
+          'Learn to provide structure for new team members',
+          'Develop comfort with close supervision'
+        ],
+        activities: [
+          'Practice directing conversations with role-play scenarios',
+          'Create clear instruction templates for common tasks',
+          'Implement directing style with appropriate team members',
+          'Document results and team member responses'
+        ]
+      },
+      {
+        week: 3,
+        focus: 'Coaching Style Development',
+        objectives: [
+          'Learn when and how to use the Coaching style',
+          'Practice explaining decisions and soliciting suggestions',
+          'Develop skills in two-way communication',
+          'Master the balance of direction and support'
+        ],
+        activities: [
+          'Practice coaching conversations using structured frameworks',
+          'Implement coaching approach with developing team members',
+          'Learn to ask powerful questions that promote growth',
+          'Practice giving feedback that builds competence and confidence'
+        ]
+      },
+      {
+        week: 4,
+        focus: 'Supporting Style Excellence',
+        objectives: [
+          'Master when and how to use the Supporting style',
+          'Practice facilitating problem-solving',
+          'Learn to provide encouragement and motivation',
+          'Develop skills in shared decision-making'
+        ],
+        activities: [
+          'Practice supporting conversations with competent but unmotivated team members',
+          'Learn to facilitate team member problem-solving',
+          'Implement shared decision-making processes',
+          'Focus on building confidence and motivation'
+        ]
+      },
+      {
+        week: 5,
+        focus: 'Delegating Style Mastery',
+        objectives: [
+          'Learn when and how to use the Delegating style',
+          'Practice turning over responsibility for decisions',
+          'Develop comfort with minimal supervision',
+          'Master the art of empowerment'
+        ],
+        activities: [
+          'Practice delegating conversations with high performers',
+          'Learn to set clear expectations while giving autonomy',
+          'Implement delegation with appropriate team members',
+          'Develop systems for monitoring without micromanaging'
+        ]
+      },
+      {
+        week: 6,
+        focus: 'Style Flexibility & Adaptation',
+        objectives: [
+          'Practice switching between styles fluidly',
+          'Learn to read situational cues quickly',
+          'Develop comfort with all four styles',
+          'Master explaining style changes to team members'
+        ],
+        activities: [
+          'Practice rapid style switching in scenario exercises',
+          'Implement different styles with the same person for different tasks',
+          'Learn to communicate why you\'re changing your approach',
+          'Get feedback from team members on your adaptability'
+        ]
+      },
+      {
+        week: 7,
+        focus: 'Communication Mastery',
+        objectives: [
+          'Match communication style to leadership approach',
+          'Practice clear, appropriate communication for each style',
+          'Learn to adjust tone and method based on situation',
+          'Develop scripts and frameworks for each style'
+        ],
+        activities: [
+          'Practice communication approaches for each leadership style',
+          'Develop personal communication templates',
+          'Record and review your communication effectiveness',
+          'Get feedback on communication clarity and appropriateness'
+        ]
+      },
+      {
+        week: 8,
+        focus: 'Development Stage Progression',
+        objectives: [
+          'Learn to move team members through development stages',
+          'Practice accelerating team member growth',
+          'Master knowing when to increase or decrease support',
+          'Develop individual progression plans'
+        ],
+        activities: [
+          'Create development progression plans for each team member',
+          'Practice moving team members to higher development levels',
+          'Learn to recognize readiness for increased responsibility',
+          'Implement systematic development tracking'
+        ]
+      },
+      {
+        week: 9,
+        focus: 'Advanced Situational Reading',
+        objectives: [
+          'Develop expertise in reading complex situations',
+          'Learn to assess multiple factors simultaneously',
+          'Master adapting to changing circumstances',
+          'Practice real-time style adjustment'
+        ],
+        activities: [
+          'Practice complex scenario analysis',
+          'Learn to factor in multiple situational variables',
+          'Implement real-time style adjustments',
+          'Develop intuitive situational assessment skills'
+        ]
+      },
+      {
+        week: 10,
+        focus: 'Team Optimization',
+        objectives: [
+          'Use situational leadership to optimize team performance',
+          'Balance individual and team needs',
+          'Create high-performing team dynamics',
+          'Master team-level situational leadership'
+        ],
+        activities: [
+          'Analyze and optimize overall team dynamics',
+          'Implement team-level situational leadership strategies',
+          'Balance different development levels within the team',
+          'Create systems for ongoing team optimization'
+        ]
+      },
+      {
+        week: 11,
+        focus: 'Advanced Applications',
+        objectives: [
+          'Apply situational leadership to complex challenges',
+          'Master crisis and change leadership',
+          'Develop expertise in difficult conversations',
+          'Practice advanced coaching techniques'
+        ],
+        activities: [
+          'Apply situational leadership to challenging situations',
+          'Practice crisis leadership using appropriate styles',
+          'Master difficult conversations using situational approaches',
+          'Implement advanced coaching and development techniques'
+        ]
+      },
+      {
+        week: 12,
+        focus: 'Mastery & Integration',
+        objectives: [
+          'Integrate all situational leadership skills',
+          'Develop personal leadership philosophy',
+          'Create systems for continuous improvement',
+          'Plan for ongoing development'
+        ],
+        activities: [
+          'Complete comprehensive situational leadership assessment',
+          'Create personal leadership development plan',
+          'Establish systems for ongoing skill refinement',
+          'Plan next steps in leadership development journey'
+        ]
+      }
+    ]
   }
 ];
 
