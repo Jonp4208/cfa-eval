@@ -424,11 +424,11 @@ export default function NewDocument() {
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-8">
                 <div className="space-y-4">
                   <div className="bg-blue-50 rounded-xl p-3 md:p-4 border border-blue-200">
-                    <div className="flex items-center gap-2 md:gap-3 mb-3">
-                      <div className="bg-blue-500 text-white p-1.5 md:p-2 rounded-lg">
+                    <div className="flex flex-col md:flex-row md:items-center gap-2 md:gap-3 mb-3">
+                      <div className="bg-blue-500 text-white p-1.5 md:p-2 rounded-lg mx-auto md:mx-0 w-fit">
                         <UserIcon className="h-4 w-4 md:h-5 md:w-5" />
                       </div>
-                      <div>
+                      <div className="text-center md:text-left">
                         <Label className="text-base md:text-lg font-semibold text-blue-900">
                           Select Employee <span className="text-red-500">*</span>
                         </Label>
@@ -465,11 +465,11 @@ export default function NewDocument() {
 
                 <div className="space-y-4">
                   <div className="bg-green-50 rounded-xl p-3 md:p-4 border border-green-200">
-                    <div className="flex items-center gap-2 md:gap-3 mb-3">
-                      <div className="bg-green-500 text-white p-1.5 md:p-2 rounded-lg">
+                    <div className="flex flex-col md:flex-row md:items-center gap-2 md:gap-3 mb-3">
+                      <div className="bg-green-500 text-white p-1.5 md:p-2 rounded-lg mx-auto md:mx-0 w-fit">
                         <Calendar className="h-4 w-4 md:h-5 md:w-5" />
                       </div>
-                      <div>
+                      <div className="text-center md:text-left">
                         <Label className="text-base md:text-lg font-semibold text-green-900">
                           Document Date <span className="text-red-500">*</span>
                         </Label>
@@ -489,11 +489,11 @@ export default function NewDocument() {
                 </div>
 
                 <div className="col-span-full space-y-4">
-                  <div className="flex items-center gap-2 md:gap-3 mb-4">
-                    <div className="bg-purple-500 text-white p-1.5 md:p-2 rounded-lg">
+                  <div className="flex flex-col md:flex-row md:items-center gap-2 md:gap-3 mb-4">
+                    <div className="bg-purple-500 text-white p-1.5 md:p-2 rounded-lg mx-auto md:mx-0 w-fit">
                       <Building className="h-4 w-4 md:h-5 md:w-5" />
                     </div>
-                    <div>
+                    <div className="text-center md:text-left">
                       <Label className="text-base md:text-lg font-semibold text-gray-900">
                         Document Category <span className="text-red-500">*</span>
                       </Label>
@@ -575,11 +575,11 @@ export default function NewDocument() {
 
                 {formData.category && (
                   <div className="col-span-full space-y-4">
-                    <div className="flex items-center gap-2 md:gap-3 mb-4">
-                      <div className="bg-indigo-500 text-white p-1.5 md:p-2 rounded-lg">
+                    <div className="flex flex-col md:flex-row md:items-center gap-2 md:gap-3 mb-4">
+                      <div className="bg-indigo-500 text-white p-1.5 md:p-2 rounded-lg mx-auto md:mx-0 w-fit">
                         <ClipboardList className="h-4 w-4 md:h-5 md:w-5" />
                       </div>
-                      <div>
+                      <div className="text-center md:text-left">
                         <Label className="text-base md:text-lg font-semibold text-gray-900">
                           Document Type <span className="text-red-500">*</span>
                         </Label>
@@ -790,11 +790,11 @@ export default function NewDocument() {
                 </div>
 
                 <div className="bg-blue-50 rounded-xl p-4 md:p-6 border border-blue-200">
-                  <div className="flex items-start gap-3 md:gap-4">
-                    <div className="bg-blue-500 text-white p-2 md:p-3 rounded-xl">
+                  <div className="flex flex-col md:flex-row md:items-start gap-3 md:gap-4">
+                    <div className="bg-blue-500 text-white p-2 md:p-3 rounded-xl mx-auto md:mx-0 w-fit">
                       <Users className="h-5 w-5 md:h-6 md:w-6" />
                     </div>
-                    <div className="flex-1">
+                    <div className="flex-1 text-center md:text-left">
                       <Label className="text-base md:text-lg font-semibold text-blue-900 mb-2 block">
                         Witnesses (Optional)
                       </Label>
@@ -806,7 +806,7 @@ export default function NewDocument() {
                         name="witnesses"
                         value={formData.witnesses}
                         onChange={handleInputChange}
-                        className="h-10 md:h-12 border-blue-300 focus:border-blue-500 focus:ring-blue-500 bg-white text-sm md:text-base"
+                        className="h-10 md:h-12 border-blue-300 focus:border-blue-500 focus:ring-blue-500 bg-white text-sm md:text-base text-left"
                         placeholder="Example: John Smith (Team Lead), Sarah Johnson (Customer present), Mike Davis (Shift Manager)"
                       />
                       <p className="text-xs text-blue-600 mt-2">Separate multiple names with commas</p>
@@ -815,16 +815,16 @@ export default function NewDocument() {
                 </div>
 
                 {(formData.category === 'Disciplinary' || formData.category === 'PIP') && (
-                  <div className="bg-orange-50 rounded-xl p-6 border border-orange-200">
-                    <div className="flex items-start gap-4">
-                      <div className="bg-orange-500 text-white p-3 rounded-xl">
-                        <ClipboardList className="h-6 w-6" />
+                  <div className="bg-orange-50 rounded-xl p-4 md:p-6 border border-orange-200">
+                    <div className="flex flex-col md:flex-row md:items-start gap-3 md:gap-4">
+                      <div className="bg-orange-500 text-white p-2 md:p-3 rounded-xl mx-auto md:mx-0 w-fit">
+                        <ClipboardList className="h-5 w-5 md:h-6 md:w-6" />
                       </div>
-                      <div className="flex-1">
-                        <Label className="text-lg font-semibold text-orange-900 mb-2 block">
+                      <div className="flex-1 text-center md:text-left">
+                        <Label className="text-base md:text-lg font-semibold text-orange-900 mb-2 block">
                           {formData.category === 'PIP' ? 'Initial Action/Context' : 'Action Taken'} <span className="text-red-500">*</span>
                         </Label>
-                        <p className="text-orange-700 mb-4">
+                        <p className="text-orange-700 mb-4 text-sm md:text-base">
                           {formData.category === 'PIP'
                             ? "Explain the background and initial steps taken before creating this PIP"
                             : "Explain what steps were taken to address the issue and any consequences for the employee"}
@@ -834,7 +834,7 @@ export default function NewDocument() {
                           name="actionTaken"
                           value={formData.actionTaken}
                           onChange={handleInputChange}
-                          className="min-h-[120px] border-orange-300 focus:border-orange-500 focus:ring-orange-500 bg-white"
+                          className="min-h-[120px] md:min-h-[150px] border-orange-300 focus:border-orange-500 focus:ring-orange-500 bg-white text-sm md:text-base text-left"
                           placeholder={formData.category === 'PIP'
                             ? "Example: Previous coaching sessions were conducted on [dates]. Employee was provided with additional training on [topics]. Despite these efforts, performance gaps persist in [areas]. This PIP is being implemented to provide structured support..."
                             : "Example: Employee was immediately counseled about the behavior. A verbal warning was issued and documented. Employee acknowledged understanding of expectations. Follow-up training scheduled for [date]..."}
@@ -867,11 +867,11 @@ export default function NewDocument() {
 
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-8">
                 <div className="bg-teal-50 rounded-xl p-4 md:p-6 border border-teal-200">
-                  <div className="flex items-center gap-2 md:gap-3 mb-4">
-                    <div className="bg-teal-500 text-white p-1.5 md:p-2 rounded-lg">
+                  <div className="flex flex-col md:flex-row md:items-center gap-2 md:gap-3 mb-4">
+                    <div className="bg-teal-500 text-white p-1.5 md:p-2 rounded-lg mx-auto md:mx-0 w-fit">
                       <Calendar className="h-4 w-4 md:h-5 md:w-5" />
                     </div>
-                    <div>
+                    <div className="text-center md:text-left">
                       <Label className="text-base md:text-lg font-semibold text-teal-900">
                         Follow-up Date
                       </Label>
@@ -889,11 +889,11 @@ export default function NewDocument() {
                 </div>
 
                 <div className="bg-indigo-50 rounded-xl p-4 md:p-6 border border-indigo-200">
-                  <div className="flex items-center gap-2 md:gap-3 mb-4">
-                    <div className="bg-indigo-500 text-white p-1.5 md:p-2 rounded-lg">
+                  <div className="flex flex-col md:flex-row md:items-center gap-2 md:gap-3 mb-4">
+                    <div className="bg-indigo-500 text-white p-1.5 md:p-2 rounded-lg mx-auto md:mx-0 w-fit">
                       <ClipboardList className="h-4 w-4 md:h-5 md:w-5" />
                     </div>
-                    <div>
+                    <div className="text-center md:text-left">
                       <Label className="text-base md:text-lg font-semibold text-indigo-900">
                         Follow-up Actions
                       </Label>
@@ -1059,12 +1059,12 @@ export default function NewDocument() {
 
                 <div className="space-y-4 md:space-y-6">
                   <div className="bg-blue-50 rounded-xl p-4 md:p-6 border border-blue-200">
-                    <div className="flex justify-between items-start mb-4">
-                      <div className="flex items-center gap-2 md:gap-3">
-                        <div className="bg-blue-500 text-white p-1.5 md:p-2 rounded-lg">
+                    <div className="flex flex-col md:flex-row md:justify-between md:items-start gap-3 md:gap-0 mb-4">
+                      <div className="flex flex-col md:flex-row md:items-center gap-2 md:gap-3">
+                        <div className="bg-blue-500 text-white p-1.5 md:p-2 rounded-lg mx-auto md:mx-0 w-fit">
                           <FileText className="h-4 w-4 md:h-5 md:w-5" />
                         </div>
-                        <div>
+                        <div className="text-center md:text-left">
                           <Label className="text-base md:text-lg font-semibold text-blue-900">
                             Supporting Document <span className="text-red-500">*</span>
                           </Label>
