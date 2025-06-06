@@ -135,7 +135,7 @@ import {
   InteractiveTrainingScenariosForm,
   CommunicationStyleAdaptationForm,
   SituationalLeadershipApplicationTestForm
-} from '@/components/Leadership/SituationalLeadershipForms'
+} from '@/components/leadership/SituationalLeadershipForms'
 
 interface Task {
   id: string

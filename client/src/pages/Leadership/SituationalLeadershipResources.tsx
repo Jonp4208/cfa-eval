@@ -29,9 +29,9 @@ import {
   Play
 } from 'lucide-react'
 import { useToast } from '@/components/ui/use-toast'
-import { InteractiveTeamAssessmentTool } from '@/components/Leadership/InteractiveAssessmentTool'
-import { InteractiveCommunicationGuide } from '@/components/Leadership/InteractiveCommunicationGuide'
-import { InteractiveQuickReference } from '@/components/Leadership/InteractiveQuickReference'
+import { InteractiveTeamAssessmentTool } from '@/components/leadership/InteractiveAssessmentTool'
+import { InteractiveCommunicationGuide } from '@/components/leadership/InteractiveCommunicationGuide'
+import { InteractiveQuickReference } from '@/components/leadership/InteractiveQuickReference'
 
 interface Resource {
   id: string
