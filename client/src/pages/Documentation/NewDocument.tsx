@@ -742,11 +742,11 @@ export default function NewDocument() {
             <CardContent className="p-4 md:p-8">
               <div className="space-y-4 md:space-y-6">
                 <div className="bg-purple-50 rounded-xl p-4 md:p-6 border border-purple-200">
-                  <div className="flex items-start gap-3 md:gap-4 mb-4">
-                    <div className="bg-purple-500 text-white p-2 md:p-3 rounded-xl">
+                  <div className="flex flex-col md:flex-row md:items-start gap-3 md:gap-4 mb-4">
+                    <div className="bg-purple-500 text-white p-2 md:p-3 rounded-xl mx-auto md:mx-0 w-fit">
                       <FileText className="h-5 w-5 md:h-6 md:w-6" />
                     </div>
-                    <div className="flex-1">
+                    <div className="flex-1 text-center md:text-left">
                       <Label className="text-base md:text-lg font-semibold text-purple-900 mb-2 block">
                         Description <span className="text-red-500">*</span>
                       </Label>
@@ -762,7 +762,7 @@ export default function NewDocument() {
                         name="description"
                         value={formData.description}
                         onChange={handleInputChange}
-                        className="min-h-[120px] md:min-h-[150px] border-purple-300 focus:border-purple-500 focus:ring-purple-500 bg-white text-sm md:text-base"
+                        className="min-h-[120px] md:min-h-[150px] border-purple-300 focus:border-purple-500 focus:ring-purple-500 bg-white text-sm md:text-base text-left"
                         placeholder={
                           formData.category === 'Disciplinary'
                             ? "Example: On [date] at approximately [time], [employee name] was observed [specific behavior/incident]. The incident occurred in [location] and was witnessed by [witnesses if any]. The employee [describe actions taken or not taken]. This behavior/incident [explain impact on operations, customers, or team]..."
@@ -776,11 +776,11 @@ export default function NewDocument() {
                   </div>
 
                   <div className="bg-purple-100 rounded-lg p-3 md:p-4">
-                    <div className="flex items-center gap-2 mb-2">
+                    <div className="flex items-center justify-center md:justify-start gap-2 mb-2">
                       <Lightbulb className="h-4 w-4 md:h-5 md:w-5 text-purple-600" />
                       <span className="font-medium text-purple-800 text-sm md:text-base">Writing Tips</span>
                     </div>
-                    <ul className="text-xs md:text-sm text-purple-700 space-y-1">
+                    <ul className="text-xs md:text-sm text-purple-700 space-y-1 text-center md:text-left">
                       <li>• Be specific and factual - avoid opinions or assumptions</li>
                       <li>• Include dates, times, and locations when relevant</li>
                       <li>• Describe the impact on operations, team, or customers</li>
