@@ -69,6 +69,7 @@ export default function DocumentationPage() {
     };
     documents: CombinedRecord[];
     disciplinaryCount: number;
+    pipCount: number;
     administrativeCount: number;
     latestDocument: CombinedRecord;
   }
@@ -129,7 +130,11 @@ export default function DocumentationPage() {
 
     // Apply category filter
     if (filter !== 'all') {
-      filtered = filtered.filter(doc => doc.category.toLowerCase() === filter);
+      if (filter === 'pip') {
+        filtered = filtered.filter(doc => doc.category.toLowerCase() === 'pip');
+      } else {
+        filtered = filtered.filter(doc => doc.category.toLowerCase() === filter);
+      }
     }
 
     // Apply employee filter if present
@@ -173,6 +178,7 @@ export default function DocumentationPage() {
           employee: doc.employee,
           documents: [],
           disciplinaryCount: 0,
+          pipCount: 0,
           administrativeCount: 0,
           latestDocument: doc
         });
@@ -184,6 +190,8 @@ export default function DocumentationPage() {
       // Update counts
       if (doc.category === 'Disciplinary') {
         employeeData.disciplinaryCount++;
+      } else if (doc.category === 'PIP') {
+        employeeData.pipCount++;
       } else {
         employeeData.administrativeCount++;
       }
@@ -222,6 +230,8 @@ export default function DocumentationPage() {
     switch (category) {
       case 'Disciplinary':
         return <AlertTriangle className="w-5 h-5 text-red-500" />;
+      case 'PIP':
+        return <TrendingUp className="w-5 h-5 text-orange-500" />;
       case 'Administrative':
         return <ClipboardList className="w-5 h-5 text-[#E51636]" />;
       default:
@@ -384,62 +394,76 @@ export default function DocumentationPage() {
         )}
 
         {/* Filters and Search */}
-        <Card className="border-0 shadow-xl bg-gradient-to-r from-white to-gray-50 overflow-hidden">
-          <CardContent className="p-6">
-            <div className="flex flex-col lg:flex-row gap-6">
+        <Card className="border border-gray-200 shadow-lg bg-white overflow-hidden">
+          <CardContent className="p-4 md:p-6">
+            <div className="space-y-4">
               {/* Search Section */}
-              <div className="flex-1">
-                <div className="relative">
-                  <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
-                    <Search className="h-5 w-5 text-gray-400" />
-                  </div>
-                  <Input
-                    type="text"
-                    placeholder="Search by employee name, document type, or description..."
-                    className="pl-12 h-12 border-gray-300 focus:border-[#E51636] focus:ring-[#E51636] bg-white text-base shadow-sm"
-                    value={searchQuery}
-                    onChange={(e) => setSearchQuery(e.target.value)}
-                  />
+              <div className="relative">
+                <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
+                  <Search className="h-5 w-5 text-gray-400" />
                 </div>
+                <Input
+                  type="text"
+                  placeholder="Search by employee name, document type, or description..."
+                  className="pl-12 h-12 border-gray-300 focus:border-[#E51636] focus:ring-[#E51636] bg-white text-base shadow-sm"
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                />
               </div>
 
               {/* Filter Buttons */}
-              <div className="flex gap-3">
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-2 md:gap-3">
                 <Button
                   variant={filter === 'all' ? 'default' : 'outline'}
-                  className={`h-12 px-6 transition-all duration-200 ${
+                  className={`h-10 md:h-12 px-3 md:px-6 transition-all duration-200 text-sm md:text-base ${
                     filter === 'all'
-                      ? 'bg-gradient-to-r from-[#E51636] to-[#DD0031] hover:from-[#DD0031] hover:to-[#C41E3A] text-white shadow-lg'
+                      ? 'bg-[#E51636] hover:bg-[#DD0031] text-white shadow-lg'
                       : 'border-gray-300 hover:border-[#E51636] hover:text-[#E51636] hover:bg-[#E51636]/5'
                   }`}
                   onClick={() => setFilter('all')}
                 >
-                  <Sparkles className="w-4 h-4 mr-2" />
-                  All Documents
+                  <Sparkles className="w-4 h-4 mr-1 md:mr-2" />
+                  <span className="hidden sm:inline">All Documents</span>
+                  <span className="sm:hidden">All</span>
                 </Button>
                 <Button
                   variant={filter === 'disciplinary' ? 'default' : 'outline'}
-                  className={`h-12 px-6 transition-all duration-200 ${
+                  className={`h-10 md:h-12 px-3 md:px-6 transition-all duration-200 text-sm md:text-base ${
                     filter === 'disciplinary'
-                      ? 'bg-gradient-to-r from-red-500 to-red-600 hover:from-red-600 hover:to-red-700 text-white shadow-lg'
+                      ? 'bg-red-500 hover:bg-red-600 text-white shadow-lg'
                       : 'border-gray-300 hover:border-red-500 hover:text-red-500 hover:bg-red-50'
                   }`}
                   onClick={() => setFilter('disciplinary')}
                 >
-                  <Shield className="w-4 h-4 mr-2" />
-                  Disciplinary
+                  <Shield className="w-4 h-4 mr-1 md:mr-2" />
+                  <span className="hidden sm:inline">Disciplinary</span>
+                  <span className="sm:hidden">Disc</span>
+                </Button>
+                <Button
+                  variant={filter === 'pip' ? 'default' : 'outline'}
+                  className={`h-10 md:h-12 px-3 md:px-6 transition-all duration-200 text-sm md:text-base ${
+                    filter === 'pip'
+                      ? 'bg-orange-500 hover:bg-orange-600 text-white shadow-lg'
+                      : 'border-gray-300 hover:border-orange-500 hover:text-orange-500 hover:bg-orange-50'
+                  }`}
+                  onClick={() => setFilter('pip')}
+                >
+                  <TrendingUp className="w-4 h-4 mr-1 md:mr-2" />
+                  <span className="hidden sm:inline">PIP</span>
+                  <span className="sm:hidden">PIP</span>
                 </Button>
                 <Button
                   variant={filter === 'administrative' ? 'default' : 'outline'}
-                  className={`h-12 px-6 transition-all duration-200 ${
+                  className={`h-10 md:h-12 px-3 md:px-6 transition-all duration-200 text-sm md:text-base ${
                     filter === 'administrative'
-                      ? 'bg-gradient-to-r from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700 text-white shadow-lg'
+                      ? 'bg-blue-500 hover:bg-blue-600 text-white shadow-lg'
                       : 'border-gray-300 hover:border-blue-500 hover:text-blue-500 hover:bg-blue-50'
                   }`}
                   onClick={() => setFilter('administrative')}
                 >
-                  <Archive className="w-4 h-4 mr-2" />
-                  Administrative
+                  <Archive className="w-4 h-4 mr-1 md:mr-2" />
+                  <span className="hidden sm:inline">Administrative</span>
+                  <span className="sm:hidden">Admin</span>
                 </Button>
               </div>
             </div>
@@ -513,6 +537,8 @@ export default function DocumentationPage() {
                           <div className={`p-2 md:p-3 rounded-xl shadow-sm ${
                             doc.category === 'Disciplinary'
                               ? 'bg-red-100 text-red-600'
+                              : doc.category === 'PIP'
+                              ? 'bg-orange-100 text-orange-600'
                               : 'bg-blue-100 text-blue-600'
                           }`}>
                             {getCategoryIcon(doc.category)}
@@ -520,7 +546,11 @@ export default function DocumentationPage() {
                           <div className="flex-1 min-w-0">
                             <div className="flex flex-col sm:flex-row sm:items-center gap-2 mb-2">
                               <h3 className={`text-base md:text-lg font-bold ${
-                                doc.category === 'Disciplinary' ? 'text-red-700' : 'text-blue-700'
+                                doc.category === 'Disciplinary'
+                                  ? 'text-red-700'
+                                  : doc.category === 'PIP'
+                                  ? 'text-orange-700'
+                                  : 'text-blue-700'
                               }`}>
                                 {doc.type}
                               </h3>
@@ -619,6 +649,14 @@ export default function DocumentationPage() {
                                 </span>
                               </div>
                             )}
+                            {employeeData.pipCount > 0 && (
+                              <div className="flex items-center gap-1.5 bg-orange-100 px-2.5 py-1 rounded-full">
+                                <TrendingUp className="w-3 h-3 text-orange-600" />
+                                <span className="text-xs font-medium text-orange-700">
+                                  {employeeData.pipCount} PIP
+                                </span>
+                              </div>
+                            )}
                             {employeeData.administrativeCount > 0 && (
                               <div className="flex items-center gap-1.5 bg-blue-100 px-2.5 py-1 rounded-full">
                                 <Archive className="w-3 h-3 text-blue-600" />
@@ -637,6 +675,8 @@ export default function DocumentationPage() {
                               <div className={`w-6 h-6 ${
                                 employeeData.latestDocument.category === 'Disciplinary'
                                   ? 'text-red-500'
+                                  : employeeData.latestDocument.category === 'PIP'
+                                  ? 'text-orange-500'
                                   : 'text-blue-500'
                               }`}>
                                 {getCategoryIcon(employeeData.latestDocument.category)}
@@ -648,7 +688,11 @@ export default function DocumentationPage() {
                             <div className="flex-1 min-w-0">
                               <div className="flex flex-col sm:flex-row sm:items-center gap-2 mb-2">
                                 <h4 className={`font-semibold text-base ${
-                                  employeeData.latestDocument.category === 'Disciplinary' ? 'text-red-700' : 'text-blue-700'
+                                  employeeData.latestDocument.category === 'Disciplinary'
+                                    ? 'text-red-700'
+                                    : employeeData.latestDocument.category === 'PIP'
+                                    ? 'text-orange-700'
+                                    : 'text-blue-700'
                                 } truncate`}>
                                   {employeeData.latestDocument.type}
                                 </h4>
