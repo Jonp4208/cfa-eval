@@ -13,6 +13,7 @@ import { updateUserMetrics, updateUser, toggleUserStatus } from '../controllers/
 import Evaluation from '../models/Evaluation.js';
 import GradingScale from '../models/GradingScale.js';
 import { sendEmail } from '../utils/email.js';
+import emailTemplates from '../utils/emailTemplates.js';
 import { uploadFileToS3, deleteFileFromS3 } from '../config/s3.js';
 import mongoose from 'mongoose';
 
@@ -269,40 +270,10 @@ router.post('/', auth, async (req, res) => {
     const user = new User(userData);
     await user.save();
 
-    // Send welcome email with the temporary password DO NOT CHANGE THIS
+    // Send welcome email with the temporary password
     try {
-      await sendEmail({
-        to: user.email,
-        subject: 'Welcome to CFA Evaluation App',
-        html: `
-          <div style="font-family: Arial, sans-serif; max-width: 800px; margin: 0 auto; padding: 20px;">
-            <div style="background-color: #E4002B; padding: 20px; border-radius: 8px; margin-bottom: 30px;">
-              <h1 style="color: white; margin: 0;">Welcome to LD Growth!</h1>
-            </div>
-
-            <div style="background-color: #f8f8f8; padding: 20px; border-radius: 8px; margin-bottom: 30px;">
-              <p>Hello ${user.name},</p>
-
-              <p>Welcome to LD-Growth. Your new home for Chick-fil-A ${req.user.store.name} development training and tasks. This is a beta web app created by Jonathon. If you have any issues or questions please reach out to me.</p>
-
-              <div style="background-color: #fff; padding: 15px; border-radius: 4px; margin: 20px 0;">
-                <p style="margin: 5px 0;"><strong>Access the site here:</strong> <a href="https://www.ld-growth.com" style="color: #E4002B;">www.ld-growth.com</a></p>
-                <p style="margin: 5px 0;"><strong>Email:</strong> ${user.email}</p>
-                <p style="margin: 5px 0;"><strong>Temporary Password:</strong> ${userData.password}</p>
-              </div>
-
-              <p>You will get your first evaluation soon.</p>
-
-              <p style="color: #E4002B; font-weight: bold;">Important Security Notice:</p>
-              <p>For your security, please change your password immediately upon first login.</p>
-            </div>
-
-            <div style="text-align: center; padding: 20px; color: #666;">
-              <p>Thank you and enjoy!<br>LD Growth Team</p>
-            </div>
-          </div>
-        `
-      });
+      const welcomeEmail = emailTemplates.welcomeNewUser(user, userData.password, req.user.store.name);
+      await sendEmail(welcomeEmail);
     } catch (emailError) {
       console.error('Failed to send welcome email:', emailError);
       // Continue with user creation even if email fails
@@ -573,38 +544,12 @@ router.post('/bulk-import', auth, upload.single('file'), async (req, res) => {
 
             // Send welcome email
             try {
-              await sendEmail({
-                to: userData.email, // Use the normalized lowercase email
-                subject: 'Welcome to LD Growth',
-                html: `
-                  <div style="font-family: Arial, sans-serif; max-width: 800px; margin: 0 auto; padding: 20px;">
-                    <div style="background-color: #E4002B; padding: 20px; border-radius: 8px; margin-bottom: 30px;">
-                      <h1 style="color: white; margin: 0;">Welcome to LD Growth!</h1>
-                    </div>
-
-                    <div style="background-color: #f8f8f8; padding: 20px; border-radius: 8px; margin-bottom: 30px;">
-                      <p>Hello ${row.name},</p>
-
-                      <p>Welcome to LD-Growth. Your new home for Chick-fil-A ${req.user.store.name || 'store'} development training and tasks. This is a beta web app created by Jonathon. If you have any issues or questions please reach out to me.</p>
-
-                      <div style="background-color: #fff; padding: 15px; border-radius: 4px; margin: 20px 0;">
-                        <p style="margin: 5px 0;"><strong>Access the site here:</strong> <a href="https://www.ld-growth.com" style="color: #E4002B;">www.ld-growth.com</a></p>
-                        <p style="margin: 5px 0;"><strong>Email:</strong> ${userData.email}</p>
-                        <p style="margin: 5px 0;"><strong>Temporary Password:</strong> ${password}</p>
-                      </div>
-
-                      <p>You will get your first evaluation soon.</p>
-
-                      <p style="color: #E4002B; font-weight: bold;">Important Security Notice:</p>
-                      <p>For your security, please change your password immediately upon first login.</p>
-                    </div>
-
-                    <div style="text-align: center; padding: 20px; color: #666;">
-                      <p>Thank you and enjoy!<br>LD Growth Team</p>
-                    </div>
-                  </div>
-                `
-              });
+              const welcomeEmail = emailTemplates.welcomeNewUser(
+                { name: row.name, email: userData.email },
+                password,
+                req.user.store.name || 'store'
+              );
+              await sendEmail(welcomeEmail);
             } catch (emailError) {
               console.error('Failed to send welcome email:', emailError);
               errors.push(`User ${userData.email} created but failed to send welcome email`);

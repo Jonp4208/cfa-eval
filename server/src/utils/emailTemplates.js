@@ -227,6 +227,170 @@ const emailTemplates = {
       </div>
     `,
   }),
+
+  welcomeNewUser: (user, password, storeName) => ({
+    subject: '🚀 Welcome to Your Leadership Journey - LD Growth',
+    html: `
+      <div style="font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; max-width: 700px; margin: 0 auto; background-color: #ffffff; border-radius: 12px; overflow: hidden; box-shadow: 0 10px 30px rgba(0,0,0,0.1);">
+
+        <!-- Hero Header with Gradient -->
+        <div style="background: linear-gradient(135deg, #E51636 0%, #B91429 50%, #8B0F1F 100%); padding: 40px 30px; text-align: center; position: relative; overflow: hidden;">
+          <!-- Decorative elements -->
+          <div style="position: absolute; top: -50px; right: -50px; width: 100px; height: 100px; background: rgba(255,255,255,0.1); border-radius: 50%; opacity: 0.3;"></div>
+          <div style="position: absolute; bottom: -30px; left: -30px; width: 60px; height: 60px; background: rgba(255,255,255,0.1); border-radius: 50%; opacity: 0.4;"></div>
+
+          <h1 style="color: white; margin: 0 0 10px 0; font-size: 32px; font-weight: 700; text-shadow: 0 2px 4px rgba(0,0,0,0.3);">
+            🎉 Welcome to LD Growth!
+          </h1>
+          <p style="color: rgba(255,255,255,0.95); margin: 0; font-size: 18px; font-weight: 400; line-height: 1.4;">
+            Your Leadership Journey Starts Today
+          </p>
+        </div>
+
+        <!-- Main Content -->
+        <div style="padding: 40px 30px;">
+
+          <!-- Personal Greeting -->
+          <div style="text-align: center; margin-bottom: 35px;">
+            <h2 style="color: #2D3748; margin: 0 0 15px 0; font-size: 24px; font-weight: 600;">
+              Hello ${user.name}! 👋
+            </h2>
+            <p style="color: #4A5568; margin: 0; font-size: 16px; line-height: 1.6;">
+              Get ready to take your leadership to the next level! You're about to embark on an incredible journey of growth, development, and transformation at <strong>${storeName}</strong>.
+            </p>
+          </div>
+
+          <!-- Inspirational Quote Box -->
+          <div style="background: linear-gradient(135deg, #F7FAFC 0%, #EDF2F7 100%); border-left: 4px solid #E51636; padding: 25px; margin: 30px 0; border-radius: 8px; position: relative;">
+            <div style="position: absolute; top: 15px; right: 20px; font-size: 40px; color: #E51636; opacity: 0.3;">"</div>
+            <p style="margin: 0; font-style: italic; color: #2D3748; font-size: 16px; line-height: 1.6; font-weight: 500;">
+              "Leadership is not about being in charge. It's about taking care of those in your charge."
+            </p>
+            <p style="margin: 10px 0 0 0; color: #718096; font-size: 14px; text-align: right;">
+              — Simon Sinek
+            </p>
+          </div>
+
+          <!-- Login Credentials Card -->
+          <div style="background: linear-gradient(135deg, #FFF5F5 0%, #FED7D7 20%, #FFF5F5 100%); border: 2px solid #E51636; border-radius: 12px; padding: 25px; margin: 30px 0; text-align: center; position: relative; overflow: hidden;">
+            <div style="position: absolute; top: -20px; right: -20px; width: 40px; height: 40px; background: rgba(229, 22, 54, 0.1); border-radius: 50%;"></div>
+            <div style="position: absolute; bottom: -15px; left: -15px; width: 30px; height: 30px; background: rgba(229, 22, 54, 0.1); border-radius: 50%;"></div>
+
+            <h3 style="color: #E51636; margin: 0 0 20px 0; font-size: 20px; font-weight: 600;">
+              🔑 Your Access Details
+            </h3>
+
+            <div style="background: white; border-radius: 8px; padding: 20px; margin: 15px 0; box-shadow: 0 2px 8px rgba(0,0,0,0.1);">
+              <div style="margin-bottom: 15px;">
+                <p style="margin: 0 0 5px 0; color: #4A5568; font-size: 14px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px;">Website</p>
+                <a href="https://www.ld-growth.com" style="color: #E51636; font-size: 18px; font-weight: 600; text-decoration: none; display: inline-block; padding: 8px 16px; background: rgba(229, 22, 54, 0.1); border-radius: 6px; transition: all 0.3s ease;">
+                  www.ld-growth.com
+                </a>
+              </div>
+
+              <div style="margin-bottom: 15px;">
+                <p style="margin: 0 0 5px 0; color: #4A5568; font-size: 14px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px;">Email</p>
+                <p style="margin: 0; color: #2D3748; font-size: 16px; font-weight: 500; background: #F7FAFC; padding: 8px 12px; border-radius: 6px; border: 1px solid #E2E8F0;">
+                  ${user.email}
+                </p>
+              </div>
+
+              <div>
+                <p style="margin: 0 0 5px 0; color: #4A5568; font-size: 14px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px;">Temporary Password</p>
+                <p style="margin: 0; color: #2D3748; font-size: 16px; font-weight: 600; background: #FFF5F5; padding: 12px; border-radius: 6px; border: 2px solid #E51636; font-family: 'Courier New', monospace; letter-spacing: 1px;">
+                  ${password}
+                </p>
+              </div>
+            </div>
+          </div>
+
+          <!-- Call to Action Button -->
+          <div style="text-align: center; margin: 35px 0;">
+            <a href="https://www.ld-growth.com" style="display: inline-block; background: linear-gradient(135deg, #E51636 0%, #B91429 100%); color: white; padding: 16px 32px; text-decoration: none; border-radius: 50px; font-size: 18px; font-weight: 600; box-shadow: 0 4px 15px rgba(229, 22, 54, 0.4); transition: all 0.3s ease; text-transform: uppercase; letter-spacing: 0.5px;">
+              🚀 Start Your Journey
+            </a>
+          </div>
+
+          <!-- What's Next Section -->
+          <div style="background: linear-gradient(135deg, #F0FFF4 0%, #C6F6D5 20%, #F0FFF4 100%); border-radius: 12px; padding: 25px; margin: 30px 0;">
+            <h3 style="color: #22543D; margin: 0 0 20px 0; font-size: 20px; font-weight: 600; text-align: center;">
+              🎯 What's Next?
+            </h3>
+
+            <div style="display: grid; gap: 15px;">
+              <div style="display: flex; align-items: flex-start; gap: 12px;">
+                <div style="background: #38A169; color: white; width: 24px; height: 24px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 12px; font-weight: bold; flex-shrink: 0; margin-top: 2px;">1</div>
+                <div>
+                  <p style="margin: 0; color: #22543D; font-weight: 600; font-size: 16px;">Log in and change your password</p>
+                  <p style="margin: 5px 0 0 0; color: #2F855A; font-size: 14px;">For your security, please update your password immediately after your first login.</p>
+                </div>
+              </div>
+
+              <div style="display: flex; align-items: flex-start; gap: 12px;">
+                <div style="background: #38A169; color: white; width: 24px; height: 24px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 12px; font-weight: bold; flex-shrink: 0; margin-top: 2px;">2</div>
+                <div>
+                  <p style="margin: 0; color: #22543D; font-weight: 600; font-size: 16px;">Explore your dashboard</p>
+                  <p style="margin: 5px 0 0 0; color: #2F855A; font-size: 14px;">Discover all the leadership development tools and resources available to you.</p>
+                </div>
+              </div>
+
+              <div style="display: flex; align-items: flex-start; gap: 12px;">
+                <div style="background: #38A169; color: white; width: 24px; height: 24px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 12px; font-weight: bold; flex-shrink: 0; margin-top: 2px;">3</div>
+                <div>
+                  <p style="margin: 0; color: #22543D; font-weight: 600; font-size: 16px;">Begin your first assessment</p>
+                  <p style="margin: 5px 0 0 0; color: #2F855A; font-size: 14px;">Start with a leadership style assessment to understand your unique strengths.</p>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Personal Message from Jonathon -->
+          <div style="background: linear-gradient(135deg, #EBF8FF 0%, #BEE3F8 20%, #EBF8FF 100%); border-radius: 12px; padding: 25px; margin: 30px 0; border-left: 4px solid #3182CE;">
+            <h3 style="color: #2B6CB0; margin: 0 0 15px 0; font-size: 18px; font-weight: 600;">
+              📧 A Personal Note from Jonathon
+            </h3>
+            <p style="margin: 0 0 15px 0; color: #2D3748; font-size: 16px; line-height: 1.6;">
+              Welcome to the LD Growth family! I'm thrilled you've joined us on this leadership development journey. With 15 years of leadership experience and 10 years at Chick-fil-A, I've designed this platform specifically for leaders like you who want to make a real difference.
+            </p>
+            <p style="margin: 0; color: #2D3748; font-size: 16px; line-height: 1.6;">
+              If you have any questions or need assistance getting started, don't hesitate to reach out. I'm here to support your growth every step of the way!
+            </p>
+
+            <div style="margin-top: 20px; padding-top: 15px; border-top: 1px solid #CBD5E0;">
+              <p style="margin: 0; color: #2B6CB0; font-weight: 600;">
+                Jonathon Pope<br>
+                <span style="font-weight: 400; color: #4A5568;">Founder, LD Growth</span><br>
+                <a href="mailto:Jonathon@LD-Growth.com" style="color: #E51636; text-decoration: none;">Jonathon@LD-Growth.com</a>
+              </p>
+            </div>
+          </div>
+
+          <!-- Security Notice -->
+          <div style="background: #FFF5F5; border: 1px solid #FEB2B2; border-radius: 8px; padding: 20px; margin: 25px 0;">
+            <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 10px;">
+              <span style="font-size: 20px;">🔒</span>
+              <h4 style="margin: 0; color: #C53030; font-size: 16px; font-weight: 600;">Important Security Notice</h4>
+            </div>
+            <p style="margin: 0; color: #742A2A; font-size: 14px; line-height: 1.5;">
+              For your security, please change your password immediately upon first login. Your temporary password is only meant for initial access.
+            </p>
+          </div>
+
+        </div>
+
+        <!-- Footer -->
+        <div style="background: #F7FAFC; padding: 25px 30px; text-align: center; border-top: 1px solid #E2E8F0;">
+          <p style="margin: 0 0 10px 0; color: #4A5568; font-size: 14px;">
+            Ready to unlock your leadership potential? Your journey begins now! 🌟
+          </p>
+          <p style="margin: 0; color: #718096; font-size: 12px;">
+            © 2024 LD Growth. Empowering leaders, one step at a time.
+          </p>
+        </div>
+
+      </div>
+    `,
+  }),
 };
 
 export default emailTemplates;

@@ -2,6 +2,7 @@ import { Store, User, StoreSubscription } from '../models/index.js';
 import bcrypt from 'bcrypt';
 import { setupNewStoreDefaults } from '../utils/setupNewStore.js';
 import { sendEmail } from '../utils/email.js';
+import emailTemplates from '../utils/emailTemplates.js';
 
 /**
  * Get all stores in the system
