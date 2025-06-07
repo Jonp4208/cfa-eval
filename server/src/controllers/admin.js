@@ -137,62 +137,8 @@ export const addStore = async (req, res) => {
 
     // Send welcome email to admin with login credentials
     try {
-      await sendEmail({
-        to: adminUser.email,
-        subject: 'Welcome to LD Growth - Your Admin Account',
-        html: `
-          <div style="font-family: Arial, sans-serif; max-width: 800px; margin: 0 auto; padding: 20px;">
-            <div style="background-color: #E4002B; padding: 20px; border-radius: 8px; margin-bottom: 30px;">
-              <h1 style="color: white; margin: 0;">Welcome to LD Growth!</h1>
-            </div>
-
-            <div style="background-color: #f8f8f8; padding: 20px; border-radius: 8px; margin-bottom: 30px;">
-              <h2 style="color: #333; margin-top: 0;">Hi ${adminUser.name},</h2>
-              <p>Your admin account for <strong>${store.name}</strong> (Store #${store.storeNumber}) has been created successfully!</p>
-
-              <div style="background-color: #e8f5e8; border: 1px solid #4caf50; border-radius: 8px; padding: 15px; margin: 20px 0;">
-                <h3 style="color: #2e7d32; margin-top: 0;">Store Information</h3>
-                <p style="margin: 5px 0;"><strong>Store Name:</strong> ${store.name}</p>
-                <p style="margin: 5px 0;"><strong>Store Number:</strong> ${store.storeNumber}</p>
-                <p style="margin: 5px 0;"><strong>Store Email:</strong> ${store.storeEmail}</p>
-              </div>
-
-              <p>Here are your login credentials:</p>
-
-              <div style="background-color: #fff; padding: 20px; border: 2px solid #E4002B; border-radius: 8px; margin: 20px 0;">
-                <h3 style="color: #E4002B; margin-top: 0;">Login Information</h3>
-                <p style="margin: 10px 0;"><strong>Website:</strong> <a href="https://www.ld-growth.com" style="color: #E4002B;">www.ld-growth.com</a></p>
-                <p style="margin: 10px 0;"><strong>Email:</strong> ${adminUser.email}</p>
-                <p style="margin: 10px 0;"><strong>Password:</strong> <code style="background-color: #f5f5f5; padding: 4px 8px; border-radius: 4px; font-family: monospace;">${generatedPassword}</code></p>
-              </div>
-
-              <div style="background-color: #fff3cd; border: 1px solid #ffeaa7; border-radius: 8px; padding: 15px; margin: 20px 0;">
-                <p style="margin: 0; color: #856404;"><strong>Important:</strong> For security reasons, please change your password after your first login.</p>
-              </div>
-
-              <p>As a store admin, you can:</p>
-              <ul style="color: #333;">
-                <li>Manage your team members and their evaluations</li>
-                <li>Create and track documentation</li>
-                <li>Set up training plans and development goals</li>
-                <li>Access analytics and reports</li>
-                <li>Configure store settings and preferences</li>
-              </ul>
-
-              <div style="margin: 30px 0; text-align: center;">
-                <a href="https://www.ld-growth.com" style="display: inline-block; background-color: #E4002B; color: white; padding: 15px 30px; text-decoration: none; border-radius: 8px; font-weight: 600; font-size: 16px;">Get Started Now</a>
-              </div>
-
-              <p>If you have any questions or need assistance getting started, please don't hesitate to reach out to our support team.</p>
-            </div>
-
-            <div style="text-align: center; color: #666; font-size: 12px; margin-top: 30px;">
-              <p>This is an automated message from LD Growth. Please do not reply to this email.</p>
-              <p>&copy; ${new Date().getFullYear()} LD Growth. All rights reserved.</p>
-            </div>
-          </div>
-        `
-      });
+      const adminWelcomeEmail = emailTemplates.welcomeStoreAdmin(adminUser, generatedPassword, store);
+      await sendEmail(adminWelcomeEmail);
       console.log(`✅ Welcome email sent to admin: ${adminUser.email}`);
     } catch (emailError) {
       console.error('❌ Failed to send admin welcome email:', emailError);

@@ -392,6 +392,201 @@ const emailTemplates = {
       </div>
     `,
   }),
+
+  welcomeStoreAdmin: (adminUser, password, store) => ({
+    to: adminUser.email,
+    subject: '🏪 Welcome to LD Growth - Your Store Admin Account',
+    html: `
+      <div style="font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; max-width: 700px; margin: 0 auto; background-color: #ffffff; border-radius: 12px; overflow: hidden; box-shadow: 0 10px 30px rgba(0,0,0,0.1);">
+
+        <!-- Hero Header with Gradient -->
+        <div style="background: linear-gradient(135deg, #E51636 0%, #B91429 50%, #8B0F1F 100%); padding: 40px 30px; text-align: center; position: relative; overflow: hidden;">
+          <!-- Decorative elements -->
+          <div style="position: absolute; top: -50px; right: -50px; width: 100px; height: 100px; background: rgba(255,255,255,0.1); border-radius: 50%; opacity: 0.3;"></div>
+          <div style="position: absolute; bottom: -30px; left: -30px; width: 60px; height: 60px; background: rgba(255,255,255,0.1); border-radius: 50%; opacity: 0.4;"></div>
+
+          <h1 style="color: white; margin: 0 0 10px 0; font-size: 32px; font-weight: 700; text-shadow: 0 2px 4px rgba(0,0,0,0.3);">
+            🏪 Welcome to LD Growth!
+          </h1>
+          <p style="color: rgba(255,255,255,0.95); margin: 0; font-size: 18px; font-weight: 400; line-height: 1.4;">
+            Your Store Admin Account is Ready
+          </p>
+        </div>
+
+        <!-- Main Content -->
+        <div style="padding: 40px 30px;">
+
+          <!-- Personal Greeting -->
+          <div style="text-align: center; margin-bottom: 35px;">
+            <h2 style="color: #2D3748; margin: 0 0 15px 0; font-size: 24px; font-weight: 600;">
+              Hello ${adminUser.name}! 👋
+            </h2>
+            <p style="color: #4A5568; margin: 0; font-size: 16px; line-height: 1.6;">
+              Congratulations! Your admin account for <strong>${store.name}</strong> has been created successfully. You're now ready to lead your team's development journey with LD Growth's powerful leadership tools.
+            </p>
+          </div>
+
+          <!-- Store Information Card -->
+          <div style="background: linear-gradient(135deg, #F0FFF4 0%, #C6F6D5 20%, #F0FFF4 100%); border: 2px solid #38A169; border-radius: 12px; padding: 25px; margin: 30px 0; text-align: center; position: relative; overflow: hidden;">
+            <div style="position: absolute; top: -20px; right: -20px; width: 40px; height: 40px; background: rgba(56, 161, 105, 0.1); border-radius: 50%;"></div>
+            <div style="position: absolute; bottom: -15px; left: -15px; width: 30px; height: 30px; background: rgba(56, 161, 105, 0.1); border-radius: 50%;"></div>
+
+            <h3 style="color: #22543D; margin: 0 0 20px 0; font-size: 20px; font-weight: 600;">
+              🏢 Your Store Information
+            </h3>
+
+            <div style="background: white; border-radius: 8px; padding: 20px; margin: 15px 0; box-shadow: 0 2px 8px rgba(0,0,0,0.1);">
+              <div style="margin-bottom: 15px;">
+                <p style="margin: 0 0 5px 0; color: #4A5568; font-size: 14px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px;">Store Name</p>
+                <p style="margin: 0; color: #2D3748; font-size: 18px; font-weight: 600; color: #22543D;">
+                  ${store.name}
+                </p>
+              </div>
+
+              <div style="margin-bottom: 15px;">
+                <p style="margin: 0 0 5px 0; color: #4A5568; font-size: 14px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px;">Store Number</p>
+                <p style="margin: 0; color: #2D3748; font-size: 16px; font-weight: 500; background: #F7FAFC; padding: 8px 12px; border-radius: 6px; border: 1px solid #E2E8F0;">
+                  #${store.storeNumber}
+                </p>
+              </div>
+
+              <div>
+                <p style="margin: 0 0 5px 0; color: #4A5568; font-size: 14px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px;">Store Email</p>
+                <p style="margin: 0; color: #2D3748; font-size: 16px; font-weight: 500; background: #F7FAFC; padding: 8px 12px; border-radius: 6px; border: 1px solid #E2E8F0;">
+                  ${store.storeEmail}
+                </p>
+              </div>
+            </div>
+          </div>
+
+          <!-- Login Credentials Card -->
+          <div style="background: linear-gradient(135deg, #FFF5F5 0%, #FED7D7 20%, #FFF5F5 100%); border: 2px solid #E51636; border-radius: 12px; padding: 25px; margin: 30px 0; text-align: center; position: relative; overflow: hidden;">
+            <div style="position: absolute; top: -20px; right: -20px; width: 40px; height: 40px; background: rgba(229, 22, 54, 0.1); border-radius: 50%;"></div>
+            <div style="position: absolute; bottom: -15px; left: -15px; width: 30px; height: 30px; background: rgba(229, 22, 54, 0.1); border-radius: 50%;"></div>
+
+            <h3 style="color: #E51636; margin: 0 0 20px 0; font-size: 20px; font-weight: 600;">
+              🔑 Your Admin Login Details
+            </h3>
+
+            <div style="background: white; border-radius: 8px; padding: 20px; margin: 15px 0; box-shadow: 0 2px 8px rgba(0,0,0,0.1);">
+              <div style="margin-bottom: 15px;">
+                <p style="margin: 0 0 5px 0; color: #4A5568; font-size: 14px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px;">Website</p>
+                <a href="https://www.ld-growth.com" style="color: #E51636; font-size: 18px; font-weight: 600; text-decoration: none; display: inline-block; padding: 8px 16px; background: rgba(229, 22, 54, 0.1); border-radius: 6px; transition: all 0.3s ease;">
+                  www.ld-growth.com
+                </a>
+              </div>
+
+              <div style="margin-bottom: 15px;">
+                <p style="margin: 0 0 5px 0; color: #4A5568; font-size: 14px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px;">Email</p>
+                <p style="margin: 0; color: #2D3748; font-size: 16px; font-weight: 500; background: #F7FAFC; padding: 8px 12px; border-radius: 6px; border: 1px solid #E2E8F0;">
+                  ${adminUser.email}
+                </p>
+              </div>
+
+              <div>
+                <p style="margin: 0 0 5px 0; color: #4A5568; font-size: 14px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px;">Temporary Password</p>
+                <p style="margin: 0; color: #2D3748; font-size: 16px; font-weight: 600; background: #FFF5F5; padding: 12px; border-radius: 6px; border: 2px solid #E51636; font-family: 'Courier New', monospace; letter-spacing: 1px;">
+                  ${password}
+                </p>
+              </div>
+            </div>
+          </div>
+
+          <!-- Call to Action Button -->
+          <div style="text-align: center; margin: 35px 0;">
+            <a href="https://www.ld-growth.com" style="display: inline-block; background: linear-gradient(135deg, #E51636 0%, #B91429 100%); color: white; padding: 16px 32px; text-decoration: none; border-radius: 50px; font-size: 18px; font-weight: 600; box-shadow: 0 4px 15px rgba(229, 22, 54, 0.4); transition: all 0.3s ease; text-transform: uppercase; letter-spacing: 0.5px;">
+              🚀 Access Your Admin Dashboard
+            </a>
+          </div>
+
+          <!-- Admin Powers Section -->
+          <div style="background: linear-gradient(135deg, #EBF8FF 0%, #BEE3F8 20%, #EBF8FF 100%); border-radius: 12px; padding: 25px; margin: 30px 0;">
+            <h3 style="color: #2B6CB0; margin: 0 0 20px 0; font-size: 20px; font-weight: 600; text-align: center;">
+              🎯 Your Admin Superpowers
+            </h3>
+
+            <div style="display: grid; gap: 15px;">
+              <div style="display: flex; align-items: flex-start; gap: 12px;">
+                <div style="background: #3182CE; color: white; width: 24px; height: 24px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 12px; font-weight: bold; flex-shrink: 0; margin-top: 2px;">👥</div>
+                <div>
+                  <p style="margin: 0; color: #2B6CB0; font-weight: 600; font-size: 16px;">Manage Your Team</p>
+                  <p style="margin: 5px 0 0 0; color: #4A5568; font-size: 14px;">Add team members, assign roles, and track their development progress.</p>
+                </div>
+              </div>
+
+              <div style="display: flex; align-items: flex-start; gap: 12px;">
+                <div style="background: #3182CE; color: white; width: 24px; height: 24px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 12px; font-weight: bold; flex-shrink: 0; margin-top: 2px;">📊</div>
+                <div>
+                  <p style="margin: 0; color: #2B6CB0; font-weight: 600; font-size: 16px;">Track Performance & Analytics</p>
+                  <p style="margin: 5px 0 0 0; color: #4A5568; font-size: 14px;">Access detailed reports and insights on your team's leadership growth.</p>
+                </div>
+              </div>
+
+              <div style="display: flex; align-items: flex-start; gap: 12px;">
+                <div style="background: #3182CE; color: white; width: 24px; height: 24px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 12px; font-weight: bold; flex-shrink: 0; margin-top: 2px;">📚</div>
+                <div>
+                  <p style="margin: 0; color: #2B6CB0; font-weight: 600; font-size: 16px;">Create Training Plans</p>
+                  <p style="margin: 5px 0 0 0; color: #4A5568; font-size: 14px;">Design custom development paths and assign leadership assessments.</p>
+                </div>
+              </div>
+
+              <div style="display: flex; align-items: flex-start; gap: 12px;">
+                <div style="background: #3182CE; color: white; width: 24px; height: 24px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 12px; font-weight: bold; flex-shrink: 0; margin-top: 2px;">⚙️</div>
+                <div>
+                  <p style="margin: 0; color: #2B6CB0; font-weight: 600; font-size: 16px;">Configure Store Settings</p>
+                  <p style="margin: 5px 0 0 0; color: #4A5568; font-size: 14px;">Customize your store's preferences and leadership development goals.</p>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Personal Message from Jonathon -->
+          <div style="background: linear-gradient(135deg, #FFFBEB 0%, #FEF3C7 20%, #FFFBEB 100%); border-radius: 12px; padding: 25px; margin: 30px 0; border-left: 4px solid #F59E0B;">
+            <h3 style="color: #92400E; margin: 0 0 15px 0; font-size: 18px; font-weight: 600;">
+              📧 A Personal Note from Jonathon
+            </h3>
+            <p style="margin: 0 0 15px 0; color: #2D3748; font-size: 16px; line-height: 1.6;">
+              Welcome to the LD Growth family! As a store admin, you're taking on a crucial role in developing the next generation of Chick-fil-A leaders. With 15 years of leadership experience and 10 years at Chick-fil-A, I've built this platform specifically for leaders like you who want to make a lasting impact.
+            </p>
+            <p style="margin: 0; color: #2D3748; font-size: 16px; line-height: 1.6;">
+              Your leadership will shape not just individual careers, but the entire culture of excellence at your store. I'm excited to support you on this journey!
+            </p>
+
+            <div style="margin-top: 20px; padding-top: 15px; border-top: 1px solid #FDE68A;">
+              <p style="margin: 0; color: #92400E; font-weight: 600;">
+                Jonathon Pope<br>
+                <span style="font-weight: 400; color: #4A5568;">Founder, LD Growth</span><br>
+                <a href="mailto:Jonathon@LD-Growth.com" style="color: #E51636; text-decoration: none;">Jonathon@LD-Growth.com</a>
+              </p>
+            </div>
+          </div>
+
+          <!-- Security Notice -->
+          <div style="background: #FFF5F5; border: 1px solid #FEB2B2; border-radius: 8px; padding: 20px; margin: 25px 0;">
+            <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 10px;">
+              <span style="font-size: 20px;">🔒</span>
+              <h4 style="margin: 0; color: #C53030; font-size: 16px; font-weight: 600;">Important Security Notice</h4>
+            </div>
+            <p style="margin: 0; color: #742A2A; font-size: 14px; line-height: 1.5;">
+              For your security, please change your password immediately upon first login. As an admin, you have access to sensitive team data - keeping your account secure is crucial.
+            </p>
+          </div>
+
+        </div>
+
+        <!-- Footer -->
+        <div style="background: #F7FAFC; padding: 25px 30px; text-align: center; border-top: 1px solid #E2E8F0;">
+          <p style="margin: 0 0 10px 0; color: #4A5568; font-size: 14px;">
+            Ready to lead your team to greatness? Your admin journey begins now! 🌟
+          </p>
+          <p style="margin: 0; color: #718096; font-size: 12px;">
+            © 2024 LD Growth. Empowering leaders, one store at a time.
+          </p>
+        </div>
+
+      </div>
+    `,
+  }),
 };
 
 export default emailTemplates;
