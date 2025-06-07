@@ -3,6 +3,7 @@ import { Card } from '@/components/ui/card'
 import { Skeleton } from '@/components/ui/skeleton'
 import { cn } from '@/lib/utils'
 import { formatUTCTimeDirectly } from '@/lib/utils/date-utils'
+import { CheckCircle2, Clock, User, Star, Zap, Trash2, Users } from 'lucide-react'
 
 interface Task {
   _id: string
@@ -25,12 +26,16 @@ interface TaskListProps {
 export function TaskList({ tasks, onComplete, onDelete, isLoading }: TaskListProps) {
   if (isLoading) {
     return (
-      <div className="space-y-3">
+      <div className="space-y-4">
         {[1, 2, 3, 4, 5].map((i) => (
-          <div key={i} className="bg-white/60 rounded-xl p-4 animate-pulse">
-            <div className="flex items-center gap-3">
-              <div className="h-5 w-5 rounded-sm bg-gray-200"></div>
-              <Skeleton className="h-5 w-3/4" />
+          <div key={i} className="bg-gradient-to-r from-white/60 to-white/40 backdrop-blur-sm rounded-2xl p-6 animate-pulse border border-white/20">
+            <div className="flex items-center gap-4">
+              <div className="h-6 w-6 rounded-lg bg-gray-200"></div>
+              <div className="flex-1">
+                <Skeleton className="h-5 w-3/4 mb-2" />
+                <Skeleton className="h-3 w-1/2" />
+              </div>
+              <div className="h-8 w-8 rounded-full bg-gray-200"></div>
             </div>
           </div>
         ))}
@@ -40,91 +45,134 @@ export function TaskList({ tasks, onComplete, onDelete, isLoading }: TaskListPro
 
   if (tasks.length === 0) {
     return (
-      <div className="text-center py-12 px-4">
-        <div className="inline-flex h-12 w-12 items-center justify-center rounded-full bg-gray-100 mb-4">
-          <svg className="h-6 w-6 text-gray-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
-          </svg>
+      <div className="text-center py-16 px-6">
+        <div className="inline-flex h-20 w-20 items-center justify-center rounded-3xl bg-gradient-to-br from-gray-100 to-gray-200 mb-6 shadow-lg">
+          <Users className="h-10 w-10 text-gray-500" />
         </div>
-        <h3 className="text-lg font-medium text-gray-900">No tasks found</h3>
-        <p className="mt-1 text-sm text-gray-500">
-          Click the Add Task button to create a new task for this shift.
+        <h3 className="text-xl font-bold text-gray-900 mb-2">Ready to Serve Excellence?</h3>
+        <p className="text-gray-600 mb-6 max-w-md mx-auto">
+          Your task list is empty. Click "Add Task" to create new service standards and start delivering exceptional experiences.
         </p>
+        <div className="inline-flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-[#E51636]/10 to-[#B91C3C]/10 rounded-full text-[#E51636] font-medium">
+          <Zap className="h-4 w-4" />
+          <span>Ready to add tasks</span>
+        </div>
       </div>
     )
   }
 
   return (
-    <div className="space-y-3">
-      {tasks.map((task) => {
+    <div className="space-y-4">
+      {tasks.map((task, index) => {
         const isCompleted = task.completed === true;
 
         return (
           <div
             key={task._id}
             className={cn(
-              'bg-white rounded-xl border transition-all duration-200 hover:shadow-md',
+              'group relative overflow-hidden rounded-2xl transition-all duration-500 hover:scale-[1.02] hover:shadow-xl',
               !task.isActive && 'opacity-60',
-              isCompleted ? 'border-green-200' : 'border-gray-200'
+              isCompleted
+                ? 'bg-gradient-to-r from-emerald-50 to-green-50 border-2 border-emerald-200/50'
+                : 'bg-gradient-to-r from-white to-gray-50/50 border-2 border-gray-200/50 hover:border-[#E51636]/20'
             )}
+            style={{
+              animationDelay: `${index * 100}ms`,
+              animation: 'fadeInUp 0.6s ease-out forwards'
+            }}
           >
-            <div className="p-4">
-              <div className="flex items-start justify-between gap-3">
-                <div className="flex items-start gap-3 flex-1">
-                  <div className="pt-0.5">
-                    <Checkbox
-                      id={task._id}
-                      checked={isCompleted}
-                      onCheckedChange={() => onComplete(task._id)}
-                      className={cn(
-                        'h-5 w-5 rounded-md transition-colors',
-                        isCompleted ? 'border-green-500 text-green-500' : 'border-gray-300'
-                      )}
-                    />
-                  </div>
-                  <div className="flex-1">
-                    <div className="flex flex-col">
-                      <label
-                        htmlFor={task._id}
-                        className={cn(
-                          'text-sm font-medium cursor-pointer',
-                          isCompleted ? 'text-green-700 line-through decoration-green-500/50' : 'text-gray-900'
-                        )}
-                      >
-                        {task.name}
-                      </label>
+            {/* Completion celebration effect */}
+            {isCompleted && (
+              <div className="absolute inset-0 bg-gradient-to-r from-emerald-400/10 to-green-400/10 animate-pulse" />
+            )}
 
+            <div className="relative p-6">
+              <div className="flex items-center gap-4">
+                {/* Custom Checkbox */}
+                <div className="relative">
+                  <input
+                    type="checkbox"
+                    id={task._id}
+                    checked={isCompleted}
+                    onChange={() => onComplete(task._id)}
+                    className="sr-only"
+                  />
+                  <label
+                    htmlFor={task._id}
+                    className={cn(
+                      'flex items-center justify-center w-7 h-7 rounded-xl cursor-pointer transition-all duration-300 transform hover:scale-110',
+                      isCompleted
+                        ? 'bg-gradient-to-br from-emerald-400 to-green-500 shadow-lg shadow-emerald-200'
+                        : 'bg-white border-2 border-gray-300 hover:border-[#E51636] shadow-sm'
+                    )}
+                  >
+                    {isCompleted && (
+                      <CheckCircle2 className="h-4 w-4 text-white animate-in zoom-in duration-300" />
+                    )}
+                  </label>
+                </div>
+
+                {/* Task Content */}
+                <div className="flex-1 min-w-0">
+                  <div className="flex items-start justify-between gap-3">
+                    <div className="flex-1">
+                      <h3 className={cn(
+                        'font-semibold text-base transition-all duration-300',
+                        isCompleted
+                          ? 'text-emerald-700 line-through decoration-emerald-400/60'
+                          : 'text-gray-900 group-hover:text-[#E51636]'
+                      )}>
+                        {task.name}
+                      </h3>
+
+                      {/* Completion Info */}
                       {isCompleted && task.completedBy && task.completedAt && (
-                        <div className="flex items-center gap-2 mt-1.5 text-xs text-gray-500">
-                          <svg className="h-3.5 w-3.5 text-green-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-                          </svg>
-                          <span>
-                            Completed by <span className="font-medium text-gray-700">{task.completedBy}</span> at {task.nyTimeString || '01:59 AM'}
-                          </span>
+                        <div className="flex items-center gap-2 mt-3 p-3 bg-emerald-50/50 rounded-xl border border-emerald-100">
+                          <div className="h-8 w-8 rounded-full bg-gradient-to-br from-emerald-400 to-green-500 flex items-center justify-center shadow-sm">
+                            <User className="h-4 w-4 text-white" />
+                          </div>
+                          <div className="flex-1 min-w-0">
+                            <p className="text-sm font-medium text-emerald-800">
+                              Completed by {task.completedBy}
+                            </p>
+                            <div className="flex items-center gap-1 text-xs text-emerald-600">
+                              <Clock className="h-3 w-3" />
+                              <span>{task.nyTimeString || '01:59 AM'}</span>
+                            </div>
+                          </div>
+                          <div className="flex items-center gap-1">
+                            <Star className="h-4 w-4 text-emerald-500" />
+                          </div>
                         </div>
                       )}
                     </div>
+
+                    {/* Delete Button */}
+                    {onDelete && (
+                      <button
+                        onClick={(e) => {
+                          e.preventDefault();
+                          e.stopPropagation();
+                          if (window.confirm('Are you sure you want to delete this task?')) {
+                            onDelete(task._id);
+                          }
+                        }}
+                        className="opacity-0 group-hover:opacity-100 transition-all duration-200 p-2 rounded-xl hover:bg-red-50 text-gray-400 hover:text-red-500"
+                        title="Delete task"
+                      >
+                        <Trash2 className="h-4 w-4" />
+                      </button>
+                    )}
                   </div>
                 </div>
 
-                {onDelete && (
-                  <button
-                    onClick={(e) => {
-                      e.preventDefault();
-                      e.stopPropagation();
-                      if (window.confirm('Are you sure you want to delete this task?')) {
-                        onDelete(task._id);
-                      }
-                    }}
-                    className="text-gray-400 hover:text-red-500 transition-colors p-1 rounded-full hover:bg-red-50"
-                    title="Delete task"
-                  >
-                    <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-                    </svg>
-                  </button>
-                )}
+                {/* Status Indicator */}
+                <div className={cn(
+                  'h-3 w-3 rounded-full transition-all duration-300',
+                  isCompleted
+                    ? 'bg-gradient-to-br from-emerald-400 to-green-500 shadow-lg shadow-emerald-200 animate-pulse'
+                    : 'bg-gray-300'
+                )} />
               </div>
             </div>
           </div>

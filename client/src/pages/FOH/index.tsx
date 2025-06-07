@@ -4,7 +4,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { Button } from '@/components/ui/button'
 import { Card } from '@/components/ui/card'
-import { History, Plus, ClipboardList } from 'lucide-react'
+import { History, Plus, ClipboardList, Sparkles, Award, Star, Users, TrendingUp, Clock, Sun, Moon, ArrowLeftRight } from 'lucide-react'
 import { useAuth } from '@/contexts/AuthContext'
 import { TaskList } from './TaskList'
 import { CreateTaskDialog } from './CreateTaskDialog'
@@ -14,6 +14,7 @@ import axios from 'axios'
 import api from '@/lib/axios'
 import { getTodayDateString, isNewDay } from '@/lib/utils/date-utils'
 import PageHeader, { headerButtonClass } from '@/components/PageHeader'
+import { cn } from '@/lib/utils'
 
 type ShiftType = 'opening' | 'transition' | 'closing'
 
@@ -47,8 +48,6 @@ export default function FOHPage() {
 
         // If it's a new day (past midnight), we should reset the checklist
         if (isNewDay(lastSavedDate)) {
-          console.log('New day detected, resetting FOH checklist')
-
           // Update localStorage with today's date BEFORE invalidating queries
           localStorage.setItem('foh-checklist-last-saved', today)
 
@@ -62,7 +61,7 @@ export default function FOHPage() {
           })
         }
       } catch (error) {
-        console.error('Error checking for FOH checklist reset:', error)
+        // Silent error handling for reset check
       }
     }
 
@@ -85,10 +84,7 @@ export default function FOHPage() {
       // Check if we have a valid token before making the request
       const token = localStorage.getItem('token')
       if (token) {
-        console.log('Polling for FOH tasks updates')
         queryClient.invalidateQueries({ queryKey: ['foh-tasks'] })
-      } else {
-        console.log('Skipping FOH tasks poll - no valid token')
       }
     }, 60000) // 60 seconds
 
@@ -98,14 +94,12 @@ export default function FOHPage() {
   const { data: tasks = [], isLoading } = useQuery({
     queryKey: ['foh-tasks', today],
     queryFn: async () => {
-      console.log('Fetching FOH tasks for date:', today)
       try {
         // Get the last saved date from localStorage
         const lastSavedDate = localStorage.getItem('foh-checklist-last-saved')
 
         // If it's a new day or we don't have a saved date, update it
         if (isNewDay(lastSavedDate)) {
-          console.log('New day detected during fetch, updating last saved date')
           localStorage.setItem('foh-checklist-last-saved', today)
         }
 
@@ -113,10 +107,8 @@ export default function FOHPage() {
         const response = await api.get('/api/foh/tasks', {
           params: { date: today }
         })
-        console.log('FOH tasks response:', response)
         return response.data as Task[]
       } catch (error) {
-        console.error('Error fetching FOH tasks:', error)
         throw error
       }
     },
@@ -125,14 +117,11 @@ export default function FOHPage() {
 
   const deleteTaskMutation = useMutation({
     mutationFn: async (taskId: string) => {
-      console.log('Deleting FOH task:', taskId)
       try {
         // Use the configured API instance
         const response = await api.delete(`/api/foh/tasks/${taskId}`)
-        console.log('Task deletion response:', response)
         return response.data
       } catch (error) {
-        console.error('Error deleting FOH task:', error)
         throw error
       }
     },
@@ -150,7 +139,6 @@ export default function FOHPage() {
         description: 'Failed to delete the task. Please try again.',
         variant: 'destructive'
       })
-      console.error('Error deleting task:', error)
     }
   })
 
@@ -160,8 +148,6 @@ export default function FOHPage() {
       const lastSavedDate = localStorage.getItem('foh-checklist-last-saved')
       if (isNewDay(lastSavedDate)) {
         // It's a new day, we should reset before proceeding
-        console.log('New day detected during task completion, resetting checklist')
-
         // Update localStorage with today's date BEFORE proceeding
         localStorage.setItem('foh-checklist-last-saved', today)
 
@@ -174,18 +160,14 @@ export default function FOHPage() {
 
       // If task is already completed, we're uncompleting it
       if (task?.completed) {
-        console.log('Uncompleting FOH task:', taskId)
-
         try {
           // Call the uncomplete endpoint using the configured API instance
           const response = await api.post(`/api/foh/tasks/${taskId}/uncomplete`, {
             date: today // Send the current date in New York timezone
           })
 
-          console.log('Task uncompletion response:', response)
           return { ...response.data, uncompleted: true }
         } catch (error) {
-          console.error('Error uncompleting FOH task:', error)
           toast({
             title: 'Error',
             description: 'Failed to uncomplete the task. Please try again.',
@@ -195,16 +177,13 @@ export default function FOHPage() {
         }
       }
 
-      console.log('Completing FOH task:', taskId)
       try {
         // Use the configured API instance
         const response = await api.post(`/api/foh/tasks/${taskId}/complete`, {
           date: today // Send the current date in New York timezone
         })
-        console.log('Task completion response:', response)
         return response.data
       } catch (error) {
-        console.error('Error completing FOH task:', error)
         throw error
       }
     },
@@ -245,7 +224,6 @@ export default function FOHPage() {
         description: 'Failed to update the task status. Please try again.',
         variant: 'destructive'
       })
-      console.error('Error updating task status:', error)
     }
   })
 
@@ -268,9 +246,95 @@ export default function FOHPage() {
   const closingTasks = Array.isArray(tasks) ? tasks.filter(task => task.shiftType === 'closing' && task.isActive).length : 0
   const closingCompleted = Array.isArray(tasks) ? tasks.filter(task => task.shiftType === 'closing' && task.isActive && task.completed).length : 0
 
+  // Get current time for dynamic greetings
+  const currentHour = new Date().getHours()
+  const getShiftGreeting = () => {
+    if (completionPercentage === 100) {
+      return activeTab === 'opening' ? 'Opening Complete! 🎉' :
+             activeTab === 'transition' ? 'Transition Complete! 🎉' :
+             'Closing Complete! 🎉'
+    }
+    if (activeTab === 'opening') return currentHour < 12 ? 'Good Morning, Team!' : 'Ready to Serve!'
+    if (activeTab === 'transition') return 'Smooth Transitions!'
+    return currentHour >= 18 ? 'Good Evening!' : 'Closing Strong!'
+  }
+
+  const getShiftEmoji = () => {
+    if (completionPercentage === 100) return '🏆'
+    if (activeTab === 'opening') return '🌅'
+    if (activeTab === 'transition') return '🔄'
+    return '🌙'
+  }
+
+  const getMotivationalMessage = () => {
+    if (completionPercentage === 100) return "Exceptional service! Your dedication to excellence shows in every detail."
+    if (completionPercentage >= 80) return "Outstanding progress! You're creating amazing guest experiences."
+    if (completionPercentage >= 50) return "Great momentum! Keep delivering that signature hospitality."
+    if (completionPercentage >= 25) return "Strong start! Every task brings us closer to excellence."
+    return "Ready to create memorable experiences? Let's make today amazing!"
+  }
+
+  // Circular progress component
+  const CircularProgress = ({ percentage, size = 120, strokeWidth = 8 }: { percentage: number, size?: number, strokeWidth?: number }) => {
+    const radius = (size - strokeWidth) / 2
+    const circumference = radius * 2 * Math.PI
+    const strokeDasharray = `${circumference} ${circumference}`
+    const strokeDashoffset = circumference - (percentage / 100) * circumference
+
+    return (
+      <div className="relative" style={{ width: size, height: size }}>
+        <svg
+          className="transform -rotate-90"
+          width={size}
+          height={size}
+        >
+          <circle
+            cx={size / 2}
+            cy={size / 2}
+            r={radius}
+            stroke="currentColor"
+            strokeWidth={strokeWidth}
+            fill="transparent"
+            className="text-gray-200"
+          />
+          <circle
+            cx={size / 2}
+            cy={size / 2}
+            r={radius}
+            stroke="currentColor"
+            strokeWidth={strokeWidth}
+            fill="transparent"
+            strokeDasharray={strokeDasharray}
+            strokeDashoffset={strokeDashoffset}
+            className={cn(
+              "transition-all duration-1000 ease-out",
+              percentage === 100 ? "text-emerald-500" : "text-[#E51636]"
+            )}
+            strokeLinecap="round"
+          />
+        </svg>
+        <div className="absolute inset-0 flex items-center justify-center">
+          <div className="text-center">
+            <div className={cn(
+              "text-2xl font-bold transition-colors duration-500",
+              percentage === 100 ? "text-emerald-600" : "text-[#E51636]"
+            )}>
+              {percentage}%
+            </div>
+            {percentage === 100 && (
+              <div className="flex justify-center mt-1">
+                <Award className="h-4 w-4 text-emerald-500 animate-pulse" />
+              </div>
+            )}
+          </div>
+        </div>
+      </div>
+    )
+  }
+
   return (
-    <div className="min-h-screen p-3 md:p-6">
-      <div className="max-w-7xl mx-auto space-y-4">
+    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50/30 to-indigo-50/20">
+      <div className="space-y-6 p-4 sm:p-6 max-w-7xl mx-auto">
         {/* Page Header */}
         <PageHeader
           title="FOH Tasks"
@@ -296,242 +360,276 @@ export default function FOHPage() {
           }
         />
 
-        {/* Quick Stats */}
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-          {/* Total Completion */}
-          <Card className="bg-white rounded-[16px] shadow-sm hover:shadow-md transition-all">
-            <div className="p-4">
-              <div className="flex items-start justify-between">
-                <div>
-                  <p className="text-[#27251F]/60 text-sm font-medium">Total Completion</p>
-                  <h3 className="text-xl font-bold mt-1 text-[#27251F]">{completionPercentage}%</h3>
-                  <p className="text-xs text-[#27251F]/60 mt-1">{completedTasks} of {totalTasks} tasks</p>
-                </div>
-                <div className="h-10 w-10 bg-[#E51636]/10 rounded-xl flex items-center justify-center">
-                  <svg className="h-5 w-5 text-[#E51636]" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-                  </svg>
-                </div>
-              </div>
-              <div className="mt-3 w-full bg-gray-200 rounded-full h-2">
-                <div
-                  className="bg-[#E51636] h-2 rounded-full"
-                  style={{ width: `${completionPercentage}%` }}
-                ></div>
-              </div>
+        {/* Hero Header */}
+        <div className="text-center mb-8">
+          <div className="inline-flex items-center gap-3 mb-4">
+            <div className={cn(
+              "h-12 w-12 rounded-2xl flex items-center justify-center shadow-lg transition-all duration-500",
+              completionPercentage === 100
+                ? "bg-gradient-to-br from-emerald-400 to-green-500 animate-float"
+                : "bg-gradient-to-br from-[#E51636] to-[#B91C3C]"
+            )}>
+              {completionPercentage === 100 ? (
+                <Award className="h-6 w-6 text-white" />
+              ) : (
+                <Users className="h-6 w-6 text-white" />
+              )}
             </div>
-          </Card>
+            <div>
+              <h1 className={cn(
+                "text-3xl sm:text-4xl font-bold bg-clip-text text-transparent transition-all duration-500",
+                completionPercentage === 100
+                  ? "bg-gradient-to-r from-emerald-500 to-green-600"
+                  : "bg-gradient-to-r from-[#E51636] to-[#B91C3C]"
+              )}>
+                FOH Excellence
+              </h1>
+              <p className="text-lg text-gray-600 font-medium">
+                {getShiftEmoji()} {getShiftGreeting()}
+              </p>
+              <p className="text-sm text-gray-500 mt-1">
+                {getMotivationalMessage()}
+              </p>
+            </div>
+          </div>
+        </div>
 
-          {/* Opening Tasks */}
-          <TooltipProvider>
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <Card 
-                  className={`bg-white rounded-[16px] shadow-sm hover:shadow-md transition-all cursor-pointer ${activeTab === 'opening' ? 'ring-2 ring-blue-500' : ''}`}
-                  onClick={() => setActiveTab('opening')}
-                >
-                  <div className="p-4">
-                    <div className="flex items-start justify-between">
-                      <div>
-                        <p className="text-[#27251F]/60 text-sm font-medium">Opening</p>
-                        <h3 className="text-xl font-bold mt-1 text-[#27251F]">
+        {/* Progress Dashboard */}
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8">
+          {/* Main Progress Card */}
+          <div className="lg:col-span-2">
+            <Card className={cn(
+              "bg-white/80 backdrop-blur-sm rounded-3xl shadow-xl border-0 overflow-hidden relative transition-all duration-500",
+              completionPercentage === 100 && "animate-glow"
+            )}>
+              {/* Celebration overlay */}
+              {completionPercentage === 100 && (
+                <div className="absolute inset-0 bg-gradient-to-r from-emerald-400/10 to-green-400/10 animate-pulse" />
+              )}
+
+              <div className={cn(
+                "p-6 sm:p-8 transition-all duration-500",
+                completionPercentage === 100
+                  ? "bg-gradient-to-r from-emerald-50/50 to-green-50/50"
+                  : "bg-gradient-to-r from-[#E51636]/5 to-[#B91C3C]/5"
+              )}>
+                <div className="flex flex-col sm:flex-row items-center gap-6">
+                  <div className="relative">
+                    <CircularProgress percentage={completionPercentage} />
+                    {completionPercentage === 100 && (
+                      <div className="absolute -top-2 -right-2">
+                        <div className="h-6 w-6 rounded-full bg-gradient-to-br from-yellow-400 to-orange-500 flex items-center justify-center animate-bounce">
+                          <Star className="h-3 w-3 text-white" />
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                  <div className="flex-1 text-center sm:text-left">
+                    <h3 className={cn(
+                      "text-2xl font-bold mb-2 transition-colors duration-500",
+                      completionPercentage === 100 ? "text-emerald-700" : "text-gray-900"
+                    )}>
+                      {completionPercentage === 100 ? 'Service Excellence!' : 'Keep Serving!'}
+                    </h3>
+                    <p className="text-gray-600 mb-4">
+                      {completedTasks} of {totalTasks} tasks completed
+                    </p>
+                    <div className="grid grid-cols-3 gap-3">
+                      <div className={cn(
+                        "rounded-2xl p-3 text-center transition-all duration-500",
+                        completionPercentage === 100
+                          ? "bg-emerald-100/60 border border-emerald-200"
+                          : "bg-white/60"
+                      )}>
+                        <div className={cn(
+                          "text-lg font-bold transition-colors duration-500",
+                          completionPercentage === 100 ? "text-emerald-600" : "text-blue-600"
+                        )}>
                           {openingCompleted}/{openingTasks}
-                        </h3>
-                        <p className="text-xs text-[#27251F]/60 mt-1">
-                          {openingTasks > 0 ? Math.round((openingCompleted / openingTasks) * 100) : 0}% complete
-                        </p>
+                        </div>
+                        <div className="text-xs text-gray-600">Opening</div>
                       </div>
-                      <div className={`h-10 w-10 rounded-xl flex items-center justify-center ${activeTab === 'opening' ? 'bg-blue-500 text-white' : 'bg-blue-100 text-blue-600'}`}>
-                        <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
-                        </svg>
-                      </div>
-                    </div>
-                  </div>
-                </Card>
-              </TooltipTrigger>
-              <TooltipContent>
-                <p>Click to view Opening tasks</p>
-              </TooltipContent>
-            </Tooltip>
-          </TooltipProvider>
-
-          {/* Transition Tasks */}
-          <TooltipProvider>
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <Card 
-                  className={`bg-white rounded-[16px] shadow-sm hover:shadow-md transition-all cursor-pointer ${activeTab === 'transition' ? 'ring-2 ring-yellow-500' : ''}`}
-                  onClick={() => setActiveTab('transition')}
-                >
-                  <div className="p-4">
-                    <div className="flex items-start justify-between">
-                      <div>
-                        <p className="text-[#27251F]/60 text-sm font-medium">Transition</p>
-                        <h3 className="text-xl font-bold mt-1 text-[#27251F]">
+                      <div className={cn(
+                        "rounded-2xl p-3 text-center transition-all duration-500",
+                        completionPercentage === 100
+                          ? "bg-emerald-100/60 border border-emerald-200"
+                          : "bg-white/60"
+                      )}>
+                        <div className={cn(
+                          "text-lg font-bold transition-colors duration-500",
+                          completionPercentage === 100 ? "text-emerald-600" : "text-yellow-600"
+                        )}>
                           {transitionCompleted}/{transitionTasks}
-                        </h3>
-                        <p className="text-xs text-[#27251F]/60 mt-1">
-                          {transitionTasks > 0 ? Math.round((transitionCompleted / transitionTasks) * 100) : 0}% complete
-                        </p>
+                        </div>
+                        <div className="text-xs text-gray-600">Transition</div>
                       </div>
-                      <div className={`h-10 w-10 rounded-xl flex items-center justify-center ${activeTab === 'transition' ? 'bg-yellow-500 text-white' : 'bg-yellow-100 text-yellow-600'}`}>
-                        <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4" />
-                        </svg>
-                      </div>
-                    </div>
-                  </div>
-                </Card>
-              </TooltipTrigger>
-              <TooltipContent>
-                <p>Click to view Transition tasks</p>
-              </TooltipContent>
-            </Tooltip>
-          </TooltipProvider>
-
-          {/* Closing Tasks */}
-          <TooltipProvider>
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <Card 
-                  className={`bg-white rounded-[16px] shadow-sm hover:shadow-md transition-all cursor-pointer ${activeTab === 'closing' ? 'ring-2 ring-purple-500' : ''}`}
-                  onClick={() => setActiveTab('closing')}
-                >
-                  <div className="p-4">
-                    <div className="flex items-start justify-between">
-                      <div>
-                        <p className="text-[#27251F]/60 text-sm font-medium">Closing</p>
-                        <h3 className="text-xl font-bold mt-1 text-[#27251F]">
+                      <div className={cn(
+                        "rounded-2xl p-3 text-center transition-all duration-500",
+                        completionPercentage === 100
+                          ? "bg-emerald-100/60 border border-emerald-200"
+                          : "bg-white/60"
+                      )}>
+                        <div className={cn(
+                          "text-lg font-bold transition-colors duration-500",
+                          completionPercentage === 100 ? "text-emerald-600" : "text-purple-600"
+                        )}>
                           {closingCompleted}/{closingTasks}
-                        </h3>
-                        <p className="text-xs text-[#27251F]/60 mt-1">
-                          {closingTasks > 0 ? Math.round((closingCompleted / closingTasks) * 100) : 0}% complete
-                        </p>
-                      </div>
-                      <div className={`h-10 w-10 rounded-xl flex items-center justify-center ${activeTab === 'closing' ? 'bg-purple-500 text-white' : 'bg-purple-100 text-purple-600'}`}>
-                        <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2" />
-                          <circle cx="12" cy="7" r="4" />
-                        </svg>
+                        </div>
+                        <div className="text-xs text-gray-600">Closing</div>
                       </div>
                     </div>
                   </div>
-                </Card>
-              </TooltipTrigger>
-              <TooltipContent>
-                <p>Click to view Closing tasks</p>
-              </TooltipContent>
-            </Tooltip>
-          </TooltipProvider>
+                </div>
+              </div>
+            </Card>
+          </div>
+
+          {/* Quick Actions */}
+          <div className="space-y-4">
+            <Card className="bg-gradient-to-br from-blue-500 to-blue-600 text-white rounded-3xl shadow-xl border-0 overflow-hidden">
+              <div className="p-6">
+                <div className="flex items-center gap-3 mb-4">
+                  <History className="h-6 w-6" />
+                  <h3 className="font-semibold">View History</h3>
+                </div>
+                <p className="text-blue-100 text-sm mb-4">
+                  Track your team's service excellence over time
+                </p>
+                <Button
+                  onClick={() => navigate('/foh/history')}
+                  className="w-full bg-white/20 hover:bg-white/30 border-0 rounded-xl transition-all duration-200"
+                >
+                  Open History
+                </Button>
+              </div>
+            </Card>
+
+            <Card className="bg-gradient-to-br from-purple-500 to-purple-600 text-white rounded-3xl shadow-xl border-0 overflow-hidden">
+              <div className="p-6">
+                <div className="flex items-center gap-3 mb-4">
+                  <Plus className="h-6 w-6" />
+                  <h3 className="font-semibold">Add Task</h3>
+                </div>
+                <p className="text-purple-100 text-sm mb-4">
+                  Create new tasks to enhance service
+                </p>
+                <Button
+                  onClick={() => setIsCreateDialogOpen(true)}
+                  className="w-full bg-white/20 hover:bg-white/30 border-0 rounded-xl transition-all duration-200"
+                >
+                  Create Task
+                </Button>
+              </div>
+            </Card>
+          </div>
         </div>
 
-        {/* Task Tabs */}
-        <Card className="bg-white rounded-[16px] shadow-sm overflow-hidden">
-        <div className="p-3 md:p-6">
-          <Tabs value={activeTab} onValueChange={(value) => setActiveTab(value as ShiftType)}>
-            {/* Mobile optimized tabs - visible only on small screens */}
-            <TabsList className="grid w-full grid-cols-3 bg-gray-100 p-0.5 rounded-xl md:hidden">
-              <TabsTrigger
-                value="opening"
-                className="rounded-lg data-[state=active]:bg-white data-[state=active]:text-[#E51636] data-[state=active]:shadow-sm px-1 py-1.5"
-              >
-                <div className="flex flex-col items-center">
-                  <div className="flex items-center">
-                    <div className="h-2.5 w-2.5 rounded-full bg-blue-500 mr-1"></div>
-                    <span className="text-xs">Opening</span>
+        {/* Shift Tabs */}
+        <Card className="bg-white/80 backdrop-blur-sm rounded-3xl shadow-xl border-0 overflow-hidden">
+          <div className="p-6 sm:p-8">
+            <Tabs value={activeTab} onValueChange={(value) => setActiveTab(value as ShiftType)}>
+              <TabsList className="grid w-full grid-cols-3 bg-gradient-to-r from-gray-100 to-gray-50 p-2 rounded-2xl shadow-inner">
+                <TabsTrigger
+                  value="opening"
+                  className={cn(
+                    "rounded-xl transition-all duration-300 font-medium",
+                    "data-[state=active]:bg-gradient-to-r data-[state=active]:from-orange-400 data-[state=active]:to-orange-500",
+                    "data-[state=active]:text-white data-[state=active]:shadow-lg",
+                    "hover:bg-white/50"
+                  )}
+                >
+                  <div className="flex items-center gap-2 py-2">
+                    <Sun className="h-5 w-5" />
+                    <span className="hidden sm:inline">Opening</span>
+                    <span className="sm:hidden">Open</span>
+                    <span className="ml-1 text-xs bg-white/20 px-1.5 py-0.5 rounded-full">
+                      {openingCompleted}/{openingTasks}
+                    </span>
                   </div>
-                  <span className="text-xs bg-gray-200 px-1 py-0.5 rounded-full mt-1">{openingCompleted}/{openingTasks}</span>
-                </div>
-              </TabsTrigger>
-              <TabsTrigger
-                value="transition"
-                className="rounded-lg data-[state=active]:bg-white data-[state=active]:text-[#E51636] data-[state=active]:shadow-sm px-1 py-1.5"
-              >
-                <div className="flex flex-col items-center">
-                  <div className="flex items-center">
-                    <div className="h-2.5 w-2.5 rounded-full bg-yellow-500 mr-1"></div>
-                    <span className="text-xs">Transition</span>
+                </TabsTrigger>
+                <TabsTrigger
+                  value="transition"
+                  className={cn(
+                    "rounded-xl transition-all duration-300 font-medium",
+                    "data-[state=active]:bg-gradient-to-r data-[state=active]:from-blue-400 data-[state=active]:to-blue-500",
+                    "data-[state=active]:text-white data-[state=active]:shadow-lg",
+                    "hover:bg-white/50"
+                  )}
+                >
+                  <div className="flex items-center gap-2 py-2">
+                    <ArrowLeftRight className="h-5 w-5" />
+                    <span className="hidden sm:inline">Transition</span>
+                    <span className="sm:hidden">Trans</span>
+                    <span className="ml-1 text-xs bg-white/20 px-1.5 py-0.5 rounded-full">
+                      {transitionCompleted}/{transitionTasks}
+                    </span>
                   </div>
-                  <span className="text-xs bg-gray-200 px-1 py-0.5 rounded-full mt-1">{transitionCompleted}/{transitionTasks}</span>
-                </div>
-              </TabsTrigger>
-              <TabsTrigger
-                value="closing"
-                className="rounded-lg data-[state=active]:bg-white data-[state=active]:text-[#E51636] data-[state=active]:shadow-sm px-1 py-1.5"
-              >
-                <div className="flex flex-col items-center">
-                  <div className="flex items-center">
-                    <div className="h-2.5 w-2.5 rounded-full bg-purple-500 mr-1"></div>
-                    <span className="text-xs">Closing</span>
+                </TabsTrigger>
+                <TabsTrigger
+                  value="closing"
+                  className={cn(
+                    "rounded-xl transition-all duration-300 font-medium",
+                    "data-[state=active]:bg-gradient-to-r data-[state=active]:from-indigo-400 data-[state=active]:to-purple-500",
+                    "data-[state=active]:text-white data-[state=active]:shadow-lg",
+                    "hover:bg-white/50"
+                  )}
+                >
+                  <div className="flex items-center gap-2 py-2">
+                    <Moon className="h-5 w-5" />
+                    <span className="hidden sm:inline">Closing</span>
+                    <span className="sm:hidden">Close</span>
+                    <span className="ml-1 text-xs bg-white/20 px-1.5 py-0.5 rounded-full">
+                      {closingCompleted}/{closingTasks}
+                    </span>
                   </div>
-                  <span className="text-xs bg-gray-200 px-1 py-0.5 rounded-full mt-1">{closingCompleted}/{closingTasks}</span>
-                </div>
-              </TabsTrigger>
-            </TabsList>
-            
-            {/* Desktop tabs - hidden on mobile screens */}
-            <TabsList className="hidden md:grid w-full grid-cols-3 bg-gray-100 p-1 rounded-xl">
-              <TabsTrigger
-                value="opening"
-                className="rounded-lg data-[state=active]:bg-white data-[state=active]:text-[#E51636] data-[state=active]:shadow-sm"
-              >
-                <div className="flex items-center gap-2">
-                  <div className="h-3 w-3 rounded-full bg-blue-500"></div>
-                  <span className="text-sm">Opening</span>
-                  <span className="ml-1 text-xs bg-gray-200 px-1.5 py-0.5 rounded-full">{openingCompleted}/{openingTasks}</span>
-                </div>
-              </TabsTrigger>
-              <TabsTrigger
-                value="transition"
-                className="rounded-lg data-[state=active]:bg-white data-[state=active]:text-[#E51636] data-[state=active]:shadow-sm"
-              >
-                <div className="flex items-center gap-2">
-                  <div className="h-3 w-3 rounded-full bg-yellow-500"></div>
-                  <span className="text-sm">Transition</span>
-                  <span className="ml-1 text-xs bg-gray-200 px-1.5 py-0.5 rounded-full">{transitionCompleted}/{transitionTasks}</span>
-                </div>
-              </TabsTrigger>
-              <TabsTrigger
-                value="closing"
-                className="rounded-lg data-[state=active]:bg-white data-[state=active]:text-[#E51636] data-[state=active]:shadow-sm"
-              >
-                <div className="flex items-center gap-2">
-                  <div className="h-3 w-3 rounded-full bg-purple-500"></div>
-                  <span className="text-sm">Closing</span>
-                  <span className="ml-1 text-xs bg-gray-200 px-1.5 py-0.5 rounded-full">{closingCompleted}/{closingTasks}</span>
-                </div>
-              </TabsTrigger>
-            </TabsList>
-            <div className="mt-4">
-              <TabsContent value="opening">
-                <TaskList
-                  tasks={filteredTasks}
-                  onComplete={completeTaskMutation.mutate}
-                  onDelete={deleteTaskMutation.mutate}
-                  isLoading={isLoading}
-                />
-              </TabsContent>
-              <TabsContent value="transition">
-                <TaskList
-                  tasks={filteredTasks}
-                  onComplete={completeTaskMutation.mutate}
-                  onDelete={deleteTaskMutation.mutate}
-                  isLoading={isLoading}
-                />
-              </TabsContent>
-              <TabsContent value="closing">
-                <TaskList
-                  tasks={filteredTasks}
-                  onComplete={completeTaskMutation.mutate}
-                  onDelete={deleteTaskMutation.mutate}
-                  isLoading={isLoading}
-                />
-              </TabsContent>
-            </div>
-          </Tabs>
-        </div>
-      </Card>
+                </TabsTrigger>
+              </TabsList>
+              <div className="mt-8">
+                {isLoading ? (
+                  <div className="flex items-center justify-center py-16">
+                    <div className="flex flex-col items-center gap-4 text-center">
+                      <div className="relative">
+                        <div className="h-16 w-16 rounded-full bg-gradient-to-r from-[#E51636] to-[#B91C3C] animate-pulse"></div>
+                        <TrendingUp className="h-8 w-8 text-white animate-bounce absolute inset-0 m-auto" />
+                      </div>
+                      <div>
+                        <h3 className="text-lg font-semibold text-gray-900 mb-1">Loading your tasks</h3>
+                        <p className="text-gray-600">Preparing your {activeTab} checklist...</p>
+                      </div>
+                    </div>
+                  </div>
+                ) : (
+                  <>
+                    <TabsContent value="opening">
+                      <TaskList
+                        tasks={filteredTasks}
+                        onComplete={completeTaskMutation.mutate}
+                        onDelete={deleteTaskMutation.mutate}
+                        isLoading={isLoading}
+                      />
+                    </TabsContent>
+                    <TabsContent value="transition">
+                      <TaskList
+                        tasks={filteredTasks}
+                        onComplete={completeTaskMutation.mutate}
+                        onDelete={deleteTaskMutation.mutate}
+                        isLoading={isLoading}
+                      />
+                    </TabsContent>
+                    <TabsContent value="closing">
+                      <TaskList
+                        tasks={filteredTasks}
+                        onComplete={completeTaskMutation.mutate}
+                        onDelete={deleteTaskMutation.mutate}
+                        isLoading={isLoading}
+                      />
+                    </TabsContent>
+                  </>
+                )}
+              </div>
+            </Tabs>
+          </div>
+        </Card>
 
         <CreateTaskDialog
           open={isCreateDialogOpen}
