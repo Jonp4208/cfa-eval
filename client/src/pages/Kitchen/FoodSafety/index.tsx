@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useSnackbar } from 'notistack';
 import { useAuth } from '@/contexts/AuthContext';
-import { Card, CardContent } from '@/components/ui/card';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import {
@@ -54,7 +54,25 @@ import {
   Sun,
   Moon,
   AlarmClock,
-  User
+  User,
+  Shield,
+  Target,
+  Zap,
+  Activity,
+  BarChart3,
+  RefreshCw,
+  ChevronRight,
+  Star,
+  Flame,
+  Snowflake,
+  Timer,
+  Award,
+  CheckCircle,
+  AlertCircle,
+  Info,
+  ArrowUp,
+  ArrowDown,
+  TrendingDown
 } from 'lucide-react';
 import { kitchenService, DailyChecklistItemWithCompletions as BaseDailyChecklistItemWithCompletions, DailyChecklistCompletion } from '@/services/kitchenService';
 import {
@@ -70,6 +88,76 @@ import {
 import { cn } from "@/lib/utils";
 import PageHeader from '@/components/PageHeader';
 import ChecklistDialog from './components/ChecklistDialog'
+
+// Enhanced progress ring component for beautiful visualizations
+const ProgressRing = ({
+  progress,
+  size = 120,
+  strokeWidth = 8,
+  color = "#E51636",
+  backgroundColor = "#F3F4F6",
+  showPercentage = true,
+  label,
+  animated = true
+}: {
+  progress: number;
+  size?: number;
+  strokeWidth?: number;
+  color?: string;
+  backgroundColor?: string;
+  showPercentage?: boolean;
+  label?: string;
+  animated?: boolean;
+}) => {
+  const radius = (size - strokeWidth) / 2;
+  const circumference = radius * 2 * Math.PI;
+  const strokeDasharray = `${circumference} ${circumference}`;
+  const strokeDashoffset = circumference - (progress / 100) * circumference;
+
+  return (
+    <div className="relative inline-flex items-center justify-center">
+      <svg
+        className={`transform -rotate-90 ${animated ? 'transition-all duration-1000 ease-out' : ''}`}
+        width={size}
+        height={size}
+      >
+        {/* Background circle */}
+        <circle
+          cx={size / 2}
+          cy={size / 2}
+          r={radius}
+          stroke={backgroundColor}
+          strokeWidth={strokeWidth}
+          fill="transparent"
+        />
+        {/* Progress circle */}
+        <circle
+          cx={size / 2}
+          cy={size / 2}
+          r={radius}
+          stroke={color}
+          strokeWidth={strokeWidth}
+          fill="transparent"
+          strokeDasharray={strokeDasharray}
+          strokeDashoffset={strokeDashoffset}
+          strokeLinecap="round"
+          className={animated ? 'transition-all duration-1000 ease-out' : ''}
+          style={{
+            filter: 'drop-shadow(0 0 6px rgba(229, 22, 54, 0.3))'
+          }}
+        />
+      </svg>
+      <div className="absolute inset-0 flex flex-col items-center justify-center">
+        {showPercentage && (
+          <span className="text-2xl font-bold text-[#27251F]">{Math.round(progress)}%</span>
+        )}
+        {label && (
+          <span className="text-xs text-[#27251F]/60 mt-1 text-center">{label}</span>
+        )}
+      </div>
+    </div>
+  );
+};
 
 interface TempRange {
   min: number
@@ -206,8 +294,9 @@ const FoodSafety: React.FC = () => {
   }, []);
 
   useEffect(() => {
-    // Auto-select the most relevant tab based on current time
-    const currentHour = new Date().getHours()
+    // Auto-select the most relevant tab based on current store time
+    const storeTime = getStoreTime();
+    const currentHour = storeTime.getHours();
 
     if (currentHour >= 5 && currentHour < 11) {
       setActiveTab('morning')
@@ -315,32 +404,16 @@ const FoodSafety: React.FC = () => {
     // Count items that should be completed but aren't
     let overdueCount = 0;
 
-    // Get current time to determine which timeframes should be completed
-    const now = new Date();
-    const currentHour = now.getHours();
+    // Get current store time to determine which timeframes should be completed
+    const storeTime = getStoreTime();
+    const currentHour = storeTime.getHours();
+    const currentMinutes = storeTime.getMinutes();
+    const currentTimeInMinutes = currentHour * 60 + currentMinutes;
 
-    // Define which timeframes should be completed based on current time
-    const requiredTimeframes: TimeFrame[] = [];
-
-    if (currentHour >= 11) { // After 11 AM
-      requiredTimeframes.push('morning');
-    }
-
-    if (currentHour >= 15) { // After 3 PM
-      requiredTimeframes.push('lunch');
-    }
-
-    if (currentHour >= 20) { // After 8 PM
-      requiredTimeframes.push('dinner');
-    }
-
-    // Count incomplete items that should be completed by now
+    // Count incomplete items that are past their deadline
     Object.values(dailyChecklistItems).forEach(categoryItems => {
       categoryItems.forEach(item => {
-        if (
-          requiredTimeframes.includes(item.timeframe as TimeFrame) &&
-          !item.isCompleted
-        ) {
+        if (!item.isCompleted && !canCompleteTask(item.timeframe || 'morning')) {
           overdueCount++;
         }
       });
@@ -359,6 +432,90 @@ const FoodSafety: React.FC = () => {
     } else {
       return 'morning';
     }
+  };
+
+  // Get current time in store's timezone (default to Eastern Time for CFA)
+  const getStoreTime = () => {
+    // For now, we'll use Eastern Time as default for CFA stores
+    // TODO: Get actual store timezone from store settings
+    const storeTimezone = user?.store?.timezone || 'America/New_York';
+
+    try {
+      const now = new Date();
+      const storeTime = new Date(now.toLocaleString('en-US', { timeZone: storeTimezone }));
+      return storeTime;
+    } catch (error) {
+      console.warn('Error getting store time, falling back to local time:', error);
+      return new Date();
+    }
+  };
+
+  // Check if a task can still be completed based on time window
+  const canCompleteTask = (timeframe: string): boolean => {
+    const storeTime = getStoreTime();
+    const currentHour = storeTime.getHours();
+    const currentMinutes = storeTime.getMinutes();
+    const currentTimeInMinutes = currentHour * 60 + currentMinutes;
+
+    switch (timeframe) {
+      case 'morning':
+        // Morning tasks must be completed by 10:30 AM (630 minutes)
+        return currentTimeInMinutes <= 630; // 10:30 AM = 10*60 + 30 = 630 minutes
+      case 'lunch':
+        // Lunch tasks can be started at 10:00 AM and must be completed by 2:00 PM
+        return currentTimeInMinutes >= 600 && currentTimeInMinutes <= 840; // 10:00 AM to 2:00 PM
+      case 'dinner':
+        // Dinner tasks can be started at 1:00 PM and must be completed by 8:00 PM
+        return currentTimeInMinutes >= 780 && currentTimeInMinutes <= 1200; // 1:00 PM to 8:00 PM
+      case '30min':
+      case 'hourly':
+        // These can be completed anytime during operating hours (5 AM - 11 PM)
+        return currentTimeInMinutes >= 300 && currentTimeInMinutes <= 1380; // 5:00 AM to 11:00 PM
+      default:
+        return true;
+    }
+  };
+
+  // Get the reason why a task cannot be completed
+  const getTaskRestrictionReason = (timeframe: string): string => {
+    const storeTime = getStoreTime();
+    const currentHour = storeTime.getHours();
+    const currentMinutes = storeTime.getMinutes();
+    const currentTimeInMinutes = currentHour * 60 + currentMinutes;
+
+    switch (timeframe) {
+      case 'morning':
+        if (currentTimeInMinutes > 630) {
+          return 'Morning tasks must be completed by 10:30 AM';
+        }
+        break;
+      case 'lunch':
+        if (currentTimeInMinutes < 600) {
+          return 'Lunch tasks cannot be started before 10:00 AM';
+        }
+        if (currentTimeInMinutes > 840) {
+          return 'Lunch tasks must be completed by 2:00 PM';
+        }
+        break;
+      case 'dinner':
+        if (currentTimeInMinutes < 780) {
+          return 'Dinner tasks cannot be started before 1:00 PM';
+        }
+        if (currentTimeInMinutes > 1200) {
+          return 'Dinner tasks must be completed by 8:00 PM';
+        }
+        break;
+      case '30min':
+      case 'hourly':
+        if (currentTimeInMinutes < 300) {
+          return 'Tasks cannot be started before 5:00 AM';
+        }
+        if (currentTimeInMinutes > 1380) {
+          return 'Tasks must be completed by 11:00 PM';
+        }
+        break;
+    }
+    return '';
   };
 
   const handleCreateChecklist = async (data: any) => {
@@ -781,8 +938,227 @@ const FoodSafety: React.FC = () => {
     // Implementation here
   };
 
+  // Get current time context for smart UI using store timezone
+  const getCurrentTimeContext = () => {
+    const storeTime = getStoreTime();
+    const hour = storeTime.getHours();
+    if (hour >= 5 && hour < 11) return { period: 'morning', icon: Sun, color: 'from-orange-400 to-yellow-500', bgColor: 'bg-orange-50' };
+    if (hour >= 11 && hour < 16) return { period: 'lunch', icon: Utensils, color: 'from-blue-400 to-cyan-500', bgColor: 'bg-blue-50' };
+    return { period: 'dinner', icon: Moon, color: 'from-purple-400 to-indigo-500', bgColor: 'bg-purple-50' };
+  };
+
+  const timeContext = getCurrentTimeContext();
+  const TimeIcon = timeContext.icon;
+
   return (
-    <div className="space-y-3 sm:space-y-6 px-3 sm:px-4 md:px-6 pb-6 safe-area-top safe-area-bottom">
+    <div className="min-h-screen bg-gradient-to-br from-gray-50 via-white to-gray-50 safe-area-top safe-area-bottom">
+      {/* Hero Dashboard Section */}
+      <div className="px-4 sm:px-6 lg:px-8 pb-6 pt-6">
+        {/* Time-Based Welcome Banner */}
+        <Card className={`mb-6 overflow-hidden border-0 shadow-xl ${timeContext.bgColor} relative`}>
+          <div className={`absolute inset-0 bg-gradient-to-r ${timeContext.color} opacity-10`}></div>
+          <CardContent className="relative p-6">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-4">
+                <div className={`p-3 rounded-2xl bg-gradient-to-r ${timeContext.color} text-white shadow-lg`}>
+                  <TimeIcon className="h-6 w-6" />
+                </div>
+                <div>
+                  <h2 className="text-xl font-bold text-[#27251F] capitalize">
+                    Good {timeContext.period}!
+                  </h2>
+                  <p className="text-[#27251F]/70 text-sm">
+                    {timeContext.period === 'morning' && "Start your day with safety checks"}
+                    {timeContext.period === 'lunch' && "Keep up the great work!"}
+                    {timeContext.period === 'dinner' && "Finish strong with final checks"}
+                  </p>
+                </div>
+              </div>
+              <Button
+                onClick={() => loadData()}
+                variant="ghost"
+                size="icon"
+                className="h-10 w-10 rounded-full hover:bg-white/50"
+              >
+                <RefreshCw className="h-5 w-5" />
+              </Button>
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* Enhanced Stats Dashboard */}
+        <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+          {/* Completion Rate with Progress Ring */}
+          <Card className="bg-white border-0 shadow-xl hover:shadow-2xl transition-all duration-500 hover:-translate-y-1 group">
+            <CardContent className="p-6 text-center">
+              <div className="flex flex-col items-center">
+                <ProgressRing
+                  progress={getCompletionRate()}
+                  size={80}
+                  strokeWidth={6}
+                  color="#E51636"
+                  animated={true}
+                  showPercentage={false}
+                />
+                <div className="mt-4">
+                  <h3 className="text-2xl font-bold text-[#27251F] group-hover:text-[#E51636] transition-colors">
+                    {getCompletionRate()}%
+                  </h3>
+                  <p className="text-[#27251F]/60 text-sm font-medium">Completion Rate</p>
+                  <p className="text-[#27251F]/40 text-xs mt-1">
+                    {Object.values(dailyChecklistItems).flat().filter(item => item.isCompleted).length} completed today
+                  </p>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+
+          {/* Temperature Status */}
+          <Card className="bg-white border-0 shadow-xl hover:shadow-2xl transition-all duration-500 hover:-translate-y-1 group">
+            <CardContent className="p-6">
+              <div className="flex items-start justify-between mb-4">
+                <div className="p-3 rounded-2xl bg-gradient-to-r from-blue-400 to-cyan-500 text-white shadow-lg group-hover:scale-110 transition-transform">
+                  <ThermometerSun className="h-6 w-6" />
+                </div>
+                <Badge variant="outline" className="text-xs">
+                  {Object.keys(TEMP_RANGES).length} points
+                </Badge>
+              </div>
+              <h3 className="text-2xl font-bold text-[#27251F] group-hover:text-blue-600 transition-colors">
+                {Object.keys(temperatures).filter(location =>
+                  temperatures[location]?.value !== null &&
+                  temperatures[location]?.timestamp &&
+                  new Date(temperatures[location]?.timestamp as string).toDateString() === new Date().toDateString()
+                ).length}
+              </h3>
+              <p className="text-[#27251F]/60 text-sm font-medium">Temps Recorded</p>
+              <div className="flex items-center gap-1 mt-2">
+                <div className="flex -space-x-1">
+                  {Object.entries(temperatures).slice(0, 3).map(([location, temp], index) => {
+                    const status = getTemperatureStatus(location, temp);
+                    return (
+                      <div
+                        key={location}
+                        className={cn(
+                          "w-3 h-3 rounded-full border-2 border-white",
+                          status === 'pass' ? 'bg-green-500' :
+                          status === 'warning' ? 'bg-yellow-500' :
+                          status === 'fail' ? 'bg-red-500' : 'bg-gray-300'
+                        )}
+                      />
+                    );
+                  })}
+                </div>
+                <span className="text-xs text-[#27251F]/40 ml-2">Status indicators</span>
+              </div>
+            </CardContent>
+          </Card>
+
+          {/* Overdue Tasks */}
+          <Card className="bg-white border-0 shadow-xl hover:shadow-2xl transition-all duration-500 hover:-translate-y-1 group">
+            <CardContent className="p-6">
+              <div className="flex items-start justify-between mb-4">
+                <div className="p-3 rounded-2xl bg-gradient-to-r from-amber-400 to-orange-500 text-white shadow-lg group-hover:scale-110 transition-transform">
+                  <CalendarClock className="h-6 w-6" />
+                </div>
+                {getOverdueCount() > 0 && (
+                  <Badge variant="destructive" className="animate-pulse">
+                    Urgent
+                  </Badge>
+                )}
+              </div>
+              <h3 className="text-2xl font-bold text-[#27251F] group-hover:text-amber-600 transition-colors">
+                {getOverdueCount()}
+              </h3>
+              <p className="text-[#27251F]/60 text-sm font-medium">Overdue Tasks</p>
+              <p className="text-[#27251F]/40 text-xs mt-1">
+                {getOverdueTimeframe() === 'morning' ? 'Morning' : getOverdueTimeframe() === 'lunch' ? 'Lunch' : 'Dinner'} tasks pending
+              </p>
+            </CardContent>
+          </Card>
+
+          {/* Critical Tasks */}
+          <Card className="bg-white border-0 shadow-xl hover:shadow-2xl transition-all duration-500 hover:-translate-y-1 group">
+            <CardContent className="p-6">
+              <div className="flex items-start justify-between mb-4">
+                <div className="p-3 rounded-2xl bg-gradient-to-r from-green-400 to-emerald-500 text-white shadow-lg group-hover:scale-110 transition-transform">
+                  <Shield className="h-6 w-6" />
+                </div>
+                <Badge variant="outline" className="text-xs">
+                  Priority
+                </Badge>
+              </div>
+              <h3 className="text-2xl font-bold text-[#27251F] group-hover:text-green-600 transition-colors">
+                {getCriticalTasks()}
+              </h3>
+              <p className="text-[#27251F]/60 text-sm font-medium">Critical Tasks</p>
+              <p className="text-[#27251F]/40 text-xs mt-1">
+                {Object.values(dailyChecklistItems).flat().filter(item => item.isCompleted && ['sanitizer', 'hygiene', 'food_prep'].includes(item.category || '')).length} completed today
+              </p>
+            </CardContent>
+          </Card>
+        </div>
+
+        {/* Quick Actions Bar */}
+        <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-6">
+          <Button
+            onClick={() => navigate('/kitchen/food-safety/history')}
+            className="h-14 bg-gradient-to-r from-[#E51636] to-[#DD0031] text-white hover:from-[#DD0031] hover:to-[#E51636] shadow-lg hover:shadow-xl transition-all duration-300 rounded-2xl group"
+          >
+            <div className="flex flex-col items-center gap-1">
+              <History className="h-5 w-5 group-hover:scale-110 transition-transform" />
+              <span className="text-xs font-medium">History</span>
+            </div>
+          </Button>
+
+          <Button
+            onClick={() => {
+              const currentItems: DailyChecklistItems = { items: [] };
+              if (dailyChecklistItems.items && Array.isArray(dailyChecklistItems.items)) {
+                currentItems.items = [...dailyChecklistItems.items];
+              }
+              Object.entries(dailyChecklistItems).forEach(([category, items]) => {
+                if (category !== 'items' && Array.isArray(items)) {
+                  currentItems[category] = [...items];
+                }
+              });
+              setEditedDailyItems(currentItems);
+              setEditListsDialog(true);
+            }}
+            variant="outline"
+            className="h-14 border-2 border-gray-200 hover:border-[#E51636] hover:bg-[#E51636]/5 transition-all duration-300 rounded-2xl group"
+          >
+            <div className="flex flex-col items-center gap-1">
+              <Settings className="h-5 w-5 group-hover:scale-110 transition-transform group-hover:text-[#E51636]" />
+              <span className="text-xs font-medium group-hover:text-[#E51636]">Edit Lists</span>
+            </div>
+          </Button>
+
+          <Button
+            onClick={() => {
+              setRecordTempDialog(true);
+              setNewTemperatures(temperatures);
+            }}
+            variant="outline"
+            className="h-14 border-2 border-blue-200 hover:border-blue-500 hover:bg-blue-50 transition-all duration-300 rounded-2xl group"
+          >
+            <div className="flex flex-col items-center gap-1">
+              <ThermometerSun className="h-5 w-5 group-hover:scale-110 transition-transform group-hover:text-blue-600" />
+              <span className="text-xs font-medium group-hover:text-blue-600">Record Temps</span>
+            </div>
+          </Button>
+
+          <Button
+            onClick={() => setActiveTab(getOverdueTimeframe())}
+            variant="outline"
+            className="h-14 border-2 border-amber-200 hover:border-amber-500 hover:bg-amber-50 transition-all duration-300 rounded-2xl group"
+          >
+            <div className="flex flex-col items-center gap-1">
+              <Target className="h-5 w-5 group-hover:scale-110 transition-transform group-hover:text-amber-600" />
+              <span className="text-xs font-medium group-hover:text-amber-600">View Tasks</span>
+            </div>
+          </Button>
+        </div>
 
       {/* Add the Edit Lists Dialog */}
       <Dialog open={editListsDialog} onOpenChange={setEditListsDialog}>
@@ -1343,342 +1719,311 @@ const FoodSafety: React.FC = () => {
         </DialogContent>
       </Dialog>
 
-      {/* Info Cards - Row on desktop, 2x2 on mobile */}
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-3 sm:gap-4 mb-6">
-        {/* Completion Rate Card */}
-        <Card className="bg-white rounded-[20px] hover:shadow-xl transition-all duration-300">
-          <CardContent className="p-4 md:p-6">
-            <div className="flex items-start justify-between">
-              <div>
-                <p className="text-[#27251F]/60 text-sm md:text-base font-medium">Completion Rate</p>
-                <h3 className="text-2xl md:text-3xl font-bold mt-1 md:mt-2 text-[#27251F]">{getCompletionRate()}%</h3>
-                <p className="text-[#27251F]/60 text-xs md:text-sm mt-1">
-                  {Object.values(dailyChecklistItems).flat().filter(item => item.isCompleted).length} completed today
-                </p>
+        {/* Enhanced Daily Checklist Section */}
+        <Card className="bg-white border-0 shadow-2xl rounded-3xl overflow-hidden mb-6">
+          <div className="bg-gradient-to-r from-[#E51636] to-[#DD0031] p-6 text-white">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-4">
+                <div className="p-3 bg-white/20 rounded-2xl backdrop-blur-sm">
+                  <ClipboardCheck className="h-6 w-6" />
+                </div>
+                <div>
+                  <h2 className="text-2xl font-bold">Daily Checklist</h2>
+                  <p className="text-white/80 text-sm">
+                    {getIncompleteCount(activeTab)} tasks remaining for {activeTab}
+                  </p>
+                </div>
               </div>
-              <div className="h-12 w-12 md:h-14 md:w-14 bg-[#E51636]/10 text-[#E51636] rounded-2xl flex items-center justify-center">
-                <ClipboardCheck strokeWidth={2} size={20} className="md:h-6 md:w-6 h-5 w-5" />
-              </div>
+              <Button
+                onClick={() => {
+                  setNewItemCategory('');
+                  setNewItemName('New Item');
+                  setNewItemDialog(true);
+                }}
+                className="bg-white/20 hover:bg-white/30 text-white border-white/30 backdrop-blur-sm"
+                size="sm"
+              >
+                <Plus className="h-4 w-4 mr-2" />
+                Add Item
+              </Button>
             </div>
-          </CardContent>
-        </Card>
+          </div>
 
-        {/* Temperature Checks Card */}
-        <Card className="bg-white rounded-[20px] hover:shadow-xl transition-all duration-300">
-          <CardContent className="p-4 md:p-6">
-            <div className="flex items-start justify-between">
-              <div>
-                <p className="text-[#27251F]/60 text-sm md:text-base font-medium">Temperature Checks</p>
-                <h3 className="text-2xl md:text-3xl font-bold mt-1 md:mt-2 text-[#27251F]">
-                  {Object.keys(temperatures).filter(location =>
-                    temperatures[location]?.value !== null &&
-                    temperatures[location]?.timestamp &&
-                    new Date(temperatures[location]?.timestamp as string).toDateString() === new Date().toDateString()
-                  ).length}
-                </h3>
-                <p className="text-[#27251F]/60 text-xs md:text-sm mt-1">
-                  {Object.keys(TEMP_RANGES).length} total monitoring points
-                </p>
-              </div>
-              <div className="h-12 w-12 md:h-14 md:w-14 bg-blue-100 text-blue-600 rounded-2xl flex items-center justify-center">
-                <ThermometerSun strokeWidth={2} size={20} className="md:h-6 md:w-6 h-5 w-5" />
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-
-        {/* Overdue Tasks Card */}
-        <Card className="bg-white rounded-[20px] hover:shadow-xl transition-all duration-300">
-          <CardContent className="p-4 md:p-6">
-            <div className="flex items-start justify-between">
-              <div>
-                <p className="text-[#27251F]/60 text-sm md:text-base font-medium">Overdue Tasks</p>
-                <h3 className="text-2xl md:text-3xl font-bold mt-1 md:mt-2 text-[#27251F]">{getOverdueCount()}</h3>
-                <p className="text-[#27251F]/60 text-xs md:text-sm mt-1">
-                  {getOverdueTimeframe() === 'morning' ? 'Morning' : getOverdueTimeframe() === 'lunch' ? 'Lunch' : 'Dinner'} tasks pending
-                </p>
-              </div>
-              <div className="h-12 w-12 md:h-14 md:w-14 bg-amber-100 text-amber-600 rounded-2xl flex items-center justify-center">
-                <CalendarClock strokeWidth={2} size={20} className="md:h-6 md:w-6 h-5 w-5" />
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-
-        {/* Critical Tasks Card */}
-        <Card className="bg-white rounded-[20px] hover:shadow-xl transition-all duration-300">
-          <CardContent className="p-4 md:p-6">
-            <div className="flex items-start justify-between">
-              <div>
-                <p className="text-[#27251F]/60 text-sm md:text-base font-medium">Critical Tasks</p>
-                <h3 className="text-2xl md:text-3xl font-bold mt-1 md:mt-2 text-[#27251F]">{getCriticalTasks()}</h3>
-                <p className="text-[#27251F]/60 text-xs md:text-sm mt-1">
-                  {Object.values(dailyChecklistItems).flat().filter(item => item.isCompleted && ['sanitizer', 'hygiene', 'food_prep'].includes(item.category || '')).length} completed today
-                </p>
-              </div>
-              <div className="h-12 w-12 md:h-14 md:w-14 bg-green-100 text-green-600 rounded-2xl flex items-center justify-center">
-                <AlertTriangle strokeWidth={2} size={20} className="md:h-6 md:w-6 h-5 w-5" />
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-      </div>
-
-      {/* Action Buttons Row */}
-      <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 mb-6">
-        <Button
-          onClick={() => navigate('/kitchen/food-safety/history')}
-          className="h-9 sm:h-10 text-xs sm:text-sm bg-[#E51636] text-white hover:bg-[#E51636]/90 touch-manipulation active-scale w-full"
-        >
-          <History className="h-3.5 w-3.5 sm:h-4 sm:w-4 mr-1.5 sm:mr-2" />
-          Food Safety History
-        </Button>
-        <Button
-          onClick={() => {
-            // Initialize editedDailyItems with the current items
-            // Make a deep copy to avoid reference issues
-            const currentItems: DailyChecklistItems = { items: [] };
-
-            // Copy items from dailyChecklistItems if they exist
-            if (dailyChecklistItems.items && Array.isArray(dailyChecklistItems.items)) {
-              currentItems.items = [...dailyChecklistItems.items];
-            }
-
-            // Copy other categories
-            Object.entries(dailyChecklistItems).forEach(([category, items]) => {
-              if (category !== 'items' && Array.isArray(items)) {
-                currentItems[category] = [...items];
-              }
-            });
-
-            setEditedDailyItems(currentItems);
-            setEditListsDialog(true);
-          }}
-          variant="outline"
-          className="h-9 sm:h-10 text-xs sm:text-sm border-[#27251F]/20 hover:bg-gray-50 w-full"
-        >
-          <Settings className="h-3.5 w-3.5 sm:h-4 sm:w-4 mr-1.5 sm:mr-2" />
-          Edit Lists
-        </Button>
-        <Button
-          variant="outline"
-          className="h-9 sm:h-10 text-xs sm:text-sm bg-white shadow-sm border-gray-200 w-full"
-          onClick={() => {
-            setRecordTempDialog(true)
-            setNewTemperatures(temperatures)
-          }}
-        >
-          <ThermometerSun className="h-3.5 w-3.5 sm:h-4 sm:w-4 mr-1 sm:mr-2 text-gray-500" />
-          Record Temperatures
-        </Button>
-        <Button
-          variant="outline"
-          className="h-9 sm:h-10 text-xs sm:text-sm bg-white shadow-sm border-gray-200 w-full"
-          onClick={() => setActiveTab(getOverdueTimeframe())}
-        >
-          <CalendarClock className="h-3.5 w-3.5 sm:h-4 sm:w-4 mr-1 sm:mr-2 text-gray-500" />
-          View Overdue Tasks
-        </Button>
-      </div>
-
-      {/* Daily Checklist Section */}
-      <Card className="bg-white rounded-[16px] sm:rounded-[20px] hover:shadow-xl transition-all duration-300">
-        <CardContent className="p-3 sm:p-4 md:p-6">
-          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 sm:gap-3 md:gap-4 mb-3 sm:mb-4 md:mb-6">
-            <div>
-              <h2 className="text-xl sm:text-2xl font-semibold text-[#27251F] flex flex-wrap items-center gap-2">
-                Daily Checklist
-                <span className="inline-flex items-center justify-center px-2 sm:px-2.5 py-0.5 sm:py-1 text-xs sm:text-sm font-medium bg-[#E51636]/10 text-[#E51636] rounded-full">
-                  {getIncompleteCount(activeTab)} remaining
-                </span>
-              </h2>
-              <p className="text-sm text-[#27251F]/60 mt-2">Track and complete daily tasks</p>
-            </div>
-            <Button
-              onClick={() => {
-                setNewItemCategory('');
-                setNewItemName('New Item');
-                setNewItemDialog(true);
-              }}
-              className="w-full sm:w-auto h-9 sm:h-10 md:h-11 text-xs sm:text-sm bg-[#E51636] text-white hover:bg-[#E51636]/90 transition-all duration-200 hover:shadow-lg hover:shadow-[#E51636]/20 touch-manipulation active-scale"
-            >
-              <Plus className="h-4 w-4 sm:h-5 sm:w-5 mr-1.5 sm:mr-2" />
-              Add Item
-            </Button>
-            </div>
-
-          <Tabs defaultValue={activeTab} value={activeTab} onValueChange={(value) => setActiveTab(value as TabType)} className="w-full">
-            <div className="relative mb-4 sm:mb-6 overflow-hidden">
-              <ScrollArea className="w-full momentum-scroll">
-                <TabsList className="w-full h-auto p-1 bg-gray-100/80 backdrop-blur-sm rounded-xl flex">
+          <div className="p-6">
+            <Tabs defaultValue={activeTab} value={activeTab} onValueChange={(value) => setActiveTab(value as TabType)} className="w-full">
+              {/* Enhanced Tab Navigation */}
+              <div className="relative mb-6">
+                <TabsList className="w-full h-auto p-1 bg-gradient-to-r from-gray-100 to-gray-50 rounded-2xl flex shadow-inner">
                   <TabsTrigger
                     value="morning"
-                    className="flex-1 flex items-center justify-center h-10 sm:h-12 px-2 sm:px-4 py-1 sm:py-2 rounded-lg data-[state=active]:bg-white data-[state=active]:shadow-sm transition-all duration-200 touch-manipulation active-scale"
+                    className="flex-1 flex items-center justify-center h-12 px-4 py-2 rounded-xl data-[state=active]:bg-white data-[state=active]:shadow-lg data-[state=active]:text-[#E51636] transition-all duration-300 group"
                   >
-                    <Sun className="h-4 w-4 sm:h-5 sm:w-5 mr-1 sm:mr-2" />
-                    <span className="font-medium text-xs sm:text-sm">Morning</span>
+                    <Sun className="h-5 w-5 mr-2 group-data-[state=active]:text-orange-500" />
+                    <span className="font-semibold text-sm">Morning</span>
                     {getIncompleteCount('morning') > 0 && (
-                      <Badge variant="destructive" className="ml-1 sm:ml-2 text-xs bg-red-100 text-red-600 hover:bg-red-100">
+                      <Badge className="ml-2 bg-orange-100 text-orange-600 hover:bg-orange-100 animate-pulse">
                         {getIncompleteCount('morning')}
                       </Badge>
                     )}
                   </TabsTrigger>
                   <TabsTrigger
                     value="lunch"
-                    className="flex-1 flex items-center justify-center h-10 sm:h-12 px-2 sm:px-4 py-1 sm:py-2 rounded-lg data-[state=active]:bg-white data-[state=active]:shadow-sm transition-all duration-200 touch-manipulation active-scale"
+                    className="flex-1 flex items-center justify-center h-12 px-4 py-2 rounded-xl data-[state=active]:bg-white data-[state=active]:shadow-lg data-[state=active]:text-[#E51636] transition-all duration-300 group"
                   >
-                    <AlarmClock className="h-4 w-4 sm:h-5 sm:w-5 mr-1 sm:mr-2" />
-                    <span className="font-medium text-xs sm:text-sm">Lunch</span>
+                    <Utensils className="h-5 w-5 mr-2 group-data-[state=active]:text-blue-500" />
+                    <span className="font-semibold text-sm">Lunch</span>
                     {getIncompleteCount('lunch') > 0 && (
-                      <Badge variant="destructive" className="ml-1 sm:ml-2 text-xs bg-red-100 text-red-600 hover:bg-red-100">
+                      <Badge className="ml-2 bg-blue-100 text-blue-600 hover:bg-blue-100 animate-pulse">
                         {getIncompleteCount('lunch')}
                       </Badge>
                     )}
                   </TabsTrigger>
                   <TabsTrigger
                     value="dinner"
-                    className="flex-1 flex items-center justify-center h-10 sm:h-12 px-2 sm:px-4 py-1 sm:py-2 rounded-lg data-[state=active]:bg-white data-[state=active]:shadow-sm transition-all duration-200 touch-manipulation active-scale"
+                    className="flex-1 flex items-center justify-center h-12 px-4 py-2 rounded-xl data-[state=active]:bg-white data-[state=active]:shadow-lg data-[state=active]:text-[#E51636] transition-all duration-300 group"
                   >
-                    <Moon className="h-4 w-4 sm:h-5 sm:w-5 mr-1 sm:mr-2" />
-                    <span className="font-medium text-xs sm:text-sm">Dinner</span>
+                    <Moon className="h-5 w-5 mr-2 group-data-[state=active]:text-purple-500" />
+                    <span className="font-semibold text-sm">Dinner</span>
                     {getIncompleteCount('dinner') > 0 && (
-                      <Badge variant="destructive" className="ml-1 sm:ml-2 text-xs bg-red-100 text-red-600 hover:bg-red-100">
+                      <Badge className="ml-2 bg-purple-100 text-purple-600 hover:bg-purple-100 animate-pulse">
                         {getIncompleteCount('dinner')}
                       </Badge>
                     )}
                   </TabsTrigger>
                 </TabsList>
-              </ScrollArea>
-            </div>
+              </div>
 
-            <TabsContent value={activeTab} className="mt-0 focus-visible:outline-none">
-              <ScrollArea className="h-[400px] xs:h-[450px] sm:h-[500px] md:h-[600px]">
-                <div className="space-y-2 sm:space-y-3 pr-2 sm:pr-4">
-                  {getItemsForTab(activeTab).map(item => (
-                    <div
-                      key={item.id}
-                      className={cn(
-                        "flex flex-col sm:flex-row sm:items-center justify-between p-3 sm:p-4 rounded-lg transition-all duration-300",
-                        item.isCompleted && item.completions && item.completions.length > 0
-                          ? item.completions[0].status === 'pass'
-                            ? "bg-green-50 hover:bg-green-100/80"
-                            : "bg-red-50 hover:bg-red-100/80"
-                          : "bg-gray-50 hover:bg-gray-100/80",
-                        "hover:shadow-md group touch-manipulation active-scale"
-                      )}
-                      >
-                        <div className="flex-1">
-                          <div className="flex items-start gap-2 sm:gap-3">
-                            <div className="mt-0.5 transition-transform duration-300 group-hover:scale-110">
-                              {item.isCompleted ? (
-                                item.completions && item.completions[0].status === 'pass' ? (
-                                  <CheckCircle2 className="h-5 w-5 sm:h-6 sm:w-6 text-green-600" />
+              <TabsContent value={activeTab} className="mt-0 focus-visible:outline-none">
+                <div className="space-y-3">
+                  {getItemsForTab(activeTab).length === 0 ? (
+                    <div className="text-center py-12">
+                      <div className="w-16 h-16 mx-auto mb-4 bg-gray-100 rounded-full flex items-center justify-center">
+                        <CheckCircle className="h-8 w-8 text-gray-400" />
+                      </div>
+                      <h3 className="text-lg font-semibold text-[#27251F] mb-2">All tasks completed!</h3>
+                      <p className="text-[#27251F]/60">Great job on maintaining food safety standards.</p>
+                    </div>
+                  ) : (
+                    getItemsForTab(activeTab).map((item, index) => {
+                      const canComplete = canCompleteTask(item.timeframe || activeTab);
+                      const restrictionReason = getTaskRestrictionReason(item.timeframe || activeTab);
+                      const isOverdue = !canComplete && !item.isCompleted;
+
+                      return (
+                        <div
+                          key={item.id}
+                          className={cn(
+                            "group relative overflow-hidden rounded-2xl border-2 transition-all duration-300 hover:shadow-lg",
+                            item.isCompleted && item.completions && item.completions.length > 0
+                              ? item.completions[0].status === 'pass'
+                                ? "bg-gradient-to-r from-green-50 to-emerald-50 border-green-200 hover:border-green-300"
+                                : "bg-gradient-to-r from-red-50 to-rose-50 border-red-200 hover:border-red-300"
+                              : isOverdue
+                                ? "bg-gradient-to-r from-red-50 to-rose-50 border-red-300 opacity-75"
+                                : "bg-gradient-to-r from-gray-50 to-slate-50 border-gray-200 hover:border-[#E51636]/30",
+                            !isOverdue && "hover:-translate-y-1"
+                          )}
+                          style={{
+                            animationDelay: `${index * 100}ms`
+                          }}
+                        >
+                          {/* Status indicator bar */}
+                          <div className={cn(
+                            "absolute top-0 left-0 w-full h-1",
+                            item.isCompleted && item.completions && item.completions.length > 0
+                              ? item.completions[0].status === 'pass'
+                                ? "bg-gradient-to-r from-green-400 to-emerald-500"
+                                : "bg-gradient-to-r from-red-400 to-rose-500"
+                              : isOverdue
+                                ? "bg-gradient-to-r from-red-500 to-red-600 animate-pulse"
+                                : "bg-gradient-to-r from-gray-300 to-slate-400"
+                          )} />
+
+                          <div className="p-4">
+                            <div className="flex items-start gap-4">
+                              {/* Enhanced status icon */}
+                              <div className={cn(
+                                "flex-shrink-0 w-12 h-12 rounded-2xl flex items-center justify-center transition-all duration-300",
+                                item.isCompleted && item.completions && item.completions.length > 0
+                                  ? item.completions[0].status === 'pass'
+                                    ? "bg-green-100 text-green-600 shadow-lg shadow-green-200"
+                                    : "bg-red-100 text-red-600 shadow-lg shadow-red-200"
+                                  : isOverdue
+                                    ? "bg-red-100 text-red-600 shadow-lg shadow-red-200"
+                                    : "bg-gray-100 text-gray-400 group-hover:bg-[#E51636]/10 group-hover:text-[#E51636] group-hover:scale-110"
+                              )}>
+                                {item.isCompleted ? (
+                                  item.completions && item.completions[0].status === 'pass' ? (
+                                    <CheckCircle2 className="h-6 w-6" />
+                                  ) : (
+                                    <XCircle className="h-6 w-6" />
+                                  )
+                                ) : isOverdue ? (
+                                  <AlertTriangle className="h-6 w-6" />
                                 ) : (
-                                  <XCircle className="h-5 w-5 sm:h-6 sm:w-6 text-red-600" />
-                                )
-                              ) : (
-                                <Clock className="h-5 w-5 sm:h-6 sm:w-6 text-gray-400" />
-                              )}
-                            </div>
-                            <div className="flex-1">
-                              <div className="flex items-center gap-1.5 sm:gap-2 flex-wrap">
-                                <h3 className="text-sm sm:text-base font-medium text-[#27251F] transition-colors duration-200 group-hover:text-[#E51636]">{item.name}</h3>
-                                {item.frequency === 'multiple' && (
-                                  <Badge variant="outline" className="text-xs sm:text-sm border-gray-300 text-gray-600">
-                                    {item.requiredCompletions}x Daily
-                                  </Badge>
+                                  <Clock className="h-6 w-6" />
                                 )}
                               </div>
-                              {item.completions && item.completions.length > 0 && (
-                                <div className="flex items-center gap-1.5 sm:gap-2 mt-1.5 sm:mt-2">
-                                  <User className="h-3.5 w-3.5 sm:h-4 sm:w-4 text-gray-400" />
-                                  <span className="text-xs sm:text-sm text-gray-500 truncate">
-                                    {item.completions[0].completedBy} - {formatTime(item.completions[0].completedAt)}
-                                  </span>
+
+                              {/* Task content */}
+                              <div className="flex-1 min-w-0">
+                                <div className="flex items-center gap-2 mb-2">
+                                  <h3 className={cn(
+                                    "font-semibold transition-colors",
+                                    isOverdue ? "text-red-600" : "text-[#27251F] group-hover:text-[#E51636]"
+                                  )}>
+                                    {item.name}
+                                  </h3>
+                                  {item.frequency === 'multiple' && (
+                                    <Badge variant="outline" className="text-xs bg-white/50">
+                                      {item.requiredCompletions}x Daily
+                                    </Badge>
+                                  )}
+                                  {isOverdue && (
+                                    <Badge className="bg-red-100 text-red-700 hover:bg-red-100 text-xs animate-pulse">
+                                      <AlertTriangle className="h-3 w-3 mr-1" />
+                                      Overdue
+                                    </Badge>
+                                  )}
                                 </div>
+
+                                {/* Show restriction reason for overdue tasks */}
+                                {isOverdue && restrictionReason && (
+                                  <div className="flex items-center gap-2 text-sm text-red-600 mb-2">
+                                    <AlertCircle className="h-4 w-4" />
+                                    <span>{restrictionReason}</span>
+                                  </div>
+                                )}
+
+                                {item.completions && item.completions.length > 0 && (
+                                  <div className="flex items-center gap-2 text-sm text-[#27251F]/60">
+                                    <User className="h-4 w-4" />
+                                    <span>
+                                      {item.completions[0].completedBy} • {formatTime(item.completions[0].completedAt)}
+                                    </span>
+                                  </div>
+                                )}
+                              </div>
+
+                              {/* Action button */}
+                              {!item.isCompleted && (
+                                canComplete ? (
+                                  <Button
+                                    onClick={() => handleOpenCompleteDialog(item.category || '', item)}
+                                    className="bg-gradient-to-r from-[#E51636] to-[#DD0031] text-white hover:from-[#DD0031] hover:to-[#E51636] shadow-lg hover:shadow-xl transition-all duration-300 rounded-xl"
+                                    size="sm"
+                                  >
+                                    <CheckCircle2 className="h-4 w-4 mr-2" />
+                                    Complete
+                                  </Button>
+                                ) : (
+                                  <Button
+                                    disabled
+                                    className="bg-gray-300 text-gray-500 cursor-not-allowed rounded-xl"
+                                    size="sm"
+                                  >
+                                    <XCircle className="h-4 w-4 mr-2" />
+                                    Missed
+                                  </Button>
+                                )
                               )}
                             </div>
                           </div>
                         </div>
-                        <div className="flex items-center gap-2 mt-3 sm:mt-0">
-                          {!item.isCompleted && (
-                            <Button
-                              variant="outline"
-                              size="sm"
-                              onClick={() => handleOpenCompleteDialog(item.category || '', item)}
-                              className="h-9 sm:h-10 md:h-11 text-xs sm:text-sm border-green-200 bg-green-50 text-green-600 hover:bg-green-100 hover:text-green-700 transition-all duration-200 hover:shadow-lg hover:shadow-green-600/10 touch-manipulation active-scale"
-                            >
-                              <CheckCircle2 className="h-4 w-4 sm:h-5 sm:w-5 mr-1.5 sm:mr-2" />
-                              Complete
-                            </Button>
-                          )}
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                </ScrollArea>
+                      );
+                    })
+                  )}
+                </div>
               </TabsContent>
             </Tabs>
-          </CardContent>
+          </div>
         </Card>
 
-        {/* Temperature Monitoring Section */}
-        <Card className="bg-white rounded-[16px] sm:rounded-[20px] hover:shadow-xl transition-all duration-300">
-          <CardContent className="p-3 sm:p-4 md:p-6">
-            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 sm:gap-3 md:gap-4 mb-3 sm:mb-4 md:mb-6">
-              <div>
-                <h2 className="text-xl sm:text-2xl font-semibold text-[#27251F]">Temperature Logs</h2>
-                <p className="text-sm text-[#27251F]/60 mt-1">Monitor and record temperatures</p>
+        {/* Enhanced Temperature Monitoring Section */}
+        <Card className="bg-white border-0 shadow-2xl rounded-3xl overflow-hidden">
+          <div className="bg-gradient-to-r from-blue-500 to-cyan-500 p-6 text-white">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-4">
+                <div className="p-3 bg-white/20 rounded-2xl backdrop-blur-sm">
+                  <ThermometerSun className="h-6 w-6" />
+                </div>
+                <div>
+                  <h2 className="text-2xl font-bold">Temperature Monitoring</h2>
+                  <p className="text-white/80 text-sm">
+                    {Object.keys(temperatures).filter(location =>
+                      temperatures[location]?.value !== null &&
+                      temperatures[location]?.timestamp &&
+                      new Date(temperatures[location]?.timestamp as string).toDateString() === new Date().toDateString()
+                    ).length} of {Object.keys(TEMP_RANGES).length} recorded today
+                  </p>
+                </div>
               </div>
-              <div className="flex flex-col sm:flex-row gap-2 sm:gap-3">
+              <div className="flex gap-2">
                 <Button
                   onClick={() => navigate('/kitchen/food-safety/history')}
-                  className="w-full sm:w-auto h-9 sm:h-10 md:h-11 text-xs sm:text-sm bg-white border border-[#E51636] text-[#E51636] hover:bg-[#E51636]/10 touch-manipulation active-scale"
+                  className="bg-white/20 hover:bg-white/30 text-white border-white/30 backdrop-blur-sm"
+                  size="sm"
                 >
-                  <History className="h-4 w-4 sm:h-5 sm:w-5 mr-1.5 sm:mr-2" />
-                  View History
+                  <History className="h-4 w-4 mr-2" />
+                  History
                 </Button>
                 <Button
                   onClick={() => {
-                    setRecordTempDialog(true)
-                    setNewTemperatures(temperatures)
+                    setRecordTempDialog(true);
+                    setNewTemperatures(temperatures);
                   }}
-                  className="w-full sm:w-auto h-9 sm:h-10 md:h-11 text-xs sm:text-sm bg-[#E51636] text-white hover:bg-[#E51636]/90 touch-manipulation active-scale"
+                  className="bg-white text-blue-600 hover:bg-white/90"
+                  size="sm"
                 >
-                  Record Temperatures
+                  <Plus className="h-4 w-4 mr-2" />
+                  Record
                 </Button>
               </div>
             </div>
+          </div>
 
-            <div className="flex justify-end mb-3 sm:mb-4">
-              <div className="inline-flex items-center bg-gray-100 rounded-lg p-1">
+          <div className="p-6">
+            {/* Enhanced Tab Switcher */}
+            <div className="flex justify-center mb-6">
+              <div className="inline-flex items-center bg-gradient-to-r from-gray-100 to-gray-50 rounded-2xl p-1 shadow-inner">
                 <button
                   onClick={() => setTempView('equipment')}
                   className={cn(
-                    "px-3 py-1.5 text-xs sm:text-sm rounded-md transition-all duration-200 touch-manipulation",
-                    tempView === 'equipment' ? "bg-white text-[#E51636] shadow-sm" : "text-gray-600"
+                    "px-6 py-3 text-sm font-semibold rounded-xl transition-all duration-300",
+                    tempView === 'equipment'
+                      ? "bg-white text-blue-600 shadow-lg transform scale-105"
+                      : "text-gray-600 hover:text-blue-600"
                   )}
                 >
-                  Equipment
+                  <div className="flex items-center gap-2">
+                    <Thermometer className="h-4 w-4" />
+                    Equipment
+                  </div>
                 </button>
                 <button
                   onClick={() => setTempView('product')}
                   className={cn(
-                    "px-3 py-1.5 text-xs sm:text-sm rounded-md transition-all duration-200 touch-manipulation",
-                    tempView === 'product' ? "bg-white text-[#E51636] shadow-sm" : "text-gray-600"
+                    "px-6 py-3 text-sm font-semibold rounded-xl transition-all duration-300",
+                    tempView === 'product'
+                      ? "bg-white text-blue-600 shadow-lg transform scale-105"
+                      : "text-gray-600 hover:text-blue-600"
                   )}
                 >
-                  Products
+                  <div className="flex items-center gap-2">
+                    <Utensils className="h-4 w-4" />
+                    Products
+                  </div>
                 </button>
               </div>
             </div>
 
-            <div className="space-y-2 sm:space-y-3">
+            {/* Enhanced Temperature Grid */}
+            <div className="grid gap-4">
               {Object.entries(TEMP_RANGES)
                 .filter(([_, range]) =>
                   tempView === 'equipment' ? !range.type : range.type === 'product'
                 )
-                .map(([location, range]) => {
+                .map(([location, range], index) => {
                   const temp = temperatures?.[location] || { value: null, timestamp: null };
                   const status = getTemperatureStatus(location, temp);
                   const locationName = location.split('_').map(word =>
@@ -1689,57 +2034,109 @@ const FoodSafety: React.FC = () => {
                     <div
                       key={location}
                       className={cn(
-                        "flex flex-col sm:flex-row sm:items-center justify-between p-3 sm:p-4 rounded-lg transition-all duration-200",
-                        status === 'pass' ? "bg-green-50" :
-                        status === 'warning' ? "bg-yellow-50" :
-                        status === 'fail' ? "bg-red-50" :
-                        "bg-gray-50",
-                        "hover:shadow-md touch-manipulation active-scale"
+                        "group relative overflow-hidden rounded-2xl border-2 transition-all duration-300 hover:shadow-xl hover:-translate-y-1",
+                        status === 'pass' ? "bg-gradient-to-r from-green-50 to-emerald-50 border-green-200 hover:border-green-300" :
+                        status === 'warning' ? "bg-gradient-to-r from-yellow-50 to-amber-50 border-yellow-200 hover:border-yellow-300" :
+                        status === 'fail' ? "bg-gradient-to-r from-red-50 to-rose-50 border-red-200 hover:border-red-300" :
+                        "bg-gradient-to-r from-gray-50 to-slate-50 border-gray-200 hover:border-blue-300"
                       )}
+                      style={{
+                        animationDelay: `${index * 100}ms`
+                      }}
                     >
-                      <div className="flex items-center gap-2 sm:gap-3">
-                        {status === 'pass' && <ThermometerSun className="h-5 w-5 sm:h-6 sm:w-6 text-green-600 shrink-0" />}
-                        {status === 'warning' && <Thermometer className="h-5 w-5 sm:h-6 sm:w-6 text-yellow-600 shrink-0" />}
-                        {status === 'fail' && <ThermometerSnowflake className="h-5 w-5 sm:h-6 sm:w-6 text-red-600 shrink-0" />}
-                        {status === 'pending' && <Thermometer className="h-5 w-5 sm:h-6 sm:w-6 text-gray-400 shrink-0" />}
-                        <div>
-                          <p className="text-sm sm:text-base font-medium text-[#27251F]">{locationName}</p>
-                          <p className="text-xs sm:text-sm text-[#27251F]/60">
-                            Target: {range.min}°F - {range.max}°F
-                          </p>
-                        </div>
-                      </div>
-                      <div className="flex flex-col sm:items-end gap-1 mt-2 sm:mt-0">
-                        {temp?.value !== null ? (
-                          <>
-                            <span className={cn(
-                              "text-lg sm:text-xl font-semibold",
-                              status === 'pass' ? "text-green-600" :
-                              status === 'warning' ? "text-yellow-600" :
-                              status === 'fail' ? "text-red-600" :
-                              "text-[#27251F]"
+                      {/* Status indicator bar */}
+                      <div className={cn(
+                        "absolute top-0 left-0 w-full h-1",
+                        status === 'pass' ? "bg-gradient-to-r from-green-400 to-emerald-500" :
+                        status === 'warning' ? "bg-gradient-to-r from-yellow-400 to-amber-500" :
+                        status === 'fail' ? "bg-gradient-to-r from-red-400 to-rose-500" :
+                        "bg-gradient-to-r from-gray-300 to-slate-400"
+                      )} />
+
+                      <div className="p-4">
+                        <div className="flex items-center justify-between">
+                          {/* Location info with enhanced icon */}
+                          <div className="flex items-center gap-3">
+                            <div className={cn(
+                              "w-12 h-12 rounded-2xl flex items-center justify-center transition-all duration-300 group-hover:scale-110",
+                              status === 'pass' ? "bg-green-100 text-green-600 shadow-lg shadow-green-200" :
+                              status === 'warning' ? "bg-yellow-100 text-yellow-600 shadow-lg shadow-yellow-200" :
+                              status === 'fail' ? "bg-red-100 text-red-600 shadow-lg shadow-red-200" :
+                              "bg-gray-100 text-gray-400 group-hover:bg-blue-100 group-hover:text-blue-600"
                             )}>
-                              {temp.value}°F
-                            </span>
-                            {temp?.timestamp && (
-                              <span className="text-xs sm:text-sm text-[#27251F]/60">
-                                {new Date(temp.timestamp).toLocaleTimeString('en-US', {
-                                  hour: 'numeric',
-                                  minute: '2-digit',
-                                  hour12: true
-                                })}
-                              </span>
+                              {status === 'pass' && <ThermometerSun className="h-6 w-6" />}
+                              {status === 'warning' && <Thermometer className="h-6 w-6" />}
+                              {status === 'fail' && <ThermometerSnowflake className="h-6 w-6" />}
+                              {status === 'pending' && <Thermometer className="h-6 w-6" />}
+                            </div>
+                            <div>
+                              <h3 className="font-semibold text-[#27251F] group-hover:text-blue-600 transition-colors">
+                                {locationName}
+                              </h3>
+                              <p className="text-sm text-[#27251F]/60">
+                                Target: {range.min}°F - {range.max}°F
+                              </p>
+                            </div>
+                          </div>
+
+                          {/* Temperature display */}
+                          <div className="text-right">
+                            {temp?.value !== null ? (
+                              <>
+                                <div className={cn(
+                                  "text-2xl font-bold",
+                                  status === 'pass' ? "text-green-600" :
+                                  status === 'warning' ? "text-yellow-600" :
+                                  status === 'fail' ? "text-red-600" :
+                                  "text-[#27251F]"
+                                )}>
+                                  {temp.value}°F
+                                </div>
+                                {temp?.timestamp && (
+                                  <div className="text-xs text-[#27251F]/60 mt-1">
+                                    {new Date(temp.timestamp).toLocaleTimeString('en-US', {
+                                      hour: 'numeric',
+                                      minute: '2-digit',
+                                      hour12: true
+                                    })}
+                                  </div>
+                                )}
+                                {/* Status badge */}
+                                <Badge
+                                  className={cn(
+                                    "mt-2 text-xs",
+                                    status === 'pass' ? "bg-green-100 text-green-700 hover:bg-green-100" :
+                                    status === 'warning' ? "bg-yellow-100 text-yellow-700 hover:bg-yellow-100" :
+                                    status === 'fail' ? "bg-red-100 text-red-700 hover:bg-red-100" :
+                                    "bg-gray-100 text-gray-700 hover:bg-gray-100"
+                                  )}
+                                >
+                                  {status === 'pass' && <CheckCircle className="h-3 w-3 mr-1" />}
+                                  {status === 'warning' && <AlertTriangle className="h-3 w-3 mr-1" />}
+                                  {status === 'fail' && <XCircle className="h-3 w-3 mr-1" />}
+                                  {status === 'pending' && <Clock className="h-3 w-3 mr-1" />}
+                                  {status.charAt(0).toUpperCase() + status.slice(1)}
+                                </Badge>
+                              </>
+                            ) : (
+                              <div className="text-center">
+                                <div className="text-lg font-semibold text-[#27251F]/40 mb-2">
+                                  Not recorded
+                                </div>
+                                <Badge variant="outline" className="text-xs">
+                                  <Clock className="h-3 w-3 mr-1" />
+                                  Pending
+                                </Badge>
+                              </div>
                             )}
-                          </>
-                        ) : (
-                          <span className="text-xs sm:text-sm text-[#27251F]/60">Not recorded</span>
-                        )}
+                          </div>
+                        </div>
                       </div>
                     </div>
                   );
                 })}
             </div>
-          </CardContent>
+          </div>
         </Card>
 
         {/* Add the NewItemDialog */}
@@ -1970,6 +2367,7 @@ const FoodSafety: React.FC = () => {
         </DialogContent>
         </Dialog>
       </div>
+    </div>
   );
 };
 
