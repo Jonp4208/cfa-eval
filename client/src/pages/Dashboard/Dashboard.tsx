@@ -106,40 +106,62 @@ interface DashboardStats {
   };
 }
 
+// Helper function to get card background like your beautiful example
+const getCardBackground = (color: string) => {
+  // Soft pastel backgrounds like in your image
+  if (color.includes('purple')) return 'bg-gradient-to-br from-purple-100 to-purple-50 border-purple-200/50'; // Soft purple
+  if (color.includes('blue')) return 'bg-gradient-to-br from-blue-100 to-blue-50 border-blue-200/50'; // Soft blue
+  if (color.includes('green')) return 'bg-gradient-to-br from-green-100 to-green-50 border-green-200/50'; // Soft green
+  if (color.includes('red')) return 'bg-gradient-to-br from-red-100 to-red-50 border-red-200/50'; // Soft red/pink
+  if (color.includes('amber') || color.includes('yellow')) return 'bg-gradient-to-br from-amber-100 to-amber-50 border-amber-200/50'; // Soft yellow
+  if (color.includes('orange')) return 'bg-gradient-to-br from-orange-100 to-orange-50 border-orange-200/50'; // Soft orange
+  if (color.includes('indigo')) return 'bg-gradient-to-br from-indigo-100 to-indigo-50 border-indigo-200/50'; // Soft indigo
+  if (color.includes('violet')) return 'bg-gradient-to-br from-violet-100 to-violet-50 border-violet-200/50'; // Soft violet
+  if (color.includes('emerald')) return 'bg-gradient-to-br from-emerald-100 to-emerald-50 border-emerald-200/50'; // Soft emerald
+  return 'bg-gradient-to-br from-gray-100 to-gray-50 border-gray-200/50'; // Soft gray
+};
+
 // Memoized card components for better performance
-const StatCard = React.memo<StatCardProps>(({ title, value, subtitle, icon: Icon, color, progress, onClick, alert }) => (
-  <Card
-    className="bg-white shadow-sm hover:shadow-md transition-all duration-300 cursor-pointer rounded-lg border border-gray-100"
-    onClick={onClick}
-  >
-    <CardContent className="p-4">
-      <div className="flex items-center gap-3 mb-2">
-        <div className={`shrink-0 h-10 w-10 ${color} rounded-xl flex items-center justify-center`}>
-          <Icon strokeWidth={1.5} size={20} />
-        </div>
-        <div className="flex-1">
-          <p className="text-sm font-medium text-[#27251F]">{title}</p>
-          <h3 className="text-xl font-bold text-[#27251F] mt-0.5">{value}</h3>
-        </div>
-      </div>
+const StatCard = React.memo<StatCardProps>(({ title, value, subtitle, icon: Icon, color, progress, onClick, alert }) => {
+  const cardBg = getCardBackground(color);
 
-      {alert && alert.count > 0 ? (
-        <div className={`mt-1 mb-2 py-1 px-2 ${alert.color} rounded-md flex items-center justify-between`}>
-          <span className="text-xs font-medium">{alert.text}</span>
-          <span className="text-xs font-bold px-1.5 py-0.5 bg-white/30 rounded-full">{alert.count}</span>
-        </div>
-      ) : (
-        <p className="text-xs text-[#27251F]/60">{subtitle}</p>
-      )}
+  return (
+    <Card
+      className={`${cardBg} shadow-sm hover:shadow-xl transition-all duration-300 cursor-pointer rounded-xl border hover:border-[#E51636]/30 group`}
+      onClick={onClick}
+    >
+      <CardContent className="p-4 relative overflow-hidden">
+        {/* Subtle background accent */}
+        <div className="absolute top-0 right-0 w-24 h-24 bg-gradient-to-bl from-white/40 to-transparent rounded-full transform translate-x-10 -translate-y-10 group-hover:scale-125 transition-transform duration-500" />
 
-      {progress !== undefined && progress > 0 && (
-        <div className="mt-2">
-          <Progress value={progress} className="h-1.5" />
+        <div className="flex items-center gap-3 mb-2 relative z-10">
+          <div className={`shrink-0 h-12 w-12 ${color} rounded-xl flex items-center justify-center shadow-sm group-hover:shadow-md transition-all duration-300 group-hover:scale-105`}>
+            <Icon strokeWidth={1.5} size={22} />
+          </div>
+          <div className="flex-1">
+            <p className="text-sm font-medium text-gray-700 group-hover:text-[#E51636] transition-colors duration-300">{title}</p>
+            <h3 className="text-xl font-bold text-gray-800 mt-0.5 group-hover:text-[#E51636] transition-colors duration-300">{value}</h3>
+          </div>
         </div>
-      )}
-    </CardContent>
-  </Card>
-));
+
+        {alert && alert.count > 0 ? (
+          <div className={`mt-1 mb-2 py-1 px-2 ${alert.color} rounded-md flex items-center justify-between relative z-10`}>
+            <span className="text-xs font-medium">{alert.text}</span>
+            <span className="text-xs font-bold px-1.5 py-0.5 bg-white/30 rounded-full">{alert.count}</span>
+          </div>
+        ) : (
+          <p className="text-xs text-gray-600 relative z-10">{subtitle}</p>
+        )}
+
+        {progress !== undefined && progress > 0 && (
+          <div className="mt-2 relative z-10">
+            <Progress value={progress} className="h-2 bg-white/50 group-hover:bg-[#E51636]/10 transition-colors duration-300" />
+          </div>
+        )}
+      </CardContent>
+    </Card>
+  );
+});
 
 interface PerformanceChartProps {
   data: Array<{
@@ -963,7 +985,7 @@ export default function Dashboard() {
                         value={`${fohTaskMetrics.completionRate}%`}
                         subtitle={`${fohTaskMetrics.completedToday}/${fohTaskMetrics.totalTasks} completed today`}
                         icon={CheckSquare}
-                        color="bg-blue-100 text-blue-600"
+                        color="bg-[#5B9BD5]/20 text-[#5B9BD5]"
                         progress={fohTaskMetrics.completionRate}
                         onClick={handleNavigate('/foh')}
                       />
