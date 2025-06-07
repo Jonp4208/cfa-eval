@@ -1753,44 +1753,87 @@ const FoodSafety: React.FC = () => {
             <Tabs defaultValue={activeTab} value={activeTab} onValueChange={(value) => setActiveTab(value as TabType)} className="w-full">
               {/* Enhanced Tab Navigation */}
               <div className="relative mb-6">
-                <TabsList className="w-full h-auto p-1 bg-gradient-to-r from-gray-100 to-gray-50 rounded-2xl flex shadow-inner">
-                  <TabsTrigger
-                    value="morning"
-                    className="flex-1 flex items-center justify-center h-12 px-4 py-2 rounded-xl data-[state=active]:bg-white data-[state=active]:shadow-lg data-[state=active]:text-[#E51636] transition-all duration-300 group"
+                {/* Mobile: Single clickable tab */}
+                <div className="block sm:hidden">
+                  <button
+                    onClick={() => {
+                      const tabs = ['morning', 'lunch', 'dinner'] as TabType[];
+                      const currentIndex = tabs.findIndex(tab => tab === activeTab);
+                      const nextIndex = (currentIndex + 1) % tabs.length;
+                      setActiveTab(tabs[nextIndex]);
+                    }}
+                    className="w-full flex items-center gap-3 bg-gradient-to-r from-white to-gray-50 rounded-2xl p-4 shadow-lg border-2 border-gray-200 hover:border-[#E51636]/30 transition-all duration-300 touch-manipulation active:scale-95"
                   >
-                    <Sun className="h-5 w-5 mr-2 group-data-[state=active]:text-orange-500" />
-                    <span className="font-semibold text-sm">Morning</span>
-                    {getIncompleteCount('morning') > 0 && (
-                      <Badge className="ml-2 bg-orange-100 text-orange-600 hover:bg-orange-100 animate-pulse">
-                        {getIncompleteCount('morning')}
-                      </Badge>
-                    )}
-                  </TabsTrigger>
-                  <TabsTrigger
-                    value="lunch"
-                    className="flex-1 flex items-center justify-center h-12 px-4 py-2 rounded-xl data-[state=active]:bg-white data-[state=active]:shadow-lg data-[state=active]:text-[#E51636] transition-all duration-300 group"
-                  >
-                    <Utensils className="h-5 w-5 mr-2 group-data-[state=active]:text-blue-500" />
-                    <span className="font-semibold text-sm">Lunch</span>
-                    {getIncompleteCount('lunch') > 0 && (
-                      <Badge className="ml-2 bg-blue-100 text-blue-600 hover:bg-blue-100 animate-pulse">
-                        {getIncompleteCount('lunch')}
-                      </Badge>
-                    )}
-                  </TabsTrigger>
-                  <TabsTrigger
-                    value="dinner"
-                    className="flex-1 flex items-center justify-center h-12 px-4 py-2 rounded-xl data-[state=active]:bg-white data-[state=active]:shadow-lg data-[state=active]:text-[#E51636] transition-all duration-300 group"
-                  >
-                    <Moon className="h-5 w-5 mr-2 group-data-[state=active]:text-purple-500" />
-                    <span className="font-semibold text-sm">Dinner</span>
-                    {getIncompleteCount('dinner') > 0 && (
-                      <Badge className="ml-2 bg-purple-100 text-purple-600 hover:bg-purple-100 animate-pulse">
-                        {getIncompleteCount('dinner')}
-                      </Badge>
-                    )}
-                  </TabsTrigger>
-                </TabsList>
+                    <div className={cn(
+                      "p-2.5 rounded-xl flex-shrink-0",
+                      activeTab === 'morning' ? "bg-orange-100 text-orange-600" :
+                      activeTab === 'lunch' ? "bg-blue-100 text-blue-600" :
+                      "bg-purple-100 text-purple-600"
+                    )}>
+                      {activeTab === 'morning' && <Sun className="h-5 w-5" />}
+                      {activeTab === 'lunch' && <Utensils className="h-5 w-5" />}
+                      {activeTab === 'dinner' && <Moon className="h-5 w-5" />}
+                    </div>
+                    <div className="flex-1 text-left min-w-0">
+                      <div className="font-semibold text-[#27251F] capitalize">
+                        {activeTab}
+                      </div>
+                      <div className="text-sm text-gray-500">
+                        Tap to switch • {getIncompleteCount(activeTab)} pending
+                      </div>
+                    </div>
+                    <div className="flex items-center gap-2 flex-shrink-0">
+                      {getIncompleteCount(activeTab) > 0 && (
+                        <Badge className="bg-[#E51636] text-white text-xs animate-pulse">
+                          {getIncompleteCount(activeTab)}
+                        </Badge>
+                      )}
+                      <ChevronRight className="h-4 w-4 text-gray-400" />
+                    </div>
+                  </button>
+                </div>
+
+                {/* Desktop: Full tab navigation */}
+                <div className="hidden sm:block">
+                  <TabsList className="w-full h-auto p-1 bg-gradient-to-r from-gray-100 to-gray-50 rounded-2xl flex shadow-inner">
+                    <TabsTrigger
+                      value="morning"
+                      className="flex-1 flex items-center justify-center h-12 px-4 py-2 rounded-xl data-[state=active]:bg-white data-[state=active]:shadow-lg data-[state=active]:text-[#E51636] transition-all duration-300 group"
+                    >
+                      <Sun className="h-5 w-5 mr-2 group-data-[state=active]:text-orange-500" />
+                      <span className="font-semibold text-sm">Morning</span>
+                      {getIncompleteCount('morning') > 0 && (
+                        <Badge className="ml-2 bg-orange-100 text-orange-600 hover:bg-orange-100 animate-pulse">
+                          {getIncompleteCount('morning')}
+                        </Badge>
+                      )}
+                    </TabsTrigger>
+                    <TabsTrigger
+                      value="lunch"
+                      className="flex-1 flex items-center justify-center h-12 px-4 py-2 rounded-xl data-[state=active]:bg-white data-[state=active]:shadow-lg data-[state=active]:text-[#E51636] transition-all duration-300 group"
+                    >
+                      <Utensils className="h-5 w-5 mr-2 group-data-[state=active]:text-blue-500" />
+                      <span className="font-semibold text-sm">Lunch</span>
+                      {getIncompleteCount('lunch') > 0 && (
+                        <Badge className="ml-2 bg-blue-100 text-blue-600 hover:bg-blue-100 animate-pulse">
+                          {getIncompleteCount('lunch')}
+                        </Badge>
+                      )}
+                    </TabsTrigger>
+                    <TabsTrigger
+                      value="dinner"
+                      className="flex-1 flex items-center justify-center h-12 px-4 py-2 rounded-xl data-[state=active]:bg-white data-[state=active]:shadow-lg data-[state=active]:text-[#E51636] transition-all duration-300 group"
+                    >
+                      <Moon className="h-5 w-5 mr-2 group-data-[state=active]:text-purple-500" />
+                      <span className="font-semibold text-sm">Dinner</span>
+                      {getIncompleteCount('dinner') > 0 && (
+                        <Badge className="ml-2 bg-purple-100 text-purple-600 hover:bg-purple-100 animate-pulse">
+                          {getIncompleteCount('dinner')}
+                        </Badge>
+                      )}
+                    </TabsTrigger>
+                  </TabsList>
+                </div>
               </div>
 
               <TabsContent value={activeTab} className="mt-0 focus-visible:outline-none">
