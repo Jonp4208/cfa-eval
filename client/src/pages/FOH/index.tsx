@@ -31,6 +31,7 @@ interface Task {
 export default function FOHPage() {
   const [activeTab, setActiveTab] = useState<ShiftType>('opening')
   const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false)
+  const [hasShownResetToday, setHasShownResetToday] = useState(false)
   const navigate = useNavigate()
   const { user } = useAuth()
   const { toast } = useToast()
@@ -39,26 +40,36 @@ export default function FOHPage() {
   // Get today's date in YYYY-MM-DD format using our utility function
   const today = getTodayDateString()
 
-  // Check if the checklist should be reset (new day)
+  // Check if the checklist should be reset (new day) - only run once on mount
   useEffect(() => {
     const checkForReset = () => {
       try {
         // Get the last saved date from localStorage
         const lastSavedDate = localStorage.getItem('foh-checklist-last-saved')
+        const currentDate = getTodayDateString()
 
         // If it's a new day (past midnight), we should reset the checklist
         if (isNewDay(lastSavedDate)) {
           // Update localStorage with today's date BEFORE invalidating queries
-          localStorage.setItem('foh-checklist-last-saved', today)
+          localStorage.setItem('foh-checklist-last-saved', currentDate)
 
           // Force a refresh of the data
           queryClient.invalidateQueries({ queryKey: ['foh-tasks'] })
 
-          // Show a toast notification
-          toast({
-            title: 'Checklist Reset',
-            description: 'The FOH checklist has been reset for a new day.',
-          })
+          // Only show toast notification if we haven't shown it today
+          const resetNotificationKey = `foh-reset-shown-${currentDate}`
+          const hasShownToday = localStorage.getItem(resetNotificationKey)
+
+          if (!hasShownToday) {
+            localStorage.setItem(resetNotificationKey, 'true')
+            setHasShownResetToday(true)
+
+            // Show a toast notification
+            toast({
+              title: 'Checklist Reset',
+              description: 'The FOH checklist has been reset for a new day.',
+            })
+          }
         }
       } catch (error) {
         // Silent error handling for reset check
@@ -72,7 +83,7 @@ export default function FOHPage() {
     const resetCheckInterval = setInterval(checkForReset, 60000) // Check every minute
 
     return () => clearInterval(resetCheckInterval)
-  }, [queryClient, today, toast])
+  }, []) // Remove dependencies to only run once on mount
 
   // Set up polling for real-time updates
   useEffect(() => {
@@ -230,11 +241,21 @@ export default function FOHPage() {
 
       // Check if this is our special reset error
       if (error instanceof Error && error.message === 'CHECKLIST_RESET_NEEDED') {
-        // Show a toast notification about the reset
-        toast({
-          title: 'Checklist Reset',
-          description: 'The FOH checklist has been reset for a new day. Please try again.',
-        })
+        // Only show toast notification if we haven't shown it today
+        const currentDate = getTodayDateString()
+        const resetNotificationKey = `foh-reset-shown-${currentDate}`
+        const hasShownToday = localStorage.getItem(resetNotificationKey)
+
+        if (!hasShownToday) {
+          localStorage.setItem(resetNotificationKey, 'true')
+          setHasShownResetToday(true)
+
+          // Show a toast notification about the reset
+          toast({
+            title: 'Checklist Reset',
+            description: 'The FOH checklist has been reset for a new day. Please try again.',
+          })
+        }
 
         // Refresh the data
         queryClient.invalidateQueries({ queryKey: ['foh-tasks'] })
