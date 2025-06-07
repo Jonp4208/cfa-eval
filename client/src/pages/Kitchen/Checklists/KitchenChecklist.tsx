@@ -361,8 +361,8 @@ export function KitchenChecklist() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50/30 to-indigo-50/20">
-      <div className="space-y-6 p-4 sm:p-6 max-w-7xl mx-auto">
+    <div className="min-h-screen">
+      <div className="space-y-6 p-4 sm:p-6 max-w-none mx-auto">
         {/* Hero Header */}
         <div className="text-center mb-8">
           <div className="inline-flex items-center gap-3 mb-4">
