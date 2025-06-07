@@ -166,7 +166,7 @@ export default function FOHPage() {
             date: today // Send the current date in New York timezone
           })
 
-          return { ...response.data, uncompleted: true }
+          return { ...response.data, uncompleted: true, taskId }
         } catch (error) {
           toast({
             title: 'Error',
@@ -182,15 +182,33 @@ export default function FOHPage() {
         const response = await api.post(`/api/foh/tasks/${taskId}/complete`, {
           date: today // Send the current date in New York timezone
         })
-        return response.data
+        return { ...response.data, taskId }
       } catch (error) {
         throw error
       }
     },
-    onSuccess: (data) => {
-      // Invalidate the tasks query to refresh the list
-      queryClient.invalidateQueries({ queryKey: ['foh-tasks', today] })
+    onMutate: async (taskId: string) => {
+      // Cancel any outgoing refetches (so they don't overwrite our optimistic update)
+      await queryClient.cancelQueries({ queryKey: ['foh-tasks', today] })
 
+      // Snapshot the previous value
+      const previousTasks = queryClient.getQueryData(['foh-tasks', today])
+
+      // Optimistically update to the new value
+      queryClient.setQueryData(['foh-tasks', today], (old: any) => {
+        if (!old) return old
+
+        return old.map((task: any) =>
+          task._id === taskId
+            ? { ...task, completed: !task.completed }
+            : task
+        )
+      })
+
+      // Return a context object with the snapshotted value
+      return { previousTasks }
+    },
+    onSuccess: (data) => {
       // Show different toast messages based on whether the task was completed or uncompleted
       if (data?.uncompleted) {
         toast({
@@ -204,7 +222,12 @@ export default function FOHPage() {
         })
       }
     },
-    onError: (error) => {
+    onError: (error, taskId, context) => {
+      // If we have a context, rollback the optimistic update
+      if (context?.previousTasks) {
+        queryClient.setQueryData(['foh-tasks', today], context.previousTasks)
+      }
+
       // Check if this is our special reset error
       if (error instanceof Error && error.message === 'CHECKLIST_RESET_NEEDED') {
         // Show a toast notification about the reset
@@ -224,6 +247,10 @@ export default function FOHPage() {
         description: 'Failed to update the task status. Please try again.',
         variant: 'destructive'
       })
+    },
+    onSettled: () => {
+      // Always refetch after error or success to ensure we have the latest data
+      queryClient.invalidateQueries({ queryKey: ['foh-tasks', today] })
     }
   })
 
