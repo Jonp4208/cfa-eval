@@ -1,68 +1,302 @@
 const emailTemplates = {
   trainingAssigned: (employee, plan, startDate) => ({
-    subject: 'New Training Plan Assigned',
+    to: employee.email,
+    subject: '📚 New Training Plan Assigned - LD Growth',
     html: `
-      <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
-        <h2 style="color: #E51636;">New Training Plan Assigned</h2>
-        <p>Hello ${employee.name},</p>
-        <p>You have been assigned a new training plan:</p>
-        <div style="background-color: #f5f5f5; padding: 15px; border-radius: 5px; margin: 15px 0;">
-          <ul style="list-style: none; padding: 0;">
-            <li style="margin: 10px 0;"><strong>Plan:</strong> ${plan.name}</li>
-            <li style="margin: 10px 0;"><strong>Start Date:</strong> ${new Date(startDate).toLocaleDateString()}</li>
-            <li style="margin: 10px 0;"><strong>Duration:</strong> ${plan.modules.length} modules</li>
-          </ul>
+      <div style="font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; max-width: 700px; margin: 0 auto; background-color: #ffffff; border-radius: 12px; overflow: hidden; box-shadow: 0 10px 30px rgba(0,0,0,0.1);">
+
+        <!-- Hero Header with Gradient -->
+        <div style="background: linear-gradient(135deg, #059669 0%, #047857 50%, #065F46 100%); padding: 40px 30px; text-align: center; position: relative; overflow: hidden;">
+          <!-- Decorative elements -->
+          <div style="position: absolute; top: -50px; right: -50px; width: 100px; height: 100px; background: rgba(255,255,255,0.1); border-radius: 50%; opacity: 0.3;"></div>
+          <div style="position: absolute; bottom: -30px; left: -30px; width: 60px; height: 60px; background: rgba(255,255,255,0.1); border-radius: 50%; opacity: 0.4;"></div>
+
+          <h1 style="color: white; margin: 0 0 10px 0; font-size: 32px; font-weight: 700; text-shadow: 0 2px 4px rgba(0,0,0,0.3);">
+            📚 New Training Assigned!
+          </h1>
+          <p style="color: rgba(255,255,255,0.95); margin: 0; font-size: 18px; font-weight: 400; line-height: 1.4;">
+            Your Development Journey Continues
+          </p>
         </div>
-        <p>Please log in to the training portal to begin your training:</p>
-        <p>
-          <a href="https://cfa-eval-app.vercel.app"
-             style="display: inline-block; background-color: #E51636; color: white; padding: 12px 24px; text-decoration: none; border-radius: 8px; font-weight: 500;">
-            Access Training Portal
-          </a>
-        </p>
-        <p style="color: #666; font-size: 12px;">If the button above doesn't work, copy and paste this link into your browser:</p>
-        <p style="color: #666; font-size: 12px;">https://cfa-eval-app.vercel.app</p>
-        <hr style="border: none; border-top: 1px solid #eee; margin: 20px 0;">
-        <p>Best regards,<br>Training Team</p>
+
+        <!-- Main Content -->
+        <div style="padding: 40px 30px;">
+
+          <!-- Personal Greeting -->
+          <div style="text-align: center; margin-bottom: 35px;">
+            <h2 style="color: #2D3748; margin: 0 0 15px 0; font-size: 24px; font-weight: 600;">
+              Hello ${employee.name}! 👋
+            </h2>
+            <p style="color: #4A5568; margin: 0; font-size: 16px; line-height: 1.6;">
+              Exciting news! You've been assigned a new training plan to help accelerate your leadership development. This is another step forward in your growth journey!
+            </p>
+          </div>
+
+          <!-- Training Plan Details Card -->
+          <div style="background: linear-gradient(135deg, #F0FDF4 0%, #DCFCE7 20%, #F0FDF4 100%); border: 2px solid #059669; border-radius: 12px; padding: 25px; margin: 30px 0; text-align: center; position: relative; overflow: hidden;">
+            <div style="position: absolute; top: -20px; right: -20px; width: 40px; height: 40px; background: rgba(5, 150, 105, 0.1); border-radius: 50%;"></div>
+            <div style="position: absolute; bottom: -15px; left: -15px; width: 30px; height: 30px; background: rgba(5, 150, 105, 0.1); border-radius: 50%;"></div>
+
+            <h3 style="color: #059669; margin: 0 0 20px 0; font-size: 20px; font-weight: 600;">
+              📋 Training Plan Details
+            </h3>
+
+            <div style="background: white; border-radius: 8px; padding: 20px; margin: 15px 0; box-shadow: 0 2px 8px rgba(0,0,0,0.1);">
+              <div style="margin-bottom: 15px;">
+                <p style="margin: 0 0 5px 0; color: #4A5568; font-size: 14px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px;">Training Plan</p>
+                <p style="margin: 0; color: #2D3748; font-size: 18px; font-weight: 600; color: #059669;">
+                  ${plan.name}
+                </p>
+              </div>
+
+              <div style="margin-bottom: 15px;">
+                <p style="margin: 0 0 5px 0; color: #4A5568; font-size: 14px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px;">Start Date</p>
+                <p style="margin: 0; color: #2D3748; font-size: 16px; font-weight: 500; background: #F7FAFC; padding: 8px 12px; border-radius: 6px; border: 1px solid #E2E8F0;">
+                  ${new Date(startDate).toLocaleDateString()}
+                </p>
+              </div>
+
+              <div>
+                <p style="margin: 0 0 5px 0; color: #4A5568; font-size: 14px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px;">Duration</p>
+                <p style="margin: 0; color: #2D3748; font-size: 16px; font-weight: 500; background: #F7FAFC; padding: 8px 12px; border-radius: 6px; border: 1px solid #E2E8F0;">
+                  ${plan.modules?.length || 0} modules
+                </p>
+              </div>
+            </div>
+          </div>
+
+          <!-- Call to Action Button -->
+          <div style="text-align: center; margin: 35px 0;">
+            <a href="https://www.ld-growth.com" style="display: inline-block; background: linear-gradient(135deg, #059669 0%, #047857 100%); color: white; padding: 16px 32px; text-decoration: none; border-radius: 50px; font-size: 18px; font-weight: 600; box-shadow: 0 4px 15px rgba(5, 150, 105, 0.4); transition: all 0.3s ease; text-transform: uppercase; letter-spacing: 0.5px;">
+              🚀 Start Training
+            </a>
+          </div>
+
+          <!-- Motivational Message -->
+          <div style="background: linear-gradient(135deg, #FFFBEB 0%, #FEF3C7 20%, #FFFBEB 100%); border-radius: 12px; padding: 25px; margin: 30px 0; border-left: 4px solid #F59E0B;">
+            <h3 style="color: #92400E; margin: 0 0 15px 0; font-size: 18px; font-weight: 600;">
+              💪 Your Growth Journey
+            </h3>
+            <p style="margin: 0; color: #2D3748; font-size: 16px; line-height: 1.6;">
+              Every great leader started with a commitment to continuous learning. This training plan is designed to help you develop new skills, gain confidence, and take your leadership to the next level. You've got this!
+            </p>
+          </div>
+
+        </div>
+
+        <!-- Footer -->
+        <div style="background: #F7FAFC; padding: 25px 30px; text-align: center; border-top: 1px solid #E2E8F0;">
+          <p style="margin: 0 0 10px 0; color: #4A5568; font-size: 14px;">
+            Ready to grow? Your training awaits! 🌟
+          </p>
+          <p style="margin: 0; color: #718096; font-size: 12px;">
+            © 2024 LD Growth. Empowering leaders, one step at a time.
+          </p>
+        </div>
+
       </div>
     `,
   }),
 
   moduleCompleted: (employee, module) => ({
-    subject: 'Training Module Completed',
+    to: employee.email,
+    subject: '🎉 Training Module Completed - Congratulations!',
     html: `
-      <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
-        <h2 style="color: #E51636;">Training Module Completed</h2>
-        <p>Hello ${employee.name},</p>
-        <p>Congratulations on completing the following training module:</p>
-        <div style="background-color: #f5f5f5; padding: 15px; border-radius: 5px; margin: 15px 0;">
-          <ul style="list-style: none; padding: 0;">
-            <li style="margin: 10px 0;"><strong>Module:</strong> ${module.name}</li>
-            <li style="margin: 10px 0;"><strong>Plan:</strong> ${employee.trainingPlan.name}</li>
-          </ul>
+      <div style="font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; max-width: 700px; margin: 0 auto; background-color: #ffffff; border-radius: 12px; overflow: hidden; box-shadow: 0 10px 30px rgba(0,0,0,0.1);">
+
+        <!-- Hero Header with Gradient -->
+        <div style="background: linear-gradient(135deg, #7C3AED 0%, #6D28D9 50%, #5B21B6 100%); padding: 40px 30px; text-align: center; position: relative; overflow: hidden;">
+          <!-- Decorative elements -->
+          <div style="position: absolute; top: -50px; right: -50px; width: 100px; height: 100px; background: rgba(255,255,255,0.1); border-radius: 50%; opacity: 0.3;"></div>
+          <div style="position: absolute; bottom: -30px; left: -30px; width: 60px; height: 60px; background: rgba(255,255,255,0.1); border-radius: 50%; opacity: 0.4;"></div>
+
+          <h1 style="color: white; margin: 0 0 10px 0; font-size: 32px; font-weight: 700; text-shadow: 0 2px 4px rgba(0,0,0,0.3);">
+            🎉 Congratulations!
+          </h1>
+          <p style="color: rgba(255,255,255,0.95); margin: 0; font-size: 18px; font-weight: 400; line-height: 1.4;">
+            Module Completed Successfully
+          </p>
         </div>
-        <p>Keep up the good work!</p>
-        <hr style="border: none; border-top: 1px solid #eee; margin: 20px 0;">
-        <p>Best regards,<br>Training Team</p>
+
+        <!-- Main Content -->
+        <div style="padding: 40px 30px;">
+
+          <!-- Personal Greeting -->
+          <div style="text-align: center; margin-bottom: 35px;">
+            <h2 style="color: #2D3748; margin: 0 0 15px 0; font-size: 24px; font-weight: 600;">
+              Amazing work, ${employee.name}! 🌟
+            </h2>
+            <p style="color: #4A5568; margin: 0; font-size: 16px; line-height: 1.6;">
+              You've successfully completed another training module! Each step forward brings you closer to becoming the leader you're meant to be.
+            </p>
+          </div>
+
+          <!-- Achievement Card -->
+          <div style="background: linear-gradient(135deg, #FAF5FF 0%, #E9D5FF 20%, #FAF5FF 100%); border: 2px solid #7C3AED; border-radius: 12px; padding: 25px; margin: 30px 0; text-align: center; position: relative; overflow: hidden;">
+            <div style="position: absolute; top: -20px; right: -20px; width: 40px; height: 40px; background: rgba(124, 58, 237, 0.1); border-radius: 50%;"></div>
+            <div style="position: absolute; bottom: -15px; left: -15px; width: 30px; height: 30px; background: rgba(124, 58, 237, 0.1); border-radius: 50%;"></div>
+
+            <h3 style="color: #7C3AED; margin: 0 0 20px 0; font-size: 20px; font-weight: 600;">
+              🏆 Module Achievement
+            </h3>
+
+            <div style="background: white; border-radius: 8px; padding: 20px; margin: 15px 0; box-shadow: 0 2px 8px rgba(0,0,0,0.1);">
+              <div style="margin-bottom: 15px;">
+                <p style="margin: 0 0 5px 0; color: #4A5568; font-size: 14px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px;">Completed Module</p>
+                <p style="margin: 0; color: #2D3748; font-size: 18px; font-weight: 600; color: #7C3AED;">
+                  ${module.name}
+                </p>
+              </div>
+
+              <div>
+                <p style="margin: 0 0 5px 0; color: #4A5568; font-size: 14px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px;">Training Plan</p>
+                <p style="margin: 0; color: #2D3748; font-size: 16px; font-weight: 500; background: #F7FAFC; padding: 8px 12px; border-radius: 6px; border: 1px solid #E2E8F0;">
+                  ${employee.trainingPlan?.name || 'Leadership Development'}
+                </p>
+              </div>
+            </div>
+          </div>
+
+          <!-- Motivational Message -->
+          <div style="background: linear-gradient(135deg, #F0FDF4 0%, #DCFCE7 20%, #F0FDF4 100%); border-radius: 12px; padding: 25px; margin: 30px 0; border-left: 4px solid #059669;">
+            <h3 style="color: #059669; margin: 0 0 15px 0; font-size: 18px; font-weight: 600;">
+              🚀 Keep the Momentum Going!
+            </h3>
+            <p style="margin: 0; color: #2D3748; font-size: 16px; line-height: 1.6;">
+              Every module you complete is a building block in your leadership foundation. You're developing skills that will serve you throughout your career. Keep up the excellent work!
+            </p>
+          </div>
+
+          <!-- Call to Action Button -->
+          <div style="text-align: center; margin: 35px 0;">
+            <a href="https://www.ld-growth.com" style="display: inline-block; background: linear-gradient(135deg, #7C3AED 0%, #6D28D9 100%); color: white; padding: 16px 32px; text-decoration: none; border-radius: 50px; font-size: 18px; font-weight: 600; box-shadow: 0 4px 15px rgba(124, 58, 237, 0.4); transition: all 0.3s ease; text-transform: uppercase; letter-spacing: 0.5px;">
+              🎯 Continue Training
+            </a>
+          </div>
+
+        </div>
+
+        <!-- Footer -->
+        <div style="background: #F7FAFC; padding: 25px 30px; text-align: center; border-top: 1px solid #E2E8F0;">
+          <p style="margin: 0 0 10px 0; color: #4A5568; font-size: 14px;">
+            Proud of your progress! Keep growing! 🌟
+          </p>
+          <p style="margin: 0; color: #718096; font-size: 12px;">
+            © 2024 LD Growth. Empowering leaders, one step at a time.
+          </p>
+        </div>
+
       </div>
     `,
   }),
 
   trainingCompleted: (employee, plan) => ({
-    subject: 'Training Plan Completed',
+    to: employee.email,
+    subject: '🏆 Training Plan Completed - Outstanding Achievement!',
     html: `
-      <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
-        <h2 style="color: #E51636;">Training Plan Completed</h2>
-        <p>Hello ${employee.name},</p>
-        <p>Congratulations on completing your training plan:</p>
-        <div style="background-color: #f5f5f5; padding: 15px; border-radius: 5px; margin: 15px 0;">
-          <ul style="list-style: none; padding: 0;">
-            <li style="margin: 10px 0;"><strong>Plan:</strong> ${plan.name}</li>
-          </ul>
+      <div style="font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; max-width: 700px; margin: 0 auto; background-color: #ffffff; border-radius: 12px; overflow: hidden; box-shadow: 0 10px 30px rgba(0,0,0,0.1);">
+
+        <!-- Hero Header with Gradient -->
+        <div style="background: linear-gradient(135deg, #F59E0B 0%, #D97706 50%, #B45309 100%); padding: 40px 30px; text-align: center; position: relative; overflow: hidden;">
+          <!-- Decorative elements -->
+          <div style="position: absolute; top: -50px; right: -50px; width: 100px; height: 100px; background: rgba(255,255,255,0.1); border-radius: 50%; opacity: 0.3;"></div>
+          <div style="position: absolute; bottom: -30px; left: -30px; width: 60px; height: 60px; background: rgba(255,255,255,0.1); border-radius: 50%; opacity: 0.4;"></div>
+
+          <h1 style="color: white; margin: 0 0 10px 0; font-size: 32px; font-weight: 700; text-shadow: 0 2px 4px rgba(0,0,0,0.3);">
+            🏆 Outstanding Achievement!
+          </h1>
+          <p style="color: rgba(255,255,255,0.95); margin: 0; font-size: 18px; font-weight: 400; line-height: 1.4;">
+            Training Plan Completed
+          </p>
         </div>
-        <p>This is a significant achievement! Your dedication to learning and improvement is appreciated.</p>
-        <hr style="border: none; border-top: 1px solid #eee; margin: 20px 0;">
-        <p>Best regards,<br>Training Team</p>
+
+        <!-- Main Content -->
+        <div style="padding: 40px 30px;">
+
+          <!-- Personal Greeting -->
+          <div style="text-align: center; margin-bottom: 35px;">
+            <h2 style="color: #2D3748; margin: 0 0 15px 0; font-size: 24px; font-weight: 600;">
+              Incredible work, ${employee.name}! 🎉
+            </h2>
+            <p style="color: #4A5568; margin: 0; font-size: 16px; line-height: 1.6;">
+              You've reached a major milestone in your leadership journey! Completing an entire training plan demonstrates your commitment to growth and excellence.
+            </p>
+          </div>
+
+          <!-- Achievement Card -->
+          <div style="background: linear-gradient(135deg, #FFFBEB 0%, #FEF3C7 20%, #FFFBEB 100%); border: 2px solid #F59E0B; border-radius: 12px; padding: 25px; margin: 30px 0; text-align: center; position: relative; overflow: hidden;">
+            <div style="position: absolute; top: -20px; right: -20px; width: 40px; height: 40px; background: rgba(245, 158, 11, 0.1); border-radius: 50%;"></div>
+            <div style="position: absolute; bottom: -15px; left: -15px; width: 30px; height: 30px; background: rgba(245, 158, 11, 0.1); border-radius: 50%;"></div>
+
+            <h3 style="color: #F59E0B; margin: 0 0 20px 0; font-size: 20px; font-weight: 600;">
+              🎓 Training Plan Achievement
+            </h3>
+
+            <div style="background: white; border-radius: 8px; padding: 20px; margin: 15px 0; box-shadow: 0 2px 8px rgba(0,0,0,0.1);">
+              <div style="margin-bottom: 15px;">
+                <p style="margin: 0 0 5px 0; color: #4A5568; font-size: 14px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px;">Completed Training Plan</p>
+                <p style="margin: 0; color: #2D3748; font-size: 18px; font-weight: 600; color: #F59E0B;">
+                  ${plan.name}
+                </p>
+              </div>
+
+              <div style="background: #F0FDF4; border: 1px solid #BBF7D0; border-radius: 6px; padding: 15px;">
+                <p style="margin: 0; color: #059669; font-size: 16px; font-weight: 600; text-align: center;">
+                  ✅ 100% Complete
+                </p>
+              </div>
+            </div>
+          </div>
+
+          <!-- Celebration Message -->
+          <div style="background: linear-gradient(135deg, #EBF8FF 0%, #BEE3F8 20%, #EBF8FF 100%); border-radius: 12px; padding: 25px; margin: 30px 0; border-left: 4px solid #3182CE;">
+            <h3 style="color: #2B6CB0; margin: 0 0 15px 0; font-size: 18px; font-weight: 600;">
+              🌟 This is a Significant Achievement!
+            </h3>
+            <p style="margin: 0 0 15px 0; color: #2D3748; font-size: 16px; line-height: 1.6;">
+              Your dedication to learning and improvement is truly appreciated. You've invested in yourself and your future, and that commitment will pay dividends throughout your leadership career.
+            </p>
+            <p style="margin: 0; color: #2D3748; font-size: 16px; line-height: 1.6;">
+              You're not just completing training - you're building the foundation for exceptional leadership!
+            </p>
+          </div>
+
+          <!-- Call to Action Button -->
+          <div style="text-align: center; margin: 35px 0;">
+            <a href="https://www.ld-growth.com" style="display: inline-block; background: linear-gradient(135deg, #F59E0B 0%, #D97706 100%); color: white; padding: 16px 32px; text-decoration: none; border-radius: 50px; font-size: 18px; font-weight: 600; box-shadow: 0 4px 15px rgba(245, 158, 11, 0.4); transition: all 0.3s ease; text-transform: uppercase; letter-spacing: 0.5px;">
+              🚀 Continue Growing
+            </a>
+          </div>
+
+          <!-- Personal Message from Jonathon -->
+          <div style="background: linear-gradient(135deg, #FFF5F5 0%, #FED7D7 20%, #FFF5F5 100%); border-radius: 12px; padding: 25px; margin: 30px 0; border-left: 4px solid #E51636;">
+            <h3 style="color: #C53030; margin: 0 0 15px 0; font-size: 18px; font-weight: 600;">
+              📧 A Personal Congratulations from Jonathon
+            </h3>
+            <p style="margin: 0; color: #2D3748; font-size: 16px; line-height: 1.6;">
+              Congratulations on this outstanding achievement! Completing a full training plan shows the kind of commitment and dedication that separates good leaders from great ones. I'm proud of your progress and excited to see how you'll apply these new skills in your leadership role.
+            </p>
+
+            <div style="margin-top: 20px; padding-top: 15px; border-top: 1px solid #FEB2B2;">
+              <p style="margin: 0; color: #C53030; font-weight: 600;">
+                Jonathon Pope<br>
+                <span style="font-weight: 400; color: #4A5568;">Founder, LD Growth</span>
+              </p>
+            </div>
+          </div>
+
+        </div>
+
+        <!-- Footer -->
+        <div style="background: #F7FAFC; padding: 25px 30px; text-align: center; border-top: 1px solid #E2E8F0;">
+          <p style="margin: 0 0 10px 0; color: #4A5568; font-size: 14px;">
+            Celebrating your success! The future is bright! 🌟
+          </p>
+          <p style="margin: 0; color: #718096; font-size: 12px;">
+            © 2024 LD Growth. Empowering leaders, one step at a time.
+          </p>
+        </div>
+
       </div>
     `,
   }),
@@ -213,7 +447,7 @@ const emailTemplates = {
               Best regards,<br>
               <strong>Jonathon Pope</strong><br>
               LD Growth Platform<br>
-              <a href="mailto:jonp4208@gmail.com" style="color: #E51636;">jonp4208@gmail.com</a>
+              <a href="mailto:Jonathon@LD-Growth.com" style="color: #E51636;">Jonathon@LD-Growth.com</a>
             </p>
           </div>
 
@@ -581,6 +815,116 @@ const emailTemplates = {
           </p>
           <p style="margin: 0; color: #718096; font-size: 12px;">
             © 2024 LD Growth. Empowering leaders, one store at a time.
+          </p>
+        </div>
+
+      </div>
+    `,
+  }),
+
+  passwordReset: (user, newPassword) => ({
+    to: user.email,
+    subject: '🔒 Password Reset - LD Growth',
+    html: `
+      <div style="font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; max-width: 700px; margin: 0 auto; background-color: #ffffff; border-radius: 12px; overflow: hidden; box-shadow: 0 10px 30px rgba(0,0,0,0.1);">
+
+        <!-- Hero Header with Gradient -->
+        <div style="background: linear-gradient(135deg, #DC2626 0%, #B91C1C 50%, #991B1B 100%); padding: 40px 30px; text-align: center; position: relative; overflow: hidden;">
+          <!-- Decorative elements -->
+          <div style="position: absolute; top: -50px; right: -50px; width: 100px; height: 100px; background: rgba(255,255,255,0.1); border-radius: 50%; opacity: 0.3;"></div>
+          <div style="position: absolute; bottom: -30px; left: -30px; width: 60px; height: 60px; background: rgba(255,255,255,0.1); border-radius: 50%; opacity: 0.4;"></div>
+
+          <h1 style="color: white; margin: 0 0 10px 0; font-size: 32px; font-weight: 700; text-shadow: 0 2px 4px rgba(0,0,0,0.3);">
+            🔒 Password Reset
+          </h1>
+          <p style="color: rgba(255,255,255,0.95); margin: 0; font-size: 18px; font-weight: 400; line-height: 1.4;">
+            Your New Login Credentials
+          </p>
+        </div>
+
+        <!-- Main Content -->
+        <div style="padding: 40px 30px;">
+
+          <!-- Personal Greeting -->
+          <div style="text-align: center; margin-bottom: 35px;">
+            <h2 style="color: #2D3748; margin: 0 0 15px 0; font-size: 24px; font-weight: 600;">
+              Hello ${user.name}! 👋
+            </h2>
+            <p style="color: #4A5568; margin: 0; font-size: 16px; line-height: 1.6;">
+              Your password has been reset by an administrator. Below are your new login credentials to access LD Growth.
+            </p>
+          </div>
+
+          <!-- New Credentials Card -->
+          <div style="background: linear-gradient(135deg, #FFF5F5 0%, #FED7D7 20%, #FFF5F5 100%); border: 2px solid #DC2626; border-radius: 12px; padding: 25px; margin: 30px 0; text-align: center; position: relative; overflow: hidden;">
+            <div style="position: absolute; top: -20px; right: -20px; width: 40px; height: 40px; background: rgba(220, 38, 38, 0.1); border-radius: 50%;"></div>
+            <div style="position: absolute; bottom: -15px; left: -15px; width: 30px; height: 30px; background: rgba(220, 38, 38, 0.1); border-radius: 50%;"></div>
+
+            <h3 style="color: #DC2626; margin: 0 0 20px 0; font-size: 20px; font-weight: 600;">
+              🔑 Your New Login Details
+            </h3>
+
+            <div style="background: white; border-radius: 8px; padding: 20px; margin: 15px 0; box-shadow: 0 2px 8px rgba(0,0,0,0.1);">
+              <div style="margin-bottom: 15px;">
+                <p style="margin: 0 0 5px 0; color: #4A5568; font-size: 14px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px;">Website</p>
+                <a href="https://www.ld-growth.com" style="color: #DC2626; font-size: 18px; font-weight: 600; text-decoration: none; display: inline-block; padding: 8px 16px; background: rgba(220, 38, 38, 0.1); border-radius: 6px; transition: all 0.3s ease;">
+                  www.ld-growth.com
+                </a>
+              </div>
+
+              <div style="margin-bottom: 15px;">
+                <p style="margin: 0 0 5px 0; color: #4A5568; font-size: 14px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px;">Email</p>
+                <p style="margin: 0; color: #2D3748; font-size: 16px; font-weight: 500; background: #F7FAFC; padding: 8px 12px; border-radius: 6px; border: 1px solid #E2E8F0;">
+                  ${user.email}
+                </p>
+              </div>
+
+              <div>
+                <p style="margin: 0 0 5px 0; color: #4A5568; font-size: 14px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px;">New Password</p>
+                <p style="margin: 0; color: #2D3748; font-size: 16px; font-weight: 600; background: #FFF5F5; padding: 12px; border-radius: 6px; border: 2px solid #DC2626; font-family: 'Courier New', monospace; letter-spacing: 1px;">
+                  ${newPassword}
+                </p>
+              </div>
+            </div>
+          </div>
+
+          <!-- Call to Action Button -->
+          <div style="text-align: center; margin: 35px 0;">
+            <a href="https://www.ld-growth.com" style="display: inline-block; background: linear-gradient(135deg, #DC2626 0%, #B91C1C 100%); color: white; padding: 16px 32px; text-decoration: none; border-radius: 50px; font-size: 18px; font-weight: 600; box-shadow: 0 4px 15px rgba(220, 38, 38, 0.4); transition: all 0.3s ease; text-transform: uppercase; letter-spacing: 0.5px;">
+              🚀 Login Now
+            </a>
+          </div>
+
+          <!-- Security Notice -->
+          <div style="background: #FFF5F5; border: 1px solid #FEB2B2; border-radius: 8px; padding: 20px; margin: 25px 0;">
+            <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 10px;">
+              <span style="font-size: 20px;">🔒</span>
+              <h4 style="margin: 0; color: #C53030; font-size: 16px; font-weight: 600;">Important Security Notice</h4>
+            </div>
+            <p style="margin: 0; color: #742A2A; font-size: 14px; line-height: 1.5;">
+              For your security, please change your password immediately after logging in. If you didn't request this password reset, please contact your administrator immediately.
+            </p>
+          </div>
+
+          <!-- Support Section -->
+          <div style="background: linear-gradient(135deg, #EBF8FF 0%, #BEE3F8 20%, #EBF8FF 100%); border-radius: 12px; padding: 25px; margin: 30px 0; border-left: 4px solid #3182CE;">
+            <h3 style="color: #2B6CB0; margin: 0 0 15px 0; font-size: 18px; font-weight: 600;">
+              📧 Need Help?
+            </h3>
+            <p style="margin: 0; color: #2D3748; font-size: 16px; line-height: 1.6;">
+              If you have any questions or need assistance, don't hesitate to reach out to our support team at <a href="mailto:Jonathon@LD-Growth.com" style="color: #E51636; text-decoration: none; font-weight: 600;">Jonathon@LD-Growth.com</a>
+            </p>
+          </div>
+
+        </div>
+
+        <!-- Footer -->
+        <div style="background: #F7FAFC; padding: 25px 30px; text-align: center; border-top: 1px solid #E2E8F0;">
+          <p style="margin: 0 0 10px 0; color: #4A5568; font-size: 14px;">
+            Your security is our priority. Welcome back to LD Growth! 🌟
+          </p>
+          <p style="margin: 0; color: #718096; font-size: 12px;">
+            © 2024 LD Growth. Empowering leaders, one step at a time.
           </p>
         </div>
 

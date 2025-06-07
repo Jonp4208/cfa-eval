@@ -3,6 +3,7 @@ import jwt from 'jsonwebtoken';
 import { User } from '../models/index.js';
 import crypto from 'crypto';
 import { sendEmail } from '../utils/email.js';
+import emailTemplates from '../utils/emailTemplates.js';
 import logger from '../utils/logger.js';
 
 // Register new user
@@ -207,42 +208,10 @@ export const forgotPassword = async (req, res) => {
       console.log('Temporary password saved for user');
 
       // Send email with temporary password
-      const emailContent = `
-        <div style="font-family: Arial, sans-serif; max-width: 800px; margin: 0 auto; padding: 20px;">
-          <div style="background-color: #E4002B; padding: 20px; border-radius: 8px; margin-bottom: 30px;">
-            <h1 style="color: white; margin: 0;">Password Reset</h1>
-          </div>
-
-          <div style="background-color: #f8f8f8; padding: 20px; border-radius: 8px; margin-bottom: 30px;">
-            <p>Hello ${user.name},</p>
-
-            <p>You recently requested to reset your password for your LD Growth account. Here are your new login credentials:</p>
-
-            <div style="background-color: #fff; padding: 15px; border-radius: 4px; margin: 20px 0;">
-              <p style="margin: 5px 0;"><strong>Access the site here:</strong> <a href="https://www.ld-growth.com" style="color: #E4002B;">www.ld-growth.com</a></p>
-              <p style="margin: 5px 0;"><strong>Email:</strong> ${user.email}</p>
-              <p style="margin: 5px 0;"><strong>Temporary Password:</strong> ${newPassword}</p>
-            </div>
-
-            <p style="color: #E4002B; font-weight: bold;">Important Security Notice:</p>
-            <p>For your security, please change your password immediately after logging in.</p>
-
-            <p style="color: #666;">If you didn't request a password reset, please contact your administrator immediately.</p>
-          </div>
-
-          <div style="text-align: center; padding: 20px; color: #666;">
-            <p>Thank you,<br>LD Growth Team</p>
-          </div>
-        </div>
-      `;
-
       try {
         console.log('Attempting to send email to:', email);
-        await sendEmail({
-          to: email,
-          subject: 'Your Temporary Password - LD Growth',
-          html: emailContent
-        });
+        const passwordResetEmail = emailTemplates.passwordReset(user, newPassword);
+        await sendEmail(passwordResetEmail);
         console.log('Temporary password email sent successfully');
       } catch (emailError) {
         console.error('Error sending temporary password email:', emailError);

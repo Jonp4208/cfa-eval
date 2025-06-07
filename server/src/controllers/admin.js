@@ -534,35 +534,8 @@ export const resetUserPassword = async (req, res) => {
     await user.save();
 
     // Send email with new password
-    await sendEmail({
-      to: user.email,
-      subject: 'Password Reset - LD Growth',
-      html: `
-        <div style="font-family: Arial, sans-serif; max-width: 800px; margin: 0 auto; padding: 20px;">
-          <div style="background-color: #E4002B; padding: 20px; border-radius: 8px; margin-bottom: 30px;">
-            <h1 style="color: white; margin: 0;">Password Reset</h1>
-          </div>
-
-          <div style="background-color: #f8f8f8; padding: 20px; border-radius: 8px; margin-bottom: 30px;">
-            <p>Hello ${user.name},</p>
-
-            <p>Your password has been reset by an administrator. Here are your new login credentials:</p>
-
-            <div style="background-color: #fff; padding: 15px; border-radius: 4px; margin: 20px 0;">
-              <p style="margin: 5px 0;"><strong>Access the site here:</strong> <a href="https://www.ld-growth.com" style="color: #E4002B;">www.ld-growth.com</a></p>
-              <p style="margin: 5px 0;"><strong>Email:</strong> ${user.email}</p>
-              <p style="margin: 5px 0;"><strong>New Password:</strong> ${newPassword}</p>
-            </div>
-
-            <p>For security reasons, please change your password after logging in.</p>
-          </div>
-
-          <div style="text-align: center; color: #666; font-size: 12px; margin-top: 30px;">
-            <p>This is an automated message, please do not reply to this email.</p>
-          </div>
-        </div>
-      `
-    });
+    const passwordResetEmail = emailTemplates.passwordReset(user, newPassword);
+    await sendEmail(passwordResetEmail);
 
     res.json({
       message: 'User password reset successfully',
