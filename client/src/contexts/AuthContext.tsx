@@ -99,6 +99,25 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     initAuth();
   }, []);
 
+  // Add page visibility detection to refresh token when user returns
+  useEffect(() => {
+    const handleVisibilityChange = async () => {
+      if (!document.hidden && user && token) {
+        // User returned to the tab, check if token needs refresh
+        try {
+          // Try a simple API call to see if token is still valid
+          await api.get('/api/auth/profile');
+        } catch (error) {
+          console.log('Token may be expired, attempting refresh...');
+          // If it fails, the axios interceptor will handle the refresh
+        }
+      }
+    };
+
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+    return () => document.removeEventListener('visibilitychange', handleVisibilityChange);
+  }, [user, token]);
+
   const login = async (email: string, password: string) => {
     // Clear any existing auth state before attempting login
     localStorage.removeItem('token');

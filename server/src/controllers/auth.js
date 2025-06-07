@@ -75,7 +75,7 @@ export const login = async (req, res) => {
     const token = jwt.sign(
       { userId: user.id, store: user.store },
       process.env.JWT_SECRET,
-      { expiresIn: '1h' }
+      { expiresIn: '8h' } // Extended to 8 hours to reduce timeouts
     );
 
     // Generate refresh token (long-lived)

@@ -55,7 +55,7 @@ export const auth = async (req, res, next) => {
             const newToken = jwt.sign(
               { userId: user._id, store: user.store._id },
               process.env.JWT_SECRET,
-              { expiresIn: '1h' }
+              { expiresIn: '8h' }
             );
 
             // Set the new token in the response header
@@ -102,7 +102,7 @@ export const auth = async (req, res, next) => {
               const newToken = jwt.sign(
                 { userId: user._id, store: user.store._id },
                 process.env.JWT_SECRET,
-                { expiresIn: '1h' }
+                { expiresIn: '8h' }
               );
 
               // Set the new token in the response header
