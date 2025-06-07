@@ -1941,15 +1941,15 @@ const FoodSafety: React.FC = () => {
 
         {/* Enhanced Temperature Monitoring Section */}
         <Card className="bg-white border-0 shadow-2xl rounded-3xl overflow-hidden">
-          <div className="bg-gradient-to-r from-blue-500 to-cyan-500 p-6 text-white">
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-4">
-                <div className="p-3 bg-white/20 rounded-2xl backdrop-blur-sm">
-                  <ThermometerSun className="h-6 w-6" />
+          <div className="bg-gradient-to-r from-blue-500 to-cyan-500 p-4 sm:p-6 text-white">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+              <div className="flex items-center gap-3 sm:gap-4">
+                <div className="p-2.5 sm:p-3 bg-white/20 rounded-2xl backdrop-blur-sm flex-shrink-0">
+                  <ThermometerSun className="h-5 w-5 sm:h-6 sm:w-6" />
                 </div>
-                <div>
-                  <h2 className="text-2xl font-bold">Temperature Monitoring</h2>
-                  <p className="text-white/80 text-sm">
+                <div className="min-w-0">
+                  <h2 className="text-xl sm:text-2xl font-bold">Temperature Monitoring</h2>
+                  <p className="text-white/80 text-xs sm:text-sm">
                     {Object.keys(temperatures).filter(location =>
                       temperatures[location]?.value !== null &&
                       temperatures[location]?.timestamp &&
@@ -1958,10 +1958,10 @@ const FoodSafety: React.FC = () => {
                   </p>
                 </div>
               </div>
-              <div className="flex gap-2">
+              <div className="flex gap-2 w-full sm:w-auto">
                 <Button
                   onClick={() => navigate('/kitchen/food-safety/history')}
-                  className="bg-white/20 hover:bg-white/30 text-white border-white/30 backdrop-blur-sm"
+                  className="flex-1 sm:flex-none bg-white/20 hover:bg-white/30 text-white border-white/30 backdrop-blur-sm h-10 sm:h-9 text-sm touch-manipulation"
                   size="sm"
                 >
                   <History className="h-4 w-4 mr-2" />
@@ -1972,7 +1972,7 @@ const FoodSafety: React.FC = () => {
                     setRecordTempDialog(true);
                     setNewTemperatures(temperatures);
                   }}
-                  className="bg-white text-blue-600 hover:bg-white/90"
+                  className="flex-1 sm:flex-none bg-white text-blue-600 hover:bg-white/90 h-10 sm:h-9 text-sm touch-manipulation"
                   size="sm"
                 >
                   <Plus className="h-4 w-4 mr-2" />
@@ -1982,36 +1982,36 @@ const FoodSafety: React.FC = () => {
             </div>
           </div>
 
-          <div className="p-6">
-            {/* Enhanced Tab Switcher */}
-            <div className="flex justify-center mb-6">
-              <div className="inline-flex items-center bg-gradient-to-r from-gray-100 to-gray-50 rounded-2xl p-1 shadow-inner">
+          <div className="p-4 sm:p-6">
+            {/* Enhanced Tab Switcher - Mobile Optimized */}
+            <div className="flex justify-center mb-4 sm:mb-6">
+              <div className="inline-flex items-center bg-gradient-to-r from-gray-100 to-gray-50 rounded-2xl p-1 shadow-inner w-full sm:w-auto">
                 <button
                   onClick={() => setTempView('equipment')}
                   className={cn(
-                    "px-6 py-3 text-sm font-semibold rounded-xl transition-all duration-300",
+                    "flex-1 sm:flex-none px-4 sm:px-6 py-2.5 sm:py-3 text-sm font-semibold rounded-xl transition-all duration-300 touch-manipulation",
                     tempView === 'equipment'
                       ? "bg-white text-blue-600 shadow-lg transform scale-105"
-                      : "text-gray-600 hover:text-blue-600"
+                      : "text-gray-600 hover:text-blue-600 active:bg-gray-200"
                   )}
                 >
-                  <div className="flex items-center gap-2">
+                  <div className="flex items-center justify-center gap-1.5 sm:gap-2">
                     <Thermometer className="h-4 w-4" />
-                    Equipment
+                    <span className="text-xs sm:text-sm">Equipment</span>
                   </div>
                 </button>
                 <button
                   onClick={() => setTempView('product')}
                   className={cn(
-                    "px-6 py-3 text-sm font-semibold rounded-xl transition-all duration-300",
+                    "flex-1 sm:flex-none px-4 sm:px-6 py-2.5 sm:py-3 text-sm font-semibold rounded-xl transition-all duration-300 touch-manipulation",
                     tempView === 'product'
                       ? "bg-white text-blue-600 shadow-lg transform scale-105"
-                      : "text-gray-600 hover:text-blue-600"
+                      : "text-gray-600 hover:text-blue-600 active:bg-gray-200"
                   )}
                 >
-                  <div className="flex items-center gap-2">
+                  <div className="flex items-center justify-center gap-1.5 sm:gap-2">
                     <Utensils className="h-4 w-4" />
-                    Products
+                    <span className="text-xs sm:text-sm">Products</span>
                   </div>
                 </button>
               </div>
@@ -2034,7 +2034,8 @@ const FoodSafety: React.FC = () => {
                     <div
                       key={location}
                       className={cn(
-                        "group relative overflow-hidden rounded-2xl border-2 transition-all duration-300 hover:shadow-xl hover:-translate-y-1",
+                        "group relative overflow-hidden rounded-2xl border-2 transition-all duration-300 touch-manipulation",
+                        "sm:hover:shadow-xl sm:hover:-translate-y-1",
                         status === 'pass' ? "bg-gradient-to-r from-green-50 to-emerald-50 border-green-200 hover:border-green-300" :
                         status === 'warning' ? "bg-gradient-to-r from-yellow-50 to-amber-50 border-yellow-200 hover:border-yellow-300" :
                         status === 'fail' ? "bg-gradient-to-r from-red-50 to-rose-50 border-red-200 hover:border-red-300" :
@@ -2053,38 +2054,39 @@ const FoodSafety: React.FC = () => {
                         "bg-gradient-to-r from-gray-300 to-slate-400"
                       )} />
 
-                      <div className="p-4">
-                        <div className="flex items-center justify-between">
+                      <div className="p-3 sm:p-4">
+                        <div className="flex items-center justify-between gap-3">
                           {/* Location info with enhanced icon */}
-                          <div className="flex items-center gap-3">
+                          <div className="flex items-center gap-2 sm:gap-3 min-w-0 flex-1">
                             <div className={cn(
-                              "w-12 h-12 rounded-2xl flex items-center justify-center transition-all duration-300 group-hover:scale-110",
+                              "w-10 h-10 sm:w-12 sm:h-12 rounded-2xl flex items-center justify-center transition-all duration-300 flex-shrink-0",
+                              "sm:group-hover:scale-110",
                               status === 'pass' ? "bg-green-100 text-green-600 shadow-lg shadow-green-200" :
                               status === 'warning' ? "bg-yellow-100 text-yellow-600 shadow-lg shadow-yellow-200" :
                               status === 'fail' ? "bg-red-100 text-red-600 shadow-lg shadow-red-200" :
                               "bg-gray-100 text-gray-400 group-hover:bg-blue-100 group-hover:text-blue-600"
                             )}>
-                              {status === 'pass' && <ThermometerSun className="h-6 w-6" />}
-                              {status === 'warning' && <Thermometer className="h-6 w-6" />}
-                              {status === 'fail' && <ThermometerSnowflake className="h-6 w-6" />}
-                              {status === 'pending' && <Thermometer className="h-6 w-6" />}
+                              {status === 'pass' && <ThermometerSun className="h-5 w-5 sm:h-6 sm:w-6" />}
+                              {status === 'warning' && <Thermometer className="h-5 w-5 sm:h-6 sm:w-6" />}
+                              {status === 'fail' && <ThermometerSnowflake className="h-5 w-5 sm:h-6 sm:w-6" />}
+                              {status === 'pending' && <Thermometer className="h-5 w-5 sm:h-6 sm:w-6" />}
                             </div>
-                            <div>
-                              <h3 className="font-semibold text-[#27251F] group-hover:text-blue-600 transition-colors">
+                            <div className="min-w-0 flex-1">
+                              <h3 className="font-semibold text-sm sm:text-base text-[#27251F] group-hover:text-blue-600 transition-colors truncate">
                                 {locationName}
                               </h3>
-                              <p className="text-sm text-[#27251F]/60">
+                              <p className="text-xs sm:text-sm text-[#27251F]/60">
                                 Target: {range.min}°F - {range.max}°F
                               </p>
                             </div>
                           </div>
 
                           {/* Temperature display */}
-                          <div className="text-right">
+                          <div className="text-right flex-shrink-0">
                             {temp?.value !== null ? (
                               <>
                                 <div className={cn(
-                                  "text-2xl font-bold",
+                                  "text-xl sm:text-2xl font-bold",
                                   status === 'pass' ? "text-green-600" :
                                   status === 'warning' ? "text-yellow-600" :
                                   status === 'fail' ? "text-red-600" :
@@ -2104,7 +2106,7 @@ const FoodSafety: React.FC = () => {
                                 {/* Status badge */}
                                 <Badge
                                   className={cn(
-                                    "mt-2 text-xs",
+                                    "mt-1.5 sm:mt-2 text-xs",
                                     status === 'pass' ? "bg-green-100 text-green-700 hover:bg-green-100" :
                                     status === 'warning' ? "bg-yellow-100 text-yellow-700 hover:bg-yellow-100" :
                                     status === 'fail' ? "bg-red-100 text-red-700 hover:bg-red-100" :
@@ -2120,7 +2122,7 @@ const FoodSafety: React.FC = () => {
                               </>
                             ) : (
                               <div className="text-center">
-                                <div className="text-lg font-semibold text-[#27251F]/40 mb-2">
+                                <div className="text-base sm:text-lg font-semibold text-[#27251F]/40 mb-1 sm:mb-2">
                                   Not recorded
                                 </div>
                                 <Badge variant="outline" className="text-xs">
