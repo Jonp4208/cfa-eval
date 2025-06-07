@@ -9,7 +9,7 @@ const log = {
   },
   info: (message: string, ...args: any[]) => {
     // Set to true to enable info logs
-    const INFO_ENABLED = true;
+    const INFO_ENABLED = false;
     if (INFO_ENABLED) {
       console.log(`[INFO] ${message}`, ...args);
     }
@@ -22,7 +22,7 @@ const log = {
   },
   save: (id: number, message: string, ...args: any[]) => {
     // Set to true to enable save logs
-    const SAVE_LOGS_ENABLED = true;
+    const SAVE_LOGS_ENABLED = false;
     if (SAVE_LOGS_ENABLED) {
       console.log(`[SAVE ${id}] ${message}`, ...args);
     }

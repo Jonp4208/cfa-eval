@@ -16,8 +16,8 @@ const getCurrentLogLevel = () => {
   if (envLevel && LOG_LEVELS[envLevel] !== undefined) {
     return LOG_LEVELS[envLevel];
   }
-  // Default to WARN in production, INFO in development
-  return process.env.NODE_ENV === 'production' ? LOG_LEVELS.WARN : LOG_LEVELS.INFO;
+  // Default to ERROR in production, WARN in development
+  return process.env.NODE_ENV === 'production' ? LOG_LEVELS.ERROR : LOG_LEVELS.WARN;
 };
 
 const currentLogLevel = getCurrentLogLevel();

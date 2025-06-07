@@ -6,7 +6,7 @@ import { Card } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { useToast } from '@/components/ui/use-toast'
-import { CheckCircle2, Loader2, Sun, Moon, ArrowLeftRight, Pencil, History } from 'lucide-react'
+import { CheckCircle2, Loader2, Sun, Moon, ArrowLeftRight, Pencil, History, Clock, Users, TrendingUp, Sparkles, Star, Award } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { KitchenTaskList } from '@/components/kitchen/checklists/KitchenTaskList'
 import { EditChecklistDialog } from '@/components/kitchen/checklists/EditChecklistDialog'
@@ -48,8 +48,6 @@ export function KitchenChecklist() {
 
         // If it's a new day (past midnight), we should reset the checklist
         if (isNewDay(lastSavedDate)) {
-          console.log('New day detected, resetting kitchen checklist')
-
           // Force a refresh of the data
           queryClient.invalidateQueries({ queryKey: ['kitchen-tasks'] })
 
@@ -63,7 +61,7 @@ export function KitchenChecklist() {
           })
         }
       } catch (error) {
-        console.error('Error checking for checklist reset:', error)
+        // Silent error handling for reset check
       }
     }
 
@@ -83,10 +81,7 @@ export function KitchenChecklist() {
       // Check if we have a valid token before making the request
       const token = localStorage.getItem('token')
       if (token) {
-        console.log('Polling for kitchen checklist updates')
         queryClient.invalidateQueries({ queryKey: ['kitchen-tasks', today] })
-      } else {
-        console.log('Skipping kitchen checklist poll - no valid token')
       }
     }, 60000) // 60 seconds
 
@@ -97,7 +92,6 @@ export function KitchenChecklist() {
   const { data: tasks = [] as Task[], isLoading } = useQuery<Task[]>({
     queryKey: ['kitchen-tasks', activeTab, today],
     queryFn: async () => {
-      console.log(`Fetching ${activeTab} kitchen tasks`)
       try {
         // Get the checklist items
         const response = await axios.get(`/api/kitchen/checklists/shift/${activeTab}`, {
@@ -141,7 +135,6 @@ export function KitchenChecklist() {
 
         return baseItems
       } catch (error) {
-        console.error(`Error fetching ${activeTab} kitchen tasks:`, error)
         throw error
       }
     },
@@ -155,8 +148,6 @@ export function KitchenChecklist() {
       const lastSavedDate = localStorage.getItem('kitchen-checklist-last-saved')
       if (isNewDay(lastSavedDate)) {
         // It's a new day, we should reset before proceeding
-        console.log('New day detected during task completion, resetting checklist')
-
         // Update localStorage with today's date
         localStorage.setItem('kitchen-checklist-last-saved', today)
 
@@ -173,7 +164,6 @@ export function KitchenChecklist() {
 
       // If the task is already completed, uncomplete it
       if (task.isCompleted) {
-        console.log('Uncompleting kitchen task:', taskId)
 
         // Create a simple payload with just the one item being toggled
         const payload = {
@@ -194,13 +184,11 @@ export function KitchenChecklist() {
 
           return { ...response.data, uncompleted: true }
         } catch (error) {
-          console.error('Error uncompleting kitchen task:', error)
           throw error
         }
       }
 
       // If the task is not completed, complete it
-      console.log('Completing kitchen task:', taskId)
 
       // Create a simple payload with just the one item being toggled
       const payload = {
@@ -221,7 +209,6 @@ export function KitchenChecklist() {
 
         return response.data
       } catch (error) {
-        console.error('Error completing kitchen task:', error)
         throw error
       }
     },
@@ -264,7 +251,6 @@ export function KitchenChecklist() {
         description: 'Failed to update the task status. Please try again.',
         variant: 'destructive'
       })
-      console.error('Error updating task status:', error)
     }
   })
 
@@ -275,7 +261,6 @@ export function KitchenChecklist() {
 
   // Handle edit checklist
   const handleEditChecklist = () => {
-    console.log('Opening edit dialog')
     setIsEditDialogOpen(true)
   }
 
@@ -283,153 +268,373 @@ export function KitchenChecklist() {
   const totalTasks = tasks.length
   const completedTasks = tasks.filter((task: Task) => task.isCompleted).length
   const completionPercentage = totalTasks > 0 ? Math.round((completedTasks / totalTasks) * 100) : 0
+  const requiredTasks = tasks.filter((task: Task) => task.isRequired).length
+  const completedRequiredTasks = tasks.filter((task: Task) => task.isRequired && task.isCompleted).length
 
   // Check if all required tasks are completed
   const hasIncompleteRequired = tasks.some((task: Task) => task.isRequired && !task.isCompleted)
 
-  return (
-    <div className="space-y-4 sm:space-y-6">
-      {/* Progress Section - Mobile optimized */}
-      <Card className="bg-white rounded-xl p-3 sm:p-4 shadow-sm border border-gray-100">
-        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 sm:gap-4">
-          <div className="flex-1 w-full sm:w-auto">
-            <div className="flex items-center justify-between mb-2">
-              <span className="text-sm font-medium text-[#27251F]/70">Overall Completion</span>
-              <div className="flex items-center gap-1.5">
-                <span className="text-sm font-semibold">{completionPercentage}%</span>
-                {completionPercentage === 100 && (
-                  <CheckCircle2 className="h-4 w-4 text-green-500" />
-                )}
+  // Get current time for dynamic greetings
+  const currentHour = new Date().getHours()
+  const getShiftGreeting = () => {
+    if (completionPercentage === 100) {
+      return activeTab === 'opening' ? 'Opening Complete! 🎉' :
+             activeTab === 'transition' ? 'Transition Complete! 🎉' :
+             'Closing Complete! 🎉'
+    }
+    if (activeTab === 'opening') return currentHour < 12 ? 'Good Morning!' : 'Ready to Open!'
+    if (activeTab === 'transition') return 'Transition Time!'
+    return currentHour >= 18 ? 'Good Evening!' : 'Closing Time!'
+  }
+
+  const getShiftEmoji = () => {
+    if (completionPercentage === 100) return '🏆'
+    if (activeTab === 'opening') return '🌅'
+    if (activeTab === 'transition') return '🔄'
+    return '🌙'
+  }
+
+  const getMotivationalMessage = () => {
+    if (completionPercentage === 100) return "Outstanding work! Your attention to detail makes all the difference."
+    if (completionPercentage >= 80) return "Almost there! You're doing great."
+    if (completionPercentage >= 50) return "Great progress! Keep up the momentum."
+    if (completionPercentage >= 25) return "You're off to a good start!"
+    return "Ready to tackle today's tasks? Let's make it happen!"
+  }
+
+  // Circular progress component
+  const CircularProgress = ({ percentage, size = 120, strokeWidth = 8 }: { percentage: number, size?: number, strokeWidth?: number }) => {
+    const radius = (size - strokeWidth) / 2
+    const circumference = radius * 2 * Math.PI
+    const strokeDasharray = `${circumference} ${circumference}`
+    const strokeDashoffset = circumference - (percentage / 100) * circumference
+
+    return (
+      <div className="relative" style={{ width: size, height: size }}>
+        <svg
+          className="transform -rotate-90"
+          width={size}
+          height={size}
+        >
+          <circle
+            cx={size / 2}
+            cy={size / 2}
+            r={radius}
+            stroke="currentColor"
+            strokeWidth={strokeWidth}
+            fill="transparent"
+            className="text-gray-200"
+          />
+          <circle
+            cx={size / 2}
+            cy={size / 2}
+            r={radius}
+            stroke="currentColor"
+            strokeWidth={strokeWidth}
+            fill="transparent"
+            strokeDasharray={strokeDasharray}
+            strokeDashoffset={strokeDashoffset}
+            className={cn(
+              "transition-all duration-1000 ease-out",
+              percentage === 100 ? "text-emerald-500" : "text-[#E51636]"
+            )}
+            strokeLinecap="round"
+          />
+        </svg>
+        <div className="absolute inset-0 flex items-center justify-center">
+          <div className="text-center">
+            <div className={cn(
+              "text-2xl font-bold transition-colors duration-500",
+              percentage === 100 ? "text-emerald-600" : "text-[#E51636]"
+            )}>
+              {percentage}%
+            </div>
+            {percentage === 100 && (
+              <div className="flex justify-center mt-1">
+                <Award className="h-4 w-4 text-emerald-500 animate-pulse" />
               </div>
+            )}
+          </div>
+        </div>
+      </div>
+    )
+  }
+
+  return (
+    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50/30 to-indigo-50/20">
+      <div className="space-y-6 p-4 sm:p-6 max-w-7xl mx-auto">
+        {/* Hero Header */}
+        <div className="text-center mb-8">
+          <div className="inline-flex items-center gap-3 mb-4">
+            <div className={cn(
+              "h-12 w-12 rounded-2xl flex items-center justify-center shadow-lg transition-all duration-500",
+              completionPercentage === 100
+                ? "bg-gradient-to-br from-emerald-400 to-green-500 animate-float"
+                : "bg-gradient-to-br from-[#E51636] to-[#B91C3C]"
+            )}>
+              {completionPercentage === 100 ? (
+                <Award className="h-6 w-6 text-white" />
+              ) : (
+                <Sparkles className="h-6 w-6 text-white" />
+              )}
             </div>
-            <div className="h-2.5 w-full bg-gray-100 rounded-full overflow-hidden">
-              <div
-                className={cn(
-                  "h-full transition-all duration-500",
-                  completionPercentage === 100
-                    ? "bg-gradient-to-r from-green-400 to-green-500"
-                    : "bg-gradient-to-r from-[#E51636]/80 to-[#E51636]"
-                )}
-                style={{ width: `${completionPercentage}%` }}
-              />
-            </div>
-            <div className="flex justify-between items-center mt-2">
-              <p className="text-xs text-[#27251F]/60">
-                {completedTasks} of {totalTasks} tasks completed
+            <div>
+              <h1 className={cn(
+                "text-3xl sm:text-4xl font-bold bg-clip-text text-transparent transition-all duration-500",
+                completionPercentage === 100
+                  ? "bg-gradient-to-r from-emerald-500 to-green-600"
+                  : "bg-gradient-to-r from-[#E51636] to-[#B91C3C]"
+              )}>
+                Kitchen Operations
+              </h1>
+              <p className="text-lg text-gray-600 font-medium">
+                {getShiftEmoji()} {getShiftGreeting()}
+              </p>
+              <p className="text-sm text-gray-500 mt-1">
+                {getMotivationalMessage()}
               </p>
             </div>
           </div>
-          <div className="flex flex-wrap gap-2 w-full sm:w-auto">
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => navigate('/kitchen/checklists/history')}
-              className="flex items-center gap-2 text-[#E51636] border-[#E51636] hover:bg-[#E51636]/5 w-full sm:w-auto h-9 rounded-lg transition-all duration-200 touch-manipulation active-scale"
-            >
-              <History className="h-4 w-4" />
-              <span>History</span>
-            </Button>
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={(e) => {
-                e.preventDefault()
-                e.stopPropagation()
-                console.log('Customize List button clicked')
-                handleEditChecklist()
-              }}
-              className="flex items-center gap-2 text-[#E51636] border-[#E51636] hover:bg-[#E51636]/5 w-full sm:w-auto h-9 rounded-lg transition-all duration-200 touch-manipulation active-scale"
-            >
-              <Pencil className="h-4 w-4" />
-              <span>Customize List</span>
-            </Button>
-          </div>
         </div>
-      </Card>
 
-      {/* Required Tasks Warning - Mobile optimized */}
-      {hasIncompleteRequired && (
-        <div className="flex items-start gap-2 sm:gap-3 p-3 sm:p-4 bg-amber-50/80 text-amber-700 rounded-xl border border-amber-200/70">
-          <svg className="h-5 w-5 mt-0.5 flex-shrink-0 text-amber-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
-          </svg>
-          <div>
-            <p className="font-medium text-sm sm:text-base">Required tasks incomplete</p>
-            <p className="text-xs sm:text-sm mt-1 text-amber-600/90">
-              Complete all required tasks before saving your checklist progress.
-            </p>
-          </div>
-        </div>
-      )}
+        {/* Progress Dashboard */}
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8">
+          {/* Main Progress Card */}
+          <div className="lg:col-span-2">
+            <Card className={cn(
+              "bg-white/80 backdrop-blur-sm rounded-3xl shadow-xl border-0 overflow-hidden relative transition-all duration-500",
+              completionPercentage === 100 && "animate-glow"
+            )}>
+              {/* Celebration overlay */}
+              {completionPercentage === 100 && (
+                <div className="absolute inset-0 bg-gradient-to-r from-emerald-400/10 to-green-400/10 animate-pulse" />
+              )}
 
-      {/* Task Tabs - Mobile optimized */}
-      <Card className="bg-white rounded-xl shadow-sm overflow-hidden">
-        <div className="p-3 sm:p-4 md:p-6">
-          <Tabs value={activeTab} onValueChange={(value) => setActiveTab(value as ShiftType)}>
-            <TabsList className="grid w-full grid-cols-3 bg-gray-100 p-1 rounded-xl">
-              <TabsTrigger
-                value="opening"
-                className="rounded-lg data-[state=active]:bg-white data-[state=active]:text-[#E51636] data-[state=active]:shadow-sm touch-manipulation active-scale"
-              >
-                <div className="flex items-center gap-1 sm:gap-2">
-                  <Sun className="h-4 w-4" />
-                  <span className="text-xs sm:text-sm">Opening</span>
-                </div>
-              </TabsTrigger>
-              <TabsTrigger
-                value="transition"
-                className="rounded-lg data-[state=active]:bg-white data-[state=active]:text-[#E51636] data-[state=active]:shadow-sm touch-manipulation active-scale"
-              >
-                <div className="flex items-center gap-1 sm:gap-2">
-                  <ArrowLeftRight className="h-4 w-4" />
-                  <span className="text-xs sm:text-sm">Transition</span>
-                </div>
-              </TabsTrigger>
-              <TabsTrigger
-                value="closing"
-                className="rounded-lg data-[state=active]:bg-white data-[state=active]:text-[#E51636] data-[state=active]:shadow-sm touch-manipulation active-scale"
-              >
-                <div className="flex items-center gap-1 sm:gap-2">
-                  <Moon className="h-4 w-4" />
-                  <span className="text-xs sm:text-sm">Closing</span>
-                </div>
-              </TabsTrigger>
-            </TabsList>
-            <div className="mt-3 sm:mt-4">
-              {isLoading ? (
-                <div className="flex items-center justify-center py-8 sm:py-10">
-                  <div className="flex flex-col items-center gap-3 text-center">
-                    <Loader2 className="h-7 w-7 sm:h-8 sm:w-8 animate-spin text-[#E51636]" />
-                    <span className="text-sm font-medium text-[#27251F]/70">Loading checklist...</span>
+              <div className={cn(
+                "p-6 sm:p-8 transition-all duration-500",
+                completionPercentage === 100
+                  ? "bg-gradient-to-r from-emerald-50/50 to-green-50/50"
+                  : "bg-gradient-to-r from-[#E51636]/5 to-[#B91C3C]/5"
+              )}>
+                <div className="flex flex-col sm:flex-row items-center gap-6">
+                  <div className="relative">
+                    <CircularProgress percentage={completionPercentage} />
+                    {completionPercentage === 100 && (
+                      <div className="absolute -top-2 -right-2">
+                        <div className="h-6 w-6 rounded-full bg-gradient-to-br from-yellow-400 to-orange-500 flex items-center justify-center animate-bounce">
+                          <Star className="h-3 w-3 text-white" />
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                  <div className="flex-1 text-center sm:text-left">
+                    <h3 className={cn(
+                      "text-2xl font-bold mb-2 transition-colors duration-500",
+                      completionPercentage === 100 ? "text-emerald-700" : "text-gray-900"
+                    )}>
+                      {completionPercentage === 100 ? 'Outstanding Work!' : 'Keep Going!'}
+                    </h3>
+                    <p className="text-gray-600 mb-4">
+                      {completedTasks} of {totalTasks} tasks completed
+                    </p>
+                    <div className="grid grid-cols-2 gap-4">
+                      <div className={cn(
+                        "rounded-2xl p-4 text-center transition-all duration-500",
+                        completionPercentage === 100
+                          ? "bg-emerald-100/60 border border-emerald-200"
+                          : "bg-white/60"
+                      )}>
+                        <div className={cn(
+                          "text-2xl font-bold transition-colors duration-500",
+                          completionPercentage === 100 ? "text-emerald-600" : "text-[#E51636]"
+                        )}>
+                          {completedRequiredTasks}
+                        </div>
+                        <div className="text-sm text-gray-600">Required Done</div>
+                      </div>
+                      <div className={cn(
+                        "rounded-2xl p-4 text-center transition-all duration-500",
+                        completionPercentage === 100
+                          ? "bg-emerald-100/60 border border-emerald-200"
+                          : "bg-white/60"
+                      )}>
+                        <div className={cn(
+                          "text-2xl font-bold transition-colors duration-500",
+                          completionPercentage === 100 ? "text-emerald-600" : "text-blue-600"
+                        )}>
+                          {totalTasks - completedTasks}
+                        </div>
+                        <div className="text-sm text-gray-600">Remaining</div>
+                      </div>
+                    </div>
                   </div>
                 </div>
-              ) : (
-                <KitchenTaskList
-                  tasks={tasks}
-                  onComplete={handleTaskComplete}
-                  isLoading={isLoading}
-                />
-              )}
-            </div>
-          </Tabs>
-        </div>
-      </Card>
+              </div>
+            </Card>
+          </div>
 
-      {/* Edit Dialog */}
-      <EditChecklistDialog
-        open={isEditDialogOpen}
-        onOpenChange={(open) => {
-          console.log('Setting edit dialog open state to:', open)
-          setIsEditDialogOpen(open)
-        }}
-        type={activeTab}
-        items={tasks || []}
-        onSave={() => {
-          console.log('Dialog save callback triggered')
-          queryClient.invalidateQueries({ queryKey: ['kitchen-checklist'] })
-          queryClient.invalidateQueries({ queryKey: ['kitchen-tasks', activeTab, today] })
-        }}
-      />
+          {/* Quick Actions */}
+          <div className="space-y-4">
+            <Card className="bg-gradient-to-br from-blue-500 to-blue-600 text-white rounded-3xl shadow-xl border-0 overflow-hidden">
+              <div className="p-6">
+                <div className="flex items-center gap-3 mb-4">
+                  <History className="h-6 w-6" />
+                  <h3 className="font-semibold">View History</h3>
+                </div>
+                <p className="text-blue-100 text-sm mb-4">
+                  Track your team's performance over time
+                </p>
+                <Button
+                  onClick={() => navigate('/kitchen/checklists/history')}
+                  className="w-full bg-white/20 hover:bg-white/30 border-0 rounded-xl transition-all duration-200"
+                >
+                  Open History
+                </Button>
+              </div>
+            </Card>
+
+            <Card className="bg-gradient-to-br from-purple-500 to-purple-600 text-white rounded-3xl shadow-xl border-0 overflow-hidden">
+              <div className="p-6">
+                <div className="flex items-center gap-3 mb-4">
+                  <Pencil className="h-6 w-6" />
+                  <h3 className="font-semibold">Customize</h3>
+                </div>
+                <p className="text-purple-100 text-sm mb-4">
+                  Tailor your checklist to your needs
+                </p>
+                <Button
+                  onClick={handleEditChecklist}
+                  className="w-full bg-white/20 hover:bg-white/30 border-0 rounded-xl transition-all duration-200"
+                >
+                  Edit List
+                </Button>
+              </div>
+            </Card>
+          </div>
+        </div>
+
+        {/* Required Tasks Warning */}
+        {hasIncompleteRequired && (
+          <Card className="bg-gradient-to-r from-amber-50 to-orange-50 border-0 rounded-3xl shadow-lg overflow-hidden mb-6">
+            <div className="p-6">
+              <div className="flex items-start gap-4">
+                <div className="h-12 w-12 rounded-2xl bg-gradient-to-br from-amber-400 to-orange-500 flex items-center justify-center shadow-lg flex-shrink-0">
+                  <Clock className="h-6 w-6 text-white" />
+                </div>
+                <div className="flex-1">
+                  <h3 className="text-lg font-semibold text-amber-800 mb-2">
+                    Required Tasks Pending
+                  </h3>
+                  <p className="text-amber-700 mb-4">
+                    {requiredTasks - completedRequiredTasks} required tasks need your attention before this shift is complete.
+                  </p>
+                  <div className="flex items-center gap-2">
+                    <div className="h-2 flex-1 bg-amber-200 rounded-full overflow-hidden">
+                      <div
+                        className="h-full bg-gradient-to-r from-amber-400 to-orange-500 transition-all duration-500"
+                        style={{ width: `${(completedRequiredTasks / requiredTasks) * 100}%` }}
+                      />
+                    </div>
+                    <span className="text-sm font-medium text-amber-800">
+                      {completedRequiredTasks}/{requiredTasks}
+                    </span>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </Card>
+        )}
+
+        {/* Shift Tabs */}
+        <Card className="bg-white/80 backdrop-blur-sm rounded-3xl shadow-xl border-0 overflow-hidden">
+          <div className="p-6 sm:p-8">
+            <Tabs value={activeTab} onValueChange={(value) => setActiveTab(value as ShiftType)}>
+              <TabsList className="grid w-full grid-cols-3 bg-gradient-to-r from-gray-100 to-gray-50 p-2 rounded-2xl shadow-inner">
+                <TabsTrigger
+                  value="opening"
+                  className={cn(
+                    "rounded-xl transition-all duration-300 font-medium",
+                    "data-[state=active]:bg-gradient-to-r data-[state=active]:from-orange-400 data-[state=active]:to-orange-500",
+                    "data-[state=active]:text-white data-[state=active]:shadow-lg",
+                    "hover:bg-white/50"
+                  )}
+                >
+                  <div className="flex items-center gap-2 py-2">
+                    <Sun className="h-5 w-5" />
+                    <span className="hidden sm:inline">Opening</span>
+                    <span className="sm:hidden">Open</span>
+                  </div>
+                </TabsTrigger>
+                <TabsTrigger
+                  value="transition"
+                  className={cn(
+                    "rounded-xl transition-all duration-300 font-medium",
+                    "data-[state=active]:bg-gradient-to-r data-[state=active]:from-blue-400 data-[state=active]:to-blue-500",
+                    "data-[state=active]:text-white data-[state=active]:shadow-lg",
+                    "hover:bg-white/50"
+                  )}
+                >
+                  <div className="flex items-center gap-2 py-2">
+                    <ArrowLeftRight className="h-5 w-5" />
+                    <span className="hidden sm:inline">Transition</span>
+                    <span className="sm:hidden">Trans</span>
+                  </div>
+                </TabsTrigger>
+                <TabsTrigger
+                  value="closing"
+                  className={cn(
+                    "rounded-xl transition-all duration-300 font-medium",
+                    "data-[state=active]:bg-gradient-to-r data-[state=active]:from-indigo-400 data-[state=active]:to-purple-500",
+                    "data-[state=active]:text-white data-[state=active]:shadow-lg",
+                    "hover:bg-white/50"
+                  )}
+                >
+                  <div className="flex items-center gap-2 py-2">
+                    <Moon className="h-5 w-5" />
+                    <span className="hidden sm:inline">Closing</span>
+                    <span className="sm:hidden">Close</span>
+                  </div>
+                </TabsTrigger>
+              </TabsList>
+
+              <div className="mt-8">
+                {isLoading ? (
+                  <div className="flex items-center justify-center py-16">
+                    <div className="flex flex-col items-center gap-4 text-center">
+                      <div className="relative">
+                        <div className="h-16 w-16 rounded-full bg-gradient-to-r from-[#E51636] to-[#B91C3C] animate-pulse"></div>
+                        <Loader2 className="h-8 w-8 text-white animate-spin absolute inset-0 m-auto" />
+                      </div>
+                      <div>
+                        <h3 className="text-lg font-semibold text-gray-900 mb-1">Loading your checklist</h3>
+                        <p className="text-gray-600">Preparing your {activeTab} tasks...</p>
+                      </div>
+                    </div>
+                  </div>
+                ) : (
+                  <KitchenTaskList
+                    tasks={tasks}
+                    onComplete={handleTaskComplete}
+                    isLoading={isLoading}
+                  />
+                )}
+              </div>
+            </Tabs>
+          </div>
+        </Card>
+
+        {/* Edit Dialog */}
+        <EditChecklistDialog
+          open={isEditDialogOpen}
+          onOpenChange={setIsEditDialogOpen}
+          type={activeTab}
+          items={tasks || []}
+          onSave={() => {
+            queryClient.invalidateQueries({ queryKey: ['kitchen-checklist'] })
+            queryClient.invalidateQueries({ queryKey: ['kitchen-tasks', activeTab, today] })
+          }}
+        />
+      </div>
     </div>
   )
 }
