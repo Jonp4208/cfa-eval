@@ -396,7 +396,8 @@ function WasteTrackerContent() {
               <div className="bg-white rounded-[20px] p-6 sm:p-8">
                 {/* Enhanced Meal Period Selector */}
                 <div className="flex flex-col space-y-6 mb-8">
-                  <div className="flex justify-between items-center">
+                  {/* Header - Hidden on mobile, visible on larger screens */}
+                  <div className="hidden sm:flex justify-between items-center">
                     <h2 className="text-xl sm:text-2xl font-black text-[#27251F] flex items-center gap-3">
                       <span className="text-3xl">🍽️</span>
                       Quick Add Waste
@@ -404,6 +405,17 @@ function WasteTrackerContent() {
                     <Button
                       onClick={() => setShowBulkEntryDialog(true)}
                       className="bg-gradient-to-r from-[#E51636] to-[#C41230] text-white hover:from-[#C41230] hover:to-[#A01020] h-12 sm:h-14 px-6 sm:px-8 text-sm sm:text-base font-bold rounded-2xl shadow-lg hover:shadow-xl transition-all duration-300 transform hover:scale-[1.02] active:scale-[0.98] touch-manipulation"
+                    >
+                      <span className="mr-2">📝</span>
+                      Bulk Entry
+                    </Button>
+                  </div>
+
+                  {/* Mobile-only full-width bulk entry button */}
+                  <div className="sm:hidden">
+                    <Button
+                      onClick={() => setShowBulkEntryDialog(true)}
+                      className="w-full bg-gradient-to-r from-[#E51636] to-[#C41230] text-white hover:from-[#C41230] hover:to-[#A01020] h-14 text-base font-bold rounded-2xl shadow-lg hover:shadow-xl transition-all duration-300 transform hover:scale-[1.02] active:scale-[0.98] touch-manipulation"
                     >
                       <span className="mr-2">📝</span>
                       Bulk Entry
