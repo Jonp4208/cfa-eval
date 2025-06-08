@@ -3,7 +3,7 @@ import { Card } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { ScrollArea } from '@/components/ui/scroll-area'
-import { Trash2, Clock, DollarSign, Package, Sun, Coffee, Moon, X } from 'lucide-react'
+import { Trash2, Clock, DollarSign, Package, Sun, Coffee, Moon, X, CheckCircle } from 'lucide-react'
 import useWasteStore from '@/stores/useWasteStore'
 import { format } from 'date-fns'
 import {
@@ -104,6 +104,8 @@ function WasteTrackerContent() {
   const [showPricesDialog, setShowPricesDialog] = useState(false)
   const [showCustomItemsDialog, setShowCustomItemsDialog] = useState(false)
   const [showBulkEntryDialog, setShowBulkEntryDialog] = useState(false)
+  const [showSuccessAnimation, setShowSuccessAnimation] = useState(false)
+  const [lastAddedItem, setLastAddedItem] = useState<string>('')
 
   const { entries, metrics, createWasteEntry, deleteWasteEntry, fetchWasteEntries, fetchWasteMetrics, isLoading } = useWasteStore()
   const { getItemPrice } = useItemPrices()
@@ -162,6 +164,14 @@ function WasteTrackerContent() {
         endDate: endOfDay
       })
 
+      // Show success animation
+      setLastAddedItem(item.name)
+      setShowSuccessAnimation(true)
+      setTimeout(() => {
+        setShowSuccessAnimation(false)
+        setLastAddedItem('')
+      }, 2000)
+
       setReason('')
     } catch (error) {
       console.error('Failed to add waste entry:', error)
@@ -185,6 +195,15 @@ function WasteTrackerContent() {
         cost: price * qty,
         reason: reason || 'Other'
       })
+
+      // Show success animation
+      setLastAddedItem(selectedItem)
+      setShowSuccessAnimation(true)
+      setTimeout(() => {
+        setShowSuccessAnimation(false)
+        setLastAddedItem('')
+      }, 2000)
+
       setSelectedItem('')
       setQuantity('')
       setCustomPrice('')
@@ -248,55 +267,85 @@ function WasteTrackerContent() {
   const totalWaste = metrics?.totalCost || 0
 
   return (
-    <div className="space-y-4 px-4 md:px-6 pb-6">
+    <div className="space-y-6 px-3 md:px-6 pb-8 bg-gradient-to-br from-gray-50 to-gray-100 min-h-screen relative">
 
-      {/* Stats Row - Made more compact on mobile */}
-      <div className="grid grid-cols-2 gap-3 sm:gap-4">
-        <Card className="bg-white rounded-[20px] hover:shadow-xl transition-all duration-300">
-          <div className="p-3 sm:p-6">
+      {/* Loading Overlay */}
+      {isLoading && (
+        <div className="fixed inset-0 bg-black/20 backdrop-blur-sm z-50 flex items-center justify-center">
+          <div className="bg-white rounded-3xl p-8 shadow-2xl flex flex-col items-center gap-4">
+            <div className="w-16 h-16 border-4 border-[#E51636]/20 border-t-[#E51636] rounded-full animate-spin"></div>
+            <p className="text-lg font-semibold text-[#27251F]">Processing...</p>
+          </div>
+        </div>
+      )}
+
+      {/* Success Animation Overlay */}
+      {showSuccessAnimation && (
+        <div className="fixed inset-0 bg-black/10 backdrop-blur-sm z-50 flex items-center justify-center pointer-events-none">
+          <div className="bg-gradient-to-r from-green-500 to-green-600 text-white rounded-3xl p-8 shadow-2xl flex flex-col items-center gap-4 animate-bounce">
+            <CheckCircle className="w-16 h-16 animate-pulse" strokeWidth={2.5} />
+            <div className="text-center">
+              <p className="text-xl font-bold">Added Successfully!</p>
+              <p className="text-lg opacity-90">{lastAddedItem}</p>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Enhanced Stats Row with Gradient Cards */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-6">
+        <Card className="bg-gradient-to-br from-[#E51636] to-[#C41230] text-white rounded-[24px] shadow-2xl hover:shadow-3xl transition-all duration-500 transform hover:scale-[1.02] border-0">
+          <div className="p-6 sm:p-8">
             <div className="flex items-start justify-between">
-              <div>
-                <p className="text-xs sm:text-sm text-[#27251F]/60 font-medium line-clamp-1">Total Waste Today</p>
-                <h3 className="text-lg sm:text-2xl md:text-3xl font-bold mt-1 text-[#27251F]">${totalWaste.toFixed(2)}</h3>
-                <p className="text-xs sm:text-sm text-[#27251F]/60 mt-0.5 sm:mt-1">{todaysEntries.length} items logged</p>
+              <div className="flex-1">
+                <p className="text-white/80 font-semibold text-sm sm:text-base mb-2">💰 Total Waste Today</p>
+                <h3 className="text-3xl sm:text-4xl md:text-5xl font-black mb-2 text-white drop-shadow-lg">
+                  ${totalWaste.toFixed(2)}
+                </h3>
+                <p className="text-white/90 text-sm sm:text-base font-medium">
+                  {todaysEntries.length} items logged
+                </p>
               </div>
-              <div className="h-8 w-8 sm:h-12 sm:w-12 md:h-14 md:w-14 bg-[#E51636]/10 text-[#E51636] rounded-xl sm:rounded-2xl flex items-center justify-center">
-                <DollarSign className="h-4 w-4 sm:h-5 sm:w-5 md:h-6 md:w-6" strokeWidth={2} />
+              <div className="h-16 w-16 sm:h-20 sm:w-20 bg-white/20 backdrop-blur-sm text-white rounded-2xl flex items-center justify-center shadow-lg">
+                <DollarSign className="h-8 w-8 sm:h-10 sm:w-10" strokeWidth={2.5} />
               </div>
             </div>
           </div>
         </Card>
 
-        <Card className="bg-white rounded-[20px] hover:shadow-xl transition-all duration-300">
-          <div className="p-3 sm:p-6">
+        <Card className="bg-gradient-to-br from-orange-500 to-orange-600 text-white rounded-[24px] shadow-2xl hover:shadow-3xl transition-all duration-500 transform hover:scale-[1.02] border-0">
+          <div className="p-6 sm:p-8">
             <div className="flex items-start justify-between">
-              <div>
-                <p className="text-xs sm:text-sm text-[#27251F]/60 font-medium line-clamp-1">Most Wasted Item</p>
-                <h3 className="text-sm sm:text-lg md:text-2xl font-bold mt-1 text-[#27251F] line-clamp-1">
-                  {todaysEntries[0]?.itemName || 'No items logged'}
+              <div className="flex-1">
+                <p className="text-white/80 font-semibold text-sm sm:text-base mb-2">📦 Most Wasted</p>
+                <h3 className="text-xl sm:text-2xl md:text-3xl font-black mb-2 text-white drop-shadow-lg line-clamp-2">
+                  {todaysEntries[0]?.itemName || 'No items yet'}
                 </h3>
-                <p className="text-xs sm:text-sm text-[#27251F]/60 mt-0.5 sm:mt-1 line-clamp-1">
-                  {todaysEntries[0] ? `Last added ${format(new Date(todaysEntries[0].date), 'h:mm a')}` : 'Start logging waste'}
+                <p className="text-white/90 text-sm sm:text-base font-medium line-clamp-1">
+                  {todaysEntries[0] ? `Last: ${format(new Date(todaysEntries[0].date), 'h:mm a')}` : 'Start tracking waste'}
                 </p>
               </div>
-              <div className="h-8 w-8 sm:h-12 sm:w-12 md:h-14 md:w-14 bg-orange-100 text-orange-600 rounded-xl sm:rounded-2xl flex items-center justify-center">
-                <Package className="h-4 w-4 sm:h-5 sm:w-5 md:h-6 md:w-6" strokeWidth={2} />
+              <div className="h-16 w-16 sm:h-20 sm:w-20 bg-white/20 backdrop-blur-sm text-white rounded-2xl flex items-center justify-center shadow-lg">
+                <Package className="h-8 w-8 sm:h-10 sm:w-10" strokeWidth={2.5} />
               </div>
             </div>
           </div>
         </Card>
       </div>
 
-      {/* Management Buttons */}
-      <div className="grid grid-cols-2 gap-3 sm:gap-4">
+      {/* Enhanced Management Buttons */}
+      <div className="grid grid-cols-2 gap-4 sm:gap-6">
         <Dialog open={showCustomItemsDialog} onOpenChange={setShowCustomItemsDialog}>
           <DialogTrigger asChild>
             <Button
               variant="outline"
               onClick={() => setShowCustomItemsDialog(true)}
-              className="w-full bg-[#E51636]/5 text-[#E51636] border-[#E51636]/20 hover:bg-[#E51636]/10 hover:border-[#E51636]/30"
+              className="w-full h-16 sm:h-20 bg-gradient-to-r from-blue-50 to-blue-100 text-blue-700 border-2 border-blue-200 hover:from-blue-100 hover:to-blue-200 hover:border-blue-300 rounded-2xl font-bold text-base sm:text-lg shadow-lg hover:shadow-xl transition-all duration-300 transform hover:scale-[1.02] active:scale-[0.98] touch-manipulation"
             >
-              Custom Items
+              <div className="flex items-center gap-3">
+                <span className="text-2xl">⚙️</span>
+                <span>Custom Items</span>
+              </div>
             </Button>
           </DialogTrigger>
           <DialogContent className="max-w-xl w-full max-h-[80vh] overflow-y-auto p-0">
@@ -317,9 +366,12 @@ function WasteTrackerContent() {
             <Button
               variant="outline"
               onClick={() => setShowPricesDialog(true)}
-              className="w-full bg-[#E51636]/5 text-[#E51636] border-[#E51636]/20 hover:bg-[#E51636]/10 hover:border-[#E51636]/30"
+              className="w-full h-16 sm:h-20 bg-gradient-to-r from-green-50 to-green-100 text-green-700 border-2 border-green-200 hover:from-green-100 hover:to-green-200 hover:border-green-300 rounded-2xl font-bold text-base sm:text-lg shadow-lg hover:shadow-xl transition-all duration-300 transform hover:scale-[1.02] active:scale-[0.98] touch-manipulation"
             >
-              Manage Prices
+              <div className="flex items-center gap-3">
+                <span className="text-2xl">💲</span>
+                <span>Manage Prices</span>
+              </div>
             </Button>
           </DialogTrigger>
           <DialogContent className="max-w-xl w-full max-h-[80vh] overflow-y-auto p-0">
@@ -336,236 +388,292 @@ function WasteTrackerContent() {
         </Dialog>
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-5 gap-3 sm:gap-4">
-        {/* Quick Add Section - Full width on mobile */}
-        <div className="lg:col-span-3 space-y-3 sm:space-y-4">
-          <Card className="bg-white rounded-[20px] hover:shadow-xl transition-all duration-300">
-            <div className="p-3 sm:p-6">
-              {/* Meal Period Selector */}
-              <div className="flex flex-col space-y-3 sm:space-y-4 mb-4 sm:mb-6">
-                <div className="flex justify-between items-center">
-                  <h2 className="text-base sm:text-lg font-semibold text-[#27251F]">Quick Add Waste</h2>
-                  <Button
-                    onClick={() => setShowBulkEntryDialog(true)}
-                    size="sm"
-                    className="bg-[#E51636] text-white hover:bg-[#E51636]/90 h-8 sm:h-9 text-xs sm:text-sm rounded-full"
-                  >
-                    Bulk Entry
-                  </Button>
-                </div>
-                <div className="flex flex-wrap gap-1.5 sm:gap-2">
-                  <Button
-                    onClick={() => setActiveMealPeriod('breakfast')}
-                    variant={activeMealPeriod === 'breakfast' ? 'default' : 'outline'}
-                    size="sm"
-                    className={cn(
-                      'h-8 sm:h-10 text-xs sm:text-sm rounded-full',
-                      activeMealPeriod === 'breakfast'
-                        ? 'bg-[#E51636] text-white hover:bg-[#E51636]/90'
-                        : 'hover:bg-[#E51636]/5 hover:text-[#E51636] hover:border-[#E51636]/20'
-                    )}
-                  >
-                    <Sun className="h-3.5 w-3.5 sm:h-4 sm:w-4 mr-1.5 sm:mr-2" />
-                    Breakfast
-                  </Button>
-                  <Button
-                    onClick={() => setActiveMealPeriod('lunch')}
-                    variant={activeMealPeriod === 'lunch' ? 'default' : 'outline'}
-                    size="sm"
-                    className={cn(
-                      'h-8 sm:h-10 text-xs sm:text-sm rounded-full',
-                      activeMealPeriod === 'lunch'
-                        ? 'bg-[#E51636] text-white hover:bg-[#E51636]/90'
-                        : 'hover:bg-[#E51636]/5 hover:text-[#E51636] hover:border-[#E51636]/20'
-                    )}
-                  >
-                    <Coffee className="h-3.5 w-3.5 sm:h-4 sm:w-4 mr-1.5 sm:mr-2" />
-                    Lunch
-                  </Button>
-                  <Button
-                    onClick={() => setActiveMealPeriod('dinner')}
-                    variant={activeMealPeriod === 'dinner' ? 'default' : 'outline'}
-                    size="sm"
-                    className={cn(
-                      'h-8 sm:h-10 text-xs sm:text-sm rounded-full',
-                      activeMealPeriod === 'dinner'
-                        ? 'bg-[#E51636] text-white hover:bg-[#E51636]/90'
-                        : 'hover:bg-[#E51636]/5 hover:text-[#E51636] hover:border-[#E51636]/20'
-                    )}
-                  >
-                    <Moon className="h-3.5 w-3.5 sm:h-4 sm:w-4 mr-1.5 sm:mr-2" />
-                    Dinner
-                  </Button>
-                </div>
-              </div>
-
-              {/* Quick Add Items Grid */}
-              <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 sm:gap-3">
-                {/* Default items */}
-                {WASTE_ITEMS[activeMealPeriod as keyof WasteItems].map((item) => {
-                  // Get the custom price (or default if no custom price)
-                  const itemPrice = getItemPrice(item.name, item.defaultCost)
-
-                  return (
+      <div className="grid grid-cols-1 lg:grid-cols-5 gap-6">
+        {/* Enhanced Quick Add Section - Full width on mobile */}
+        <div className="lg:col-span-3 space-y-6">
+          <Card className="bg-white rounded-[24px] shadow-2xl hover:shadow-3xl transition-all duration-500 border-0 overflow-hidden">
+            <div className="bg-gradient-to-r from-[#E51636] to-[#C41230] p-1">
+              <div className="bg-white rounded-[20px] p-6 sm:p-8">
+                {/* Enhanced Meal Period Selector */}
+                <div className="flex flex-col space-y-6 mb-8">
+                  <div className="flex justify-between items-center">
+                    <h2 className="text-xl sm:text-2xl font-black text-[#27251F] flex items-center gap-3">
+                      <span className="text-3xl">🍽️</span>
+                      Quick Add Waste
+                    </h2>
                     <Button
-                      key={item.name}
-                      variant="outline"
-                      size="sm"
-                      onClick={() => handleQuickAdd(item)}
-                      className="h-auto py-2 sm:py-3 px-2 sm:px-4 flex flex-col items-center gap-1 sm:gap-2 text-[#27251F] hover:bg-[#E51636]/5 hover:text-[#E51636] border border-gray-100 rounded-xl sm:rounded-[20px] hover:border-[#E51636]/20"
+                      onClick={() => setShowBulkEntryDialog(true)}
+                      className="bg-gradient-to-r from-[#E51636] to-[#C41230] text-white hover:from-[#C41230] hover:to-[#A01020] h-12 sm:h-14 px-6 sm:px-8 text-sm sm:text-base font-bold rounded-2xl shadow-lg hover:shadow-xl transition-all duration-300 transform hover:scale-[1.02] active:scale-[0.98] touch-manipulation"
                     >
-                      <span className="text-base sm:text-lg">{item.icon}</span>
-                      <span className="text-xs sm:text-sm text-center line-clamp-1">{item.name}</span>
-                      <span className="text-[10px] sm:text-xs text-[#27251F]/60">${itemPrice.toFixed(2)}</span>
+                      <span className="mr-2">📝</span>
+                      Bulk Entry
                     </Button>
-                  )
-                })}
+                  </div>
+                  <div className="grid grid-cols-3 gap-3 sm:gap-4">
+                    <Button
+                      onClick={() => setActiveMealPeriod('breakfast')}
+                      variant={activeMealPeriod === 'breakfast' ? 'default' : 'outline'}
+                      className={cn(
+                        'h-16 sm:h-20 text-sm sm:text-base font-bold rounded-2xl transition-all duration-300 transform hover:scale-[1.02] active:scale-[0.98] touch-manipulation shadow-lg',
+                        activeMealPeriod === 'breakfast'
+                          ? 'bg-gradient-to-r from-orange-400 to-orange-500 text-white shadow-xl border-0'
+                          : 'bg-white border-2 border-orange-200 text-orange-600 hover:bg-orange-50 hover:border-orange-300'
+                      )}
+                    >
+                      <div className="flex flex-col items-center gap-2">
+                        <Sun className="h-6 w-6 sm:h-8 sm:w-8" strokeWidth={2.5} />
+                        <span>Breakfast</span>
+                      </div>
+                    </Button>
+                    <Button
+                      onClick={() => setActiveMealPeriod('lunch')}
+                      variant={activeMealPeriod === 'lunch' ? 'default' : 'outline'}
+                      className={cn(
+                        'h-16 sm:h-20 text-sm sm:text-base font-bold rounded-2xl transition-all duration-300 transform hover:scale-[1.02] active:scale-[0.98] touch-manipulation shadow-lg',
+                        activeMealPeriod === 'lunch'
+                          ? 'bg-gradient-to-r from-blue-400 to-blue-500 text-white shadow-xl border-0'
+                          : 'bg-white border-2 border-blue-200 text-blue-600 hover:bg-blue-50 hover:border-blue-300'
+                      )}
+                    >
+                      <div className="flex flex-col items-center gap-2">
+                        <Coffee className="h-6 w-6 sm:h-8 sm:w-8" strokeWidth={2.5} />
+                        <span>Lunch</span>
+                      </div>
+                    </Button>
+                    <Button
+                      onClick={() => setActiveMealPeriod('dinner')}
+                      variant={activeMealPeriod === 'dinner' ? 'default' : 'outline'}
+                      className={cn(
+                        'h-16 sm:h-20 text-sm sm:text-base font-bold rounded-2xl transition-all duration-300 transform hover:scale-[1.02] active:scale-[0.98] touch-manipulation shadow-lg',
+                        activeMealPeriod === 'dinner'
+                          ? 'bg-gradient-to-r from-purple-400 to-purple-500 text-white shadow-xl border-0'
+                          : 'bg-white border-2 border-purple-200 text-purple-600 hover:bg-purple-50 hover:border-purple-300'
+                      )}
+                    >
+                      <div className="flex flex-col items-center gap-2">
+                        <Moon className="h-6 w-6 sm:h-8 sm:w-8" strokeWidth={2.5} />
+                        <span>Dinner</span>
+                      </div>
+                    </Button>
+                  </div>
+                </div>
 
-                {/* Custom items */}
-                {customItems
-                  .filter(item => item.mealPeriod === activeMealPeriod)
-                  .map((item) => {
+                {/* Enhanced Quick Add Items Grid - Larger buttons for gloves */}
+                <div className="grid grid-cols-2 sm:grid-cols-3 gap-4 sm:gap-6">
+                  {/* Default items */}
+                  {WASTE_ITEMS[activeMealPeriod as keyof WasteItems].map((item) => {
                     // Get the custom price (or default if no custom price)
                     const itemPrice = getItemPrice(item.name, item.defaultCost)
 
                     return (
                       <Button
-                        key={item._id}
+                        key={item.name}
                         variant="outline"
-                        size="sm"
-                        onClick={() => handleQuickAdd({
-                          name: item.name,
-                          unit: item.unit,
-                          defaultCost: item.defaultCost,
-                          icon: item.icon
-                        })}
-                        className="h-auto py-2 sm:py-3 px-2 sm:px-4 flex flex-col items-center gap-1 sm:gap-2 text-[#27251F] hover:bg-[#E51636]/5 hover:text-[#E51636] border border-gray-100 rounded-xl sm:rounded-[20px] hover:border-[#E51636]/20 bg-blue-50/30"
+                        onClick={() => handleQuickAdd(item)}
+                        data-item={item.name}
+                        className="h-24 sm:h-28 md:h-32 p-4 flex flex-col items-center justify-center gap-2 sm:gap-3 bg-gradient-to-br from-white to-gray-50 border-2 border-gray-200 hover:from-[#E51636]/5 hover:to-[#E51636]/10 hover:border-[#E51636]/30 rounded-2xl sm:rounded-3xl shadow-lg hover:shadow-xl transition-all duration-300 transform hover:scale-[1.02] active:scale-[0.95] touch-manipulation group"
+                        disabled={isLoading}
                       >
-                        <span className="text-base sm:text-lg">{item.icon}</span>
-                        <span className="text-xs sm:text-sm text-center line-clamp-1">{item.name}</span>
-                        <span className="text-[10px] sm:text-xs text-[#27251F]/60">${itemPrice.toFixed(2)}</span>
+                        <span className="text-2xl sm:text-3xl md:text-4xl group-hover:scale-110 transition-transform duration-200">
+                          {item.icon}
+                        </span>
+                        <div className="text-center">
+                          <span className="text-xs sm:text-sm md:text-base font-bold text-[#27251F] line-clamp-2 leading-tight">
+                            {item.name}
+                          </span>
+                          <span className="text-xs sm:text-sm text-[#E51636] font-semibold block mt-1">
+                            ${itemPrice.toFixed(2)}
+                          </span>
+                        </div>
                       </Button>
                     )
-                  })
-                }
+                  })}
+
+                  {/* Custom items */}
+                  {customItems
+                    .filter(item => item.mealPeriod === activeMealPeriod)
+                    .map((item) => {
+                      // Get the custom price (or default if no custom price)
+                      const itemPrice = getItemPrice(item.name, item.defaultCost)
+
+                      return (
+                        <Button
+                          key={item._id}
+                          variant="outline"
+                          onClick={() => handleQuickAdd({
+                            name: item.name,
+                            unit: item.unit,
+                            defaultCost: item.defaultCost,
+                            icon: item.icon
+                          })}
+                          data-item={item.name}
+                          className="h-24 sm:h-28 md:h-32 p-4 flex flex-col items-center justify-center gap-2 sm:gap-3 bg-gradient-to-br from-blue-50 to-blue-100 border-2 border-blue-200 hover:from-blue-100 hover:to-blue-200 hover:border-blue-300 rounded-2xl sm:rounded-3xl shadow-lg hover:shadow-xl transition-all duration-300 transform hover:scale-[1.02] active:scale-[0.95] touch-manipulation group"
+                          disabled={isLoading}
+                        >
+                          <span className="text-2xl sm:text-3xl md:text-4xl group-hover:scale-110 transition-transform duration-200">
+                            {item.icon}
+                          </span>
+                          <div className="text-center">
+                            <span className="text-xs sm:text-sm md:text-base font-bold text-blue-700 line-clamp-2 leading-tight">
+                              {item.name}
+                            </span>
+                            <span className="text-xs sm:text-sm text-blue-600 font-semibold block mt-1">
+                              ${itemPrice.toFixed(2)}
+                            </span>
+                          </div>
+                        </Button>
+                      )
+                    })
+                  }
+                </div>
               </div>
             </div>
           </Card>
 
-          {/* Reason Selection - Grid layout adjusted for mobile */}
-          <Card className="bg-white rounded-[20px] hover:shadow-xl transition-all duration-300">
-            <div className="p-3 sm:p-6">
-              <h3 className="text-base sm:text-lg font-semibold text-[#27251F] mb-3 sm:mb-4">Select Reason</h3>
-              <div className="grid grid-cols-2 gap-2 sm:gap-3">
-                {WASTE_REASONS.map((wasteReason) => (
-                  <Button
-                    key={wasteReason.label}
-                    variant="outline"
-                    className={`h-auto py-4 sm:py-6 px-2 sm:px-4 text-sm sm:text-base border ${
-                      reason === wasteReason.label
-                        ? `bg-[#E51636]/10 text-[#E51636] border-[#E51636]/20 hover:bg-[#E51636]/20`
-                        : 'border-gray-100 hover:bg-[#E51636]/5 hover:text-[#E51636] hover:border-[#E51636]/20'
-                    } rounded-xl sm:rounded-[20px] transition-all duration-200 font-medium`}
-                    onClick={() => setReason(wasteReason.label)}
-                    disabled={isLoading}
-                  >
-                    {wasteReason.label}
-                  </Button>
-                ))}
+          {/* Enhanced Reason Selection */}
+          <Card className="bg-white rounded-[24px] shadow-2xl hover:shadow-3xl transition-all duration-500 border-0 overflow-hidden">
+            <div className="bg-gradient-to-r from-purple-500 to-purple-600 p-1">
+              <div className="bg-white rounded-[20px] p-6 sm:p-8">
+                <h3 className="text-xl sm:text-2xl font-black text-[#27251F] mb-6 flex items-center gap-3">
+                  <span className="text-3xl">🤔</span>
+                  Select Reason
+                </h3>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-6">
+                  {WASTE_REASONS.map((wasteReason) => (
+                    <Button
+                      key={wasteReason.label}
+                      variant="outline"
+                      className={`h-16 sm:h-20 px-4 sm:px-6 text-sm sm:text-base font-bold border-2 transition-all duration-300 transform hover:scale-[1.02] active:scale-[0.98] touch-manipulation shadow-lg ${
+                        reason === wasteReason.label
+                          ? `bg-gradient-to-r from-[#E51636] to-[#C41230] text-white border-[#E51636] shadow-xl`
+                          : 'bg-white border-gray-200 text-gray-700 hover:bg-gray-50 hover:border-gray-300 hover:shadow-xl'
+                      } rounded-2xl`}
+                      onClick={() => setReason(wasteReason.label)}
+                      disabled={isLoading}
+                    >
+                      <div className="flex items-center justify-center gap-2">
+                        <span className="text-lg">
+                          {wasteReason.label === 'Overproduction' && '📈'}
+                          {wasteReason.label === 'Quality Issues' && '❌'}
+                          {wasteReason.label === 'Expired' && '⏰'}
+                          {wasteReason.label === 'Dropped/Contaminated' && '💧'}
+                        </span>
+                        <span className="text-center leading-tight">{wasteReason.label}</span>
+                      </div>
+                    </Button>
+                  ))}
+                </div>
               </div>
             </div>
           </Card>
         </div>
 
-        {/* Today's Entries - Adjusted height and padding for mobile */}
+        {/* Enhanced Today's Entries */}
         <div className="lg:col-span-2">
-          <Card className="bg-white rounded-[20px] hover:shadow-xl transition-all duration-300">
-            <div className="p-4 md:p-6">
-              <h2 className="text-xl md:text-2xl font-bold text-[#27251F] mb-4 md:mb-6">Today's Entries</h2>
-              <ScrollArea className="h-[400px] md:h-[600px] pr-4">
-                <div className="space-y-3 md:space-y-4">
-                  {todaysEntries.length === 0 ? (
-                    <div className="text-center py-8">
-                      <Trash2 className="w-12 h-12 mx-auto text-gray-300 mb-3" />
-                      <p className="text-[#27251F]/60">No waste logged today</p>
-                      <p className="text-sm text-[#27251F]/40">
-                        Use the quick add buttons to log waste
-                      </p>
-                    </div>
-                  ) : (
-                    todaysEntries.map((entry) => (
-                      <div
-                        key={entry._id}
-                        className="p-3 md:p-4 border rounded-xl hover:shadow-sm transition-shadow relative group"
-                      >
-                        <div className="flex items-start justify-between">
-                          <div className="pr-8">
-                            <h4 className="font-semibold text-[#27251F] text-sm md:text-base">{entry.itemName}</h4>
-                            <p className="text-xs md:text-sm text-[#27251F]/60">
-                              {entry.quantity} {entry.unit} - ${entry.cost.toFixed(2)}
-                            </p>
-                            <p className="text-xs text-[#27251F]/40 mt-1">
-                              {format(new Date(entry.date), 'h:mm a')} - {entry.reason}
-                            </p>
-                          </div>
-                          <Button
-                            variant="ghost"
-                            size="icon"
-                            className="opacity-100 md:opacity-0 group-hover:opacity-100 transition-opacity absolute top-2 right-2 text-red-600 hover:text-red-700 hover:bg-red-50"
-                            onClick={() => setSelectedEntryToDelete(entry._id)}
-                          >
-                            <X className="h-4 w-4" />
-                          </Button>
+          <Card className="bg-white rounded-[24px] shadow-2xl hover:shadow-3xl transition-all duration-500 border-0 overflow-hidden">
+            <div className="bg-gradient-to-r from-green-500 to-green-600 p-1">
+              <div className="bg-white rounded-[20px] p-6">
+                <h2 className="text-xl md:text-2xl font-black text-[#27251F] mb-6 flex items-center gap-3">
+                  <span className="text-3xl">📋</span>
+                  Today's Entries
+                </h2>
+                <ScrollArea className="h-[400px] md:h-[600px] pr-4">
+                  <div className="space-y-4">
+                    {todaysEntries.length === 0 ? (
+                      <div className="text-center py-12">
+                        <div className="w-24 h-24 mx-auto mb-6 bg-gradient-to-br from-gray-100 to-gray-200 rounded-full flex items-center justify-center">
+                          <Trash2 className="w-12 h-12 text-gray-400" />
                         </div>
+                        <p className="text-lg font-semibold text-[#27251F]/60 mb-2">No waste logged today</p>
+                        <p className="text-sm text-[#27251F]/40">
+                          Use the quick add buttons above to start tracking waste
+                        </p>
                       </div>
-                    ))
-                  )}
-                </div>
-              </ScrollArea>
+                    ) : (
+                      todaysEntries.map((entry) => (
+                        <div
+                          key={entry._id}
+                          className="p-4 md:p-5 bg-gradient-to-r from-gray-50 to-white border-2 border-gray-100 rounded-2xl hover:shadow-lg transition-all duration-300 relative group transform hover:scale-[1.01]"
+                        >
+                          <div className="flex items-start justify-between">
+                            <div className="pr-12 flex-1">
+                              <h4 className="font-bold text-[#27251F] text-base md:text-lg mb-2">{entry.itemName}</h4>
+                              <div className="flex items-center gap-4 mb-2">
+                                <span className="text-sm md:text-base text-[#E51636] font-semibold bg-[#E51636]/10 px-3 py-1 rounded-full">
+                                  {entry.quantity} {entry.unit}
+                                </span>
+                                <span className="text-sm md:text-base text-green-600 font-semibold bg-green-100 px-3 py-1 rounded-full">
+                                  ${entry.cost.toFixed(2)}
+                                </span>
+                              </div>
+                              <p className="text-xs md:text-sm text-[#27251F]/60 flex items-center gap-2">
+                                <Clock className="h-4 w-4" />
+                                {format(new Date(entry.date), 'h:mm a')} - {entry.reason}
+                              </p>
+                            </div>
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              className="opacity-100 md:opacity-0 group-hover:opacity-100 transition-opacity absolute top-3 right-3 text-red-600 hover:text-red-700 hover:bg-red-50 h-10 w-10 rounded-xl"
+                              onClick={() => setSelectedEntryToDelete(entry._id)}
+                            >
+                              <X className="h-5 w-5" />
+                            </Button>
+                          </div>
+                        </div>
+                      ))
+                    )}
+                  </div>
+                </ScrollArea>
+              </div>
             </div>
           </Card>
         </div>
       </div>
 
-      {/* Custom Add Card */}
-      <Card className="bg-white rounded-[20px] hover:shadow-xl transition-all duration-300">
-        <div className="p-3 sm:p-6">
-          <div className="flex flex-col space-y-3 sm:space-y-4">
-            <h2 className="text-base sm:text-lg font-semibold text-[#27251F]">Custom Entry</h2>
-            <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 sm:gap-3">
-              <div className="col-span-2 sm:col-span-1">
+      {/* Enhanced Custom Add Card */}
+      <Card className="bg-white rounded-[24px] shadow-2xl hover:shadow-3xl transition-all duration-500 border-0 overflow-hidden">
+        <div className="bg-gradient-to-r from-indigo-500 to-indigo-600 p-1">
+          <div className="bg-white rounded-[20px] p-6 sm:p-8">
+            <h2 className="text-xl sm:text-2xl font-black text-[#27251F] mb-6 flex items-center gap-3">
+              <span className="text-3xl">✏️</span>
+              Custom Entry
+            </h2>
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6">
+              <div className="sm:col-span-2 lg:col-span-1">
                 <Input
                   placeholder="Item name"
                   value={selectedItem}
                   onChange={(e) => setSelectedItem(e.target.value)}
-                  className="w-full h-8 sm:h-10 text-xs sm:text-sm rounded-lg"
+                  className="w-full h-14 sm:h-16 text-base sm:text-lg font-medium rounded-2xl border-2 border-gray-200 focus:border-indigo-400 focus:ring-4 focus:ring-indigo-100 transition-all duration-300 px-4"
                 />
               </div>
-              <div className="col-span-1">
+              <div>
                 <Input
                   type="number"
                   placeholder="Quantity"
                   value={quantity}
                   onChange={(e) => setQuantity(e.target.value)}
-                  className="w-full h-8 sm:h-10 text-xs sm:text-sm rounded-lg"
+                  className="w-full h-14 sm:h-16 text-base sm:text-lg font-medium rounded-2xl border-2 border-gray-200 focus:border-indigo-400 focus:ring-4 focus:ring-indigo-100 transition-all duration-300 px-4"
                 />
               </div>
-              <div className="col-span-1">
+              <div>
                 <Input
                   type="number"
                   step="0.01"
                   placeholder="Unit Price ($)"
                   value={customPrice}
                   onChange={(e) => setCustomPrice(e.target.value)}
-                  className="w-full h-8 sm:h-10 text-xs sm:text-sm rounded-lg"
+                  className="w-full h-14 sm:h-16 text-base sm:text-lg font-medium rounded-2xl border-2 border-gray-200 focus:border-indigo-400 focus:ring-4 focus:ring-indigo-100 transition-all duration-300 px-4"
                 />
               </div>
-              <div className="col-span-2 sm:col-span-1">
+              <div className="sm:col-span-2 lg:col-span-1">
                 <Button
                   onClick={handleCustomAdd}
-                  disabled={!selectedItem || !quantity}
-                  className="w-full h-8 sm:h-10 text-xs sm:text-sm bg-[#E51636] text-white hover:bg-[#E51636]/90 rounded-lg"
+                  disabled={!selectedItem || !quantity || isLoading}
+                  className="w-full h-14 sm:h-16 text-base sm:text-lg font-bold bg-gradient-to-r from-[#E51636] to-[#C41230] text-white hover:from-[#C41230] hover:to-[#A01020] rounded-2xl shadow-lg hover:shadow-xl transition-all duration-300 transform hover:scale-[1.02] active:scale-[0.98] touch-manipulation disabled:opacity-50 disabled:cursor-not-allowed"
                 >
+                  <span className="mr-2">➕</span>
                   Add Entry
                 </Button>
               </div>
