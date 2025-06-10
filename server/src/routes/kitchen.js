@@ -12,7 +12,8 @@ import expressAsyncHandler from 'express-async-handler';
 import * as shiftChecklistController from '../controllers/shiftChecklistController.js';
 import FoodSafetyConfig from '../models/FoodSafetyConfig.js';
 import * as dailyChecklistController from '../controllers/dailyChecklist.js';
-import * as temperatureLogController from '../controllers/temperatureLog.js'
+import * as temperatureLogController from '../controllers/temperatureLog.js';
+import * as foodQualityController from '../controllers/foodQuality.js';
 
 // Helper function to calculate next due date based on cleaning frequency
 function calculateNextDueDate(frequency, fromDate = new Date()) {
@@ -1370,8 +1371,6 @@ router.post('/food-safety/temperature-logs/batch', auth, temperatureLogControlle
 router.get('/food-safety/temperature-logs/latest', auth, temperatureLogController.getLatestTemperatures)
 
 // Food Quality Routes
-import * as foodQualityController from '../controllers/foodQuality.js';
-
 router.get('/food-quality/config', auth, foodQualityController.getFoodQualityConfig)
 router.post('/food-quality/config', auth, foodQualityController.updateFoodQualityConfig)
 router.get('/food-quality/standards', auth, foodQualityController.getFoodQualityStandards)
