@@ -1,179 +1,194 @@
 import React, { useState, useEffect } from 'react'
-import { useNavigate, useParams } from 'react-router-dom'
-import { Card } from '@/components/ui/card'
+import { useParams, useNavigate } from 'react-router-dom'
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
-import {
-  Calendar,
-  Users,
-  CheckCircle2,
-  AlertTriangle,
-  ArrowLeft,
-  Edit,
-  Trash2,
-  MessageSquare,
-  Target,
-  Clock,
-  BookOpen,
-  BrainCircuit,
-  Presentation,
-  Puzzle
-} from 'lucide-react'
 import { Progress } from '@/components/ui/progress'
-import PageHeader from '@/components/PageHeader'
+import { Textarea } from '@/components/ui/textarea'
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
+import {
+  Target,
+  ArrowLeft,
+  Calendar,
+  TrendingUp,
+  CheckCircle,
+  Clock,
+  Star,
+  Edit,
+  Save,
+  Plus,
+  Trash2,
+  Flag,
+  BarChart3,
+  Users,
+  MessageSquare,
+  FileText
+} from 'lucide-react'
+import { useAuth } from '@/contexts/AuthContext'
+import { useToast } from '@/components/ui/use-toast'
+import api from '@/lib/axios'
 
-type Status = 'in-progress' | 'completed' | 'needs-review'
-type Timeframe = 'short-term' | 'long-term'
-type Priority = 'high' | 'medium' | 'low'
-type ActivityType = 'training' | 'assignment' | 'mentoring' | 'development'
-
-interface Activity {
-  title: string
-  type: ActivityType
-  completed: boolean
-}
-
-interface FocusArea {
-  area: string
-  progress: number
-}
-
-interface Milestone {
-  title: string
-  completed: boolean
-  dueDate: string
-}
-
-interface Comment {
-  author: string
-  date: string
-  text: string
-}
-
-interface GoalMetrics {
-  teamParticipation: number
-  feedbackScore: number
-  completionRate: number
-}
-
-interface DevelopmentPlan {
-  id: number
+interface Goal {
+  id: string
   title: string
   description: string
-  status: Status
-  timeframe: Timeframe
-  dueDate: string
+  category: string
+  priority: 'high' | 'medium' | 'low'
+  targetDate: string
+  status: 'not_started' | 'in_progress' | 'completed' | 'on_hold'
   progress: number
-  assignee: string
-  priority: Priority
-  focusAreas: FocusArea[]
-  activities: Activity[]
-  milestones: Milestone[]
-  comments: Comment[]
-  metrics: GoalMetrics
+  milestones: string[]
+  metrics: string
+  createdAt: string
+  updatedAt: string
+  notes?: string[]
+  activities?: Array<{
+    id: string
+    type: string
+    description: string
+    timestamp: string
+  }>
 }
 
 export default function GoalDetails() {
+  const { id } = useParams<{ id: string }>()
   const navigate = useNavigate()
-  const { id } = useParams()
-  const [loading, setLoading] = useState(false)
-  const [goal, setGoal] = useState<DevelopmentPlan | null>(null)
-  const [error, setError] = useState<string | null>(null)
+  const { user } = useAuth()
+  const { toast } = useToast()
+  const [goal, setGoal] = useState<Goal | null>(null)
+  const [loading, setLoading] = useState(true)
+  const [saving, setSaving] = useState(false)
+  const [newNote, setNewNote] = useState('')
+  const [editingProgress, setEditingProgress] = useState(false)
+  const [newProgress, setNewProgress] = useState(0)
+
+  const priorityColors = {
+    high: 'bg-red-100 text-red-800 border-red-200',
+    medium: 'bg-yellow-100 text-yellow-800 border-yellow-200',
+    low: 'bg-green-100 text-green-800 border-green-200'
+  }
+
+  const statusColors = {
+    not_started: 'bg-gray-100 text-gray-800 border-gray-200',
+    in_progress: 'bg-blue-100 text-blue-800 border-blue-200',
+    completed: 'bg-green-100 text-green-800 border-green-200',
+    on_hold: 'bg-orange-100 text-orange-800 border-orange-200'
+  }
+
+  const categoryIcons = {
+    leadership: Users,
+    operational: BarChart3,
+    team: Users,
+    personal: TrendingUp,
+    customer: Star,
+    financial: Target
+  }
 
   useEffect(() => {
-    const fetchGoalDetails = async () => {
-      setLoading(true)
-      setError(null)
-      try {
-        // TODO: Replace with actual API call
-        const mockGoal: DevelopmentPlan = {
-          id: Number(id),
-          title: 'Strategic Leadership Development',
-          description: 'Develop strategic thinking and decision-making capabilities for senior leadership role',
-          status: 'in-progress',
-          timeframe: 'long-term',
-          dueDate: '2025-12-31',
-          progress: 45,
-          assignee: 'John Smith',
-          priority: 'high',
-          focusAreas: [
-            { area: 'Strategic Thinking', progress: 60 },
-            { area: 'Business Acumen', progress: 45 },
-            { area: 'Change Management', progress: 30 }
-          ],
-          activities: [
-            { title: 'Executive Leadership Program', type: 'training', completed: true },
-            { title: 'Cross-functional Project Lead', type: 'assignment', completed: false },
-            { title: 'Mentorship with VP', type: 'mentoring', completed: true },
-            { title: 'Industry Conference Speaking', type: 'development', completed: false }
-          ],
-          milestones: [
-            { title: 'Initial Assessment', completed: true, dueDate: '2024-02-15' },
-            { title: 'Development Plan Creation', completed: true, dueDate: '2024-03-01' },
-            { title: 'First Quarter Review', completed: false, dueDate: '2024-03-31' },
-            { title: 'Mid-year Assessment', completed: false, dueDate: '2024-06-30' }
-          ],
-          comments: [
-            { author: 'Sarah Johnson', date: '2024-02-15', text: 'Initial assessment completed successfully. Strong potential in strategic thinking.' },
-            { author: 'Michael Chen', date: '2024-03-01', text: 'Development plan looks comprehensive. Focus areas align well with organizational needs.' }
-          ],
-          metrics: {
-            teamParticipation: 85,
-            feedbackScore: 4.2,
-            completionRate: 45
-          }
-        }
-
-        setGoal(mockGoal)
-      } catch (error) {
-        console.error('Error fetching goal details:', error)
-        setError('Failed to load goal details. Please try again.')
-      } finally {
-        setLoading(false)
-      }
-    }
-
     if (id) {
-      fetchGoalDetails()
+      fetchGoal()
     }
   }, [id])
 
-  const getStatusBadge = (status: Status) => {
-    const statusConfig = {
-      'in-progress': { label: 'In Progress', className: 'bg-blue-100 text-blue-600' },
-      'completed': { label: 'Completed', className: 'bg-green-100 text-green-600' },
-      'needs-review': { label: 'Needs Review', className: 'bg-orange-100 text-orange-600' }
+  const fetchGoal = async () => {
+    try {
+      setLoading(true)
+      const response = await api.get(`/leadership/goals/${id}`)
+      setGoal(response.data)
+      setNewProgress(response.data.progress)
+    } catch (error) {
+      console.error('Error fetching goal:', error)
+      toast({
+        title: 'Error',
+        description: 'Failed to load goal details. Please try again.',
+        variant: 'destructive'
+      })
+      navigate('/leadership/goals')
+    } finally {
+      setLoading(false)
     }
-    const config = statusConfig[status]
-    return (
-      <Badge className={config.className} variant="outline">
-        {config.label}
-      </Badge>
-    )
   }
 
-  const getPriorityBadge = (priority: Priority) => {
-    const priorityConfig = {
-      'high': { className: 'bg-red-100 text-red-600' },
-      'medium': { className: 'bg-yellow-100 text-yellow-600' },
-      'low': { className: 'bg-green-100 text-green-600' }
+  const updateProgress = async () => {
+    if (!goal) return
+    
+    try {
+      setSaving(true)
+      await api.patch(`/leadership/goals/${goal.id}/progress`, { 
+        progress: newProgress,
+        status: newProgress === 100 ? 'completed' : newProgress > 0 ? 'in_progress' : 'not_started'
+      })
+      
+      setGoal({
+        ...goal,
+        progress: newProgress,
+        status: newProgress === 100 ? 'completed' : newProgress > 0 ? 'in_progress' : 'not_started'
+      })
+      
+      setEditingProgress(false)
+      toast({
+        title: 'Progress Updated',
+        description: 'Goal progress has been updated successfully.',
+      })
+    } catch (error) {
+      console.error('Error updating progress:', error)
+      toast({
+        title: 'Error',
+        description: 'Failed to update progress. Please try again.',
+        variant: 'destructive'
+      })
+    } finally {
+      setSaving(false)
     }
-    return (
-      <Badge className={priorityConfig[priority].className} variant="outline">
-        {priority.charAt(0).toUpperCase() + priority.slice(1)}
-      </Badge>
-    )
   }
 
-  const getActivityIcon = (type: ActivityType) => {
-    const icons = {
-      'training': BookOpen,
-      'assignment': Puzzle,
-      'mentoring': Users,
-      'development': BrainCircuit
+  const addNote = async () => {
+    if (!goal || !newNote.trim()) return
+    
+    try {
+      setSaving(true)
+      await api.post(`/leadership/goals/${goal.id}/notes`, { note: newNote })
+      
+      setGoal({
+        ...goal,
+        notes: [...(goal.notes || []), newNote]
+      })
+      
+      setNewNote('')
+      toast({
+        title: 'Note Added',
+        description: 'Your note has been added successfully.',
+      })
+    } catch (error) {
+      console.error('Error adding note:', error)
+      toast({
+        title: 'Error',
+        description: 'Failed to add note. Please try again.',
+        variant: 'destructive'
+      })
+    } finally {
+      setSaving(false)
     }
-    const Icon = icons[type]
-    return <Icon className="h-4 w-4" />
+  }
+
+  const formatDate = (dateString: string) => {
+    return new Date(dateString).toLocaleDateString('en-US', {
+      year: 'numeric',
+      month: 'long',
+      day: 'numeric'
+    })
+  }
+
+  const isOverdue = (targetDate: string) => {
+    return new Date(targetDate) < new Date() && new Date(targetDate).getTime() !== 0
+  }
+
+  const getDaysUntilTarget = (targetDate: string) => {
+    const target = new Date(targetDate)
+    const today = new Date()
+    const diffTime = target.getTime() - today.getTime()
+    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24))
+    return diffDays
   }
 
   if (loading) {
@@ -184,258 +199,257 @@ export default function GoalDetails() {
     )
   }
 
-  if (error) {
+  if (!goal) {
     return (
-      <div className="flex flex-col items-center justify-center h-96 space-y-4">
-        <div className="text-red-600">{error}</div>
+      <div className="text-center py-12">
+        <Target className="h-16 w-16 mx-auto mb-4 text-gray-300" />
+        <h3 className="text-lg font-semibold text-gray-700 mb-2">Goal Not Found</h3>
+        <p className="text-gray-500 mb-4">The goal you're looking for doesn't exist or has been deleted.</p>
         <Button onClick={() => navigate('/leadership/goals')}>
-          <ArrowLeft className="w-4 h-4 mr-2" />
+          <ArrowLeft className="h-4 w-4 mr-2" />
           Back to Goals
         </Button>
       </div>
     )
   }
 
-  if (!goal) {
-    return (
-      <div className="flex flex-col items-center justify-center h-96 space-y-4">
-        <div className="text-lg font-semibold">Goal not found</div>
-        <Button onClick={() => navigate('/leadership/goals')}>
-          <ArrowLeft className="w-4 h-4 mr-2" />
-          Back to Goals
-        </Button>
-      </div>
-    )
-  }
+  const CategoryIcon = categoryIcons[goal.category as keyof typeof categoryIcons] || Target
+  const isGoalOverdue = isOverdue(goal.targetDate)
+  const daysUntilTarget = getDaysUntilTarget(goal.targetDate)
 
   return (
     <div className="space-y-6">
-      <div className="bg-white rounded-[20px] p-6 md:p-8 hover:shadow-xl transition-all duration-300">
-        <div className="flex items-center gap-4">
-          <div className="h-16 w-16 bg-[#E51636]/10 text-[#E51636] rounded-2xl flex items-center justify-center">
-            <Target className="h-8 w-8" />
-          </div>
-          <div>
-            <h1 className="text-2xl md:text-3xl font-bold text-[#27251F]">Development Plan Details</h1>
-            <p className="text-[#27251F]/60 mt-1">
-              View and manage development plan progress
-            </p>
-          </div>
-          <div className="ml-auto flex gap-2">
-            <Button
-              variant="outline"
-              onClick={() => navigate('/leadership/goals')}
-              className="border-[#E51636] text-[#E51636] hover:bg-[#E51636]/5 flex items-center justify-center gap-2"
-            >
-              <ArrowLeft className="w-4 h-4" />
-              Back
-            </Button>
-            <Button
-              variant="outline"
-              onClick={() => navigate(`/leadership/goals/${id}/edit`)}
-              className="border-[#E51636] text-[#E51636] hover:bg-[#E51636]/5 flex items-center justify-center gap-2"
-            >
-              <Edit className="w-4 h-4" />
-              Edit Plan
-            </Button>
-            <Button
-              variant="outline"
-              onClick={() => {
-                // TODO: Add confirmation dialog
-                console.log('Delete goal')
-              }}
-              className="border-[#E51636] text-[#E51636] hover:bg-[#E51636]/5 flex items-center justify-center gap-2"
-            >
-              <Trash2 className="w-4 h-4" />
-              Delete
-            </Button>
-          </div>
-        </div>
+      {/* Header */}
+      <div className="flex items-center justify-between">
+        <Button
+          variant="ghost"
+          onClick={() => navigate('/leadership/goals')}
+          className="flex items-center gap-2"
+        >
+          <ArrowLeft className="h-4 w-4" />
+          Back to Goals
+        </Button>
+        <Button
+          onClick={() => navigate('/leadership/goal-setting')}
+          className="bg-[#E51636] hover:bg-[#E51636]/90 flex items-center gap-2"
+        >
+          <Edit className="h-4 w-4" />
+          Edit Goal
+        </Button>
       </div>
 
+      {/* Goal Overview */}
+      <Card className="bg-gradient-to-r from-[#E51636] to-[#B91C3C] text-white">
+        <CardContent className="p-8">
+          <div className="flex items-start justify-between">
+            <div className="flex items-center gap-4">
+              <div className="h-16 w-16 bg-white/20 rounded-xl flex items-center justify-center">
+                <CategoryIcon className="h-8 w-8" />
+              </div>
+              <div>
+                <h1 className="text-3xl font-bold mb-2">{goal.title}</h1>
+                <p className="text-white/90 text-lg mb-4">{goal.description}</p>
+                <div className="flex gap-2">
+                  <Badge className={`${priorityColors[goal.priority]} text-gray-800`}>
+                    {goal.priority} priority
+                  </Badge>
+                  <Badge className={`${statusColors[goal.status]} text-gray-800`}>
+                    {goal.status.replace('_', ' ')}
+                  </Badge>
+                  {isGoalOverdue && (
+                    <Badge className="bg-red-200 text-red-800 border-red-300">
+                      Overdue
+                    </Badge>
+                  )}
+                </div>
+              </div>
+            </div>
+            <div className="text-right">
+              <div className="text-4xl font-bold mb-1">{goal.progress}%</div>
+              <div className="text-white/80">Complete</div>
+            </div>
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* Progress and Timeline */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        {/* Main Content */}
-        <div className="lg:col-span-2 space-y-6">
-          {/* Goal Overview */}
-          <Card className="bg-white p-6 hover:shadow-md transition-shadow cursor-pointer rounded-[20px] border border-gray-100">
-            <div className="space-y-4">
-              <div className="flex items-start justify-between">
+        <Card className="lg:col-span-2">
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <TrendingUp className="h-5 w-5 text-[#E51636]" />
+              Progress Tracking
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-6">
+            <div>
+              <div className="flex justify-between items-center mb-4">
+                <span className="text-lg font-semibold">Overall Progress</span>
+                <div className="flex items-center gap-2">
+                  {editingProgress ? (
+                    <>
+                      <input
+                        type="number"
+                        min="0"
+                        max="100"
+                        value={newProgress}
+                        onChange={(e) => setNewProgress(Number(e.target.value))}
+                        className="w-16 px-2 py-1 border rounded text-center"
+                      />
+                      <span>%</span>
+                      <Button size="sm" onClick={updateProgress} disabled={saving}>
+                        <Save className="h-3 w-3" />
+                      </Button>
+                      <Button size="sm" variant="ghost" onClick={() => setEditingProgress(false)}>
+                        Cancel
+                      </Button>
+                    </>
+                  ) : (
+                    <>
+                      <span className="text-2xl font-bold text-[#E51636]">{goal.progress}%</span>
+                      <Button size="sm" variant="ghost" onClick={() => setEditingProgress(true)}>
+                        <Edit className="h-3 w-3" />
+                      </Button>
+                    </>
+                  )}
+                </div>
+              </div>
+              <Progress value={goal.progress} className="h-4" />
+            </div>
+
+            {/* Milestones */}
+            {goal.milestones.length > 0 && goal.milestones[0] && (
+              <div>
+                <h3 className="font-semibold mb-3">Milestones</h3>
                 <div className="space-y-2">
-                  <div className="flex flex-wrap items-center gap-3">
-                    <h3 className="text-lg font-semibold text-[#27251F]">{goal.title}</h3>
-                    <div className="flex gap-2">
-                      {getStatusBadge(goal.status)}
-                      {getPriorityBadge(goal.priority)}
+                  {goal.milestones.filter(m => m.trim()).map((milestone, index) => (
+                    <div key={index} className="flex items-center gap-3 p-3 bg-gray-50 rounded-lg">
+                      <CheckCircle className="h-5 w-5 text-green-500" />
+                      <span>{milestone}</span>
                     </div>
-                  </div>
-                  <p className="text-gray-600">{goal.description}</p>
+                  ))}
                 </div>
               </div>
+            )}
+          </CardContent>
+        </Card>
 
-              <div className="flex flex-col md:flex-row gap-6">
-                <div className="flex items-center gap-4 text-sm text-gray-500">
-                  <div className="flex items-center gap-1">
-                    <Calendar className="h-4 w-4" />
-                    Due {new Date(goal.dueDate).toLocaleDateString()}
-                  </div>
-                  <div className="flex items-center gap-1">
-                    <Users className="h-4 w-4" />
-                    {goal.assignee}
-                  </div>
-                </div>
-                <div className="flex-1 space-y-2">
-                  <div className="flex items-center justify-between text-sm">
-                    <span className="text-gray-600">Overall Progress</span>
-                    <span className="font-medium">{goal.progress}%</span>
-                  </div>
-                  <Progress value={goal.progress} className="h-2" />
-                </div>
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <Calendar className="h-5 w-5 text-[#E51636]" />
+              Timeline
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <div className="text-center p-4 bg-blue-50 rounded-lg">
+              <div className="text-2xl font-bold text-blue-600">
+                {daysUntilTarget > 0 ? daysUntilTarget : 'Overdue'}
+              </div>
+              <div className="text-sm text-blue-600">
+                {daysUntilTarget > 0 ? 'Days remaining' : 'Days overdue'}
               </div>
             </div>
-          </Card>
-
-          {/* Focus Areas */}
-          <Card className="bg-white p-6 hover:shadow-md transition-shadow cursor-pointer rounded-[20px] border border-gray-100">
-            <div className="flex items-center justify-between mb-6">
-              <h3 className="text-lg font-semibold text-[#27251F]">Focus Areas</h3>
-              <Badge variant="outline" className="bg-[#E51636]/10 text-[#E51636] font-medium">
-                {goal.focusAreas.length} Areas
-              </Badge>
-            </div>
-            <div className="space-y-3">
-              {goal.focusAreas.map((area, index) => (
-                <div key={index} className="space-y-1">
-                  <div className="flex justify-between text-sm">
-                    <span className="text-gray-600">{area.area}</span>
-                    <span className="font-medium">{area.progress}%</span>
-                  </div>
-                  <Progress value={area.progress} className="h-1.5" />
-                </div>
-              ))}
-            </div>
-          </Card>
-
-          {/* Milestones */}
-          <Card className="bg-white p-6 hover:shadow-md transition-shadow cursor-pointer rounded-[20px] border border-gray-100">
-            <div className="flex items-center justify-between mb-6">
-              <h3 className="text-lg font-semibold text-[#27251F]">Milestones</h3>
-              <Badge variant="outline" className="bg-[#E51636]/10 text-[#E51636] font-medium">
-                {goal.milestones.filter(m => m.completed).length}/{goal.milestones.length} Completed
-              </Badge>
-            </div>
-            <div className="space-y-3">
-              {goal.milestones.map((milestone, index) => (
-                <div key={index} className="flex items-center gap-3">
-                  {milestone.completed ? (
-                    <CheckCircle2 className="h-4 w-4 text-green-500" />
-                  ) : (
-                    <AlertTriangle className="h-4 w-4 text-orange-500" />
-                  )}
-                  <div className="flex items-center gap-2">
-                    <span className={milestone.completed ? 'text-gray-600' : 'text-gray-900'}>
-                      {milestone.title}
-                    </span>
-                    <span className="text-sm text-gray-500">
-                      - Due {new Date(milestone.dueDate).toLocaleDateString()}
-                    </span>
-                  </div>
-                </div>
-              ))}
-            </div>
-          </Card>
-
-          {/* Activities */}
-          <Card className="bg-white p-6 hover:shadow-md transition-shadow cursor-pointer rounded-[20px] border border-gray-100">
-            <div className="flex items-center justify-between mb-6">
-              <h3 className="text-lg font-semibold text-[#27251F]">Development Activities</h3>
-              <Badge variant="outline" className="bg-[#E51636]/10 text-[#E51636] font-medium">
-                {goal.activities.filter(a => a.completed).length}/{goal.activities.length} Completed
-              </Badge>
-            </div>
-            <div className="space-y-2">
-              {goal.activities.map((activity, index) => (
-                <div key={index} className="flex items-center gap-2 text-sm">
-                  {activity.completed ? (
-                    <CheckCircle2 className="h-4 w-4 text-green-500" />
-                  ) : (
-                    <AlertTriangle className="h-4 w-4 text-orange-500" />
-                  )}
-                  <div className="flex items-center gap-2">
-                    {getActivityIcon(activity.type)}
-                    <span className={activity.completed ? 'text-gray-600' : 'text-gray-900'}>
-                      {activity.title}
-                    </span>
-                  </div>
-                </div>
-              ))}
-            </div>
-          </Card>
-
-          {/* Comments */}
-          <Card className="bg-white p-6 hover:shadow-md transition-shadow cursor-pointer rounded-[20px] border border-gray-100">
-            <div className="flex items-center justify-between mb-6">
-              <h3 className="text-lg font-semibold text-[#27251F]">Comments & Updates</h3>
-              <Badge variant="outline" className="bg-[#E51636]/10 text-[#E51636] font-medium">
-                {goal.comments.length} Comments
-              </Badge>
-            </div>
-            <div className="space-y-4">
-              {goal.comments.map((comment, index) => (
-                <div key={index} className="flex gap-3">
-                  <div className="h-8 w-8 bg-[#E51636]/10 text-[#E51636] rounded-lg flex items-center justify-center flex-shrink-0">
-                    <MessageSquare className="h-4 w-4" />
-                  </div>
-                  <div>
-                    <div className="flex items-center gap-2 mb-1">
-                      <span className="font-medium text-[#27251F]">{comment.author}</span>
-                      <span className="text-sm text-gray-500">
-                        {new Date(comment.date).toLocaleDateString()}
-                      </span>
-                    </div>
-                    <p className="text-gray-600 text-sm">{comment.text}</p>
-                  </div>
-                </div>
-              ))}
-            </div>
-          </Card>
-        </div>
-
-        {/* Sidebar */}
-        <div className="space-y-6">
-          {/* Metrics */}
-          <Card className="bg-white p-6 hover:shadow-md transition-shadow cursor-pointer rounded-[20px] border border-gray-100">
-            <div className="flex items-center justify-between mb-6">
-              <h3 className="text-lg font-semibold text-[#27251F]">Goal Metrics</h3>
-              <Badge variant="outline" className="bg-[#E51636]/10 text-[#E51636] font-medium">
-                Overview
-              </Badge>
-            </div>
-            <div className="space-y-4">
-              <div className="space-y-2">
-                <div className="flex justify-between text-sm">
-                  <span className="text-gray-600">Team Participation</span>
-                  <span className="font-medium">{goal.metrics.teamParticipation}%</span>
-                </div>
-                <Progress value={goal.metrics.teamParticipation} className="h-1.5" />
+            
+            <div className="space-y-3 text-sm">
+              <div className="flex justify-between">
+                <span className="text-gray-600">Created:</span>
+                <span>{formatDate(goal.createdAt)}</span>
               </div>
-              <div className="space-y-2">
-                <div className="flex justify-between text-sm">
-                  <span className="text-gray-600">Feedback Score</span>
-                  <span className="font-medium">{goal.metrics.feedbackScore}/5.0</span>
-                </div>
-                <Progress value={goal.metrics.feedbackScore * 20} className="h-1.5" />
+              <div className="flex justify-between">
+                <span className="text-gray-600">Target Date:</span>
+                <span className={isGoalOverdue ? 'text-red-600 font-medium' : ''}>
+                  {formatDate(goal.targetDate)}
+                </span>
               </div>
-              <div className="space-y-2">
-                <div className="flex justify-between text-sm">
-                  <span className="text-gray-600">Completion Rate</span>
-                  <span className="font-medium">{goal.metrics.completionRate}%</span>
-                </div>
-                <Progress value={goal.metrics.completionRate} className="h-1.5" />
+              <div className="flex justify-between">
+                <span className="text-gray-600">Last Updated:</span>
+                <span>{formatDate(goal.updatedAt)}</span>
               </div>
             </div>
-          </Card>
-        </div>
+
+            {goal.metrics && (
+              <div className="pt-4 border-t">
+                <h4 className="font-medium mb-2">Success Metrics</h4>
+                <p className="text-sm text-gray-600">{goal.metrics}</p>
+              </div>
+            )}
+          </CardContent>
+        </Card>
       </div>
+
+      {/* Notes and Activities */}
+      <Tabs defaultValue="notes" className="space-y-4">
+        <TabsList>
+          <TabsTrigger value="notes" className="flex items-center gap-2">
+            <MessageSquare className="h-4 w-4" />
+            Notes
+          </TabsTrigger>
+          <TabsTrigger value="activities" className="flex items-center gap-2">
+            <FileText className="h-4 w-4" />
+            Activities
+          </TabsTrigger>
+        </TabsList>
+
+        <TabsContent value="notes">
+          <Card>
+            <CardHeader>
+              <CardTitle>Goal Notes</CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div className="flex gap-2">
+                <Textarea
+                  placeholder="Add a note about your progress, challenges, or insights..."
+                  value={newNote}
+                  onChange={(e) => setNewNote(e.target.value)}
+                  rows={3}
+                />
+                <Button
+                  onClick={addNote}
+                  disabled={!newNote.trim() || saving}
+                  className="bg-[#E51636] hover:bg-[#E51636]/90"
+                >
+                  <Plus className="h-4 w-4" />
+                </Button>
+              </div>
+
+              {goal.notes && goal.notes.length > 0 ? (
+                <div className="space-y-3">
+                  {goal.notes.map((note, index) => (
+                    <div key={index} className="p-4 bg-gray-50 rounded-lg">
+                      <p className="text-gray-700">{note}</p>
+                      <p className="text-xs text-gray-500 mt-2">
+                        Added on {new Date().toLocaleDateString()}
+                      </p>
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <div className="text-center py-8 text-gray-500">
+                  <MessageSquare className="h-12 w-12 mx-auto mb-4 text-gray-300" />
+                  <p>No notes yet</p>
+                  <p className="text-sm">Add notes to track your progress and insights</p>
+                </div>
+              )}
+            </CardContent>
+          </Card>
+        </TabsContent>
+
+        <TabsContent value="activities">
+          <Card>
+            <CardHeader>
+              <CardTitle>Recent Activities</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="text-center py-8 text-gray-500">
+                <FileText className="h-12 w-12 mx-auto mb-4 text-gray-300" />
+                <p>No activities yet</p>
+                <p className="text-sm">Activities will appear here as you work on your goal</p>
+              </div>
+            </CardContent>
+          </Card>
+        </TabsContent>
+      </Tabs>
     </div>
   )
-} 
+}

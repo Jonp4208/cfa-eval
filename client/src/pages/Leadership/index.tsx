@@ -74,6 +74,19 @@ export default function Leadership() {
           <div className="overflow-x-auto hide-scrollbar flex items-center">
             <div className="flex items-center space-x-4 overflow-x-auto">
               <Button
+                variant={isActive('dashboard') ? 'default' : 'ghost'}
+                onClick={() => handleNavigate('dashboard')}
+                className={`flex items-center gap-2 px-4 py-2 whitespace-nowrap ${
+                  isActive('dashboard')
+                    ? 'bg-red-50 text-[#E51636] hover:bg-red-100'
+                    : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900'
+                }`}
+              >
+                <LayoutDashboard className="w-4 h-4" />
+                Dashboard
+              </Button>
+
+              <Button
                 variant={isActive('my-plans') ? 'default' : 'ghost'}
                 onClick={() => handleNavigate('my-plans')}
                 className={`flex items-center gap-2 px-4 py-2 whitespace-nowrap ${
@@ -137,6 +150,8 @@ export default function Leadership() {
                 <BookOpen className="w-4 h-4" />
                 Playbooks
               </Button>
+
+
             </div>
           </div>
         </div>

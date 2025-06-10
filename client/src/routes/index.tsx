@@ -45,6 +45,8 @@ import ViewCompletion from '../pages/Kitchen/FoodSafety/ViewCompletion';
 import KitchenHome from '@/pages/Kitchen/Home';
 import Leadership from '@/pages/Leadership';
 import LeadershipDashboard from '@/pages/Leadership/Dashboard';
+
+import GoalSetting from '@/pages/Leadership/GoalSetting';
 import Goals from '@/pages/Leadership/Goals';
 import GoalDetails from '@/pages/Leadership/GoalDetails';
 import DevelopmentalPlan from '@/pages/Leadership/DevelopmentalPlan';
@@ -258,8 +260,10 @@ export default function AppRoutes() {
       <Route path="/future" element={<PrivateRoute><FuturePage /></PrivateRoute>} />
 
       <Route path="/leadership" element={<PrivateRoute requiredFeature="leadership"><Leadership /></PrivateRoute>}>
-        <Route index element={<Navigate to="/leadership/my-plans" replace />} />
+        <Route index element={<Navigate to="/leadership/dashboard" replace />} />
         <Route path="dashboard" element={<LeadershipDashboard />} />
+
+        <Route path="goal-setting" element={<GoalSetting />} />
         <Route path="goals" element={<Goals />} />
         <Route path="goals/:id" element={<GoalDetails />} />
         <Route path="developmental-plan" element={<DevelopmentalPlan />} />
@@ -289,7 +293,7 @@ export default function AppRoutes() {
         <Route path="playbooks/:id/edit" element={<PlaybookEditor />} />
         <Route path="playbooks/:id/simple-edit" element={<SimplePlaybookEditor />} />
         <Route path="subscription" element={<Subscription />} />
-        <Route path="*" element={<Navigate to="/leadership/my-plans" replace />} />
+        <Route path="*" element={<Navigate to="/leadership/dashboard" replace />} />
       </Route>
 
       <Route path="/foh" element={<PrivateRoute requiredFeature="fohTasks"><FOH /></PrivateRoute>} />

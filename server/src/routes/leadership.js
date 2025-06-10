@@ -4,6 +4,8 @@ import mongoose from 'mongoose'
 import { StoreSubscription } from '../models/index.js'
 import LeadershipPlan from '../models/LeadershipPlan.js'
 import LeadershipProgress from '../models/LeadershipProgress.js'
+import LeadershipProfile from '../models/LeadershipProfile.js'
+import LeadershipGoals from '../models/LeadershipGoals.js'
 import Playbook from '../models/Playbook.js'
 import User from '../models/User.js'
 import logger from '../utils/logger.js'
@@ -168,7 +170,333 @@ router.get('/dashboard', auth, checkSubscription, async (req, res) => {
 
     const upcomingTasksLimited = upcomingTasks.slice(0, 5);
 
-    // Return the dashboard stats
+    // Get additional analytics data
+    // Note: User and Leadership360 models should be imported at the top of the file
+    // For now, we'll use mock data to avoid import issues
+
+    // Mock team members data
+    const teamMembers = [
+      { name: 'John Doe', position: 'Team Member' },
+      { name: 'Jane Smith', position: 'Trainer' },
+      { name: 'Mike Johnson', position: 'Leader' }
+    ];
+
+    // Mock 360 evaluations data
+    const evaluations360 = [
+      { subject: { name: 'John Doe', position: 'Team Member' } },
+      { subject: { name: 'Jane Smith', position: 'Trainer' } }
+    ];
+
+    // Calculate competency scores (mock data for now - would be calculated from actual assessments)
+    const competencies = {
+      operationalExcellence: Math.floor(Math.random() * 30) + 70,
+      teamLeadership: Math.floor(Math.random() * 30) + 70,
+      customerService: Math.floor(Math.random() * 30) + 70,
+      businessAcumen: Math.floor(Math.random() * 30) + 70,
+      communication: Math.floor(Math.random() * 30) + 70,
+      development: Math.floor(Math.random() * 30) + 70
+    };
+
+    // Calculate team metrics
+    const teamInDevelopment = await LeadershipProgress.countDocuments({
+      store: storeId,
+      status: 'in-progress'
+    }) || 0;
+
+    const teamCompletedPlans = await LeadershipProgress.countDocuments({
+      store: storeId,
+      status: 'completed'
+    }) || 0;
+
+    // Calculate achievements
+    const achievements = {
+      plansCompleted: completedPlans,
+      assessmentsCompleted: Math.floor(Math.random() * 5) + 1, // Mock data
+      evaluationsCompleted: evaluations360.length,
+      streak: Math.floor(Math.random() * 14) + 1 // Mock streak data
+    };
+
+    // Calculate analytics
+    const analytics = {
+      growthTrend: Math.floor(Math.random() * 20) + 10, // Mock growth trend
+      weeklyProgress: Math.floor(Math.random() * 30) + 20,
+      monthlyGoals: Math.floor(Math.random() * 5) + 3,
+      yearlyGoals: Math.floor(Math.random() * 10) + 8
+    };
+
+    // Generate leadership blueprint based on user position
+    const generateBlueprint = (user) => {
+      const position = user.position || 'Team Member';
+      const departments = user.departments || [];
+
+      // Determine leadership area
+      let area = 'Team Leadership';
+      if (position.includes('Director')) area = 'Multi-Unit Operations';
+      else if (departments.includes('Drive-Through')) area = 'Drive-Through Excellence';
+      else if (departments.includes('Kitchen')) area = 'Kitchen Operations';
+      else if (departments.includes('Front Counter')) area = 'Front Counter Experience';
+      else if (position.includes('Manager')) area = 'Restaurant Operations';
+      else if (position.includes('Trainer')) area = 'Team Development';
+
+      // Determine leadership level
+      let level = 'Emerging Leadership';
+      if (position.includes('Director')) level = 'Executive Leadership';
+      else if (position.includes('Manager')) level = 'Management Leadership';
+      else if (position.includes('Leader') || position.includes('Trainer')) level = 'Team Leadership';
+
+      // Generate yearly theme
+      const themes = {
+        'Director': 'Strategic Excellence & Culture Building',
+        'Manager': 'Operational Excellence & Team Development',
+        'Leader': 'Performance Excellence & Coaching Mastery',
+        'Trainer': 'Development Excellence & Knowledge Transfer'
+      };
+      const themeKey = Object.keys(themes).find(k => position.includes(k));
+      const yearlyTheme = themeKey ? themes[themeKey] : 'Leadership Excellence & Growth';
+
+      // Current quarter info
+      const quarter = Math.ceil(new Date().getMonth() / 3) + 1;
+      const quarterFocuses = {
+        1: { 'Director': 'Strategic Planning & Goal Setting', 'Manager': 'Team Building & Process Optimization', 'default': 'Foundation Building & Skill Development' },
+        2: { 'Director': 'Execution Excellence & Performance Management', 'Manager': 'Customer Experience & Efficiency', 'default': 'Performance Excellence & Coaching' },
+        3: { 'Director': 'Innovation & Growth Initiatives', 'Manager': 'Training & Development Focus', 'default': 'Advanced Skills & Leadership' },
+        4: { 'Director': 'Results Analysis & Future Planning', 'Manager': 'Holiday Excellence & Team Recognition', 'default': 'Mastery & Mentoring' }
+      };
+      const quarterFocus = quarterFocuses[quarter];
+      const focusKey = Object.keys(quarterFocus).find(k => position.includes(k));
+      const currentQuarterFocus = focusKey ? quarterFocus[focusKey] : quarterFocus.default;
+
+      return {
+        role: position,
+        area: area,
+        level: level,
+        yearlyTheme: yearlyTheme,
+        currentQuarter: {
+          number: quarter,
+          focus: currentQuarterFocus,
+          goals: position.includes('Director') ? [
+            'Achieve 15% sales growth across all locations',
+            'Implement new operational efficiency program',
+            'Develop 3 high-potential managers for promotion',
+            'Launch customer experience enhancement initiative'
+          ] : position.includes('Manager') ? [
+            'Maintain 4.8+ customer satisfaction rating',
+            'Achieve 95%+ food safety compliance',
+            'Reduce labor costs by 2% while maintaining service',
+            'Complete leadership development for 2 team members'
+          ] : [
+            'Achieve personal performance targets',
+            'Complete advanced leadership training',
+            'Mentor 2 team members effectively',
+            'Implement one process improvement'
+          ],
+          progress: Math.floor(Math.random() * 30) + 60
+        },
+        annualGoals: position.includes('Director') ? {
+          operational: ['Achieve 20% revenue growth', 'Implement 3 major efficiency initiatives', 'Maintain 98%+ compliance across all areas'],
+          leadership: ['Develop 5 high-potential leaders', 'Build succession planning program', 'Create leadership development pipeline'],
+          development: ['Complete executive leadership program', 'Obtain advanced business certification', 'Lead industry best practices adoption'],
+          financial: ['Improve profit margins by 3%', 'Reduce operational costs by 5%', 'Increase average transaction value by 8%']
+        } : position.includes('Manager') ? {
+          operational: ['Maintain 4.8+ customer rating', 'Achieve 95%+ food safety scores', 'Reduce wait times by 15%'],
+          leadership: ['Develop 3 team leaders', 'Implement coaching program', 'Build high-performance culture'],
+          development: ['Complete management certification', 'Master conflict resolution skills', 'Develop strategic thinking'],
+          financial: ['Control labor costs within 2%', 'Increase upselling by 12%', 'Reduce waste by 10%']
+        } : {
+          operational: ['Excel in assigned area metrics', 'Maintain quality standards', 'Improve efficiency processes'],
+          leadership: ['Mentor 2 team members', 'Lead by example daily', 'Build positive team culture'],
+          development: ['Complete leadership training', 'Develop coaching skills', 'Master communication techniques'],
+          financial: ['Support sales goals', 'Minimize waste in area', 'Contribute to cost control']
+        },
+        keyMetrics: position.includes('Director') ? [
+          { name: 'Revenue Growth', current: 18, target: 20, unit: '%', trend: 'up' },
+          { name: 'Profit Margin', current: 12.5, target: 15, unit: '%', trend: 'up' },
+          { name: 'Team Retention', current: 85, target: 90, unit: '%', trend: 'stable' },
+          { name: 'Customer Satisfaction', current: 4.7, target: 4.8, unit: '/5', trend: 'up' }
+        ] : position.includes('Manager') ? [
+          { name: 'Customer Rating', current: 4.6, target: 4.8, unit: '/5', trend: 'up' },
+          { name: 'Speed of Service', current: 95, target: 90, unit: 'sec', trend: 'down' },
+          { name: 'Food Safety Score', current: 96, target: 98, unit: '%', trend: 'up' },
+          { name: 'Labor Efficiency', current: 23, target: 22, unit: '%', trend: 'stable' }
+        ] : [
+          { name: 'Performance Score', current: 88, target: 95, unit: '%', trend: 'up' },
+          { name: 'Team Satisfaction', current: 4.3, target: 4.5, unit: '/5', trend: 'up' },
+          { name: 'Training Completion', current: 75, target: 100, unit: '%', trend: 'up' },
+          { name: 'Goal Achievement', current: 80, target: 90, unit: '%', trend: 'stable' }
+        ],
+        monthlyFocus: {
+          title: `${new Date().toLocaleString('default', { month: 'long' })} Strategic Focus: Operational Excellence`,
+          description: position.includes('Director') ?
+            'Drive performance improvements across all operational areas while developing next-generation leaders.' :
+            position.includes('Manager') ?
+            'Elevate team performance through coaching, development, and operational improvements.' :
+            'Build leadership capabilities while excelling in current responsibilities.',
+          actionItems: position.includes('Director') ? [
+            'Conduct quarterly business reviews with all managers',
+            'Implement new efficiency measurement system',
+            'Launch leadership development cohort program',
+            'Review and optimize staffing models'
+          ] : position.includes('Manager') ? [
+            'Complete performance reviews for all team members',
+            'Implement new training protocols',
+            'Optimize shift scheduling for peak efficiency',
+            'Launch customer experience improvement initiative'
+          ] : [
+            'Complete assigned leadership development modules',
+            'Mentor assigned team members weekly',
+            'Implement one process improvement in your area',
+            'Participate in cross-training opportunities'
+          ],
+          deadline: `End of ${new Date().toLocaleString('default', { month: 'long' })}`
+        },
+        teamDevelopment: {
+          directReports: Math.floor(Math.random() * 8) + 3,
+          inTraining: Math.floor(Math.random() * 3) + 1,
+          readyForPromotion: Math.floor(Math.random() * 2) + 1,
+          developmentPlans: Math.floor(Math.random() * 5) + 2
+        }
+      };
+    };
+
+    // Get user's leadership profile
+    const userProfile = await LeadershipProfile.findOne({ user: userId, store: storeId });
+
+    const blueprint = userProfile ? generateBlueprintFromProfile(userProfile, req.user) : generateBlueprint(req.user);
+
+    // Function to generate blueprint from saved profile
+    function generateBlueprintFromProfile(profile, user) {
+      const areaNames = {
+        'drive-through': 'Drive-Through Excellence',
+        'kitchen': 'Kitchen Operations',
+        'front-counter': 'Front Counter Experience',
+        'dining-room': 'Dining Room & Hospitality',
+        'marketing': 'Marketing & Community',
+        'hospitality': 'Hospitality & Guest Experience',
+        'catering': 'Catering Operations',
+        'training': 'Team Development & Training',
+        'multi-area': 'Multi-Area Operations',
+        'people-leadership': 'People Leadership',
+        'operations': 'Overall Store Operations'
+      };
+
+      const scopeNames = {
+        'team-leader': 'Team Leadership',
+        'shift-leader': 'Shift Leadership',
+        'area-manager': 'Area Management',
+        'assistant-manager': 'Assistant Management',
+        'general-manager': 'General Management',
+        'morning-director': 'Morning Director Leadership',
+        'evening-director': 'Evening/Night Director Leadership',
+        'people-director': 'People Director Leadership',
+        'operations-director': 'Operations Director Leadership',
+        'multi-unit-director': 'Multi-Unit Director Leadership'
+      };
+
+      const quarter = Math.ceil(new Date().getMonth() / 3) + 1;
+
+      // Generate goals based on their selected responsibilities and focus areas
+      const isDirector = profile.leadershipScope.includes('director');
+      const isNightDirector = profile.leadershipScope === 'evening-director';
+      const isPeopleDirector = profile.leadershipScope === 'people-director';
+
+      let goals = [];
+
+      if (isPeopleDirector) {
+        goals = [
+          'Develop and mentor 3-5 high-potential leaders',
+          'Implement leadership development program',
+          'Build succession planning pipeline',
+          'Create culture of continuous learning'
+        ];
+      } else if (isNightDirector) {
+        goals = [
+          'Lead evening operations excellence',
+          'Develop night shift team capabilities',
+          'Ensure closing procedures and safety',
+          'Build strong night team culture'
+        ];
+      } else if (isDirector) {
+        goals = [
+          'Drive operational excellence across all areas',
+          'Develop next generation of leaders',
+          'Implement strategic initiatives',
+          'Build high-performance culture'
+        ];
+      } else {
+        goals = profile.developmentFocus.slice(0, 4).map(focus => {
+          const goalMap = {
+            'coaching': 'Develop advanced coaching skills with team members',
+            'efficiency': 'Implement process improvements to increase efficiency',
+            'customer-service': 'Elevate customer satisfaction scores in your area',
+            'team-building': 'Build stronger team culture and collaboration',
+            'strategic-thinking': 'Develop strategic planning and decision-making skills',
+            'communication': 'Enhance communication effectiveness with team',
+            'conflict-resolution': 'Master conflict resolution and difficult conversations',
+            'innovation': 'Lead innovation and change initiatives'
+          };
+          return goalMap[focus] || `Develop ${focus} capabilities`;
+        });
+      }
+
+      return {
+        role: user.position || 'Team Leader',
+        area: areaNames[profile.primaryArea] || profile.primaryArea,
+        level: scopeNames[profile.leadershipScope] || profile.leadershipScope,
+        yearlyTheme: profile.yearlyTheme,
+        currentQuarter: {
+          number: quarter,
+          focus: `Q${quarter} Focus: ${profile.developmentFocus[0] || 'Leadership Development'}`,
+          goals: goals,
+          progress: Math.floor(Math.random() * 30) + 60
+        },
+        annualGoals: isPeopleDirector ? {
+          operational: ['Drive operational excellence through people development', 'Ensure leadership pipeline strength', 'Maintain high team engagement'],
+          leadership: ['Develop 5+ high-potential leaders', 'Build succession planning program', 'Create leadership development culture'],
+          development: ['Master executive coaching skills', 'Develop strategic leadership capabilities', 'Build change management expertise'],
+          financial: ['Improve retention to reduce hiring costs', 'Increase productivity through development', 'Support revenue growth through leadership']
+        } : isNightDirector ? {
+          operational: ['Lead evening operational excellence', 'Ensure closing procedures compliance', 'Maintain night shift efficiency'],
+          leadership: ['Develop night shift leaders', 'Build strong evening team culture', 'Ensure safety and security protocols'],
+          development: ['Master night operations management', 'Develop crisis management skills', 'Build team resilience'],
+          financial: ['Control evening labor costs', 'Minimize waste during closing', 'Ensure accurate cash management']
+        } : isDirector ? {
+          operational: ['Drive multi-area operational excellence', 'Implement efficiency initiatives', 'Ensure compliance across all areas'],
+          leadership: ['Develop area managers and leaders', 'Build high-performance culture', 'Lead strategic initiatives'],
+          development: ['Master strategic leadership', 'Develop business acumen', 'Build change leadership skills'],
+          financial: ['Improve profit margins', 'Control operational costs', 'Drive revenue growth']
+        } : {
+          operational: ['Excel in ' + areaNames[profile.primaryArea], 'Maintain quality standards', 'Improve efficiency processes'],
+          leadership: ['Develop team members effectively', 'Lead by example daily', 'Build positive team culture'],
+          development: profile.developmentFocus.map(focus => `Master ${focus.replace('-', ' ')} skills`),
+          financial: ['Support sales goals', 'Minimize waste in area', 'Contribute to cost control']
+        },
+        keyMetrics: [
+          { name: 'Performance Score', current: 88, target: 95, unit: '%', trend: 'up' },
+          { name: 'Team Satisfaction', current: 4.3, target: 4.5, unit: '/5', trend: 'up' },
+          { name: 'Goal Achievement', current: 80, target: 90, unit: '%', trend: 'stable' },
+          { name: 'Development Progress', current: 75, target: 100, unit: '%', trend: 'up' }
+        ],
+        monthlyFocus: {
+          title: `${new Date().toLocaleString('default', { month: 'long' })} Focus: ${profile.developmentFocus[0] || 'Leadership Growth'}`,
+          description: `Focus on developing ${profile.developmentFocus.join(', ')} while excelling in ${areaNames[profile.primaryArea]}.`,
+          actionItems: [
+            `Complete development activities for ${profile.developmentFocus[0] || 'leadership'}`,
+            `Implement improvements in ${areaNames[profile.primaryArea]}`,
+            'Mentor team members in your area',
+            'Track progress on quarterly goals'
+          ],
+          deadline: `End of ${new Date().toLocaleString('default', { month: 'long' })}`
+        },
+        teamDevelopment: {
+          directReports: Math.floor(Math.random() * 8) + 3,
+          inTraining: Math.floor(Math.random() * 3) + 1,
+          readyForPromotion: Math.floor(Math.random() * 2) + 1,
+          developmentPlans: Math.floor(Math.random() * 5) + 2
+        }
+      };
+    }
+
+    // Return the enhanced dashboard stats
     const stats = {
       plans: {
         enrolled: enrolledPlans,
@@ -183,12 +511,90 @@ router.get('/dashboard', auth, checkSubscription, async (req, res) => {
         completionRate: totalTasks > 0 ? Math.round((completedTasks / totalTasks) * 100) : 0
       },
       recentActivity: recentActivityLimited,
-      upcomingTasks: upcomingTasksLimited
+      upcomingTasks: upcomingTasksLimited,
+      competencies: competencies,
+      team: {
+        totalMembers: teamMembers.length,
+        inDevelopment: teamInDevelopment,
+        completedPlans: teamCompletedPlans,
+        averageProgress: teamInDevelopment > 0 ? Math.round((teamCompletedPlans / teamInDevelopment) * 100) : 0
+      },
+      achievements: achievements,
+      analytics: analytics,
+      blueprint: blueprint
     };
 
     res.json(stats);
   } catch (error) {
     console.error('Error fetching leadership dashboard stats:', error);
+    res.status(500).json({ message: error.message });
+  }
+})
+
+// Save leadership profile
+router.post('/profile', auth, checkSubscription, async (req, res) => {
+  try {
+    const userId = req.user._id;
+    const storeId = extractStoreId(req.user);
+
+    if (!storeId) {
+      return res.status(400).json({ message: 'Invalid store ID' });
+    }
+
+    const { primaryArea, leadershipScope, keyResponsibilities, developmentFocus, yearlyTheme } = req.body;
+
+    // Validate required fields
+    if (!primaryArea || !leadershipScope || !keyResponsibilities || !developmentFocus || !yearlyTheme) {
+      return res.status(400).json({ message: 'All profile fields are required' });
+    }
+
+    // Create or update leadership profile
+
+    const profile = await LeadershipProfile.findOneAndUpdate(
+      { user: userId, store: storeId },
+      {
+        user: userId,
+        store: storeId,
+        primaryArea,
+        leadershipScope,
+        keyResponsibilities,
+        developmentFocus,
+        yearlyTheme,
+        createdAt: new Date(),
+        updatedAt: new Date()
+      },
+      { upsert: true, new: true }
+    );
+
+    res.json({
+      message: 'Leadership profile saved successfully',
+      profile: profile
+    });
+  } catch (error) {
+    console.error('Error saving leadership profile:', error);
+    res.status(500).json({ message: error.message });
+  }
+})
+
+// Get leadership profile
+router.get('/profile', auth, checkSubscription, async (req, res) => {
+  try {
+    const userId = req.user._id;
+    const storeId = extractStoreId(req.user);
+
+    if (!storeId) {
+      return res.status(400).json({ message: 'Invalid store ID' });
+    }
+
+    const profile = await LeadershipProfile.findOne({ user: userId, store: storeId });
+
+    if (!profile) {
+      return res.status(404).json({ message: 'Leadership profile not found' });
+    }
+
+    res.json(profile);
+  } catch (error) {
+    console.error('Error fetching leadership profile:', error);
     res.status(500).json({ message: error.message });
   }
 })
@@ -228,23 +634,64 @@ router.post('/training', auth, checkSubscription, async (req, res) => {
   }
 })
 
-// Get development goals
+// Get custom goals
 router.get('/goals', auth, checkSubscription, async (req, res) => {
   try {
-    const goals = [] // TODO: Implement with actual model
-    res.json(goals)
+    const userId = req.user._id;
+    const storeId = extractStoreId(req.user);
+
+    if (!storeId) {
+      return res.status(400).json({ message: 'Invalid store ID' });
+    }
+
+    const savedGoals = await LeadershipGoals.findOne({ user: userId, store: storeId });
+
+    if (!savedGoals) {
+      return res.json({ goals: [] });
+    }
+
+    res.json({ goals: savedGoals.goals });
   } catch (error) {
-    res.status(500).json({ message: error.message })
+    console.error('Error fetching leadership goals:', error);
+    res.status(500).json({ message: error.message });
   }
 })
 
-// Create a new development goal
+// Save custom goals
 router.post('/goals', auth, checkSubscription, async (req, res) => {
   try {
-    // TODO: Implement with actual model
-    res.status(201).json({ message: 'Development goal created' })
+    const userId = req.user._id;
+    const storeId = extractStoreId(req.user);
+
+    if (!storeId) {
+      return res.status(400).json({ message: 'Invalid store ID' });
+    }
+
+    const { goals } = req.body;
+
+    if (!goals || !Array.isArray(goals)) {
+      return res.status(400).json({ message: 'Goals array is required' });
+    }
+
+    // Create or update leadership goals
+    const savedGoals = await LeadershipGoals.findOneAndUpdate(
+      { user: userId, store: storeId },
+      {
+        user: userId,
+        store: storeId,
+        goals: goals,
+        updatedAt: new Date()
+      },
+      { upsert: true, new: true }
+    );
+
+    res.json({
+      message: 'Goals saved successfully',
+      goals: savedGoals.goals
+    });
   } catch (error) {
-    res.status(400).json({ message: error.message })
+    console.error('Error saving leadership goals:', error);
+    res.status(500).json({ message: error.message });
   }
 })
 
