@@ -94,6 +94,10 @@ import Equipment from '@/pages/Kitchen/Equipment';
 import EquipmentDetail from '@/pages/Kitchen/Equipment/EquipmentDetail';
 
 import WasteAnalytics from '@/pages/Kitchen/WasteTracker/Analytics';
+import FoodQuality from '@/pages/Kitchen/FoodQuality';
+import FoodQualityHistory from '@/pages/Kitchen/FoodQuality/History';
+import FoodQualityAnalytics from '@/pages/Kitchen/FoodQuality/Analytics';
+import FoodQualitySettings from '@/pages/Kitchen/FoodQuality/Settings';
 import Training from '@/pages/Training';
 import TrainingDashboard from '@/pages/Training/Dashboard';
 import TrainingProgress from '@/pages/Training/Progress/TrainingProgress';
@@ -214,6 +218,11 @@ export default function AppRoutes() {
         <Route path="food-safety/pages/temperature-history" element={<TemperatureHistory />} />
         <Route path="food-safety/analytics/:id" element={<ChecklistAnalytics />} />
         <Route path="food-safety/view/:id" element={<ViewCompletion />} />
+
+        <Route path="food-quality" element={<FoodQuality />} />
+        <Route path="food-quality/history" element={<FoodQualityHistory />} />
+        <Route path="food-quality/analytics" element={<FoodQualityAnalytics />} />
+        <Route path="food-quality/settings" element={<FoodQualitySettings />} />
 
         <Route path="checklists" element={<Checklists />} />
         <Route path="checklists/history" element={<KitchenChecklistHistory />} />

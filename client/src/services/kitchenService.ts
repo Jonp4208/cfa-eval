@@ -578,4 +578,40 @@ export const kitchenService = {
     const response = await api.get('/api/kitchen/food-safety/temperature-logs/latest');
     return response.data;
   },
+
+  // Food Quality Services
+  getFoodQualityConfig: async () => {
+    const response = await api.get('/api/kitchen/food-quality/config');
+    return response.data;
+  },
+
+  updateFoodQualityConfig: async (config: any) => {
+    const response = await api.post('/api/kitchen/food-quality/config', config);
+    return response.data;
+  },
+
+  getFoodQualityStandards: async () => {
+    const response = await api.get('/api/kitchen/food-quality/standards');
+    return response.data;
+  },
+
+  createOrUpdateFoodQualityStandard: async (standard: any) => {
+    const response = await api.post('/api/kitchen/food-quality/standards', standard);
+    return response.data;
+  },
+
+  submitFoodQualityEvaluation: async (evaluation: any) => {
+    const response = await api.post('/api/kitchen/food-quality/evaluations', evaluation);
+    return response.data;
+  },
+
+  getFoodQualityEvaluations: async (params?: any) => {
+    const response = await api.get('/api/kitchen/food-quality/evaluations', { params });
+    return response.data;
+  },
+
+  getFoodQualityAnalytics: async (params?: any) => {
+    const response = await api.get('/api/kitchen/food-quality/analytics', { params });
+    return response.data;
+  },
 };

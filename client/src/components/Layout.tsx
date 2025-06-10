@@ -275,6 +275,12 @@ export default function Layout({ children }: { children: React.ReactNode }) {
           badge: null
         },
         {
+          icon: Target,
+          label: 'Food Quality',
+          href: '/kitchen/food-quality',
+          badge: null
+        },
+        {
           icon: ClipboardList,
           label: t('kitchen.shiftChecklists', 'Shift Checklists'),
           href: '/kitchen/checklists',

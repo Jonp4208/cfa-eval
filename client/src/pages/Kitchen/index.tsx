@@ -9,7 +9,8 @@ import {
   ShieldCheck,
   LayoutDashboard,
   ClipboardList,
-  ChefHat
+  ChefHat,
+  Target
 } from 'lucide-react';
 import { format } from 'date-fns';
 import { useTranslation } from '@/contexts/TranslationContext';
@@ -114,6 +115,18 @@ const Kitchen: React.FC = () => {
                 >
                   <ShieldCheck className="w-4 h-4 mr-2" />
                   {t('kitchen.foodSafety')}
+                </Button>
+                <Button
+                  variant={isActive('food-quality') ? 'default' : 'ghost'}
+                  onClick={() => handleNavigate('food-quality')}
+                  className={`rounded-full whitespace-nowrap transition-all duration-300 ${
+                    isActive('food-quality')
+                      ? 'bg-[#E51636]/10 text-[#E51636] hover:bg-[#E51636]/20 font-medium'
+                      : 'hover:bg-gray-100 text-gray-700'
+                  }`}
+                >
+                  <Target className="w-4 h-4 mr-2" />
+                  Food Quality
                 </Button>
                 <Button
                   variant={isActive('checklists') ? 'default' : 'ghost'}

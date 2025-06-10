@@ -1369,4 +1369,15 @@ router.post('/food-safety/temperature-logs', auth, temperatureLogController.reco
 router.post('/food-safety/temperature-logs/batch', auth, temperatureLogController.recordMultipleTemperatures)
 router.get('/food-safety/temperature-logs/latest', auth, temperatureLogController.getLatestTemperatures)
 
+// Food Quality Routes
+import * as foodQualityController from '../controllers/foodQuality.js';
+
+router.get('/food-quality/config', auth, foodQualityController.getFoodQualityConfig)
+router.post('/food-quality/config', auth, foodQualityController.updateFoodQualityConfig)
+router.get('/food-quality/standards', auth, foodQualityController.getFoodQualityStandards)
+router.post('/food-quality/standards', auth, foodQualityController.createOrUpdateStandard)
+router.post('/food-quality/evaluations', auth, foodQualityController.submitEvaluation)
+router.get('/food-quality/evaluations', auth, foodQualityController.getEvaluations)
+router.get('/food-quality/analytics', auth, foodQualityController.getEvaluationAnalytics)
+
 export default router;
