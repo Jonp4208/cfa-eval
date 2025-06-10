@@ -40,7 +40,8 @@ import {
   Coffee,
   Flame,
   Sparkles,
-  ArrowRight
+  ArrowRight,
+  Package
 } from 'lucide-react';
 import { kitchenService } from '@/services/kitchenService';
 import { ProductType, FoodQualityStandard, FoodQualityEvaluation } from '@/types/kitchen';
@@ -53,19 +54,22 @@ interface FoodQualityConfig {
   qualityPhotos: Record<string, string>;
 }
 
-const productTypeLabels: Record<ProductType, string> = {
-  sandwich_regular: 'Sandwich Regular',
-  sandwich_spicy: 'Sandwich Spicy',
-  nuggets_8: 'Nuggets 8-count',
-  nuggets_12: 'Nuggets 12-count',
-  strips_4: 'Strips 4-count',
-  grilled_sandwich: 'Grilled Sandwich',
-  grilled_nuggets_8: 'Grilled Nuggets 8-count',
-  grilled_nuggets_12: 'Grilled Nuggets 12-count',
-  fries_small: 'Fries Small',
-  fries_medium: 'Fries Medium',
-  fries_large: 'Fries Large'
+// Dynamic product type labels - will be populated from API
+let productTypeLabels: Record<string, string> = {};
+
+// Icon mapping for food items
+const iconMap = {
+  sandwich: Utensils,
+  circle: Coffee,
+  minus: Flame,
+  utensils: Utensils,
+  flame: Flame,
+  plus: ChefHat,
+  coffee: Coffee,
+  'more-horizontal': ChefHat
 };
+
+
 
 const FoodQuality: React.FC = () => {
   const navigate = useNavigate();
@@ -78,6 +82,21 @@ const FoodQuality: React.FC = () => {
   const [evaluationDialog, setEvaluationDialog] = useState(false);
   const [productSelectionDialog, setProductSelectionDialog] = useState(false);
   const [analytics, setAnalytics] = useState<any>(null);
+  const [foodItems, setFoodItems] = useState<any[]>([]);
+
+  const getProductIcon = (productType: string) => {
+    const foodItem = foodItems.find(item => item.key === productType);
+    if (foodItem && iconMap[foodItem.icon as keyof typeof iconMap]) {
+      const IconComponent = iconMap[foodItem.icon as keyof typeof iconMap];
+      return <IconComponent className="h-5 w-5" />;
+    }
+
+    // Fallback to category-based icons
+    if (productType.includes('sandwich')) return <Utensils className="h-5 w-5" />;
+    if (productType.includes('nuggets')) return <Coffee className="h-5 w-5" />;
+    if (productType.includes('strips')) return <Flame className="h-5 w-5" />;
+    return <ChefHat className="h-5 w-5" />;
+  };
 
   useEffect(() => {
     loadData();
@@ -86,16 +105,27 @@ const FoodQuality: React.FC = () => {
   const loadData = async () => {
     try {
       setLoading(true);
-      
+
       const [configData, evaluationsData, analyticsData] = await Promise.all([
         kitchenService.getFoodQualityConfig(),
         kitchenService.getFoodQualityEvaluations({ limit: 10 }),
         kitchenService.getFoodQualityAnalytics({ days: 7 })
       ]);
-      
+
       setConfig(configData);
       setRecentEvaluations(evaluationsData);
       setAnalytics(analyticsData);
+
+      // Update food items and product type labels
+      if (configData.foodItems) {
+        setFoodItems(configData.foodItems);
+        // Build dynamic product type labels
+        const labels: Record<string, string> = {};
+        configData.foodItems.forEach((item: any) => {
+          labels[item.key] = item.name;
+        });
+        productTypeLabels = labels;
+      }
     } catch (error) {
       console.error('Error loading food quality data:', error);
       enqueueSnackbar('Failed to load food quality data', { variant: 'error' });
@@ -259,6 +289,14 @@ const FoodQuality: React.FC = () => {
                   <div className="absolute inset-0 bg-gradient-to-r from-blue-600/0 to-violet-600/0 group-hover:from-blue-600/10 group-hover:to-violet-600/10 transition-all duration-500"></div>
                   <BarChart3 className="h-5 w-5 mr-3 relative z-10" />
                   <span className="relative z-10 font-semibold">Analytics</span>
+                </Button>
+                <Button
+                  onClick={() => navigate('/kitchen/food-quality/food-items')}
+                  className="group relative overflow-hidden bg-gradient-to-r from-emerald-100 to-green-100 hover:from-emerald-200 hover:to-green-200 text-emerald-700 border-0 shadow-xl hover:shadow-2xl transition-all duration-500 px-6 py-3 rounded-2xl"
+                >
+                  <div className="absolute inset-0 bg-gradient-to-r from-emerald-600/0 to-green-600/0 group-hover:from-emerald-600/10 group-hover:to-green-600/10 transition-all duration-500"></div>
+                  <Package className="h-5 w-5 mr-3 relative z-10" />
+                  <span className="relative z-10 font-semibold">Food Items</span>
                 </Button>
                 <Button
                   onClick={() => navigate('/kitchen/food-quality/settings')}
@@ -661,10 +699,7 @@ const FoodQuality: React.FC = () => {
                             "p-2 rounded-xl transition-colors",
                             isSelected ? "bg-[#E51636] text-white" : "bg-gray-100 text-gray-600"
                           )}>
-                            {productType.includes('sandwich') ? <Utensils className="h-5 w-5" /> :
-                             productType.includes('nuggets') ? <Coffee className="h-5 w-5" /> :
-                             productType.includes('strips') ? <Flame className="h-5 w-5" /> :
-                             <ChefHat className="h-5 w-5" />}
+                            {getProductIcon(productType)}
                           </div>
                           <Checkbox
                             checked={isSelected}

@@ -10,6 +10,7 @@ import CleaningTaskCompletion from '../models/CleaningTaskCompletion.js';
 import mongoose from 'mongoose';
 import expressAsyncHandler from 'express-async-handler';
 import * as shiftChecklistController from '../controllers/shiftChecklistController.js';
+import * as foodItemsController from '../controllers/foodItems.js';
 import FoodSafetyConfig from '../models/FoodSafetyConfig.js';
 import * as dailyChecklistController from '../controllers/dailyChecklist.js';
 import * as temperatureLogController from '../controllers/temperatureLog.js';
@@ -1378,5 +1379,12 @@ router.post('/food-quality/standards', auth, foodQualityController.createOrUpdat
 router.post('/food-quality/evaluations', auth, foodQualityController.submitEvaluation)
 router.get('/food-quality/evaluations', auth, foodQualityController.getEvaluations)
 router.get('/food-quality/analytics', auth, foodQualityController.getEvaluationAnalytics)
+
+// Food Items Routes
+router.get('/food-items', auth, foodItemsController.getFoodItems)
+router.post('/food-items', auth, foodItemsController.createFoodItem)
+router.put('/food-items/:id', auth, foodItemsController.updateFoodItem)
+router.delete('/food-items/:id', auth, foodItemsController.deleteFoodItem)
+router.get('/food-items/categories', auth, foodItemsController.getFoodItemCategories)
 
 export default router;

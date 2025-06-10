@@ -44,7 +44,8 @@ import {
   Hash,
   Ruler,
   CheckCircle,
-  AlertTriangle
+  AlertTriangle,
+  Package
 } from 'lucide-react';
 import { kitchenService } from '@/services/kitchenService';
 import { ProductType } from '@/types/kitchen';
@@ -77,19 +78,7 @@ const FoodQualitySettings: React.FC = () => {
   const [editingCriteria, setEditingCriteria] = useState<Criteria | null>(null);
   const [showCriteriaDialog, setShowCriteriaDialog] = useState(false);
 
-  const productTypeLabels: Record<string, string> = {
-    sandwich_regular: 'Sandwich Regular',
-    sandwich_spicy: 'Sandwich Spicy',
-    nuggets_8: 'Nuggets 8-count',
-    nuggets_12: 'Nuggets 12-count',
-    strips_4: 'Strips 4-count',
-    grilled_sandwich: 'Grilled Sandwich',
-    grilled_nuggets_8: 'Grilled Nuggets 8-count',
-    grilled_nuggets_12: 'Grilled Nuggets 12-count',
-    fries_small: 'Fries Small',
-    fries_medium: 'Fries Medium',
-    fries_large: 'Fries Large'
-  };
+  const [productTypeLabels, setProductTypeLabels] = useState<Record<string, string>>({});
 
   const criteriaTypes = [
     { value: 'yes_no', label: 'Yes/No', icon: CheckCircle },
@@ -110,7 +99,16 @@ const FoodQualitySettings: React.FC = () => {
       setLoading(true);
       const data = await kitchenService.getFoodQualityConfig();
       setConfig(data);
-      
+
+      // Build product type labels from food items
+      if (data.foodItems) {
+        const labels: Record<string, string> = {};
+        data.foodItems.forEach((item: any) => {
+          labels[item.key] = item.name;
+        });
+        setProductTypeLabels(labels);
+      }
+
       // Set first product as selected by default
       if (data?.standards && Object.keys(data.standards).length > 0) {
         setSelectedProduct(Object.keys(data.standards)[0]);
@@ -239,6 +237,13 @@ const FoodQualitySettings: React.FC = () => {
               </div>
             </div>
             <div className="flex gap-3">
+              <Button
+                onClick={() => navigate('/kitchen/food-quality/food-items')}
+                className="bg-white/20 border-white/30 text-white hover:bg-white/30 backdrop-blur-sm rounded-2xl px-6 py-3 font-semibold border-2"
+              >
+                <Package className="h-5 w-5 mr-2" />
+                Manage Items
+              </Button>
               <Button
                 onClick={saveConfig}
                 disabled={saving}

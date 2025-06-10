@@ -78,7 +78,28 @@ export interface DailyChecklistItem {
 }
 
 // Food Quality Types
-export type ProductType = 'sandwich_regular' | 'sandwich_spicy' | 'nuggets_8' | 'nuggets_12' | 'strips_4' | 'grilled_sandwich' | 'grilled_nuggets_8' | 'grilled_nuggets_12' | 'fries_small' | 'fries_medium' | 'fries_large';
+export type ProductType = string; // Now dynamic based on food items
+
+export interface FoodItem {
+  _id?: string;
+  key: string;
+  name: string;
+  description?: string;
+  category: 'sandwich' | 'nuggets' | 'strips' | 'fries' | 'grilled' | 'sides' | 'beverages' | 'other';
+  icon: string;
+  isDefault: boolean;
+  isActive: boolean;
+  store: string;
+  createdBy: string;
+  createdAt?: string;
+  updatedAt?: string;
+}
+
+export interface FoodItemCategory {
+  value: string;
+  label: string;
+  icon: string;
+}
 
 export interface FoodQualityStandard {
   _id?: string;

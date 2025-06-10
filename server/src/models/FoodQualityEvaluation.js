@@ -21,20 +21,8 @@ const itemEvaluationSchema = new mongoose.Schema({
 const foodQualityEvaluationSchema = new mongoose.Schema({
   productType: {
     type: String,
-    enum: [
-      'sandwich_regular',
-      'sandwich_spicy', 
-      'nuggets_8',
-      'nuggets_12',
-      'strips_4',
-      'grilled_sandwich',
-      'grilled_nuggets_8',
-      'grilled_nuggets_12',
-      'fries_small',
-      'fries_medium',
-      'fries_large'
-    ],
-    required: true
+    required: true,
+    trim: true
   },
   evaluatedBy: {
     type: mongoose.Schema.Types.ObjectId,

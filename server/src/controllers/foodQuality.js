@@ -1,6 +1,8 @@
 import FoodQualityStandard from '../models/FoodQualityStandard.js';
 import FoodQualityEvaluation from '../models/FoodQualityEvaluation.js';
 import FoodQualityConfig from '../models/FoodQualityConfig.js';
+import FoodItem from '../models/FoodItem.js';
+import { initializeDefaultItems } from './foodItems.js';
 import logger from '../utils/logger.js';
 
 // Helper function to calculate item status based on criteria and value
@@ -48,6 +50,13 @@ const calculateItemStatus = (value, validation, type) => {
 export const getFoodQualityConfig = async (req, res) => {
   try {
     const store = req.user.store._id;
+
+    // Initialize default food items if they don't exist
+    await initializeDefaultItems(store, req.user._id);
+
+    // Get all active food items for this store
+    const foodItems = await FoodItem.find({ store, isActive: true }).sort({ category: 1, name: 1 });
+
     let config = await FoodQualityConfig.findOne({ store });
 
     // If no config exists, create one with defaults
@@ -55,9 +64,26 @@ export const getFoodQualityConfig = async (req, res) => {
       config = await FoodQualityConfig.create({ store });
     }
 
+    // Build standards object from food items and existing config
+    const standards = {};
+    for (const item of foodItems) {
+      standards[item.key] = config.standards[item.key] || {
+        name: item.name,
+        criteria: []
+      };
+    }
+
     res.json({
-      standards: config.standards,
-      qualityPhotos: config.qualityPhotos
+      standards,
+      qualityPhotos: config.qualityPhotos || {},
+      foodItems: foodItems.map(item => ({
+        key: item.key,
+        name: item.name,
+        description: item.description,
+        category: item.category,
+        icon: item.icon,
+        isDefault: item.isDefault
+      }))
     });
   } catch (error) {
     logger.error('Error getting food quality config:', error);

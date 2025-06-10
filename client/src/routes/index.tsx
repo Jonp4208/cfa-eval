@@ -98,6 +98,7 @@ import FoodQuality from '@/pages/Kitchen/FoodQuality';
 import FoodQualityHistory from '@/pages/Kitchen/FoodQuality/History';
 import FoodQualityAnalytics from '@/pages/Kitchen/FoodQuality/Analytics';
 import FoodQualitySettings from '@/pages/Kitchen/FoodQuality/Settings';
+import FoodItemsManagement from '@/pages/Kitchen/FoodQuality/FoodItems';
 import Training from '@/pages/Training';
 import TrainingDashboard from '@/pages/Training/Dashboard';
 import TrainingProgress from '@/pages/Training/Progress/TrainingProgress';
@@ -223,6 +224,7 @@ export default function AppRoutes() {
         <Route path="food-quality/history" element={<FoodQualityHistory />} />
         <Route path="food-quality/analytics" element={<FoodQualityAnalytics />} />
         <Route path="food-quality/settings" element={<FoodQualitySettings />} />
+        <Route path="food-quality/food-items" element={<FoodItemsManagement />} />
 
         <Route path="checklists" element={<Checklists />} />
         <Route path="checklists/history" element={<KitchenChecklistHistory />} />

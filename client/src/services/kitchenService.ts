@@ -1,5 +1,5 @@
 import api from '@/lib/axios';
-import { FoodSafetyChecklist, FoodSafetyChecklistCompletion, ChecklistItemCompletion } from '../types/kitchen';
+import { FoodSafetyChecklist, FoodSafetyChecklistCompletion, ChecklistItemCompletion, FoodItem, FoodItemCategory } from '../types/kitchen';
 import { CleaningTask, CleaningTaskCompletion } from '../types/task';
 
 export interface EquipmentStatus {
@@ -612,6 +612,31 @@ export const kitchenService = {
 
   getFoodQualityAnalytics: async (params?: any) => {
     const response = await api.get('/api/kitchen/food-quality/analytics', { params });
+    return response.data;
+  },
+
+  // Food Items Management
+  getFoodItems: async (): Promise<FoodItem[]> => {
+    const response = await api.get('/api/kitchen/food-items');
+    return response.data;
+  },
+
+  createFoodItem: async (item: Omit<FoodItem, '_id' | 'store' | 'createdBy' | 'isActive' | 'createdAt' | 'updatedAt'>): Promise<FoodItem> => {
+    const response = await api.post('/api/kitchen/food-items', item);
+    return response.data;
+  },
+
+  updateFoodItem: async (id: string, item: Partial<FoodItem>): Promise<FoodItem> => {
+    const response = await api.put(`/api/kitchen/food-items/${id}`, item);
+    return response.data;
+  },
+
+  deleteFoodItem: async (id: string): Promise<void> => {
+    await api.delete(`/api/kitchen/food-items/${id}`);
+  },
+
+  getFoodItemCategories: async (): Promise<FoodItemCategory[]> => {
+    const response = await api.get('/api/kitchen/food-items/categories');
     return response.data;
   },
 };
