@@ -120,12 +120,7 @@ export default function NewDocument() {
     if (validationError) setValidationError(null);
   };
 
-  const handleCheckboxChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const { name, checked } = e.target;
-    setFormData(prev => ({ ...prev, [name]: checked }));
-    // Clear validation error when user makes changes
-    if (validationError) setValidationError(null);
-  };
+
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files[0]) {
@@ -918,14 +913,11 @@ export default function NewDocument() {
                 </h3>
 
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-4 md:gap-6">
-                  <div className={`p-4 md:p-6 rounded-xl border-2 transition-all duration-200 cursor-pointer hover:shadow-lg ${
+                  <div className={`p-4 md:p-6 rounded-xl border-2 transition-all duration-200 hover:shadow-lg ${
                     formData.previousIncidents
                       ? 'border-red-300 bg-red-50 shadow-md'
                       : 'border-gray-200 bg-white hover:border-gray-300'
-                  }`}
-                  onClick={() => handleCheckboxChange({
-                    target: { name: 'previousIncidents', checked: !formData.previousIncidents }
-                  } as any)}>
+                  }`}>
                     <div className="flex items-start gap-3 md:gap-4">
                       <div className={`p-2 md:p-3 rounded-xl ${
                         formData.previousIncidents
@@ -939,14 +931,13 @@ export default function NewDocument() {
                           <Checkbox
                             id="previousIncidents"
                             checked={formData.previousIncidents}
-                            onCheckedChange={(checked) =>
-                              handleCheckboxChange({
-                                target: { name: 'previousIncidents', checked: checked === true }
-                              } as any)
-                            }
+                            onCheckedChange={(checked) => {
+                              setFormData(prev => ({ ...prev, previousIncidents: checked === true }));
+                              if (validationError) setValidationError(null);
+                            }}
                             className="data-[state=checked]:bg-[#E51636] data-[state=checked]:border-[#E51636]"
                           />
-                          <Label className="font-semibold text-gray-900 cursor-pointer text-sm md:text-base">
+                          <Label htmlFor="previousIncidents" className="font-semibold text-gray-900 cursor-pointer text-sm md:text-base">
                             Previous Incidents
                           </Label>
                         </div>
@@ -957,14 +948,11 @@ export default function NewDocument() {
                     </div>
                   </div>
 
-                  <div className={`p-6 rounded-xl border-2 transition-all duration-200 cursor-pointer hover:shadow-lg ${
+                  <div className={`p-6 rounded-xl border-2 transition-all duration-200 hover:shadow-lg ${
                     formData.documentationAttached
                       ? 'border-blue-300 bg-blue-50 shadow-md'
                       : 'border-gray-200 bg-white hover:border-gray-300'
-                  }`}
-                  onClick={() => handleCheckboxChange({
-                    target: { name: 'documentationAttached', checked: !formData.documentationAttached }
-                  } as any)}>
+                  }`}>
                     <div className="flex items-start gap-4">
                       <div className={`p-3 rounded-xl ${
                         formData.documentationAttached
@@ -978,14 +966,13 @@ export default function NewDocument() {
                           <Checkbox
                             id="documentationAttached"
                             checked={formData.documentationAttached}
-                            onCheckedChange={(checked) =>
-                              handleCheckboxChange({
-                                target: { name: 'documentationAttached', checked: checked === true }
-                              } as any)
-                            }
+                            onCheckedChange={(checked) => {
+                              setFormData(prev => ({ ...prev, documentationAttached: checked === true }));
+                              if (validationError) setValidationError(null);
+                            }}
                             className="data-[state=checked]:bg-[#E51636] data-[state=checked]:border-[#E51636]"
                           />
-                          <Label className="font-semibold text-gray-900 cursor-pointer">
+                          <Label htmlFor="documentationAttached" className="font-semibold text-gray-900 cursor-pointer">
                             Attach Documents
                           </Label>
                         </div>
@@ -996,14 +983,11 @@ export default function NewDocument() {
                     </div>
                   </div>
 
-                  <div className={`p-6 rounded-xl border-2 transition-all duration-200 cursor-pointer hover:shadow-lg ${
+                  <div className={`p-6 rounded-xl border-2 transition-all duration-200 hover:shadow-lg ${
                     formData.notifyEmployee
                       ? 'border-green-300 bg-green-50 shadow-md'
                       : 'border-gray-200 bg-white hover:border-gray-300'
-                  }`}
-                  onClick={() => handleCheckboxChange({
-                    target: { name: 'notifyEmployee', checked: !formData.notifyEmployee }
-                  } as any)}>
+                  }`}>
                     <div className="flex items-start gap-4">
                       <div className={`p-3 rounded-xl ${
                         formData.notifyEmployee
@@ -1017,14 +1001,13 @@ export default function NewDocument() {
                           <Checkbox
                             id="notifyEmployee"
                             checked={formData.notifyEmployee}
-                            onCheckedChange={(checked) =>
-                              handleCheckboxChange({
-                                target: { name: 'notifyEmployee', checked: checked === true }
-                              } as any)
-                            }
+                            onCheckedChange={(checked) => {
+                              setFormData(prev => ({ ...prev, notifyEmployee: checked === true }));
+                              if (validationError) setValidationError(null);
+                            }}
                             className="data-[state=checked]:bg-[#E51636] data-[state=checked]:border-[#E51636]"
                           />
-                          <Label className="font-semibold text-gray-900 cursor-pointer">
+                          <Label htmlFor="notifyEmployee" className="font-semibold text-gray-900 cursor-pointer">
                             Notify Employee
                           </Label>
                         </div>
